@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Sign In — Carve Studio Portal | Carve Model</title>
+<meta name="description" content="Sign in to your Carve Model client workspace to review quotes, track milestones, and exchange files.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/png" href="assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+body{background:var(--cm-ink-950);min-height:100vh;}
+.auth{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem var(--gutter);position:relative;}
+.auth::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0.5;
+  background-image:linear-gradient(var(--cm-line-faint) 1px,transparent 1px),linear-gradient(90deg,var(--cm-line-faint) 1px,transparent 1px);
+  background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0,#000,transparent 75%);-webkit-mask-image:radial-gradient(120% 80% at 50% 0,#000,transparent 75%);}
+.auth__card{position:relative;width:100%;max-width:436px;background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:clamp(1.8rem,4vw,2.6rem);box-shadow:var(--shadow-lg);}
+.auth__brand{display:flex;justify-content:center;margin-bottom:2rem;}
+.auth__brand img{height:34px;}
+.auth-panel h1{font-size:1.6rem;letter-spacing:-0.02em;text-align:center;}
+.auth__sub{text-align:center;color:var(--cm-text-muted);font-size:0.95rem;margin-top:0.7rem;margin-bottom:1.8rem;}
+.field{margin-bottom:1.1rem;}
+.field label{display:block;font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-muted);margin-bottom:0.5rem;}
+.field input{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-text);border-radius:var(--r-sm);padding:0.85rem 1rem;font-family:var(--font-sans);font-size:0.95rem;transition:border-color var(--dur-2);}
+.field input:focus{outline:none;border-color:var(--cm-text-subtle);}
+.field input[readonly]{color:var(--cm-text-muted);background:var(--cm-ink-850);}
+.field .hint{font-size:0.78rem;color:var(--cm-text-subtle);margin-top:0.45rem;}
+.auth__alt{display:flex;justify-content:space-between;gap:1rem;margin-top:1.2rem;flex-wrap:wrap;}
+.linkbtn{background:none;border:0;color:var(--cm-gray-300);font-family:var(--font-sans);font-size:0.85rem;padding:0;transition:color var(--dur-2);}
+.linkbtn:hover{color:var(--cm-text-strong);text-decoration:underline;}
+.auth__foot{margin-top:1.8rem;padding-top:1.5rem;border-top:1px solid var(--cm-line-faint);text-align:center;font-size:0.88rem;color:var(--cm-text-muted);}
+.auth__foot a{color:var(--cm-text);text-decoration:underline;text-underline-offset:2px;}
+.auth__foot a:hover{color:var(--cm-text-strong);}
+.auth__back{display:inline-flex;align-items:center;gap:0.5rem;margin-top:1.6rem;font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);background:none;border:0;}
+.auth__back:hover{color:var(--cm-text);}
+.auth__icon{width:52px;height:52px;border-radius:50%;background:var(--cm-silver);color:var(--cm-ink-900);display:flex;align-items:center;justify-content:center;margin:0 auto 1.3rem;font-size:1.5rem;}
+.auth__confirm{text-align:center;}
+.auth__confirm p{color:var(--cm-text-muted);font-size:0.95rem;margin-top:0.7rem;}
+.auth__confirm b{color:var(--cm-text);}
+.auth__demo{position:relative;margin-top:1.5rem;font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.03em;color:var(--cm-text-subtle);text-align:center;max-width:420px;}
+.pw-wrap{position:relative;}
+.pw-wrap .toggle{position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;padding:0.3rem;}
+.pw-wrap .toggle:hover{color:var(--cm-text);}
+.field input.full-pw{padding-right:3.6rem;}
+.auth-panel[hidden]{display:none;}
+.auth__demo-nav{position:relative;margin-top:0.9rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);}
+.auth__demo-nav span{letter-spacing:0.04em;text-transform:uppercase;}
+.auth__demo-nav button{background:none;border:1px solid var(--cm-border);color:var(--cm-gray-300);border-radius:var(--r-pill);padding:0.3rem 0.7rem;font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.03em;transition:color var(--dur-2),border-color var(--dur-2);}
+.auth__demo-nav button:hover{color:var(--cm-text-strong);border-color:var(--cm-text-subtle);}
+</style>
+</head>
+<body>
+<main class="auth">
+  <div class="auth__card">
+    <a class="auth__brand" href="index.html" aria-label="Carve Model home"><img src="assets/logo-lockup.png" alt="Carve Model"></a>
+
+    <!-- SIGN IN -->
+    <div class="auth-panel" id="panel-login">
+      <h1>Client sign in</h1>
+      <p class="auth__sub">Access your project workspace, quotes, and files.</p>
+      <form onsubmit="return signIn(event)">
+        <div class="field"><label for="loginEmail">Email</label><input id="loginEmail" type="email" required placeholder="you@firm.com" autocomplete="email"></div>
+        <div class="field"><label for="loginPw">Password</label>
+          <div class="pw-wrap"><input id="loginPw" class="full-pw" type="password" required placeholder="Your password" autocomplete="current-password"><button type="button" class="toggle" onclick="togglePw('loginPw',this)">Show</button></div>
+        </div>
+        <button class="btn btn--primary btn--lg full" type="submit">Sign in</button>
+      </form>
+      <div class="auth__alt">
+        <button class="linkbtn" onclick="showPanel('magic')">Email me a link instead</button>
+        <button class="linkbtn" onclick="showPanel('forgot')">Forgot password?</button>
+      </div>
+      <div class="auth__foot">New client? <a href="contact.html">Request a quote</a> to get started.</div>
+    </div>
+
+    <!-- MAGIC LINK -->
+    <div class="auth-panel" id="panel-magic" hidden>
+      <h1>Email a sign-in link</h1>
+      <p class="auth__sub">We'll send a one-time link to your inbox — no password needed.</p>
+      <form onsubmit="return sendMagic(event)">
+        <div class="field"><label for="magicEmail">Email</label><input id="magicEmail" type="email" required placeholder="you@firm.com" autocomplete="email"></div>
+        <button class="btn btn--primary btn--lg full" type="submit">Send sign-in link</button>
+      </form>
+      <div style="text-align:center;"><button class="auth__back" onclick="showPanel('login')">← Back to sign in</button></div>
+    </div>
+    <div class="auth-panel" id="panel-magic-sent" hidden>
+      <div class="auth__confirm">
+        <div class="auth__icon">✓</div>
+        <h1>Check your inbox</h1>
+        <p>If an account exists for <b id="magicAddr">that email</b>, a sign-in link is on its way. It expires in 15 minutes.</p>
+      </div>
+      <div style="text-align:center;"><button class="auth__back" onclick="showPanel('login')">← Back to sign in</button></div>
+    </div>
+
+    <!-- FORGOT PASSWORD -->
+    <div class="auth-panel" id="panel-forgot" hidden>
+      <h1>Reset your password</h1>
+      <p class="auth__sub">Enter your email and we'll send a link to choose a new password.</p>
+      <form onsubmit="return sendReset(event)">
+        <div class="field"><label for="resetEmail">Email</label><input id="resetEmail" type="email" required placeholder="you@firm.com" autocomplete="email"></div>
+        <button class="btn btn--primary btn--lg full" type="submit">Send reset link</button>
+      </form>
+      <div style="text-align:center;"><button class="auth__back" onclick="showPanel('login')">← Back to sign in</button></div>
+    </div>
+    <div class="auth-panel" id="panel-reset-sent" hidden>
+      <div class="auth__confirm">
+        <div class="auth__icon">✓</div>
+        <h1>Reset link sent</h1>
+        <p>If an account exists for <b id="resetAddr">that email</b>, a password-reset link is on its way.</p>
+      </div>
+      <div style="text-align:center;"><button class="auth__back" onclick="showPanel('login')">← Back to sign in</button></div>
+    </div>
+
+    <!-- SET PASSWORD (invite) -->
+    <div class="auth-panel" id="panel-invite" hidden>
+      <h1>Set your password</h1>
+      <p class="auth__sub">You've been invited to your Carve Model workspace. Choose a password to finish setting up your account.</p>
+      <form onsubmit="return setPassword(event)">
+        <div class="field"><label for="inviteEmail">Email</label><input id="inviteEmail" type="email" value="jane@firm.com" readonly></div>
+        <div class="field"><label for="invitePw">Create password</label>
+          <div class="pw-wrap"><input id="invitePw" class="full-pw" type="password" required minlength="8" placeholder="At least 8 characters" autocomplete="new-password"><button type="button" class="toggle" onclick="togglePw('invitePw',this)">Show</button></div>
+          <div class="hint">Use 8+ characters with a mix of letters and numbers.</div>
+        </div>
+        <div class="field"><label for="invitePw2">Confirm password</label><input id="invitePw2" type="password" required placeholder="Re-enter password" autocomplete="new-password"></div>
+        <button class="btn btn--primary btn--lg full" type="submit">Set password &amp; continue</button>
+      </form>
+    </div>
+  </div>
+  <p class="auth__demo">Demo · sign-in isn't enforced in this preview. Any details continue to the portal. Connect a backend (Supabase, Firebase, Auth0) to make authentication real.</p>
+  <div class="auth__demo-nav">
+    <span>Preview screens:</span>
+    <button onclick="showPanel('login')">Sign in</button>
+    <button onclick="showPanel('invite')">Set password</button>
+    <button onclick="showPanel('magic')">Magic link</button>
+    <button onclick="showPanel('forgot')">Reset password</button>
+  </div>
+</main>
+
+<script>
+function showPanel(name){
+  document.querySelectorAll('.auth-panel').forEach(function(p){p.hidden=true;});
+  var el=document.getElementById('panel-'+name);
+  if(el)el.hidden=false;
+}
+function togglePw(id,btn){
+  var i=document.getElementById(id);
+  if(i.type==='password'){i.type='text';btn.textContent='Hide';}else{i.type='password';btn.textContent='Show';}
+}
+function go(){ try{localStorage.setItem('cm_session','1');}catch(e){} location.href='app.html'; }
+function signIn(e){e.preventDefault();go();return false;}
+function setPassword(e){
+  e.preventDefault();
+  var a=document.getElementById('invitePw').value,b=document.getElementById('invitePw2').value;
+  if(a!==b){alert('Passwords do not match. Please re-enter.');return false;}
+  go();return false;
+}
+function sendMagic(e){e.preventDefault();document.getElementById('magicAddr').textContent=document.getElementById('magicEmail').value||'that email';showPanel('magic-sent');return false;}
+function sendReset(e){e.preventDefault();document.getElementById('resetAddr').textContent=document.getElementById('resetEmail').value||'that email';showPanel('reset-sent');return false;}
+
+// Route: an invite link (login.html?invite=TOKEN&email=...) opens the set-password panel.
+(function(){
+  var q=new URLSearchParams(location.search);
+  if(q.get('invite')!==null){
+    var em=q.get('email');
+    if(em)document.getElementById('inviteEmail').value=em;
+    showPanel('invite');
+  }
+})();
+</script>
+</body>
+</html>

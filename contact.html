@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get a Free Quote — Contact Carve Model</title>
+<meta name="description" content="Tell us about your project and get a free quote. Carve Model builds architectural scale models, sales-gallery pieces, product prototypes, and film miniatures from Los Angeles.">
+<link rel="canonical" href="https://www.physical-model.com/contact">
+<meta property="og:title" content="Get a Free Quote | Carve Model">
+<meta property="og:description" content="Tell us what decision your model needs to support.">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/png" href="assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.contact-wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(2rem,5vw,5rem);align-items:start;padding-top:clamp(3rem,6vw,5rem);}
+.contact-info h1{margin-top:1.4rem;}
+.contact-info .lead{margin-top:1.4rem;}
+.contact-detail{display:flex;flex-direction:column;gap:1.4rem;margin-top:2.5rem;border-top:1px solid var(--cm-line-faint);padding-top:2rem;}
+.cd{display:flex;gap:1rem;align-items:flex-start;}
+.cd .k{font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);width:90px;flex:none;padding-top:3px;}
+.cd .v{color:var(--cm-text);font-size:1rem;}
+.cd .v a{color:var(--cm-text);}.cd .v a:hover{color:var(--cm-text-strong);}
+.steps-mini{display:flex;flex-direction:column;gap:0.8rem;margin-top:2rem;}
+.steps-mini .s{display:flex;gap:0.8rem;align-items:center;font-size:0.9rem;color:var(--cm-text-muted);}
+.steps-mini .s b{font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-silver);width:24px;flex:none;}
+
+.form-card{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:clamp(1.6rem,3vw,2.5rem);}
+.field{margin-bottom:1.2rem;}
+.field label{display:block;font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-muted);margin-bottom:0.5rem;}
+.field input,.field select,.field textarea{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-text);border-radius:var(--r-sm);padding:0.85rem 1rem;font-family:var(--font-sans);font-size:0.95rem;transition:border-color var(--dur-2);}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--cm-text-subtle);}
+.field textarea{resize:vertical;min-height:120px;}
+.field .hint{font-size:0.78rem;color:var(--cm-text-subtle);margin-top:0.45rem;line-height:1.45;}
+.projtitle{display:flex;flex-direction:column;gap:0.25rem;margin-top:0.7rem;padding:0.7rem 0.9rem;background:rgba(182,182,182,0.07);border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);border-radius:var(--r-sm);}
+.projtitle__k{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.projtitle__v{font-family:var(--font-display);font-weight:var(--w-semibold);font-size:1rem;color:var(--cm-text-strong);letter-spacing:-0.01em;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;}
+.form-note{font-size:0.8rem;color:var(--cm-text-subtle);margin-top:1rem;}
+.optional{text-transform:none;letter-spacing:0;color:var(--cm-text-subtle);font-weight:var(--w-regular);}
+.mono-eg{font-family:var(--font-mono);font-size:0.92em;color:var(--cm-silver);}
+
+/* wizard */
+.wiz__head{margin-bottom:1.8rem;}
+.wiz__steps{display:flex;justify-content:space-between;gap:0.4rem;margin-bottom:0.9rem;}
+.wstep{display:flex;align-items:center;gap:0.5rem;flex:none;opacity:0.45;transition:opacity var(--dur-2);}
+.wstep.on,.wstep.done{opacity:1;}
+.wstep__n{width:24px;height:24px;border-radius:50%;border:1px solid var(--cm-border-strong);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-muted);flex:none;transition:0.18s;}
+.wstep.on .wstep__n{background:var(--cm-white);color:var(--cm-ink-900);border-color:var(--cm-white);}
+.wstep.done .wstep__n{background:var(--cm-silver);color:var(--cm-ink-900);border-color:var(--cm-silver);}
+.wstep__l{font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-muted);}
+.wstep.on .wstep__l{color:var(--cm-text-strong);}
+.wiz__bar{height:2px;background:var(--cm-ink-700);border-radius:99px;overflow:hidden;}
+.wiz__bar i{display:block;height:100%;background:var(--cm-silver);transition:width var(--dur-3) var(--ease-out);}
+.wpanel{border:0;padding:0;margin:0;min-inline-size:0;}
+.wpanel[hidden]{display:none;}
+.wpanel__t{font-family:var(--font-display);font-size:1.25rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;padding:0;margin-bottom:1.3rem;}
+.wiz__nav{display:flex;justify-content:space-between;gap:1rem;margin-top:1.6rem;}
+.wiz__nav .btn{min-width:128px;}
+.wiz__nav .btn[disabled]{opacity:0.4;cursor:not-allowed;pointer-events:none;}
+@media(max-width:560px){.wstep__l{display:none;}.wstep{flex:1;justify-content:center;}}
+.needlist{border:1px solid var(--cm-border);border-radius:var(--r-sm);background:var(--cm-ink-850);padding:0.95rem 1.1rem;margin-bottom:0.8rem;}
+.needlist__h{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.needlist ul{list-style:none;padding:0;margin:0.7rem 0 0;display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 1rem;}
+.needlist li{position:relative;padding-left:1.2rem;font-size:0.86rem;color:var(--cm-text);}
+.needlist li::before{content:"";position:absolute;left:0;top:0.55em;width:6px;height:6px;background:var(--cm-silver);}
+.needlist__note{font-size:0.78rem;color:var(--cm-text-subtle);line-height:1.5;margin-top:0.85rem;}
+.needlist__note strong{color:var(--cm-text);}
+@media(max-width:480px){.needlist ul{grid-template-columns:1fr;}}
+.orlink{display:flex;align-items:center;gap:0.8rem;margin:1rem 0 0.8rem;color:var(--cm-text-subtle);}
+.orlink::before,.orlink::after{content:"";flex:1;height:1px;background:var(--cm-line-faint);}
+.orlink span{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.06em;text-transform:uppercase;}
+
+/* segmented radio group */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+.seg label{display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.85rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);cursor:pointer;font-size:0.88rem;color:var(--cm-text-muted);transition:border-color var(--dur-2),color var(--dur-2),background var(--dur-2);margin:0;text-transform:none;letter-spacing:0;font-family:var(--font-sans);}
+.seg label:hover{border-color:var(--cm-text-subtle);color:var(--cm-text);}
+.seg input{position:absolute;opacity:0;pointer-events:none;}
+.seg label .dot{width:14px;height:14px;border:1px solid var(--cm-border-strong);border-radius:50%;flex:none;position:relative;transition:0.18s;}
+.seg input:checked + .dot{border-color:var(--cm-silver);background:radial-gradient(circle,var(--cm-silver) 0 38%,transparent 42%);}
+.seg input:checked ~ span{color:var(--cm-text-strong);}
+.seg label:has(input:checked){border-color:var(--cm-text-subtle);background:var(--cm-ink-850);color:var(--cm-text-strong);}
+
+/* multi-select checks */
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+.checks label{display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.85rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);cursor:pointer;font-size:0.88rem;color:var(--cm-text-muted);transition:border-color var(--dur-2),color var(--dur-2),background var(--dur-2);margin:0;text-transform:none;letter-spacing:0;font-family:var(--font-sans);}
+.checks label:hover{border-color:var(--cm-text-subtle);color:var(--cm-text);}
+.checks input{position:absolute;opacity:0;pointer-events:none;}
+.checks .ck{width:15px;height:15px;border:1px solid var(--cm-border-strong);border-radius:2px;flex:none;position:relative;transition:0.18s;}
+.checks input:checked + .ck{background:var(--cm-silver);border-color:var(--cm-silver);}
+.checks input:checked + .ck::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--cm-ink-900);border-width:0 2px 2px 0;transform:rotate(45deg);}
+.checks label:has(input:checked){border-color:var(--cm-text-subtle);background:var(--cm-ink-850);color:var(--cm-text-strong);}
+@media(max-width:560px){.checks{grid-template-columns:1fr;}}
+
+/* file dropzone */
+.drop{border:1.5px dashed var(--cm-border-strong);border-radius:var(--r-sm);padding:1.4rem;text-align:center;color:var(--cm-text-muted);font-size:0.88rem;transition:0.18s;cursor:pointer;}
+.drop:hover,.drop.over{border-color:var(--cm-silver);color:var(--cm-text);background:var(--cm-ink-850);}
+.drop strong{color:var(--cm-text);display:block;margin-bottom:0.3rem;}
+.drop .sub{font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.02em;color:var(--cm-text-subtle);margin-top:0.5rem;}
+.filelist{list-style:none;padding:0;margin:0.8rem 0 0;display:flex;flex-direction:column;gap:0.5rem;}
+.filelist li{display:flex;align-items:center;gap:0.7rem;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.55rem 0.7rem;font-size:0.82rem;color:var(--cm-text);}
+.filelist .fz{margin-left:auto;font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);}
+.filelist .rm{background:none;border:0;color:var(--cm-text-subtle);font-size:1rem;padding:0 0.2rem;line-height:1;}
+.filelist .rm:hover{color:var(--cm-text-strong);}
+
+/* conditional scope-boundary tool */
+.scope{margin-bottom:1.2rem;border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);border-radius:var(--r-sm);background:rgba(182,182,182,0.04);padding:1.1rem 1.2rem;}
+.scope[hidden]{display:none;}
+.scope__head{display:flex;align-items:baseline;gap:0.6rem;flex-wrap:wrap;}
+.scope__head h4{font-family:var(--font-display);font-size:1.02rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
+.scope__head .tagm{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-silver);}
+.scope p.hint{margin-top:0.5rem;}
+.scope__stage{position:relative;margin-top:0.9rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);background:var(--cm-ink-850);overflow:hidden;display:none;}
+.scope__stage.on{display:block;}
+.scope__stage canvas{display:block;width:100%;cursor:crosshair;}
+.scope__tools{display:flex;gap:0.5rem;margin-top:0.7rem;flex-wrap:wrap;align-items:center;}
+.scope__tools .btn--sm{padding:0.5rem 0.9rem;font-size:0.8rem;}
+.scope__count{font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);margin-left:auto;}
+.scope__upload{margin-top:0.9rem;}
+
+.success{display:none;text-align:center;padding:2rem 0;}
+.success.show{display:block;}
+.success .ic{width:56px;height:56px;border-radius:50%;background:var(--cm-silver);color:var(--cm-ink-900);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;font-size:1.6rem;}
+.success h3{font-size:1.4rem;}.success p{color:var(--cm-text-muted);margin-top:0.7rem;}
+@media(max-width:820px){.contact-wrap{grid-template-columns:1fr;}.row2{grid-template-columns:1fr;}.seg{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<header class="site-header"><div class="container nav">
+  <a class="nav__brand" href="index.html"><img src="assets/logo-lockup.png" alt="Carve Model"></a>
+  <nav><ul class="nav__links"><li><a href="services.html">Services</a></li><li><a href="process.html">Process</a></li><li><a href="works.html">Works</a></li><li><a href="about.html">About</a></li><li><a href="blog.html">Blog</a></li><li><a href="faq.html">FAQ</a></li></ul></nav>
+  <div class="nav__actions"><div class="nav__social"><a href="https://www.linkedin.com/company/109973397" target="_blank" rel="noopener" aria-label="Carve Model on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5 2.5 2.5 0 01.02-5zM3 8.98h4v12H3v-12zM9 8.98h3.83v1.64h.05c.53-1 1.84-2.06 3.79-2.06 4.05 0 4.8 2.67 4.8 6.14v6.28h-4v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9v-12z"/></svg></a><a href="https://www.instagram.com/carvemodel" target="_blank" rel="noopener" aria-label="Carve Model on Instagram"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg></a></div><a class="nav__login" href="login.html">Client Login</a><a class="btn btn--primary" href="contact.html" aria-current="page">Get a Free Quote</a><button class="nav__toggle" data-menu-toggle aria-label="Menu"><span></span></button></div>
+</div>
+<div class="mobile-menu" id="mobileMenu"><a href="services.html">Services</a><a href="process.html">Process</a><a href="works.html">Works</a><a href="about.html">About</a><a href="blog.html">Blog</a><a href="faq.html">FAQ</a><a href="login.html">Client Login</a><a href="contact.html">Get a Free Quote</a></div>
+</header>
+
+<main>
+<div class="container contact-wrap">
+  <div class="contact-info">
+    <span class="eyebrow">Start a project</span>
+    <h1 class="display-lg">Tell us about your project.</h1>
+    <p class="lead measure-sm">Share your project and any files you have. The more you tell us here, the faster we can reply with a real quote — no back-and-forth, no account needed.</p>
+    <div class="steps-mini">
+      <div class="s"><b>01</b> Submit your details, files &amp; scope in one step</div>
+      <div class="s"><b>02</b> We review and recommend scale &amp; detail</div>
+      <div class="s"><b>03</b> You receive a fixed quote and timeline</div>
+    </div>
+    <div class="contact-detail">
+      <div class="cd"><span class="k">Email</span><span class="v"><a href="mailto:support@physical-model.com">support@physical-model.com</a></span></div>
+      <div class="cd"><span class="k">Phone</span><span class="v"><a href="tel:+18778566665">877.856.6665</a></span></div>
+      <div class="cd"><span class="k">Studio</span><span class="v">1370 Valley Vista Dr #200<br>Diamond Bar, CA 91765</span></div>
+      <div class="cd"><span class="k">Serving</span><span class="v">United States &amp; Canada · nationwide shipping</span></div>
+      <div class="cd"><span class="k">Hours</span><span class="v">Mon–Fri · 9am–6pm PT</span></div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <form id="quoteForm" onsubmit="return submitQuote(event)">
+      <!-- Progress -->
+      <div class="wiz__head">
+        <div class="wiz__steps" id="wizSteps">
+          <div class="wstep on" data-step="1"><span class="wstep__n">1</span><span class="wstep__l">Project</span></div>
+          <div class="wstep" data-step="2"><span class="wstep__n">2</span><span class="wstep__l">Size</span></div>
+          <div class="wstep" data-step="3"><span class="wstep__n">3</span><span class="wstep__l">Files</span></div>
+          <div class="wstep" data-step="4"><span class="wstep__n">4</span><span class="wstep__l">You</span></div>
+        </div>
+        <div class="wiz__bar"><i id="wizBar" style="width:25%"></i></div>
+      </div>
+
+      <!-- STEP 1 — Project -->
+      <fieldset class="wpanel on" data-panel="1">
+        <legend class="wpanel__t">What are you building?</legend>
+        <div class="field"><label>Model type</label>
+          <div class="seg" id="typeSeg">
+            <label><input type="radio" name="type" value="Architectural — building only" onchange="onTypeChange()"><span class="dot"></span><span>Architectural — building only</span></label>
+            <label><input type="radio" name="type" value="Architectural — with site context" onchange="onTypeChange()"><span class="dot"></span><span>Architectural — with site context</span></label>
+            <label><input type="radio" name="type" value="Masterplan / site model" onchange="onTypeChange()"><span class="dot"></span><span>Masterplan / site model</span></label>
+            <label><input type="radio" name="type" value="Sales gallery / presentation" onchange="onTypeChange()"><span class="dot"></span><span>Sales gallery / presentation</span></label>
+            <label><input type="radio" name="type" value="Product prototype" onchange="onTypeChange()"><span class="dot"></span><span>Product prototype</span></label>
+            <label><input type="radio" name="type" value="Film / commercial miniature" onchange="onTypeChange()"><span class="dot"></span><span>Film / commercial miniature</span></label>
+            <label><input type="radio" name="type" value="Art installation / sculpture" onchange="onTypeChange()"><span class="dot"></span><span>Art installation / sculpture</span></label>
+            <label><input type="radio" name="type" value="Not sure yet" onchange="onTypeChange()"><span class="dot"></span><span>Not sure yet</span></label>
+          </div>
+        </div>
+        <div class="field"><label for="projname">Project / building name</label>
+          <input id="projname" name="projname" type="text" placeholder="e.g. Aria Tower" oninput="updateProjTitle()">
+          <div class="hint">The name of the building, development, or piece — used to label your project everywhere.</div>
+          <div class="projtitle" id="projTitlePreview" hidden>
+            <span class="projtitle__k">Your project will be filed as</span>
+            <span class="projtitle__v" id="projTitleVal"></span>
+          </div>
+        </div>
+        <div class="field"><label for="use">Intended use <span class="optional">(optional)</span></label>
+          <select id="use" name="use">
+            <option value="">Select one…</option>
+            <option>Planning / approvals</option><option>Investor / board meeting</option>
+            <option>Sales gallery / marketing</option><option>Internal design review</option>
+            <option>Film / production</option><option>Exhibition / public display</option><option>Other</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <!-- STEP 2 — Size -->
+      <fieldset class="wpanel" data-panel="2" hidden>
+        <legend class="wpanel__t">How big should it be?</legend>
+        <div class="field"><label for="scale">Scale <span class="optional">(or leave blank)</span></label>
+          <input id="scale" name="scale" type="text" placeholder='e.g. 1:200  or  1/8" = 1&#39;-0"'>
+          <div class="hint">International (<span class="mono-eg">1:40</span>, <span class="mono-eg">1:200</span>) or Imperial (<span class="mono-eg">1/8" = 1'-0"</span>). Not sure? Leave it blank — we'll recommend one.</div>
+        </div>
+        <div class="field"><label for="modelsize">Or, desired model size <span class="optional">(if you don't know the scale)</span></label>
+          <input id="modelsize" name="modelsize" type="text" placeholder='e.g. 36" L × 24" W × 18" H  or  90 × 60 × 45 cm'>
+          <div class="hint">Tell us how big you want the finished model (length × width × height) and we'll work out the scale that fits.</div>
+        </div>
+        <div class="field"><label>Special requirements <span class="optional">(select any that apply)</span></label>
+          <div class="checks">
+            <label><input type="checkbox" name="extras" value="Integrated lighting"><span class="ck"></span><span>Integrated lighting</span></label>
+            <label><input type="checkbox" name="extras" value="Display stand / base"><span class="ck"></span><span>Display stand / base</span></label>
+            <label><input type="checkbox" name="extras" value="Split into sections"><span class="ck"></span><span>Split into sections (transport / access)</span></label>
+            <label><input type="checkbox" name="extras" value="Interior finishes"><span class="ck"></span><span>Interior finishes</span></label>
+            <label><input type="checkbox" name="extras" value="Furniture & fit-out"><span class="ck"></span><span>Furniture &amp; fit-out</span></label>
+            <label><input type="checkbox" name="extras" value="Removable roof / levels"><span class="ck"></span><span>Removable roof / levels</span></label>
+            <label><input type="checkbox" name="extras" value="Protective travel case"><span class="ck"></span><span>Protective travel case</span></label>
+          </div>
+          <input id="extrasOther" name="extrasOther" type="text" placeholder="Other requirements — type anything specific…" style="margin-top:0.6rem;">
+        </div>
+      </fieldset>
+
+      <!-- STEP 3 — Files & scope -->
+      <fieldset class="wpanel" data-panel="3" hidden>
+        <legend class="wpanel__t">Share your drawings</legend>
+        <!-- Conditional: scope boundary (context / masterplan only) -->
+        <div class="scope" id="scopeBlock" hidden>
+          <div class="scope__head"><h4>Mark your scope boundary</h4><span class="tagm">Context models</span></div>
+          <p class="hint">For models with surrounding context, show us which area to build in <strong>full detail</strong> versus simplified context massing. Upload a site plan or aerial, then click to outline the in-scope area.</p>
+          <div class="scope__upload">
+            <div class="drop" id="planDrop" onclick="document.getElementById('planInput').click()">
+              <strong>Upload a site plan or aerial</strong>
+              Drag an image here, or click to browse
+              <span class="sub">PNG / JPG / PDF page · a screenshot is fine</span>
+            </div>
+            <input id="planInput" type="file" accept="image/*" hidden onchange="loadPlan(this.files)">
+          </div>
+          <div class="scope__stage" id="planStage">
+            <canvas id="planCanvas"></canvas>
+          </div>
+          <div class="scope__tools" id="planTools" style="display:none;">
+            <button type="button" class="btn btn--ghost btn--sm" onclick="undoPoint()">Undo point</button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="clearScope()">Clear</button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="changePlan()">Replace image</button>
+            <span class="scope__count" id="ptCount">0 points</span>
+          </div>
+        </div>
+
+        <div class="field"><label>Files <span class="optional">(drawings, renderings, 3D)</span></label>
+          <div class="needlist">
+            <span class="needlist__h">Drawings that help us quote:</span>
+            <ul>
+              <li>Layout / floor plan</li>
+              <li>Site plan</li>
+              <li>Elevations</li>
+              <li>Roof plan</li>
+              <li>Landscape plan</li>
+              <li>Interior plan</li>
+              <li>Renderings (if available)</li>
+            </ul>
+            <p class="needlist__note">CAD / Revit files carry the dimensions, so no need to type sizes. Renderings help us match finishes, color, and lighting. For models with context, also attach a <strong>marked-up site plan showing the scope boundary</strong> — or mark it directly above.</p>
+          </div>
+          <div class="drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+            <strong>Drop files here, or click to browse</strong>
+            Attach what you have — it speeds up your quote
+            <span class="sub">CAD · PDF · Revit · Rhino · SketchUp · images · up to 250 MB · large files? use a link below</span>
+          </div>
+          <input id="fileInput" type="file" multiple hidden onchange="addFiles(this.files)">
+          <ul class="filelist" id="fileList"></ul>
+          <div class="orlink"><span>or share a link</span></div>
+          <input id="filelink" name="filelink" type="url" placeholder="Dropbox, Google Drive, WeTransfer, or OneDrive link">
+          <div class="hint">Architectural files are often large — a shared cloud link is perfect. Please set it to “anyone with the link can view.”</div>
+        </div>
+      </fieldset>
+
+      <!-- STEP 4 — You -->
+      <fieldset class="wpanel" data-panel="4" hidden>
+        <legend class="wpanel__t">Where do we send your quote?</legend>
+        <div class="row2">
+          <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" placeholder="Jane Doe"></div>
+          <div class="field"><label for="company">Company <span class="optional">(optional)</span></label><input id="company" name="company" type="text" placeholder="Firm / studio"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" placeholder="jane@firm.com"></div>
+          <div class="field"><label for="phone">Phone <span class="optional">(optional)</span></label><input id="phone" name="phone" type="tel" placeholder="(555) 000-0000"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="projloc">Project location <span class="optional">(city / region)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA" oninput="updateProjTitle()"></div>
+          <div class="field"><label for="deliveryloc">Delivery location <span class="optional">(where it ships)</span></label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX"></div>
+        </div>
+        <div class="field"><label for="deadline">Deadline / event date <span class="optional">(optional)</span></label><input id="deadline" name="deadline" type="text" placeholder="e.g. mid-September" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
+        <div class="field"><label for="message">Anything else <span class="optional">(optional)</span></label><textarea id="message" name="message" placeholder="Notes on detail, finishes, lighting, or your deadline."></textarea></div>
+      </fieldset>
+
+      <!-- Nav -->
+      <div class="wiz__nav">
+        <button type="button" class="btn btn--ghost" id="wizBack" onclick="wizPrev()" style="visibility:hidden;">← Back</button>
+        <button type="button" class="btn btn--primary" id="wizNextBtn" onclick="wizNext()">Continue →</button>
+        <button type="submit" class="btn btn--primary" id="wizSubmit" style="display:none;">Send project details →</button>
+      </div>
+      <p class="form-note">By submitting, you agree to be contacted about your project. We never share your information. No account required.</p>
+    </form>
+    <div class="success" id="success">
+      <div class="ic">✓</div>
+      <h3>Thanks — we've got it.</h3>
+      <p>We'll review your project and reply within one business day. Once we've looked over your scope, we'll set up your private workspace and place a <strong style="color:var(--cm-text);">preliminary quote</strong> inside for you to review — no payment due until you approve.</p>
+      <p class="form-note" style="margin-top:1.2rem;">Already been invited? You can open your client portal anytime.</p>
+      <a class="btn btn--ghost mt-3" href="app.html" style="margin-top:1rem;">Open the Studio Portal →</a>
+    </div>
+  </div>
+</div>
+
+<section class="section"><div class="container"><hr class="rule"></div></section>
+</main>
+
+<footer class="site-footer"><div class="container">
+  <div class="footer__top">
+    <div class="footer__brand"><img src="assets/logo-lockup.png" alt="Carve Model"><p>A Los Angeles physical model studio. Architectural, product, film, and art models — built for confident decisions, tracked end to end.</p></div>
+    <div class="footer__col"><h4>Services</h4><ul><li><a href="services.html#architectural">Architectural Models</a></li><li><a href="services.html#sales">Sales Gallery Models</a></li><li><a href="services.html#product">Product Prototypes</a></li><li><a href="services.html#film">Film Miniatures</a></li><li><a href="services.html#art">Art &amp; Sculpture</a></li></ul></div>
+    <div class="footer__col"><h4>Studio</h4><ul><li><a href="about.html">About</a></li><li><a href="process.html">Process</a></li><li><a href="works.html">Works</a></li><li><a href="blog.html">Blog</a></li><li><a href="faq.html">FAQ</a></li></ul></div>
+    <div class="footer__col"><h4>Get in touch</h4><ul><li><a href="contact.html">Get a Free Quote</a></li><li><a href="app.html">Client Portal</a></li><li><a href="mailto:support@physical-model.com">support@physical-model.com</a></li><li><a href="#">Los Angeles, CA</a></li></ul></div>
+  </div>
+  <div class="footer__bottom"><p>© 2026 Carve Model. All rights reserved.</p><div class="footer__social"><a class="social-link" href="https://www.linkedin.com/company/109973397" target="_blank" rel="noopener" aria-label="Carve Model on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5 2.5 2.5 0 01.02-5zM3 8.98h4v12H3v-12zM9 8.98h3.83v1.64h.05c.53-1 1.84-2.06 3.79-2.06 4.05 0 4.8 2.67 4.8 6.14v6.28h-4v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9v-12z"/></svg></a><a class="social-link" href="https://www.instagram.com/carvemodel" target="_blank" rel="noopener" aria-label="Carve Model on Instagram"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg></a></div></div>
+</div></footer>
+<script src="site.js"></script>
+<script>
+/* ---- Wizard navigation ---- */
+var wizStep=1, wizMax=4;
+function showStep(n){
+  wizStep=n;
+  document.querySelectorAll('.wpanel').forEach(function(p){p.hidden=(+p.dataset.panel!==n);});
+  document.querySelectorAll('.wstep').forEach(function(s){
+    var i=+s.dataset.step;
+    s.classList.toggle('on',i===n);
+    s.classList.toggle('done',i<n);
+  });
+  document.getElementById('wizBar').style.width=(n/wizMax*100)+'%';
+  document.getElementById('wizBack').style.visibility=(n>1)?'visible':'hidden';
+  document.getElementById('wizNextBtn').style.display=(n<wizMax)?'':'none';
+  document.getElementById('wizSubmit').style.display=(n===wizMax)?'':'none';
+  syncNextEnabled();
+  document.querySelector('.form-card').scrollIntoView({block:'nearest'});
+}
+function syncNextEnabled(){
+  var nx=document.getElementById('wizNextBtn');
+  if(wizStep===1){
+    var ok=!!document.querySelector('input[name="type"]:checked');
+    nx.disabled=!ok;
+  } else { nx.disabled=false; }
+}
+function validateStep(n){
+  if(n===1){
+    if(!document.querySelector('input[name="type"]:checked')){alert('Please choose a model type to continue.');return false;}
+  }
+  return true;
+}
+function wizNext(){ if(!validateStep(wizStep))return; if(wizStep<wizMax)showStep(wizStep+1); }
+function wizPrev(){ if(wizStep>1)showStep(wizStep-1); }
+
+/* ---- Model type → show scope boundary for context / masterplan ---- */
+function onTypeChange(){
+  var v=(document.querySelector('input[name="type"]:checked')||{}).value||'';
+  var needsScope=(v==='Architectural — with site context'||v==='Masterplan / site model');
+  document.getElementById('scopeBlock').hidden=!needsScope;
+  updateProjTitle();
+  syncNextEnabled();
+}
+
+/* ---- Standardized project title (recognizable to client + management) ---- */
+var TYPE_LABEL={
+  'Architectural — building only':'Architectural Model',
+  'Architectural — with site context':'Architectural Model',
+  'Masterplan / site model':'Masterplan Model',
+  'Sales gallery / presentation':'Sales Gallery Model',
+  'Product prototype':'Product Prototype',
+  'Film / commercial miniature':'Film Miniature',
+  'Art installation / sculpture':'Art Model',
+  'Not sure yet':'Model'
+};
+function updateProjTitle(){
+  var nm=(document.getElementById('projname').value||'').trim();
+  var loc=(document.getElementById('projloc').value||'').trim();
+  var box=document.getElementById('projTitlePreview');
+  if(!nm){box.hidden=true;return;}
+  document.getElementById('projTitleVal').textContent=loc?(nm+' — '+loc):nm;
+  box.hidden=false;
+}
+
+/* ---- File list (project files) ---- */
+var pickedFiles=[];
+function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(0)+' KB';return (b/1048576).toFixed(1)+' MB';}
+function renderFiles(){
+  var ul=document.getElementById('fileList');ul.innerHTML='';
+  pickedFiles.forEach(function(f,i){
+    var li=document.createElement('li');
+    li.innerHTML='<span>'+f.name.replace(/[<>]/g,'')+'</span><span class="fz">'+fmtSize(f.size)+'</span><button type="button" class="rm" aria-label="Remove">×</button>';
+    li.querySelector('.rm').onclick=function(){pickedFiles.splice(i,1);renderFiles();};
+    ul.appendChild(li);
+  });
+}
+function addFiles(list){for(var i=0;i<list.length;i++)pickedFiles.push(list[i]);renderFiles();}
+
+/* drag-drop for both zones */
+function wireDrop(zoneId,onFiles){
+  var z=document.getElementById(zoneId);
+  ['dragenter','dragover'].forEach(function(e){z.addEventListener(e,function(ev){ev.preventDefault();z.classList.add('over');});});
+  ['dragleave','drop'].forEach(function(e){z.addEventListener(e,function(ev){ev.preventDefault();z.classList.remove('over');});});
+  z.addEventListener('drop',function(ev){if(ev.dataTransfer&&ev.dataTransfer.files)onFiles(ev.dataTransfer.files);});
+}
+wireDrop('fileDrop',addFiles);
+wireDrop('planDrop',loadPlan);
+
+/* ---- Scope boundary canvas tool ---- */
+var planImg=null,points=[],canvas,ctx,scale=1;
+function loadPlan(files){
+  if(!files||!files.length)return;
+  var f=files[0];if(!/^image\//.test(f.type)){alert('Please upload an image (PNG or JPG). For a PDF, take a screenshot of the page.');return;}
+  var url=URL.createObjectURL(f);
+  var img=new Image();
+  img.onload=function(){
+    planImg=img;points=[];
+    canvas=document.getElementById('planCanvas');ctx=canvas.getContext('2d');
+    var stage=document.getElementById('planStage');stage.classList.add('on');
+    var maxW=stage.clientWidth||520;
+    scale=Math.min(1,maxW/img.width);
+    canvas.width=img.width*scale;canvas.height=img.height*scale;
+    document.getElementById('planDrop').style.display='none';
+    document.getElementById('planTools').style.display='flex';
+    canvas.onclick=function(e){
+      var r=canvas.getBoundingClientRect();
+      points.push({x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)});
+      drawScope();
+    };
+    drawScope();
+  };
+  img.src=url;
+}
+function drawScope(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(planImg,0,0,canvas.width,canvas.height);
+  if(points.length){
+    ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
+    for(var i=1;i<points.length;i++)ctx.lineTo(points[i].x,points[i].y);
+    ctx.closePath();
+    ctx.fillStyle='rgba(182,182,182,0.22)';ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    points.forEach(function(p,idx){
+      ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);
+      ctx.fillStyle=idx===0?'#fff':'#B6B6B6';ctx.fill();
+      ctx.strokeStyle='#0D0E11';ctx.lineWidth=1.5;ctx.stroke();
+    });
+  }
+  document.getElementById('ptCount').textContent=points.length+(points.length===1?' point':' points');
+}
+function undoPoint(){points.pop();if(planImg)drawScope();}
+function clearScope(){points=[];if(planImg)drawScope();}
+function changePlan(){
+  planImg=null;points=[];
+  document.getElementById('planStage').classList.remove('on');
+  document.getElementById('planTools').style.display='none';
+  document.getElementById('planDrop').style.display='';
+  document.getElementById('planInput').value='';
+}
+
+/* ---- Submit ---- */
+function submitQuote(e){
+  e.preventDefault();
+  var email=document.getElementById('email');
+  if(!email.value.trim()){alert('Please add your email so we can send your quote.');email.focus();return false;}
+  var typeEl=document.querySelector('input[name="type"]:checked');
+  var type=typeEl?typeEl.value:'Not sure yet';
+  var extras=[]; document.querySelectorAll('input[name="extras"]:checked').forEach(function(cb){extras.push(cb.value);});
+  var extrasOther=(document.getElementById('extrasOther').value||'').trim();
+  if(extrasOther)extras.push(extrasOther);
+  var projname=(document.getElementById('projname').value||'').trim()||'Untitled project';
+  var projloc=(document.getElementById('projloc').value||'').trim();
+  var title=projloc?(projname+' — '+projloc):projname;
+  var name=(document.getElementById('name').value||'').trim()||'(name not given)';
+  var company=(document.getElementById('company').value||'').trim();
+  var phone=(document.getElementById('phone').value||'').trim();
+  var deliveryloc=(document.getElementById('deliveryloc').value||'').trim();
+  var deadline=(document.getElementById('deadline').value||'').trim();
+  var message=(document.getElementById('message').value||'').trim();
+  var scale=(document.getElementById('scale').value||'').trim();
+  var modelsize=(document.getElementById('modelsize').value||'').trim();
+  var filelink=(document.getElementById('filelink').value||'').trim();
+  var today=new Date().toISOString().slice(0,10);
+  var code='CM-'+Math.floor(1000+Math.random()*9000);
+  var brief={
+    id:'b'+Date.now(),
+    code:code,
+    title:title,
+    invited:['northpoint'],
+    sentDate:today,
+    brief:{
+      'Model type':type,
+      'Scale':scale||'Not specified — recommend on review',
+      'Approx. size':modelsize||'Not specified',
+      'Materials':'To be proposed by production',
+      'Base':'To be proposed by production',
+      'Special requirements':extras.length?extras.join(' · '):'None specified',
+      'Timeline':deadline||'Not specified',
+      'Deadline':deadline||'Not specified',
+      'Region':projloc||'Not specified'
+    },
+    notes:message||'(no additional notes)',
+    files:pickedFiles.map(function(f){return {name:f.name,size:fmtSize(f.size),by:'Client',date:today};}),
+    link:filelink||null,
+    client:{Name:name,Company:company||'—',Contact:email.value.trim()+(phone?(' · '+phone):''),Address:deliveryloc||projloc||'—',Email:email.value.trim()},
+    status:'open',awarded:null,awardedVariantIndex:null,assignedTech:null,stage:'sourcing',
+    quotes:{},variations:{}
+  };
+  if(window.__fsDoc){
+    window.__fsDoc.set({briefs:firebase.firestore.FieldValue.arrayUnion(brief)},{merge:true}).then(function(){
+      document.getElementById('quoteForm').style.display='none';
+      document.getElementById('success').classList.add('show');
+      window.scrollTo({top:0,behavior:'smooth'});
+    }).catch(function(err){
+      console.error('Submission failed:',err);
+      alert('Something went wrong sending your project — please try again or email support@physical-model.com directly.');
+    });
+  }else{
+    alert('Live submission isn\'t connected right now — please email support@physical-model.com directly.');
+  }
+  return false;
+}
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+var firebaseConfig={apiKey:"AIzaSyDAErAhr3G1PO1Vr2wHddA8-b8awihJDwM",authDomain:"carve-model-pilot.firebaseapp.com",projectId:"carve-model-pilot",storageBucket:"carve-model-pilot.firebasestorage.app",messagingSenderId:"494671559334",appId:"1:494671559334:web:a60ade35ca64597dd01267"};
+try{
+  firebase.initializeApp(firebaseConfig);
+  window.__fsDoc=firebase.firestore().collection('pilot').doc('sourcing');
+}catch(e){console.error('Firebase init failed:',e);}
+</script>
+</body>
+</html>
