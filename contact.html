@@ -491,33 +491,24 @@ function submitQuote(e){
   var modelsize=(document.getElementById('modelsize').value||'').trim();
   var filelink=(document.getElementById('filelink').value||'').trim();
   var today=new Date().toISOString().slice(0,10);
-  var code='CM-'+Math.floor(1000+Math.random()*9000);
-  var brief={
-    id:'b'+Date.now(),
-    code:code,
+  var lead={
+    id:'L'+Date.now(),
     title:title,
-    invited:['northpoint'],
-    sentDate:today,
-    brief:{
-      'Model type':type,
-      'Scale':scale||'Not specified — recommend on review',
-      'Approx. size':modelsize||'Not specified',
-      'Materials':'To be proposed by production',
-      'Base':'To be proposed by production',
-      'Special requirements':extras.length?extras.join(' · '):'None specified',
-      'Timeline':deadline||'Not specified',
-      'Deadline':deadline||'Not specified',
-      'Region':projloc||'Not specified'
-    },
+    type:type,
+    client:{Name:name,Company:company||'—',Email:email.value.trim(),Phone:phone||''},
+    scale:scale||'Not specified',
+    modelsize:modelsize||'Not specified',
+    timeline:deadline||'Not specified',
+    deliveryTo:deliveryloc||projloc||'Not specified',
+    extras:extras,
     notes:message||'(no additional notes)',
-    files:pickedFiles.map(function(f){return {name:f.name,size:fmtSize(f.size),by:'Client',date:today};}),
-    link:filelink||null,
-    client:{Name:name,Company:company||'—',Contact:email.value.trim()+(phone?(' · '+phone):''),Address:deliveryloc||projloc||'—',Email:email.value.trim()},
-    status:'open',awarded:null,awardedVariantIndex:null,assignedTech:null,stage:'sourcing',
-    quotes:{},variations:{}
+    files:pickedFiles.map(function(f){return {name:f.name,size:fmtSize(f.size)};}),
+    filelink:filelink||null,
+    receivedAt:today,
+    source:'Website form'
   };
   if(window.__fsDoc){
-    window.__fsDoc.set({briefs:firebase.firestore.FieldValue.arrayUnion(brief)},{merge:true}).then(function(){
+    window.__fsDoc.set({leads:firebase.firestore.FieldValue.arrayUnion(lead)},{merge:true}).then(function(){
       document.getElementById('quoteForm').style.display='none';
       document.getElementById('success').classList.add('show');
       window.scrollTo({top:0,behavior:'smooth'});
