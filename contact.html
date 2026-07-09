@@ -31,7 +31,7 @@
 .field label{display:block;font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-muted);margin-bottom:0.5rem;}
 .field input,.field select,.field textarea{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-text);border-radius:var(--r-sm);padding:0.85rem 1rem;font-family:var(--font-sans);font-size:0.95rem;transition:border-color var(--dur-2);}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--cm-text-subtle);}
-.field textarea{resize:vertical;min-height:120px;}
+.field select:disabled{opacity:0.4;cursor:not-allowed;}
 .field .hint{font-size:0.78rem;color:var(--cm-text-subtle);margin-top:0.45rem;line-height:1.45;}
 .projtitle{display:flex;flex-direction:column;gap:0.25rem;margin-top:0.7rem;padding:0.7rem 0.9rem;background:rgba(182,182,182,0.07);border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);border-radius:var(--r-sm);}
 .projtitle__k{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-subtle);}
@@ -81,6 +81,9 @@
 .seg input:checked + .dot{border-color:var(--cm-silver);background:radial-gradient(circle,var(--cm-silver) 0 38%,transparent 42%);}
 .seg input:checked ~ span{color:var(--cm-text-strong);}
 .seg label:has(input:checked){border-color:var(--cm-text-subtle);background:var(--cm-ink-850);color:var(--cm-text-strong);}
+.seg__tip{position:relative;}
+.seg__tip::after{content:attr(data-tip);position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:20;background:var(--cm-ink-850);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.7rem 0.85rem;font-size:0.78rem;line-height:1.45;color:var(--cm-text-muted);font-family:var(--font-sans);text-transform:none;letter-spacing:0;opacity:0;pointer-events:none;transition:opacity 0.15s;box-shadow:var(--cm-shadow-md,0 6px 20px rgba(0,0,0,.35));}
+.seg__tip:hover::after{opacity:1;}
 
 /* multi-select checks */
 .checks{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
@@ -173,18 +176,22 @@
         <legend class="wpanel__t">What are you building?</legend>
         <div class="field"><label>Model type</label>
           <div class="seg" id="typeSeg">
-            <label><input type="radio" name="type" value="Architectural — building only" onchange="onTypeChange()"><span class="dot"></span><span>Architectural — building only</span></label>
-            <label><input type="radio" name="type" value="Architectural — with site context" onchange="onTypeChange()"><span class="dot"></span><span>Architectural — with site context</span></label>
-            <label><input type="radio" name="type" value="Masterplan / site model" onchange="onTypeChange()"><span class="dot"></span><span>Masterplan / site model</span></label>
-            <label><input type="radio" name="type" value="Sales gallery / presentation" onchange="onTypeChange()"><span class="dot"></span><span>Sales gallery / presentation</span></label>
-            <label><input type="radio" name="type" value="Product prototype" onchange="onTypeChange()"><span class="dot"></span><span>Product prototype</span></label>
-            <label><input type="radio" name="type" value="Film / commercial miniature" onchange="onTypeChange()"><span class="dot"></span><span>Film / commercial miniature</span></label>
-            <label><input type="radio" name="type" value="Art installation / sculpture" onchange="onTypeChange()"><span class="dot"></span><span>Art installation / sculpture</span></label>
-            <label><input type="radio" name="type" value="Not sure yet" onchange="onTypeChange()"><span class="dot"></span><span>Not sure yet</span></label>
+            <label class="seg__tip" data-tip="Represents façade and building detail — best for larger-scale, larger models at a later design stage, or to record an as-built project."><input type="radio" name="type" value="Detailed Architectural Model — Building Alone" onchange="onTypeChange()"><span class="dot"></span><span>Detailed Architectural Model — Building Alone</span></label>
+            <label class="seg__tip" data-tip="Represents façade and building detail — best for larger-scale, larger models at a later design stage, or to record an as-built project."><input type="radio" name="type" value="Detailed Architectural Model — with Surrounding Landscape and/or Urban Fabric" onchange="onTypeChange()"><span class="dot"></span><span>Detailed Architectural Model — with Surrounding Landscape and/or Urban Fabric</span></label>
+            <label class="seg__tip" data-tip="Shows volume, scale, and spatial relationships — best for smaller, smaller-scale models at an early design stage to communicate preliminary design intent."><input type="radio" name="type" value="Architectural Massing Model — Building Alone" onchange="onTypeChange()"><span class="dot"></span><span>Architectural Massing Model — Building Alone</span></label>
+            <label class="seg__tip" data-tip="Shows volume, scale, and spatial relationships — best for smaller, smaller-scale models at an early design stage to communicate preliminary design intent."><input type="radio" name="type" value="Architectural Massing Model — with Surrounding Landscape and/or Urban Fabric" onchange="onTypeChange()"><span class="dot"></span><span>Architectural Massing Model — with Surrounding Landscape and/or Urban Fabric</span></label>
+            <label><input type="radio" name="type" value="Masterplan Model" onchange="onTypeChange()"><span class="dot"></span><span>Masterplan Model</span></label>
+            <label><input type="radio" name="type" value="Topography / Site Model" onchange="onTypeChange()"><span class="dot"></span><span>Topography &amp; Site Model</span></label>
+            <label><input type="radio" name="type" value="Interior / Section Model" onchange="onTypeChange()"><span class="dot"></span><span>Interior / Section Model</span></label>
+            <label><input type="radio" name="type" value="Interior / Section Model — with Surrounding Landscape and/or Urban Fabric" onchange="onTypeChange()"><span class="dot"></span><span>Interior / Section Model — with Surrounding Landscape and/or Urban Fabric</span></label>
+            <label><input type="radio" name="type" value="Product Prototype" onchange="onTypeChange()"><span class="dot"></span><span>Product Prototype</span></label>
+            <label><input type="radio" name="type" value="Film / Commercial Miniature" onchange="onTypeChange()"><span class="dot"></span><span>Film / Commercial Miniature</span></label>
+            <label><input type="radio" name="type" value="Art Installation / Sculpture" onchange="onTypeChange()"><span class="dot"></span><span>Art Installation / Sculpture</span></label>
+            <label><input type="radio" name="type" value="Not sure which category" onchange="onTypeChange()"><span class="dot"></span><span>Not sure which category</span></label>
           </div>
         </div>
         <div class="field"><label for="projname">Project / building name</label>
-          <input id="projname" name="projname" type="text" placeholder="e.g. Aria Tower" oninput="updateProjTitle()">
+          <input id="projname" name="projname" type="text" placeholder="e.g. Aria Tower" oninput="updateProjTitle()" required>
           <div class="hint">The name of the building, development, or piece — used to label your project everywhere.</div>
           <div class="projtitle" id="projTitlePreview" hidden>
             <span class="projtitle__k">Your project will be filed as</span>
@@ -194,9 +201,9 @@
         <div class="field"><label for="use">Intended use <span class="optional">(optional)</span></label>
           <select id="use" name="use">
             <option value="">Select one…</option>
-            <option>Planning / approvals</option><option>Investor / board meeting</option>
+            <option>Government Review / Planning Approval</option><option>Investor / board meeting</option>
             <option>Sales gallery / marketing</option><option>Internal design review</option>
-            <option>Film / production</option><option>Exhibition / public display</option><option>Other</option>
+            <option>Film / production</option><option>Exhibition / public display</option><option>Gift / Award</option><option>Other</option>
           </select>
         </div>
       </fieldset>
@@ -204,25 +211,59 @@
       <!-- STEP 2 — Size -->
       <fieldset class="wpanel" data-panel="2" hidden>
         <legend class="wpanel__t">How big should it be?</legend>
-        <div class="field"><label for="scale">Scale <span class="optional">(or leave blank)</span></label>
-          <input id="scale" name="scale" type="text" placeholder='e.g. 1:200  or  1/8" = 1&#39;-0"'>
-          <div class="hint">International (<span class="mono-eg">1:40</span>, <span class="mono-eg">1:200</span>) or Imperial (<span class="mono-eg">1/8" = 1'-0"</span>). Not sure? Leave it blank — we'll recommend one.</div>
+        <div class="field"><label>Scale <span class="optional">(required — or provide model size below)</span></label>
+          <div class="row2">
+            <div style="display:flex;align-items:baseline;gap:0.4rem;">
+              <span style="font-family:var(--font-sans);color:var(--cm-text-subtle);font-size:0.95rem;line-height:1;">1 :</span>
+              <input id="scaleIntl" type="number" placeholder="e.g. 100" oninput="syncScaleFromIntl()" style="flex:1;">
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <select id="scaleImp" onchange="syncScaleFromImp()"></select>
+              <span style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-subtle);white-space:nowrap;">= 1'-0"</span>
+            </div>
+          </div>
+          <div class="hint">Enter either the scale or the desired model size below — one of the two is required.</div>
         </div>
-        <div class="field"><label for="modelsize">Or, desired model size <span class="optional">(if you don't know the scale)</span></label>
-          <input id="modelsize" name="modelsize" type="text" placeholder='e.g. 36" L × 24" W × 18" H  or  90 × 60 × 45 cm'>
-          <div class="hint">Tell us how big you want the finished model (length × width × height) and we'll work out the scale that fits.</div>
+        <div class="row2">
+          <div class="field"><label for="modelsize">Or, desired model size <span class="optional">(if no scale)</span></label>
+            <input id="modelsize" name="modelsize" type="text" placeholder='e.g. 36" L × 24" W × 18" H  or  90 × 60 × 45 cm'>
+            <div class="hint">Tell us how big you want the finished model and we'll work out the scale that fits.</div>
+          </div>
+          <div class="field"><label for="quantity">Number of exact models</label>
+            <input id="quantity" name="quantity" type="number" min="1" step="1" value="1" required>
+            <div class="hint">Defaults to 1. Need a model with different specs? Submit a separate inquiry.</div>
+          </div>
         </div>
         <div class="field"><label>Special requirements <span class="optional">(select any that apply)</span></label>
           <div class="checks">
-            <label><input type="checkbox" name="extras" value="Integrated lighting"><span class="ck"></span><span>Integrated lighting</span></label>
-            <label><input type="checkbox" name="extras" value="Display stand / base"><span class="ck"></span><span>Display stand / base</span></label>
-            <label><input type="checkbox" name="extras" value="Split into sections"><span class="ck"></span><span>Split into sections (transport / access)</span></label>
-            <label><input type="checkbox" name="extras" value="Interior finishes"><span class="ck"></span><span>Interior finishes</span></label>
-            <label><input type="checkbox" name="extras" value="Furniture & fit-out"><span class="ck"></span><span>Furniture &amp; fit-out</span></label>
-            <label><input type="checkbox" name="extras" value="Removable roof / levels"><span class="ck"></span><span>Removable roof / levels</span></label>
-            <label><input type="checkbox" name="extras" value="Protective travel case"><span class="ck"></span><span>Protective travel case</span></label>
+            <label><input type="checkbox" name="extras" value="No Base" id="noBaseChk" onchange="toggleNoBase(this)"><span class="ck"></span><span>No Base <span class="optional">(models include a base by default)</span></span></label>
+            <label><input type="checkbox" name="extras" value="Engraved Base"><span class="ck"></span><span>Engraved Base</span></label>
+            <label><input type="checkbox" name="extras" value="Interior Lighting"><span class="ck"></span><span>Interior Lighting</span></label>
+            <label><input type="checkbox" name="extras" value="External Lighting"><span class="ck"></span><span>External Lighting</span></label>
+            <label><input type="checkbox" name="extras" value="Split into Sections (transport / access)"><span class="ck"></span><span>Split into Sections (transport / access)</span></label>
+            <label><input type="checkbox" name="extras" value="Display Stand / Plinth"><span class="ck"></span><span>Display Stand / Plinth</span></label>
+            <label><input type="checkbox" name="extras" value="Customized Protective Travel Case"><span class="ck"></span><span>Customized Protective Travel Case</span></label>
+            <label><input type="checkbox" name="extras" value="Furniture"><span class="ck"></span><span>Furniture</span></label>
+            <label><input type="checkbox" name="extras" value="Interior Finishes"><span class="ck"></span><span>Interior Finishes</span></label>
+            <label><input type="checkbox" name="extras" value="Removable Roof / Levels"><span class="ck"></span><span>Removable Roof / Levels</span></label>
           </div>
           <input id="extrasOther" name="extrasOther" type="text" placeholder="Other requirements — type anything specific…" style="margin-top:0.6rem;">
+        </div>
+        <div class="row2">
+          <div class="field"><label for="prefMaterial">Preferred model/object material <span class="optional">(optional)</span></label>
+            <select id="prefMaterial">
+              <option value="">No preference — let production recommend</option>
+              <option>Full Color ABS / Realistic Visualization</option><option>Monochromatic ABS / Massing</option>
+              <option>Clear Acrylic</option><option>ABS with Wood Veneer</option>
+              <option>Hardwood</option><option>Foam</option><option>Wrought Iron</option>
+            </select>
+          </div>
+          <div class="field"><label for="prefBase">Preferred base material <span class="optional">(optional)</span></label>
+            <select id="prefBase">
+              <option value="">No preference — let production recommend</option>
+              <option>Plywood</option><option>Foam</option><option>Wrought Iron</option>
+            </select>
+          </div>
         </div>
       </fieldset>
 
@@ -231,8 +272,8 @@
         <legend class="wpanel__t">Share your drawings</legend>
         <!-- Conditional: scope boundary (context / masterplan only) -->
         <div class="scope" id="scopeBlock" hidden>
-          <div class="scope__head"><h4>Mark your scope boundary</h4><span class="tagm">Context models</span></div>
-          <p class="hint">For models with surrounding context, show us which area to build in <strong>full detail</strong> versus simplified context massing. Upload a site plan or aerial, then click to outline the in-scope area.</p>
+          <div class="scope__head"><h4>Mark your scope boundary</h4><span class="tagm">Required for this model type</span></div>
+          <p class="hint">This model type includes surrounding context — upload a site plan or aerial, then click to outline the area that should be included in the model.</p>
           <div class="scope__upload">
             <div class="drop" id="planDrop" onclick="document.getElementById('planInput').click()">
               <strong>Upload a site plan or aerial</strong>
@@ -247,6 +288,11 @@
           <div class="scope__tools" id="planTools" style="display:none;">
             <button type="button" class="btn btn--ghost btn--sm" onclick="undoPoint()">Undo point</button>
             <button type="button" class="btn btn--ghost btn--sm" onclick="clearScope()">Clear</button>
+            <div style="display:flex;align-items:center;gap:0.4rem;">
+              <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">Boundary color</span>
+              <button type="button" id="scopeColorRed" onclick="setScopeColor('#E5484D')" style="width:22px;height:22px;border-radius:50%;background:#E5484D;border:2px solid #fff;cursor:pointer;padding:0;" aria-label="Red"></button>
+              <button type="button" id="scopeColorWhite" onclick="setScopeColor('#ffffff')" style="width:22px;height:22px;border-radius:50%;background:#ffffff;border:2px solid transparent;cursor:pointer;padding:0;" aria-label="White"></button>
+            </div>
             <button type="button" class="btn btn--ghost btn--sm" onclick="changePlan()">Replace image</button>
             <span class="scope__count" id="ptCount">0 points</span>
           </div>
@@ -269,7 +315,7 @@
           <div class="drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
             <strong>Drop files here, or click to browse</strong>
             Attach what you have — it speeds up your quote
-            <span class="sub">CAD · PDF · Revit · Rhino · SketchUp · images · up to 250 MB · large files? use a link below</span>
+            <span class="sub">CAD · PDF · Revit · Rhino · SketchUp · images · up to 25 MB each · larger files? use a link below</span>
           </div>
           <input id="fileInput" type="file" multiple hidden onchange="addFiles(this.files)">
           <ul class="filelist" id="fileList"></ul>
@@ -283,16 +329,23 @@
       <fieldset class="wpanel" data-panel="4" hidden>
         <legend class="wpanel__t">Where do we send your quote?</legend>
         <div class="row2">
-          <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" placeholder="Jane Doe"></div>
-          <div class="field"><label for="company">Company <span class="optional">(optional)</span></label><input id="company" name="company" type="text" placeholder="Firm / studio"></div>
+          <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" placeholder="Jane Doe" required></div>
+          <div class="field"><label for="title">Title / position <span class="optional">(optional)</span></label><input id="title" name="title" type="text" placeholder="e.g. Director of Development"></div>
         </div>
         <div class="row2">
-          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" placeholder="jane@firm.com"></div>
-          <div class="field"><label for="phone">Phone <span class="optional">(optional)</span></label><input id="phone" name="phone" type="tel" placeholder="(555) 000-0000"></div>
+          <div class="field"><label for="company">Company <span class="optional">(optional)</span></label><input id="company" name="company" type="text" placeholder="Firm / studio"></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" placeholder="jane@firm.com" required></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="phone">Phone <span class="optional">(optional)</span></label><input id="phone" name="phone" type="tel" placeholder="(555) 000-0000" oninput="formatPhoneInput(this)"><div class="hint" id="phoneHint" style="display:none;color:#e0a860;">That doesn't look like a complete phone number — double check it, or leave it blank.</div></div>
         </div>
         <div class="row2">
           <div class="field"><label for="projloc">Project location <span class="optional">(city / region)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA" oninput="updateProjTitle()"></div>
-          <div class="field"><label for="deliveryloc">Delivery location <span class="optional">(where it ships)</span></label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX"></div>
+          <div class="field"><label for="projcountry">Project country <span class="optional">(optional)</span></label><input id="projcountry" name="projcountry" type="text" placeholder="e.g. United States"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="deliveryloc">Delivery location <span class="optional">(if different)</span></label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX"></div>
+          <div class="field"><label for="deliverycountry">Delivery country <span class="optional">(optional)</span></label><input id="deliverycountry" name="deliverycountry" type="text" placeholder="e.g. United States"></div>
         </div>
         <div class="field"><label for="deadline">Deadline / event date <span class="optional">(optional)</span></label><input id="deadline" name="deadline" type="text" placeholder="e.g. mid-September" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
         <div class="field"><label for="message">Anything else <span class="optional">(optional)</span></label><textarea id="message" name="message" placeholder="Notes on detail, finishes, lighting, or your deadline."></textarea></div>
@@ -357,6 +410,17 @@ function syncNextEnabled(){
 function validateStep(n){
   if(n===1){
     if(!document.querySelector('input[name="type"]:checked')){alert('Please choose a model type to continue.');return false;}
+    if(!(document.getElementById('projname').value||'').trim()){alert('Please enter a project / building name to continue.');return false;}
+  }
+  if(n===2){
+    var hasScale=!!(document.getElementById('scaleIntl').value||'').trim()||document.getElementById('scaleImp').selectedIndex>0;
+    var hasSize=!!(document.getElementById('modelsize').value||'').trim();
+    if(!hasScale&&!hasSize){alert('Please provide either a scale or a desired model size to continue.');return false;}
+    if(!(document.getElementById('quantity').value||'').trim()){alert('Please enter the number of exact models to continue.');return false;}
+  }
+  if(n===3){
+    var needsScope=!document.getElementById('scopeBlock').hidden;
+    if(needsScope&&!planImg){alert('This model type includes surrounding context — please upload a site plan or aerial and mark your scope boundary before continuing.');return false;}
   }
   return true;
 }
@@ -364,24 +428,48 @@ function wizNext(){ if(!validateStep(wizStep))return; if(wizStep<wizMax)showStep
 function wizPrev(){ if(wizStep>1)showStep(wizStep-1); }
 
 /* ---- Model type → show scope boundary for context / masterplan ---- */
+var ALL_MATERIALS=['Full Color ABS / Realistic Visualization','Monochromatic ABS / Massing','Clear Acrylic','ABS with Wood Veneer','Hardwood','Foam','Wrought Iron'];
+var DETAILED_MATERIALS=['Full Color ABS / Realistic Visualization'];
+var MASSING_MATERIALS=['Monochromatic ABS / Massing','Clear Acrylic','ABS with Wood Veneer','Hardwood','Foam','Wrought Iron'];
+function filterMaterialOptions(type){
+  var sel=document.getElementById('prefMaterial');
+  if(!sel)return;
+  var list=ALL_MATERIALS;
+  if(type.indexOf('Detailed Architectural Model')===0)list=DETAILED_MATERIALS;
+  else if(type.indexOf('Architectural Massing Model')===0)list=MASSING_MATERIALS;
+  var current=sel.value;
+  sel.innerHTML='<option value="">No preference — let production recommend</option>'+list.map(function(m){return '<option>'+m+'</option>';}).join('');
+  sel.value=(list.indexOf(current)>-1)?current:'';
+}
+function toggleNoBase(cb){
+  var sel=document.getElementById('prefBase');
+  if(!sel)return;
+  sel.disabled=cb.checked;
+  if(cb.checked)sel.value='';
+}
 function onTypeChange(){
   var v=(document.querySelector('input[name="type"]:checked')||{}).value||'';
-  var needsScope=(v==='Architectural — with site context'||v==='Masterplan / site model');
+  var needsScope=(v==='Masterplan Model'||v==='Topography / Site Model'||v==='Detailed Architectural Model — with Surrounding Landscape and/or Urban Fabric'||v==='Architectural Massing Model — with Surrounding Landscape and/or Urban Fabric'||v==='Interior / Section Model — with Surrounding Landscape and/or Urban Fabric');
   document.getElementById('scopeBlock').hidden=!needsScope;
+  filterMaterialOptions(v);
   updateProjTitle();
   syncNextEnabled();
 }
 
 /* ---- Standardized project title (recognizable to client + management) ---- */
 var TYPE_LABEL={
-  'Architectural — building only':'Architectural Model',
-  'Architectural — with site context':'Architectural Model',
-  'Masterplan / site model':'Masterplan Model',
-  'Sales gallery / presentation':'Sales Gallery Model',
-  'Product prototype':'Product Prototype',
-  'Film / commercial miniature':'Film Miniature',
-  'Art installation / sculpture':'Art Model',
-  'Not sure yet':'Model'
+  'Detailed Architectural Model — Building Alone':'Architectural Model',
+  'Detailed Architectural Model — with Surrounding Landscape and/or Urban Fabric':'Architectural Model',
+  'Architectural Massing Model — Building Alone':'Architectural Massing Model',
+  'Architectural Massing Model — with Surrounding Landscape and/or Urban Fabric':'Architectural Massing Model',
+  'Masterplan Model':'Masterplan Model',
+  'Product Prototype':'Product Prototype',
+  'Art Installation / Sculpture':'Art Model',
+  'Topography / Site Model':'Site Model',
+  'Film / Commercial Miniature':'Film Miniature',
+  'Interior / Section Model':'Interior Model',
+  'Interior / Section Model — with Surrounding Landscape and/or Urban Fabric':'Interior Model',
+  'Not sure which category':'Model'
 };
 function updateProjTitle(){
   var nm=(document.getElementById('projname').value||'').trim();
@@ -404,7 +492,18 @@ function renderFiles(){
     ul.appendChild(li);
   });
 }
-function addFiles(list){for(var i=0;i<list.length;i++)pickedFiles.push(list[i]);renderFiles();}
+var MAX_UPLOAD_SIZE=25*1024*1024; // 25 MB per file — larger files must use the shared link field instead
+function addFiles(list){
+  for(var i=0;i<list.length;i++){
+    var f=list[i];
+    if(f.size>MAX_UPLOAD_SIZE){
+      alert('"'+f.name+'" is '+fmtSize(f.size)+' — too large to upload directly (25 MB limit). Please share it via the link field below instead (Dropbox, Google Drive, WeTransfer, etc.).');
+      continue;
+    }
+    pickedFiles.push(f);
+  }
+  renderFiles();
+}
 
 /* drag-drop for both zones */
 function wireDrop(zoneId,onFiles){
@@ -417,7 +516,7 @@ wireDrop('fileDrop',addFiles);
 wireDrop('planDrop',loadPlan);
 
 /* ---- Scope boundary canvas tool ---- */
-var planImg=null,points=[],canvas,ctx,scale=1;
+var planImg=null,points=[],canvas,ctx,scale=1,scopeColor='#E5484D';
 function loadPlan(files){
   if(!files||!files.length)return;
   var f=files[0];if(!/^image\//.test(f.type)){alert('Please upload an image (PNG or JPG). For a PDF, take a screenshot of the page.');return;}
@@ -448,15 +547,26 @@ function drawScope(){
     ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
     for(var i=1;i<points.length;i++)ctx.lineTo(points[i].x,points[i].y);
     ctx.closePath();
-    ctx.fillStyle='rgba(182,182,182,0.22)';ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=hexToRgba(scopeColor,0.22);ctx.fill();
+    ctx.strokeStyle=scopeColor;ctx.lineWidth=2;ctx.stroke();
     points.forEach(function(p,idx){
       ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);
-      ctx.fillStyle=idx===0?'#fff':'#B6B6B6';ctx.fill();
+      ctx.fillStyle=idx===0?scopeColor:hexToRgba(scopeColor,0.75);ctx.fill();
       ctx.strokeStyle='#0D0E11';ctx.lineWidth=1.5;ctx.stroke();
     });
   }
   document.getElementById('ptCount').textContent=points.length+(points.length===1?' point':' points');
+}
+function hexToRgba(hex,a){
+  var v=hex.replace('#','');
+  var r=parseInt(v.substring(0,2),16),g=parseInt(v.substring(2,4),16),b=parseInt(v.substring(4,6),16);
+  return 'rgba('+r+','+g+','+b+','+a+')';
+}
+function setScopeColor(c){
+  scopeColor=c;
+  document.getElementById('scopeColorRed').style.borderColor=(c==='#E5484D')?'#fff':'transparent';
+  document.getElementById('scopeColorWhite').style.borderColor=(c==='#ffffff')?'#E5484D':'transparent';
+  if(planImg)drawScope();
 }
 function undoPoint(){points.pop();if(planImg)drawScope();}
 function clearScope(){points=[];if(planImg)drawScope();}
@@ -469,66 +579,140 @@ function changePlan(){
 }
 
 /* ---- Submit ---- */
+var STANDARD_FRACTIONS=[[3,'3"'],[2,'2"'],[1.5,'1 1/2"'],[1,'1"'],[0.75,'3/4"'],[0.5,'1/2"'],[0.375,'3/8"'],[0.25,'1/4"'],[0.1875,'3/16"'],[0.125,'1/8"'],[0.09375,'3/32"'],[0.0625,'1/16"'],[0.03125,'1/32"'],[0.015625,'1/64"'],[0.0078125,'1/128"']];
+(function(){
+  var sel=document.getElementById('scaleImp');
+  sel.innerHTML='<option value="">Select\u2026</option>'+STANDARD_FRACTIONS.map(function(f){return '<option value="'+f[0]+'">'+f[1]+'</option>';}).join('');
+})();
+function syncScaleFromIntl(){
+  var n=parseFloat(document.getElementById('scaleIntl').value);
+  if(!n||n<=0)return;
+  var inches=12/n, best=null, bestDiff=Infinity;
+  STANDARD_FRACTIONS.forEach(function(f){var diff=Math.abs(f[0]-inches);if(diff<bestDiff){bestDiff=diff;best=f;}});
+  if(best)document.getElementById('scaleImp').value=best[0];
+}
+function syncScaleFromImp(){
+  var v=parseFloat(document.getElementById('scaleImp').value);
+  if(!v)return;
+  document.getElementById('scaleIntl').value=Math.round((12/v)*10)/10;
+}
+function formatPhoneInput(el){
+  var digits=el.value.replace(/\D/g,'').slice(0,10);
+  var formatted=digits;
+  if(digits.length>6)formatted='('+digits.slice(0,3)+') '+digits.slice(3,6)+'-'+digits.slice(6);
+  else if(digits.length>3)formatted='('+digits.slice(0,3)+') '+digits.slice(3);
+  else if(digits.length>0)formatted='('+digits;
+  el.value=formatted;
+  var hint=document.getElementById('phoneHint');
+  hint.style.display=(digits.length>0&&digits.length<10)?'':'none';
+}
 function submitQuote(e){
   e.preventDefault();
+  var nameEl=document.getElementById('name');
+  if(!(nameEl.value||'').trim()){alert('Please add your full name so we can send your quote.');nameEl.focus();return false;}
   var email=document.getElementById('email');
   if(!email.value.trim()){alert('Please add your email so we can send your quote.');email.focus();return false;}
+  var phoneEl=document.getElementById('phone');
+  var phoneDigits=(phoneEl.value||'').replace(/\D/g,'');
+  if(phoneDigits.length>0&&phoneDigits.length<10){
+    if(!confirm('The phone number looks incomplete ('+phoneEl.value+'). Submit anyway?')){phoneEl.focus();return false;}
+  }
   var typeEl=document.querySelector('input[name="type"]:checked');
-  var type=typeEl?typeEl.value:'Not sure yet';
+  var type=typeEl?typeEl.value:'Detailed Architectural Model — Building Alone';
   var extras=[]; document.querySelectorAll('input[name="extras"]:checked').forEach(function(cb){extras.push(cb.value);});
   var extrasOther=(document.getElementById('extrasOther').value||'').trim();
   if(extrasOther)extras.push(extrasOther);
   var projname=(document.getElementById('projname').value||'').trim()||'Untitled project';
   var projloc=(document.getElementById('projloc').value||'').trim();
+  var projcountry=(document.getElementById('projcountry').value||'').trim();
   var title=projloc?(projname+' — '+projloc):projname;
   var name=(document.getElementById('name').value||'').trim()||'(name not given)';
+  var title=(document.getElementById('title').value||'').trim();
   var company=(document.getElementById('company').value||'').trim();
   var phone=(document.getElementById('phone').value||'').trim();
   var deliveryloc=(document.getElementById('deliveryloc').value||'').trim();
+  var deliverycountry=(document.getElementById('deliverycountry').value||'').trim();
   var deadline=(document.getElementById('deadline').value||'').trim();
   var message=(document.getElementById('message').value||'').trim();
-  var scale=(document.getElementById('scale').value||'').trim();
+  var scaleIntlVal=(document.getElementById('scaleIntl').value||'').trim();
+  var scaleImpSel=document.getElementById('scaleImp');
+  var scaleImpLabel=scaleImpSel.selectedIndex>0?scaleImpSel.options[scaleImpSel.selectedIndex].text:'';
+  var scale=scaleIntlVal?('1:'+scaleIntlVal+(scaleImpLabel?(' ('+scaleImpLabel+' = 1\'-0")'):'')):(scaleImpLabel?(scaleImpLabel+' = 1\'-0"'):'');
   var modelsize=(document.getElementById('modelsize').value||'').trim();
+  var quantity=(document.getElementById('quantity').value||'').trim();
   var filelink=(document.getElementById('filelink').value||'').trim();
+  var useVal=(document.getElementById('use').value||'').trim();
+  var prefMaterial=(document.getElementById('prefMaterial').value||'').trim();
+  var prefBase=(document.getElementById('prefBase').value||'').trim();
+  var boundaryMap=null;
+  if(typeof canvas!=='undefined'&&canvas&&planImg){
+    try{boundaryMap=canvas.toDataURL('image/jpeg',0.75);}catch(err){}
+  }
   var today=new Date().toISOString().slice(0,10);
-  var lead={
-    id:'L'+Date.now(),
-    title:title,
-    type:type,
-    client:{Name:name,Company:company||'—',Email:email.value.trim(),Phone:phone||''},
-    scale:scale||'Not specified',
-    modelsize:modelsize||'Not specified',
-    timeline:deadline||'Not specified',
-    deliveryTo:deliveryloc||projloc||'Not specified',
-    extras:extras,
-    notes:message||'(no additional notes)',
-    files:pickedFiles.map(function(f){return {name:f.name,size:fmtSize(f.size)};}),
-    filelink:filelink||null,
-    receivedAt:today,
-    source:'Website form'
-  };
-  if(window.__fsDoc){
-    window.__fsDoc.set({leads:firebase.firestore.FieldValue.arrayUnion(lead)},{merge:true}).then(function(){
+  var leadId='L'+Date.now();
+  var submitBtn=document.getElementById('wizSubmit');
+  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Uploading files\u2026';}
+
+  var uploadTasks=pickedFiles.map(function(f){
+    if(!window.__fsStorage)return Promise.resolve({name:f.name,size:fmtSize(f.size),url:null});
+    var ref=window.__fsStorage.ref().child('leads/'+leadId+'/'+f.name);
+    return ref.put(f).then(function(){return ref.getDownloadURL();}).then(function(url){
+      return {name:f.name,size:fmtSize(f.size),url:url};
+    }).catch(function(err){
+      console.error('File upload failed for',f.name,err);
+      return {name:f.name,size:fmtSize(f.size),url:null};
+    });
+  });
+
+  Promise.all(uploadTasks).then(function(uploadedFiles){
+    var lead={
+      id:leadId,
+      title:title,
+      type:type,
+      intendedUse:useVal||null,
+    prefMaterial:prefMaterial||null,
+    prefBase:prefBase||null,
+      client:{Name:name,Title:title||null,Company:company||'—',Email:email.value.trim(),Phone:phone||''},
+      scale:scale||'Not specified',
+      modelsize:modelsize||'Not specified',
+      quantity:quantity||'1',
+      timeline:deadline||'Not specified',
+      deliveryTo:(deliveryloc||projloc||'Not specified')+(deliverycountry?(', '+deliverycountry):(!deliveryloc&&projcountry?(', '+projcountry):'')),
+      extras:extras,
+      notes:message||'(no additional notes)',
+      files:uploadedFiles,
+      filelink:filelink||null,
+      boundaryMap:boundaryMap,
+      receivedAt:today,
+      source:'Website form'
+    };
+    if(!window.__fsDoc){
+      alert('Live submission isn\'t connected right now — please email support@physical-model.com directly.');
+      if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Send project details \u2192';}
+      return;
+    }
+    return window.__fsDoc.set({leads:firebase.firestore.FieldValue.arrayUnion(lead)},{merge:true}).then(function(){
       document.getElementById('quoteForm').style.display='none';
       document.getElementById('success').classList.add('show');
       window.scrollTo({top:0,behavior:'smooth'});
-    }).catch(function(err){
-      console.error('Submission failed:',err);
-      alert('Something went wrong sending your project — please try again or email support@physical-model.com directly.');
     });
-  }else{
-    alert('Live submission isn\'t connected right now — please email support@physical-model.com directly.');
-  }
+  }).catch(function(err){
+    console.error('Submission failed:',err);
+    alert('Something went wrong sending your project — please try again or email support@physical-model.com directly.');
+    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Send project details \u2192';}
+  });
   return false;
 }
 </script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script>
 var firebaseConfig={apiKey:"AIzaSyDAErAhr3G1PO1Vr2wHddA8-b8awihJDwM",authDomain:"carve-model-pilot.firebaseapp.com",projectId:"carve-model-pilot",storageBucket:"carve-model-pilot.firebasestorage.app",messagingSenderId:"494671559334",appId:"1:494671559334:web:a60ade35ca64597dd01267"};
 try{
   firebase.initializeApp(firebaseConfig);
   window.__fsDoc=firebase.firestore().collection('pilot').doc('sourcing');
+  window.__fsStorage=firebase.storage();
 }catch(e){console.error('Firebase init failed:',e);}
 </script>
 </body>
