@@ -234,6 +234,7 @@ body{background:var(--cm-ink-950);}
 .projcard__meta{font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.02em;color:var(--cm-text-subtle);margin-top:0.5rem;}
 .reqfiles{border:1.5px dashed var(--cm-border-strong);border-radius:var(--r-sm);padding:1.1rem;text-align:center;color:var(--cm-text-muted);font-size:0.85rem;cursor:pointer;transition:0.16s;line-height:1.5;}
 .reqfiles:hover{border-color:var(--cm-silver);color:var(--cm-text);background:var(--cm-ink-850);}
+.field select:disabled,.efield select:disabled{opacity:0.4;cursor:not-allowed;}
 .leads-head__intro{font-size:0.9rem;color:var(--cm-text-muted);max-width:60ch;line-height:1.5;}
 .leadlist{display:flex;flex-direction:column;gap:1rem;}
 .leadcard{display:grid;grid-template-columns:1fr 220px;gap:0;border:1px solid var(--cm-border);border-radius:var(--r-sm);overflow:hidden;background:var(--cm-ink-900);}
@@ -291,10 +292,20 @@ body{background:var(--cm-ink-950);}
 .clientcard__top{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-bottom:0.9rem;margin-bottom:0.9rem;border-bottom:1px solid var(--cm-line-faint);}
 .clientcard__name{font-family:var(--font-display);font-size:1.1rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
 .clientcard__sub{font-size:0.82rem;color:var(--cm-text-subtle);margin-top:2px;}
-.clientcard__grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:1rem;}
+.clientcard__grid{display:grid;grid-template-columns:1.6fr 0.9fr 1fr 1fr 1fr;gap:1rem;}
 .cc-v{color:var(--cm-text-strong);font-weight:var(--w-semibold);font-size:0.95rem;margin-top:3px;}
 .cc-m{font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);margin-top:2px;}
 @media(max-width:760px){.clientcard__grid{grid-template-columns:1fr 1fr;}}
+.clientcard__projects{margin-top:1rem;padding-top:0.9rem;border-top:1px solid var(--cm-line-faint);}
+.cc-projlist{display:flex;flex-direction:column;gap:0.5rem;margin-top:0.6rem;}
+.cc-projrow{display:flex;align-items:center;justify-content:space-between;gap:0.8rem;font-size:0.88rem;color:var(--cm-text);}
+.cc-contacts{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--cm-border-strong);display:flex;flex-direction:column;gap:1rem;}
+.cc-contact{background:var(--cm-ink-850);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:1rem 1.1rem;}
+.cc-contact__top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.cc-contact__grid{margin-top:0.8rem;}
+.cc-offices{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--cm-border-strong);display:flex;flex-direction:column;gap:1rem;}
+.clientcard--parent{border-left:2px solid var(--cm-silver);}
+.clientcard--office{background:var(--cm-ink-850);}
 
 .menu-fab{display:none;position:fixed;bottom:18px;right:18px;z-index:150;width:52px;height:52px;border-radius:50%;background:var(--cm-white);color:var(--cm-ink-900);border:0;align-items:center;justify-content:center;box-shadow:var(--shadow-float);}
 .notice{background:rgba(182,182,182,0.08);border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);border-radius:var(--r-sm);padding:0.9rem 1.1rem;font-size:0.85rem;color:var(--cm-gray-200);margin-bottom:1.25rem;}
@@ -349,7 +360,16 @@ body{background:var(--cm-ink-950);}
 .modal__x:hover{color:var(--cm-text-strong);}
 .modal__body{padding:1.4rem;overflow-y:auto;flex:1;min-height:0;}
 .modal__intro{font-size:0.9rem;color:var(--cm-text-muted);margin-bottom:1.3rem;line-height:1.55;}
+.modal--wide{max-width:720px;}
 .modal__intro b{color:var(--cm-text);}
+.archlead-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.85rem 1rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);background:var(--cm-ink-850);margin-bottom:0.6rem;}
+.archlead-row__main{min-width:0;}
+.archlead-row__title{font-family:var(--font-display);font-size:0.94rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.archlead-row__sub{font-size:0.78rem;color:var(--cm-text-subtle);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.archlead-row__date{font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);flex:none;white-space:nowrap;}
+.archlead-search{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-text);border-radius:var(--r-sm);padding:0.7rem 0.9rem;font-family:var(--font-sans);font-size:0.88rem;margin-bottom:1rem;}
+.archlead-search:focus{outline:none;border-color:var(--cm-text-subtle);}
+.archlead-count{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.8rem;}
 .mfield{margin-bottom:1rem;}
 .mfield label{display:block;font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-muted);margin-bottom:0.45rem;}
 .mfield label .opt{text-transform:none;letter-spacing:0;color:var(--cm-text-subtle);}
@@ -407,6 +427,43 @@ body{background:var(--cm-ink-950);}
 .efield select:focus{outline:none;border-color:var(--cm-text-subtle);}
 .efield .optional{text-transform:none;letter-spacing:0;color:var(--cm-text-subtle);font-family:var(--font-sans);}
 .sublabel{display:block;font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.3rem;}
+/* segmented radio group (model type, shared with public quote form) */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+.seg label{display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.85rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);cursor:pointer;font-size:0.88rem;color:var(--cm-text-muted);transition:0.16s;}
+.seg label:hover{border-color:var(--cm-text-subtle);color:var(--cm-text);}
+.seg input{position:absolute;opacity:0;pointer-events:none;}
+.seg label .dot{width:14px;height:14px;border:1px solid var(--cm-border-strong);border-radius:50%;flex:none;position:relative;transition:0.18s;}
+.seg input:checked + .dot{border-color:var(--cm-silver);background:radial-gradient(circle,var(--cm-silver) 0 38%,transparent 42%);}
+.seg input:checked ~ span{color:var(--cm-text-strong);}
+.seg label:has(input:checked){border-color:var(--cm-text-subtle);background:var(--cm-ink-850);color:var(--cm-text-strong);}
+.seg__tip{position:relative;}
+.seg__tip::after{content:attr(data-tip);position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:20;background:var(--cm-ink-850);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.7rem 0.85rem;font-size:0.78rem;line-height:1.45;color:var(--cm-text-muted);font-family:var(--font-sans);text-transform:none;letter-spacing:0;opacity:0;pointer-events:none;transition:opacity 0.15s;box-shadow:0 6px 20px rgba(0,0,0,.35);}
+.seg__tip:hover::after{opacity:1;}
+@media(max-width:600px){.seg{grid-template-columns:1fr;}}
+/* conditional scope-boundary tool (shared with public quote form) */
+.scope{margin-bottom:1.2rem;border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);border-radius:var(--r-sm);background:rgba(182,182,182,0.04);padding:1.1rem 1.2rem;}
+.scope[hidden]{display:none;}
+.scope__head{display:flex;align-items:baseline;gap:0.6rem;flex-wrap:wrap;}
+.scope__head h4{font-family:var(--font-display);font-size:1.02rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
+.scope__head .tagm{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-silver);}
+.scope p.hint{margin-top:0.5rem;}
+.scope__stage{position:relative;margin-top:0.9rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);background:var(--cm-ink-850);overflow:hidden;display:none;}
+.scope__stage.on{display:block;}
+.scope__stage canvas{display:block;width:100%;cursor:crosshair;}
+.scope__tools{display:flex;gap:0.5rem;margin-top:0.7rem;flex-wrap:wrap;align-items:center;}
+.scope__tools .btn--sm{padding:0.5rem 0.9rem;font-size:0.8rem;}
+.scope__count{font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);margin-left:auto;}
+.scope__upload{margin-top:0.9rem;}
+/* multi-select checks (special requirements — shared with public quote form) */
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+.checks label{display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.85rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);cursor:pointer;font-size:0.88rem;color:var(--cm-text-muted);transition:0.16s;}
+.checks label:hover{border-color:var(--cm-text-subtle);color:var(--cm-text);}
+.checks input{position:absolute;opacity:0;pointer-events:none;}
+.checks .ck{width:15px;height:15px;border:1px solid var(--cm-border-strong);border-radius:2px;flex:none;position:relative;transition:0.18s;}
+.checks input:checked + .ck{background:var(--cm-silver);border-color:var(--cm-silver);}
+.checks input:checked + .ck::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--cm-ink-900);border-width:0 2px 2px 0;transform:rotate(45deg);}
+.checks label:has(input:checked){border-color:var(--cm-text-subtle);background:var(--cm-ink-850);color:var(--cm-text-strong);}
+@media(max-width:560px){.checks{grid-template-columns:1fr;}}
 .optitems{display:flex;flex-direction:column;gap:0.5rem;}
 .optitem{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.55rem 0.75rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);background:var(--cm-ink-850);}
 .optitem__name{font-size:0.88rem;color:var(--cm-text);}
@@ -496,6 +553,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <span class="demo-note" style="margin-top:0;" id="sessionLabel">Signed in</span>
         <button class="btn btn--ghost btn--sm" onclick="if(confirm('Log out of your Carve Model account?'))logOutSession();">Log out</button>
       </div>
+      <button class="btn btn--ghost btn--sm studio-only" style="width:100%;margin-top:0.6rem;" onclick="resetTestData();">Reset test data</button>
     </div>
     <div class="side__project">
       <span class="mock__k">Project</span>
@@ -1230,6 +1288,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <p class="leads-head__intro">New submissions land here from the website form and returning clients. You can also add a lead by hand — from a referral, cold call, or email.</p>
         <button class="btn btn--primary btn--sm" onclick="openAddLead()">+ Add lead</button>
       </div>
+      <button class="btn btn--ghost btn--sm" id="leadsArchivedLink" hidden onclick="openArchivedLeads()" style="margin-bottom:1rem;">View archived</button>
       <div class="leadlist" id="leadList"></div>
       <div class="leads-empty" id="leadsEmpty" hidden>
         <div class="invoice-empty__ic">✓</div>
@@ -1256,49 +1315,72 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <input type="date" id="clientTo" aria-label="To date" onchange="applyClientRange()">
         </div>
       </div>
-      <div class="kpis" id="clientsKpis" style="grid-template-columns:repeat(3,1fr);"></div>
+      <div class="kpis" id="clientsKpis" style="grid-template-columns:repeat(4,1fr);"></div>
       <div class="panel" style="margin-top:1.25rem;">
-        <div class="panel__head"><h3 id="clientsHeading">Clients</h3><span class="mock__k" id="clientsCount"></span></div>
-        <div class="panel__body">
-          <div class="clientcard" data-rep="jordan" data-date="2026-06-02">
-            <div class="clientcard__top">
-              <div><div class="clientcard__name">Reyes Development Group</div><div class="clientcard__sub">Aria Tower — Los Angeles, CA</div></div>
-              <span class="rolepill rolepill--sales">Sales: Jordan Lee</span>
-            </div>
-            <div class="clientcard__grid">
-              <div><span class="mock__k">Contact</span><div class="cc-v">Daniel Reyes</div><div class="cc-m"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4f2b2e21262a230f3d2a362a3c2b2a39612c2022">[email&#160;protected]</a> · (202) 555-0118</div></div>
-              <div><span class="mock__k">Project value</span><div class="cc-v">$2,270</div></div>
-              <div><span class="mock__k">Paid</span><div class="cc-v">$1,135</div></div>
-              <div><span class="mock__k">Balance</span><div class="cc-v">$1,135</div></div>
-            </div>
+        <div class="panel__head"><h3 id="clientsHeading">Clients</h3><div style="display:flex;align-items:center;gap:0.9rem;"><span class="mock__k" id="clientsCount"></span><button class="btn btn--ghost btn--sm" onclick="exportClientsCSV()">↓ Export to Excel (CSV)</button></div></div>
+        <div class="panel__body" id="companyList"></div>
+      </div>
+    </section>
+
+    <!-- Link contact to a company modal -->
+    <div class="modal-overlay" id="linkContactModal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Link contact to a company">
+        <div class="modal__head"><h3>Link contact</h3><button class="modal__x" onclick="document.getElementById('linkContactModal').hidden=true;" aria-label="Close">×</button></div>
+        <div class="modal__body">
+          <p class="modal__intro">Move <b id="linkContactName">this contact</b> under a different company account — useful when the same client contacts you again from another office, or you find they belong to a larger org.</p>
+          <div class="efield"><label for="linkTargetCompany">Move to company</label>
+            <select id="linkTargetCompany"></select>
           </div>
-          <div class="clientcard" data-rep="jordan" data-date="2026-04-18">
-            <div class="clientcard__top">
-              <div><div class="clientcard__name">Halcyon Capital</div><div class="clientcard__sub">Pier 7 Masterplan — Seattle, WA</div></div>
-              <span class="rolepill rolepill--sales">Sales: Jordan Lee</span>
-            </div>
-            <div class="clientcard__grid">
-              <div><span class="mock__k">Contact</span><div class="cc-v">Priya Nair</div><div class="cc-m"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5020223929311038313c33293f3e3331207e333f3d">[email&#160;protected]</a> · (206) 555-0173</div></div>
-              <div><span class="mock__k">Project value</span><div class="cc-v">$18,400</div></div>
-              <div><span class="mock__k">Paid</span><div class="cc-v">$9,200</div></div>
-              <div><span class="mock__k">Balance</span><div class="cc-v">$9,200</div></div>
-            </div>
+          <div class="efield"><label for="linkNewCompanyName">Or, create a new company <span class="optional">(optional)</span></label>
+            <input id="linkNewCompanyName" type="text" placeholder="e.g. Reyes Development Group">
           </div>
-          <div class="clientcard" data-rep="sam" data-date="2025-11-09">
-            <div class="clientcard__top">
-              <div><div class="clientcard__name">Meridian Studios</div><div class="clientcard__sub">Backlot Miniature — Atlanta, GA</div></div>
-              <span class="rolepill rolepill--sales">Sales: Sam Ortiz</span>
-            </div>
-            <div class="clientcard__grid">
-              <div><span class="mock__k">Contact</span><div class="cc-v">Leah Cohen</div><div class="cc-m"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="99f5fcf8f1d9f4fcebf0fdf0f8f7eaedecfdf0f6eab7faf6f4">[email&#160;protected]</a> · (404) 555-0142</div></div>
-              <div><span class="mock__k">Project value</span><div class="cc-v">$7,600</div></div>
-              <div><span class="mock__k">Paid</span><div class="cc-v">$3,800</div></div>
-              <div><span class="mock__k">Balance</span><div class="cc-v">$3,800</div></div>
-            </div>
+          <div class="changes__act" style="margin-top:0.4rem;">
+            <button class="btn btn--primary" onclick="confirmLinkContact()">Move contact</button>
+            <button class="btn btn--ghost" type="button" onclick="document.getElementById('linkContactModal').hidden=true;">Cancel</button>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+
+    <!-- Assign lead's contact to a company modal -->
+    <div class="modal-overlay" id="assignLeadCompanyModal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Assign lead to a company">
+        <div class="modal__head"><h3>Assign to company</h3><button class="modal__x" onclick="document.getElementById('assignLeadCompanyModal').hidden=true;" aria-label="Close">×</button></div>
+        <div class="modal__body">
+          <p class="modal__intro">Place <b id="assignLeadContactName">this contact</b> under the company account they belong to — so their quote requests and projects roll up correctly on the Clients tab.</p>
+          <div class="efield"><label for="assignLeadTargetCompany">Company / office</label>
+            <select id="assignLeadTargetCompany"></select>
+          </div>
+          <div class="efield"><label for="assignLeadNewCompanyName">Or, create a new company <span class="optional">(optional)</span></label>
+            <input id="assignLeadNewCompanyName" type="text" placeholder="e.g. Reyes Development Group">
+          </div>
+          <div class="changes__act" style="margin-top:0.4rem;">
+            <button class="btn btn--primary" onclick="confirmAssignLeadCompany()">Assign</button>
+            <button class="btn btn--ghost" type="button" onclick="document.getElementById('assignLeadCompanyModal').hidden=true;">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Group company under a global/parent company modal -->
+    <div class="modal-overlay" id="groupCompanyModal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Group company under a parent">
+        <div class="modal__head"><h3>Group under a company</h3><button class="modal__x" onclick="document.getElementById('groupCompanyModal').hidden=true;" aria-label="Close">×</button></div>
+        <div class="modal__body">
+          <p class="modal__intro">Nest <b id="groupCompanyName">this office</b> under a global/parent company account — so staff can see it individually or rolled up with its sibling offices.</p>
+          <div class="efield"><label for="groupTargetParent">Parent company</label>
+            <select id="groupTargetParent"></select>
+          </div>
+          <div class="efield"><label for="groupNewParentName">Or, create a new parent company <span class="optional">(optional)</span></label>
+            <input id="groupNewParentName" type="text" placeholder="e.g. Gensler">
+          </div>
+          <div class="changes__act" style="margin-top:0.4rem;">
+            <button class="btn btn--primary" onclick="confirmGroupCompany()">Group company</button>
+            <button class="btn btn--ghost" type="button" onclick="document.getElementById('groupCompanyModal').hidden=true;">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- TEAM & ACCESS (owner only) -->
     <section class="view owner-only" id="view-team" hidden>
@@ -1308,15 +1390,15 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="panel__head"><h3>Team members</h3><button class="btn btn--ghost btn--sm" onclick="alert('Add-member form opens here — name, email, and role. They receive an invite to set their password.')">+ Add member</button></div>
           <div class="panel__body">
             <div class="teamrow">
-              <div class="teamrow__who"><span class="av studio">MO</span><div><div class="teamrow__name">Maya Okafor <span class="you-tag">You</span></div><div class="teamrow__email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e08d819981a0908899938983818ccd8d8f84858cce838f8d">[email&#160;protected]</a></div></div></div>
+              <div class="teamrow__who"><span class="av studio">MO</span><div><div class="teamrow__name">Maya Okafor <span class="you-tag">You</span></div><div class="teamrow__email">maya@physical-model.com</div></div></div>
               <span class="rolepill rolepill--owner">Owner</span>
             </div>
             <div class="teamrow">
-              <div class="teamrow__who"><span class="av" style="background:linear-gradient(135deg,#2A6FDB,#1a4a99);color:#fff;">JL</span><div><div class="teamrow__name">Jordan Lee</div><div class="teamrow__email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="98f2f7eafcf9f6d8e8f0e1ebf1fbf9f4b5f5f7fcfdf4b6fbf7f5">[email&#160;protected]</a></div></div></div>
+              <div class="teamrow__who"><span class="av" style="background:linear-gradient(135deg,#2A6FDB,#1a4a99);color:#fff;">JL</span><div><div class="teamrow__name">Jordan Lee</div><div class="teamrow__email">jordan@physical-model.com</div></div></div>
               <span class="rolepill rolepill--sales">Sales</span>
             </div>
             <div class="teamrow">
-              <div class="teamrow__who"><span class="av" style="background:linear-gradient(135deg,#C2703D,#8a4e29);color:#fff;">RT</span><div><div class="teamrow__name">Ravi Sharma</div><div class="teamrow__email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="255744534c65554d5c564c46444908484a4140490b464a48">[email&#160;protected]</a></div></div></div>
+              <div class="teamrow__who"><span class="av" style="background:linear-gradient(135deg,#C2703D,#8a4e29);color:#fff;">RT</span><div><div class="teamrow__name">Ravi Sharma</div><div class="teamrow__email">ravi@physical-model.com</div></div></div>
               <span class="rolepill rolepill--factory">Factory</span>
             </div>
           </div>
@@ -1405,12 +1487,16 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
         <div class="efield"><label>Special requirements <span class="optional">(select any that apply)</span></label>
           <div class="checks" id="rq-extras">
-            <label><input type="checkbox" value="Integrated lighting"><span class="ck"></span><span>Integrated lighting</span></label>
-            <label><input type="checkbox" value="Display stand / base"><span class="ck"></span><span>Display stand / base</span></label>
-            <label><input type="checkbox" value="Split into sections"><span class="ck"></span><span>Split into sections</span></label>
-            <label><input type="checkbox" value="Interior finishes"><span class="ck"></span><span>Interior finishes</span></label>
-            <label><input type="checkbox" value="Furniture & fit-out"><span class="ck"></span><span>Furniture &amp; fit-out</span></label>
-            <label><input type="checkbox" value="Custom travel case"><span class="ck"></span><span>Custom travel case</span></label>
+            <label><input type="checkbox" value="No Base"><span class="ck"></span><span>No Base <span class="optional">(models include a base by default)</span></span></label>
+            <label><input type="checkbox" value="Engraved Base"><span class="ck"></span><span>Engraved Base</span></label>
+            <label><input type="checkbox" value="Interior Lighting"><span class="ck"></span><span>Interior Lighting</span></label>
+            <label><input type="checkbox" value="External Lighting"><span class="ck"></span><span>External Lighting</span></label>
+            <label><input type="checkbox" value="Split into Sections (transport / access)"><span class="ck"></span><span>Split into Sections (transport / access)</span></label>
+            <label><input type="checkbox" value="Display Stand / Plinth"><span class="ck"></span><span>Display Stand / Plinth</span></label>
+            <label><input type="checkbox" value="Customized Protective Travel Case"><span class="ck"></span><span>Customized Protective Travel Case</span></label>
+            <label><input type="checkbox" value="Furniture"><span class="ck"></span><span>Furniture</span></label>
+            <label><input type="checkbox" value="Interior Finishes"><span class="ck"></span><span>Interior Finishes</span></label>
+            <label><input type="checkbox" value="Removable Roof / Levels"><span class="ck"></span><span>Removable Roof / Levels</span></label>
           </div>
         </div>
         <div class="efield"><label for="rq-notes">Project details</label>
@@ -1456,6 +1542,19 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
+<!-- Archived leads modal -->
+<div class="modal-overlay" id="archivedLeadsModal" hidden>
+  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-label="Archived leads">
+    <div class="modal__head"><h3>Archived leads</h3><button class="modal__x" onclick="document.getElementById('archivedLeadsModal').hidden=true;" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <p class="modal__intro">Kept on record but out of the active inbox. Unarchive to bring one back.</p>
+      <input type="text" class="archlead-search" id="archivedLeadSearch" placeholder="Search by project, contact, or email…" oninput="window.SRC_renderArchivedLeads()">
+      <div class="archlead-count" id="archivedLeadCount"></div>
+      <div id="archivedLeadList" style="max-height:52vh;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Add lead modal (manual: referral / cold call / email) -->
 <div class="modal-overlay" id="addLeadModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Add a lead">
@@ -1465,36 +1564,71 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <form onsubmit="return createLead(event)">
         <div class="efield-row">
           <div class="efield"><label for="al-contact">Contact name</label><input id="al-contact" type="text" required placeholder="Jane Doe"></div>
-          <div class="efield"><label for="al-company">Company</label><input id="al-company" type="text" placeholder="Firm / studio"></div>
+          <div class="efield"><label for="al-title">Title / position <span class="optional">(optional)</span></label><input id="al-title" type="text" placeholder="e.g. Director of Development"></div>
         </div>
         <div class="efield-row">
+          <div class="efield"><label for="al-company">Company</label><input id="al-company" type="text" placeholder="Firm / studio"></div>
           <div class="efield"><label for="al-email">Email</label><input id="al-email" type="email" placeholder="jane@firm.com"></div>
+        </div>
+        <div class="efield-row">
           <div class="efield"><label for="al-phone">Phone</label><input id="al-phone" type="tel" placeholder="(555) 000-0000"></div>
         </div>
         <div class="efield-row">
-          <div class="efield"><label for="al-project">Project name</label><input id="al-project" type="text" required placeholder="Westbrook Tower"></div>
-          <div class="efield"><label for="al-location">Location</label><input id="al-location" type="text" placeholder="Denver, CO"></div>
+          <div class="efield"><label for="al-project">Project / building name</label><input id="al-project" type="text" required placeholder="Westbrook Tower"></div>
+          <div class="efield"><label for="al-location">Project location</label><input id="al-location" type="text" placeholder="Denver, CO"></div>
         </div>
         <div class="efield-row">
-          <div class="efield"><label for="al-type">Model type</label>
-            <select id="al-type">
-              <option>Architectural massing</option>
-              <option>Architectural with context</option>
-              <option>Sales gallery / presentation</option>
-              <option>Masterplan / site</option>
-              <option>Product / industrial prototype</option>
-              <option>Art installation / sculpture</option>
-              <option>Film / commercial miniature</option>
-              <option>Not sure yet</option>
-            </select>
-          </div>
-          <div class="efield"><label for="al-use">Intended use <span class="optional">(optional)</span></label>
+          <div class="efield"><label for="al-country">Project country <span class="optional">(optional)</span></label><input id="al-country" type="text" placeholder="e.g. United States"></div>
+          <div class="efield"><label for="al-delivery-location">Delivery location <span class="optional">(if different)</span></label><input id="al-delivery-location" type="text" placeholder="e.g. same as project, or a different address"></div>
+        </div>
+        <div class="efield-row">
+          <div class="efield"><label for="al-delivery-country">Delivery country <span class="optional">(optional)</span></label><input id="al-delivery-country" type="text" placeholder="e.g. United States"></div>
+        </div>
+        <div class="efield"><label for="al-type-select">Model type</label>
+          <select id="al-type-select" onchange="onALTypeChange()">
+            <option value="">Select one…</option>
+            <option value="Detailed Architectural Model — Building Alone">Detailed Architectural Model — Building Alone</option>
+            <option value="Detailed Architectural Model — with Surrounding Landscape and/or Urban Fabric">Detailed Architectural Model — with Surrounding Landscape and/or Urban Fabric</option>
+            <option value="Architectural Massing Model — Building Alone">Architectural Massing Model — Building Alone</option>
+            <option value="Architectural Massing Model — with Surrounding Landscape and/or Urban Fabric">Architectural Massing Model — with Surrounding Landscape and/or Urban Fabric</option>
+            <option value="Masterplan Model">Masterplan Model</option>
+            <option value="Topography / Site Model">Topography &amp; Site Model</option>
+            <option value="Interior / Section Model">Interior / Section Model</option>
+            <option value="Interior / Section Model — with Surrounding Landscape and/or Urban Fabric">Interior / Section Model — with Surrounding Landscape and/or Urban Fabric</option>
+            <option value="Product Prototype">Product Prototype</option>
+            <option value="Film / Commercial Miniature">Film / Commercial Miniature</option>
+            <option value="Art Installation / Sculpture">Art Installation / Sculpture</option>
+            <option value="Not sure which category">Not sure which category</option>
+          </select>
+        </div>
+        <div class="efield"><label for="al-use">Intended use <span class="optional">(optional)</span></label>
             <select id="al-use">
               <option value="">Select one…</option>
-              <option>Planning / approvals</option><option>Investor / board meeting</option>
+              <option>Government Review / Planning Approval</option><option>Investor / board meeting</option>
               <option>Sales gallery / marketing</option><option>Internal design review</option>
-              <option>Film / production</option><option>Exhibition / public display</option><option>Other</option>
+              <option>Film / production</option><option>Exhibition / public display</option><option>Gift / Award</option><option>Other</option>
             </select>
+        </div>
+        <!-- Conditional: scope boundary (context / masterplan / topography / interior-with-surroundings only) -->
+        <div class="scope" id="al-scopeBlock" hidden>
+          <div class="scope__head"><h4>Mark your scope boundary</h4><span class="tagm">Required for this model type</span></div>
+          <p class="hint">This model type includes surrounding context — upload a site plan or aerial, then click to outline the area that should be included in the model.</p>
+          <div class="scope__upload">
+            <div class="reqfiles" onclick="document.getElementById('al-planInput').click()">
+              <strong style="display:block;color:var(--cm-text);margin-bottom:0.3rem;">Upload a site plan or aerial</strong>
+              Drag an image here, or click to browse
+              <span class="sub" style="display:block;font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);margin-top:0.5rem;">PNG / JPG / PDF page · a screenshot is fine</span>
+            </div>
+            <input id="al-planInput" type="file" accept="image/*" hidden onchange="alLoadPlan(this.files)">
+          </div>
+          <div class="scope__stage" id="al-planStage">
+            <canvas id="al-planCanvas"></canvas>
+          </div>
+          <div class="scope__tools" id="al-planTools" style="display:none;">
+            <button type="button" class="btn btn--ghost btn--sm" onclick="alUndoPoint()">Undo point</button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="alClearScope()">Clear</button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="alChangePlan()">Replace image</button>
+            <span class="scope__count" id="al-ptCount">0 points</span>
           </div>
         </div>
         <div class="efield-row">
@@ -1507,26 +1641,31 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
               <option value="Other">Other</option>
             </select>
           </div>
-          <div class="efield"><label for="al-timeline">Timeline</label>
-            <select id="al-timeline"><option>As soon as possible</option><option>Within 1 month</option><option>1–3 months</option><option>Just exploring</option></select>
+          <div class="efield"><label for="al-timeline">Timeline / deadline <span class="optional">(optional)</span></label>
+            <input id="al-timeline" type="date">
           </div>
         </div>
-        <div class="efield"><label>Scale <span class="optional">(or leave blank)</span></label>
+        <div class="efield"><label>Scale <span class="optional">(required — or provide model size below)</span></label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
             <div style="display:flex;align-items:center;gap:0.3rem;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;">1:</span><input id="al-scale-intl-new" type="number" placeholder="e.g. 100" oninput="SRC_syncScaleFromIntl('al','new')"></div>
             <div style="display:flex;align-items:center;gap:0.3rem;"><input id="al-scale-imp-new" type="text" placeholder="1/8&quot;" oninput="SRC_syncScaleFromImp('al','new')"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.8rem;white-space:nowrap;">= 1'-0"</span></div>
           </div>
-          <div class="hint">Enter either one — the other fills in automatically.</div>
+          <div class="hint">Enter either the scale or the desired model size below — one of the two is required.</div>
         </div>
-        <div class="efield"><label for="al-size">Approx. model size <span class="optional">(if no scale — L × W × H)</span></label>
-          <input id="al-size" type="text" placeholder='e.g. 36" × 24" × 18"  or  90 × 60 × 45 cm'>
+        <div class="efield-row">
+          <div class="efield"><label for="al-size">Approx. model size <span class="optional">(if no scale)</span></label>
+            <input id="al-size" type="text" placeholder='e.g. 36" × 24" × 18"  or  90 × 60 × 45 cm'>
+          </div>
+          <div class="efield"><label for="al-quantity">Number of exact models</label>
+            <input id="al-quantity" type="number" min="1" step="1" value="1" required>
+          </div>
         </div>
         <div class="efield"><label>Special requirements <span class="optional">(select any that apply)</span></label>
           <div class="checks" id="al-extras-wrap"></div>
           <input id="al-extras-other" type="text" placeholder="Other requirements — type anything specific…" style="margin-top:0.6rem;">
         </div>
         <div class="efield-row">
-          <div class="efield"><label for="al-prefMaterial">Preferred model material <span class="optional">(optional)</span></label>
+          <div class="efield"><label for="al-prefMaterial">Preferred model/object material <span class="optional">(optional)</span></label>
             <select id="al-prefMaterial"><option value="">No preference — let production recommend</option></select>
           </div>
           <div class="efield"><label for="al-prefBase">Preferred base material <span class="optional">(optional)</span></label>
@@ -1613,7 +1752,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 function openInvite(){
   document.getElementById('inviteForm').hidden=false;
   document.getElementById('inviteResult').hidden=true;
@@ -1737,6 +1876,7 @@ function go(v){
   if(v==='quote')applyQuoteState();
   if(v==='invoices')renderPhase1Invoice();
   if(v==='leads'&&window.SRC_renderLeads)window.SRC_renderLeads();
+  if(v==='clients'&&window.scopeClients)window.scopeClients(document.body.dataset.role);
   if(v==='sourcing'&&window.SRC_render)SRC_render();
   document.getElementById('side').classList.remove('open');
 }
@@ -1817,7 +1957,6 @@ function renderSrcClientQuotePanel(){
       '<div style="margin-top:1.2rem;padding-top:1.1rem;border-top:1px solid var(--cm-line-faint);">'+
         '<label style="display:block;font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.5rem;">Questions or requested changes?</label>'+
         '<textarea id="srcClientCommentBox" class="changes__note" rows="3" placeholder="Message your Carve Model project team…"></textarea>'+
-        '<p class="form-note" style="margin-top:0.5rem;">This goes to your Carve Model project team only — never shared with the production shop building your model.</p>'+
         '<button class="btn btn--primary btn--sm" style="margin-top:0.6rem;" onclick="sendClientQuoteComment()">Send to studio</button>'+
       '</div>'+
       renderClientCommentList(cq)+
@@ -1833,10 +1972,15 @@ function renderSrcClientQuotePanel(){
 }
 function renderClientCommentList(cq){
   if(!cq.clientComments||!cq.clientComments.length)return '';
-  return '<div id="srcClientComments" style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--cm-line-faint);">'+
-    '<div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.5rem;">Your messages</div>'+
-    cq.clientComments.map(function(c){return '<div style="font-size:0.86rem;color:var(--cm-text-muted);padding:0.5rem 0;border-bottom:1px solid var(--cm-line-faint);">'+c.text+'<div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--cm-text-subtle);margin-top:0.25rem;">'+c.time+'</div></div>';}).join('')+
-    '</div>';
+  var ordered=cq.clientComments.slice().reverse();
+  return '<div id="srcClientComments" style="margin-top:1.2rem;padding-top:1.1rem;border-top:1px solid var(--cm-line-faint);">'+
+    '<div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.7rem;">Conversation with your project team</div>'+
+    '<div class="thread" style="max-height:none;">'+
+    ordered.map(function(c){
+      var mine=c.from==='client';
+      return '<div class="msg'+(mine?' me':'')+'"><span class="av '+(mine?'client':'studio')+'">'+(mine?'You':'CM')+'</span><div><div class="nm">'+(mine?'You':'Carve Model team')+'</div><div class="bub"><p>'+esc(c.text)+'</p><div class="t">'+esc(c.time)+'</div></div></div></div>';
+    }).join('')+
+    '</div></div>';
 }
 function sendClientQuoteComment(){
   var box=document.getElementById('srcClientCommentBox');
@@ -2066,21 +2210,101 @@ function downloadLeadFile(name,type){
 }
 var leadSeq=2059;
 function openAddLead(){
-  ['al-contact','al-company','al-email','al-phone','al-project','al-location','al-notes','al-dropbox','al-size','al-scale-intl-new','al-scale-imp-new','al-extras-other'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
+  ['al-contact','al-title','al-company','al-email','al-phone','al-project','al-location','al-country','al-delivery-location','al-delivery-country','al-notes','al-dropbox','al-size','al-quantity','al-scale-intl-new','al-scale-imp-new','al-extras-other','al-timeline'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('al-quantity').value='1';
+  document.getElementById('al-type-select').value='';
   var fi=document.getElementById('al-file-input');if(fi)fi.value='';
   document.getElementById('al-files-label').textContent='Drop files or click to upload — CAD, PDF, Rhino, images.';
   var extraWrap=document.getElementById('al-extras-wrap');
   if(extraWrap&&!extraWrap.childElementCount){
-    (window.SPECIAL_REQS||[]).forEach(function(r){var lab=document.createElement('label');lab.innerHTML='<input type="checkbox" name="al-extras" value="'+esc(r)+'"><span class="ck"></span><span>'+esc(r)+'</span>';extraWrap.appendChild(lab);});
+    (window.SPECIAL_REQS||[]).forEach(function(r){var lab=document.createElement('label');lab.innerHTML='<input type="checkbox" name="al-extras" value="'+esc(r)+'"'+(r==='No Base'?' id="al-noBaseChk"':'')+'><span class="ck"></span><span>'+esc(r)+'</span>';extraWrap.appendChild(lab);});
+    var noBaseCb=document.getElementById('al-noBaseChk');
+    if(noBaseCb)noBaseCb.addEventListener('change',function(){
+      var sel=document.getElementById('al-prefBase');
+      if(!sel)return;
+      sel.disabled=this.checked;
+      if(this.checked)sel.value='';
+    });
   }
   document.querySelectorAll('input[name="al-extras"]').forEach(function(cb){cb.checked=false;});
-  var matSel=document.getElementById('al-prefMaterial');
-  if(matSel&&matSel.options.length<2){(window.MODEL_MATERIALS||[]).forEach(function(m){var o=document.createElement('option');o.textContent=m;matSel.appendChild(o);});}
+  alFilterMaterialOptions('');
   var baseSel=document.getElementById('al-prefBase');
   if(baseSel&&baseSel.options.length<2){(window.BASE_MATERIALS||[]).forEach(function(m){var o=document.createElement('option');o.textContent=m;baseSel.appendChild(o);});}
-  if(matSel)matSel.value=''; if(baseSel)baseSel.value='';
+  if(baseSel){baseSel.value='';baseSel.disabled=false;}
   var useSel=document.getElementById('al-use');if(useSel)useSel.value='';
+  alChangePlan();
+  document.getElementById('al-scopeBlock').hidden=true;
   document.getElementById('addLeadModal').hidden=false;
+}
+var AL_DETAILED_MATERIALS=['Full Color ABS / Realistic Visualization'];
+var AL_MASSING_MATERIALS=['Monochromatic ABS / Massing','Clear Acrylic','ABS with Wood Veneer','Hardwood','Foam','Wrought Iron'];
+function alFilterMaterialOptions(type){
+  var sel=document.getElementById('al-prefMaterial');
+  if(!sel)return;
+  var all=window.MODEL_MATERIALS||[];
+  var list=all;
+  if(type.indexOf('Detailed Architectural Model')===0)list=AL_DETAILED_MATERIALS;
+  else if(type.indexOf('Architectural Massing Model')===0)list=AL_MASSING_MATERIALS;
+  var current=sel.value;
+  sel.innerHTML='<option value="">No preference — let production recommend</option>'+list.map(function(m){return '<option>'+esc(m)+'</option>';}).join('');
+  sel.value=(list.indexOf(current)>-1)?current:'';
+}
+function onALTypeChange(){
+  var v=document.getElementById('al-type-select').value||'';
+  var needsScope=(v==='Masterplan Model'||v==='Topography / Site Model'||v==='Detailed Architectural Model — with Surrounding Landscape and/or Urban Fabric'||v==='Architectural Massing Model — with Surrounding Landscape and/or Urban Fabric'||v==='Interior / Section Model — with Surrounding Landscape and/or Urban Fabric');
+  document.getElementById('al-scopeBlock').hidden=!needsScope;
+  alFilterMaterialOptions(v);
+}
+/* ---- Scope boundary canvas tool (Add lead — mirrors public quote form) ---- */
+var alPlanImg=null,alPoints=[],alCanvas,alCtx,alScale=1;
+function alLoadPlan(files){
+  if(!files||!files.length)return;
+  var f=files[0];if(!/^image\//.test(f.type)){alert('Please upload an image (PNG or JPG). For a PDF, take a screenshot of the page.');return;}
+  var url=URL.createObjectURL(f);
+  var img=new Image();
+  img.onload=function(){
+    alPlanImg=img;alPoints=[];
+    alCanvas=document.getElementById('al-planCanvas');alCtx=alCanvas.getContext('2d');
+    var stage=document.getElementById('al-planStage');stage.classList.add('on');
+    var maxW=stage.clientWidth||520;
+    alScale=Math.min(1,maxW/img.width);
+    alCanvas.width=img.width*alScale;alCanvas.height=img.height*alScale;
+    document.querySelector('#al-scopeBlock .reqfiles').style.display='none';
+    document.getElementById('al-planTools').style.display='flex';
+    alCanvas.onclick=function(e){
+      var r=alCanvas.getBoundingClientRect();
+      alPoints.push({x:(e.clientX-r.left)*(alCanvas.width/r.width),y:(e.clientY-r.top)*(alCanvas.height/r.height)});
+      alDrawScope();
+    };
+    alDrawScope();
+  };
+  img.src=url;
+}
+function alDrawScope(){
+  alCtx.clearRect(0,0,alCanvas.width,alCanvas.height);
+  alCtx.drawImage(alPlanImg,0,0,alCanvas.width,alCanvas.height);
+  if(alPoints.length){
+    alCtx.beginPath();alCtx.moveTo(alPoints[0].x,alPoints[0].y);
+    for(var i=1;i<alPoints.length;i++)alCtx.lineTo(alPoints[i].x,alPoints[i].y);
+    alCtx.closePath();
+    alCtx.fillStyle='rgba(229,72,77,0.22)';alCtx.fill();
+    alCtx.strokeStyle='#E5484D';alCtx.lineWidth=2;alCtx.stroke();
+    alPoints.forEach(function(p,idx){
+      alCtx.beginPath();alCtx.arc(p.x,p.y,4,0,Math.PI*2);
+      alCtx.fillStyle=idx===0?'#E5484D':'rgba(229,72,77,0.75)';alCtx.fill();
+      alCtx.strokeStyle='#0D0E11';alCtx.lineWidth=1.5;alCtx.stroke();
+    });
+  }
+  document.getElementById('al-ptCount').textContent=alPoints.length+(alPoints.length===1?' point':' points');
+}
+function alUndoPoint(){alPoints.pop();if(alPlanImg)alDrawScope();}
+function alClearScope(){alPoints=[];if(alPlanImg)alDrawScope();}
+function alChangePlan(){
+  alPlanImg=null;alPoints=[];
+  var stage=document.getElementById('al-planStage');if(stage)stage.classList.remove('on');
+  var tools=document.getElementById('al-planTools');if(tools)tools.style.display='none';
+  var drop=document.querySelector('#al-scopeBlock .reqfiles');if(drop)drop.style.display='';
+  var input=document.getElementById('al-planInput');if(input)input.value='';
 }
 function closeAddLead(){ document.getElementById('addLeadModal').hidden=true; }
 function alFilesPicked(input){
@@ -2090,30 +2314,49 @@ function alFilesPicked(input){
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function createLead(e){
   e.preventDefault();
+  var type=document.getElementById('al-type-select').value;
+  if(!type){alert('Please choose a model type to continue.');return false;}
+  var project=document.getElementById('al-project').value.trim();
+  if(!project){alert('Please enter a project / building name to continue.');return false;}
+  var scaleIntlCheck=document.getElementById('al-scale-intl-new').value.trim();
+  var scaleImpCheck=document.getElementById('al-scale-imp-new').value.trim();
+  var sizeCheck=document.getElementById('al-size').value.trim();
+  if(!scaleIntlCheck&&!scaleImpCheck&&!sizeCheck){alert('Please provide either a scale or a desired model size to continue.');return false;}
+  if(!document.getElementById('al-quantity').value.trim()){alert('Please enter the number of exact models to continue.');return false;}
+  var needsScope=!document.getElementById('al-scopeBlock').hidden;
+  if(needsScope&&!alPlanImg){alert('This model type includes surrounding context — please upload a site plan or aerial and mark the scope boundary before continuing.');return false;}
   var contact=document.getElementById('al-contact').value.trim()||'(name not given)';
+  var contactTitle=document.getElementById('al-title').value.trim();
   var company=document.getElementById('al-company').value.trim();
   var email=document.getElementById('al-email').value.trim();
+  if(!email){alert('Please add the client\'s email so a quote can be sent.');return false;}
   var phone=document.getElementById('al-phone').value.trim();
-  var project=document.getElementById('al-project').value.trim()||'Untitled project';
   var location=document.getElementById('al-location').value.trim();
-  var type=document.getElementById('al-type').value;
+  var country=document.getElementById('al-country').value.trim();
+  var deliveryLocation=document.getElementById('al-delivery-location').value.trim();
+  var deliveryCountry=document.getElementById('al-delivery-country').value.trim();
   var useVal=document.getElementById('al-use').value;
   var source=document.getElementById('al-source').value;
   var notes=document.getElementById('al-notes').value.trim()||'(no additional notes)';
   var dropbox=document.getElementById('al-dropbox').value.trim();
-  var scaleIntl=document.getElementById('al-scale-intl-new').value.trim();
-  var scaleImp=document.getElementById('al-scale-imp-new').value.trim();
+  var scaleIntl=scaleIntlCheck;
+  var scaleImp=scaleImpCheck;
   var scale=scaleIntl?('1:'+scaleIntl+(scaleImp?(' ('+scaleImp+' = 1\'-0")'):'')):(scaleImp?(scaleImp+' = 1\'-0"'):'Not specified');
-  var size=document.getElementById('al-size').value.trim();
+  var size=sizeCheck;
+  var quantity=document.getElementById('al-quantity').value.trim();
   var timeline=document.getElementById('al-timeline').value;
   var prefMaterial=document.getElementById('al-prefMaterial').value;
   var prefBase=document.getElementById('al-prefBase').value;
   var extras=[]; document.querySelectorAll('input[name="al-extras"]:checked').forEach(function(cb){extras.push(cb.value);});
   var extrasOther=document.getElementById('al-extras-other').value.trim();
   if(extrasOther)extras.push(extrasOther);
+  var boundaryMap=null;
+  if(alCanvas&&alPlanImg){
+    try{boundaryMap=alCanvas.toDataURL('image/jpeg',0.75);}catch(err){}
+  }
   var fi=document.getElementById('al-file-input');
   var pickedFiles=fi&&fi.files?[].slice.call(fi.files):[];
-  var title=project+(location?' — '+location:'');
+  var title=project+(location?' — '+location+(country?', '+country:''):'');
   var id='L'+Date.now();
   var today=new Date().toISOString().slice(0,10);
   var submitBtn=e.target.querySelector('button[type="submit"]');
@@ -2135,16 +2378,17 @@ function createLead(e){
       intendedUse:useVal||null,
       prefMaterial:prefMaterial||null,
       prefBase:prefBase||null,
-      client:{Name:contact,Company:company||'—',Email:email,Phone:phone||''},
+      client:{Name:contact,Title:contactTitle||null,Company:company||'—',Email:email,Phone:phone||''},
       scale:scale,
       modelsize:size||'Not specified',
+      quantity:quantity||'1',
       timeline:timeline||'Not specified',
-      deliveryTo:location||'Not specified',
+      deliveryTo:(deliveryLocation||location||'Not specified')+(deliveryCountry?(', '+deliveryCountry):(!deliveryLocation&&country?(', '+country):'')),
       extras:extras,
       notes:notes,
       files:uploadedFiles,
       filelink:dropbox||null,
-      boundaryMap:null,
+      boundaryMap:boundaryMap,
       receivedAt:today,
       source:source||'Manual entry'
     };
@@ -2255,22 +2499,230 @@ function inRange(dateStr){
 function rangeLabel(){
   return {all:'all time','30':'the last 30 days','90':'the last 90 days',ytd:'year to date',custom:'the selected dates'}[clientRange.mode]||'all time';
 }
-function scopeClients(role){
-  var rep=REP_OF_ROLE[role];           // undefined for owner → sees all
-  var cards=document.querySelectorAll('#view-clients .clientcard');
-  var shown=0,total=0,paid=0;
-  cards.forEach(function(c){
-    var mine=(!rep || c.dataset.rep===rep);
-    var dated=inRange(c.dataset.date);
-    var visible=mine&&dated;
-    c.classList.toggle('perm-off',!visible);
-    if(visible){
-      shown++;
-      var vals=c.querySelectorAll('.cc-v');
-      total+=money(vals[1]&&vals[1].textContent);
-      paid+=money(vals[2]&&vals[2].textContent);
-    }
+var PARENTS=[
+  {id:'arclight',name:'Arclight Design Partners'}
+];
+var COMPANIES=[
+  {id:'reyes',name:'Reyes Development Group',parentId:null,rep:'jordan',contacts:[
+    {id:'daniel',name:'Daniel Reyes',title:'Director of Development',email:'daniel@reyesdev.com',phone:'(202) 555-0118',quoteRequests:1,
+     projects:[{name:'Aria Tower — Los Angeles, CA',statusClass:'await',statusLabel:'In fabrication',value:2270,paid:1135,date:'2026-06-02'}]}
+  ]},
+  {id:'halcyon',name:'Halcyon Capital',parentId:null,rep:'jordan',contacts:[
+    {id:'priya',name:'Priya Nair',title:'VP Acquisitions',email:'priya@halcyoncap.com',phone:'(206) 555-0173',quoteRequests:2,
+     projects:[{name:'Pier 7 Masterplan — Seattle, WA',statusClass:'await',statusLabel:'In review',value:18400,paid:9200,date:'2026-04-18'}]}
+  ]},
+  {id:'meridian',name:'Meridian Studios',parentId:null,rep:'sam',contacts:[
+    {id:'leah',name:'Leah Cohen',title:'Production Coordinator',email:'leah@meridianstudios.com',phone:'(404) 555-0142',quoteRequests:1,
+     projects:[{name:'Backlot Miniature — Atlanta, GA',statusClass:'done',statusLabel:'Delivered',value:7600,paid:3800,date:'2025-11-09'}]}
+  ]},
+  {id:'arclight-la',name:'Arclight Design Partners — Los Angeles',parentId:'arclight',rep:'jordan',contacts:[
+    {id:'mira',name:'Mira Chen',title:'Principal',email:'mira.chen@arclightdp.com',phone:'(213) 555-0166',quoteRequests:1,
+     projects:[{name:'Westline Tower — Los Angeles, CA',statusClass:'await',statusLabel:'In fabrication',value:9400,paid:4700,date:'2026-05-11'}]}
+  ]},
+  {id:'arclight-ny',name:'Arclight Design Partners — New York',parentId:'arclight',rep:'sam',contacts:[
+    {id:'owen',name:'Owen Park',title:'Associate Principal',email:'owen.park@arclightdp.com',phone:'(212) 555-0189',quoteRequests:1,
+     projects:[{name:'Hudson Yards Pavilion — New York, NY',statusClass:'done',statusLabel:'Delivered',value:12600,paid:12600,date:'2026-01-22'}]}
+  ]}
+];
+var expandedCompanies={},expandedParents={};
+function companyLatestDate(co){
+  var dates=[];
+  co.contacts.forEach(function(c){c.projects.forEach(function(p){dates.push(p.date);});});
+  dates.sort();
+  return dates[dates.length-1]||'1970-01-01';
+}
+function toggleCompany(id){
+  expandedCompanies[id]=!expandedCompanies[id];
+  renderClients(document.body.dataset.role);
+}
+function toggleParent(id){
+  expandedParents[id]=!expandedParents[id];
+  renderClients(document.body.dataset.role);
+}
+function openLinkContact(companyId,contactId){
+  var co=COMPANIES.filter(function(c){return c.id===companyId;})[0];
+  var contact=co&&co.contacts.filter(function(c){return c.id===contactId;})[0];
+  if(!co||!contact)return;
+  document.getElementById('linkContactName').textContent=contact.name;
+  var sel=document.getElementById('linkTargetCompany');
+  sel.innerHTML=COMPANIES.filter(function(c){return c.id!==companyId;}).map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('');
+  document.getElementById('linkNewCompanyName').value='';
+  sel.dataset.fromCompany=companyId;
+  sel.dataset.contact=contactId;
+  document.getElementById('linkContactModal').hidden=false;
+}
+function confirmLinkContact(){
+  var sel=document.getElementById('linkTargetCompany');
+  var fromId=sel.dataset.fromCompany, contactId=sel.dataset.contact;
+  var fromCo=COMPANIES.filter(function(c){return c.id===fromId;})[0];
+  if(!fromCo)return;
+  var idx=fromCo.contacts.findIndex(function(c){return c.id===contactId;});
+  if(idx<0)return;
+  var contact=fromCo.contacts[idx];
+  var newName=(document.getElementById('linkNewCompanyName').value||'').trim();
+  var targetCo;
+  if(newName){
+    targetCo={id:'co'+Date.now(),name:newName,parentId:null,rep:fromCo.rep,contacts:[]};
+    COMPANIES.push(targetCo);
+  }else{
+    targetCo=COMPANIES.filter(function(c){return c.id===sel.value;})[0];
+  }
+  if(!targetCo)return;
+  fromCo.contacts.splice(idx,1);
+  targetCo.contacts.push(contact);
+  if(!fromCo.contacts.length)COMPANIES=COMPANIES.filter(function(c){return c!==fromCo;});
+  document.getElementById('linkContactModal').hidden=true;
+  scopeClients(document.body.dataset.role);
+}
+function openGroupCompany(companyId){
+  var co=COMPANIES.filter(function(c){return c.id===companyId;})[0];
+  if(!co)return;
+  document.getElementById('groupCompanyName').textContent=co.name;
+  var sel=document.getElementById('groupTargetParent');
+  sel.innerHTML=PARENTS.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';}).join('');
+  document.getElementById('groupNewParentName').value='';
+  sel.dataset.company=companyId;
+  document.getElementById('groupCompanyModal').hidden=false;
+}
+function confirmGroupCompany(){
+  var sel=document.getElementById('groupTargetParent');
+  var co=COMPANIES.filter(function(c){return c.id===sel.dataset.company;})[0];
+  if(!co)return;
+  var newName=(document.getElementById('groupNewParentName').value||'').trim();
+  var parentId;
+  if(newName){
+    parentId='p'+Date.now();
+    PARENTS.push({id:parentId,name:newName});
+  }else{
+    parentId=sel.value;
+  }
+  co.parentId=parentId;
+  document.getElementById('groupCompanyModal').hidden=true;
+  scopeClients(document.body.dataset.role);
+}
+function ungroupCompany(companyId){
+  var co=COMPANIES.filter(function(c){return c.id===companyId;})[0];
+  if(!co)return;
+  co.parentId=null;
+  scopeClients(document.body.dataset.role);
+}
+function contactSubtotals(co){
+  var value=0,paid=0,quotes=0;
+  co.contacts.forEach(function(c){
+    quotes+=c.quoteRequests||0;
+    c.projects.forEach(function(p){value+=p.value;paid+=p.paid;});
   });
+  return {value:value,paid:paid,quotes:quotes};
+}
+function renderCompanyCard(co,repName){
+  var sub=contactSubtotals(co);
+  var expanded=!!expandedCompanies[co.id];
+  var contactsHtml=co.contacts.map(function(c){
+    var projHtml=c.projects.map(function(p){
+      return '<div class="cc-projrow"><span>'+esc(p.name)+'</span><span class="chip '+esc(p.statusClass)+'">'+esc(p.statusLabel)+'</span></div>';
+    }).join('');
+    return '<div class="cc-contact">'+
+      '<div class="cc-contact__top"><div><div class="cc-v">'+esc(c.name)+(c.title?(', '+esc(c.title)):'')+'</div><div class="cc-m">'+esc(c.email)+(c.phone?(' · '+esc(c.phone)):'')+'</div></div>'+
+      '<button class="btn btn--ghost btn--sm" onclick="openLinkContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Link to another company</button></div>'+
+      '<div class="cc-contact__grid"><div><span class="mock__k">Quote requests</span><div class="cc-v">'+(c.quoteRequests||0)+'</div></div></div>'+
+      '<div class="clientcard__projects"><span class="mock__k">Projects</span><div class="cc-projlist">'+projHtml+'</div></div>'+
+    '</div>';
+  }).join('');
+  var groupBtn=co.parentId?('<button class="btn btn--ghost btn--sm" onclick="event.stopPropagation();ungroupCompany(\''+esc(co.id)+'\')">Ungroup</button>')
+    :('<button class="btn btn--ghost btn--sm" onclick="event.stopPropagation();openGroupCompany(\''+esc(co.id)+'\')">Group under a company</button>');
+  return '<div class="clientcard'+(co.parentId?' clientcard--office':'')+'">'+
+    '<div class="clientcard__top" style="cursor:pointer;" onclick="toggleCompany(\''+esc(co.id)+'\')">'+
+      '<div><div class="clientcard__name">'+esc(co.name)+'</div><div class="clientcard__sub">'+co.contacts.length+' contact'+(co.contacts.length===1?'':'s')+' · '+(expanded?'Click to collapse':'Click to expand')+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;justify-content:flex-end;"><span class="rolepill rolepill--sales">Sales: '+esc(repName)+'</span>'+groupBtn+'</div>'+
+    '</div>'+
+    '<div class="clientcard__grid">'+
+      '<div><span class="mock__k">Quote requests</span><div class="cc-v">'+sub.quotes+'</div></div>'+
+      '<div><span class="mock__k">Project value</span><div class="cc-v">$'+sub.value.toLocaleString()+'</div></div>'+
+      '<div><span class="mock__k">Paid</span><div class="cc-v">$'+sub.paid.toLocaleString()+'</div></div>'+
+      '<div><span class="mock__k">Balance</span><div class="cc-v">$'+(sub.value-sub.paid).toLocaleString()+'</div></div>'+
+    '</div>'+
+    (expanded?('<div class="cc-contacts">'+contactsHtml+'</div>'):'')+
+  '</div>';
+}
+function csvCell(v){
+  var s=String(v==null?'':v);
+  if(/[",\n]/.test(s))s='"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+function exportClientsCSV(){
+  var role=document.body.dataset.role;
+  var rep=REP_OF_ROLE[role];
+  var visibleCos=COMPANIES.filter(function(co){
+    return (!rep||co.rep===rep)&&inRange(companyLatestDate(co));
+  });
+  var rows=[['Global company','Company/Office','Contact','Title','Email','Phone','Quote requests','Project','Project status','Project value','Paid','Balance']];
+  visibleCos.forEach(function(co){
+    var parentName=co.parentId?((PARENTS.filter(function(p){return p.id===co.parentId;})[0]||{}).name||''):'';
+    if(!co.contacts.length){
+      rows.push([parentName,co.name,'','','','',0,'','',0,0,0]);
+      return;
+    }
+    co.contacts.forEach(function(c){
+      if(!c.projects.length){
+        rows.push([parentName,co.name,c.name,c.title||'',c.email,c.phone||'',c.quoteRequests||0,'','',0,0,0]);
+        return;
+      }
+      c.projects.forEach(function(p){
+        rows.push([parentName,co.name,c.name,c.title||'',c.email,c.phone||'',c.quoteRequests||0,p.name,p.statusLabel,p.value,p.paid,p.value-p.paid]);
+      });
+    });
+  });
+  var csv=rows.map(function(r){return r.map(csvCell).join(',');}).join('\r\n');
+  var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='carve-clients-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
+}
+function scopeClients(role){renderClients(role);}
+function renderClients(role){
+  var rep=REP_OF_ROLE[role];           // undefined for owner → sees all
+  var list=document.getElementById('companyList');
+  if(!list)return;
+  var shown=0,total=0,paid=0,quoteReqTotal=0;
+  var visibleCos=COMPANIES.filter(function(co){
+    return (!rep||co.rep===rep)&&inRange(companyLatestDate(co));
+  });
+  var standalone=visibleCos.filter(function(co){return !co.parentId;});
+  var parentGroups=PARENTS.map(function(p){
+    return {parent:p,offices:visibleCos.filter(function(co){return co.parentId===p.id;})};
+  }).filter(function(g){return g.offices.length;});
+  var html='';
+  parentGroups.forEach(function(g){
+    var repNames=[].concat.apply([],g.offices.map(function(o){return [o.rep];})).filter(function(v,i,a){return a.indexOf(v)===i;}).map(function(r){return r==='jordan'?'Jordan Lee':(r==='sam'?'Sam Ortiz':r);}).join(', ');
+    var globalValue=0,globalPaid=0,globalQuotes=0;
+    g.offices.forEach(function(o){var s=contactSubtotals(o);globalValue+=s.value;globalPaid+=s.paid;globalQuotes+=s.quotes;});
+    total+=globalValue;paid+=globalPaid;quoteReqTotal+=globalQuotes;shown+=g.offices.length;
+    var pExpanded=!!expandedParents[g.parent.id];
+    html+='<div class="clientcard clientcard--parent">'+
+      '<div class="clientcard__top" style="cursor:pointer;" onclick="toggleParent(\''+esc(g.parent.id)+'\')">'+
+        '<div><div class="clientcard__name">'+esc(g.parent.name)+' <span class="tagm" style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-silver);">Global</span></div><div class="clientcard__sub">'+g.offices.length+' office'+(g.offices.length===1?'':'s')+' · '+(pExpanded?'Click to collapse':'Click to expand')+'</div></div>'+
+        '<span class="rolepill rolepill--sales">Sales: '+esc(repNames)+'</span>'+
+      '</div>'+
+      '<div class="clientcard__grid">'+
+        '<div><span class="mock__k">Quote requests</span><div class="cc-v">'+globalQuotes+'</div></div>'+
+        '<div><span class="mock__k">Project value</span><div class="cc-v">$'+globalValue.toLocaleString()+'</div></div>'+
+        '<div><span class="mock__k">Paid</span><div class="cc-v">$'+globalPaid.toLocaleString()+'</div></div>'+
+        '<div><span class="mock__k">Balance</span><div class="cc-v">$'+(globalValue-globalPaid).toLocaleString()+'</div></div>'+
+      '</div>'+
+      (pExpanded?('<div class="cc-offices">'+g.offices.map(function(o){return renderCompanyCard(o,o.rep==='jordan'?'Jordan Lee':(o.rep==='sam'?'Sam Ortiz':o.rep));}).join('')+'</div>'):'')+
+    '</div>';
+  });
+  standalone.forEach(function(co){
+    shown++;
+    var sub=contactSubtotals(co);
+    total+=sub.value;paid+=sub.paid;quoteReqTotal+=sub.quotes;
+    var repName=co.rep==='jordan'?'Jordan Lee':(co.rep==='sam'?'Sam Ortiz':co.rep);
+    html+=renderCompanyCard(co,repName);
+  });
+  list.innerHTML=html||'<p class="hint">No clients in this range.</p>';
   var notice=document.getElementById('clientsNotice');
   var kpis=document.getElementById('clientsKpis');
   var count=document.getElementById('clientsCount');
@@ -2283,9 +2735,10 @@ function scopeClients(role){
     notice.innerHTML='<b>Sales access.</b> Your <b>own clients only</b> (Jordan Lee) · showing <b>'+rangeLabel()+'</b>.';
     heading.textContent='Your clients';
   }
-  count.textContent=shown+(shown===1?' client':' clients');
+  count.textContent=shown+(shown===1?' company':' companies');
   kpis.innerHTML=
-    '<div class="kpi"><span class="mock__k">Clients</span><div class="big">'+shown+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Companies</span><div class="big">'+shown+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Quote requests submitted</span><div class="big">'+quoteReqTotal+'</div></div>'+
     '<div class="kpi"><span class="mock__k">Total project value</span><div class="big">$'+total.toLocaleString()+'</div></div>'+
     '<div class="kpi"><span class="mock__k">Collected</span><div class="big">$'+paid.toLocaleString()+'</div><div class="sub">$'+(total-paid).toLocaleString()+' outstanding</div></div>';
 }
@@ -2712,6 +3165,16 @@ function logOutSession(){
   localStorage.removeItem(SESSION_KEY);
   location.reload();
 }
+function resetTestData(){
+  if(!confirm('This clears every test lead and brief from Sourcing & Quotes \u2014 for everyone on the pilot, since it\u2019s a shared live doc. Sample client-side projects (Aria Tower, etc.) are unaffected. Continue?'))return;
+  try{localStorage.removeItem('cm_portal_sourcing_v22');}catch(e){}
+  var done=function(){location.reload();};
+  if(window.__fsDoc){
+    window.__fsDoc.set({briefs:[],leads:[]}).then(done).catch(function(e){console.error('Firestore reset failed:',e);alert('Could not clear the shared Firestore doc (see console). Local test data was still cleared.');done();});
+  }else{
+    done();
+  }
+}
 (function(){
   var raw=localStorage.getItem(SESSION_KEY);
   if(!raw){document.getElementById('loginGate').style.display='flex';return;}
@@ -2740,9 +3203,9 @@ var SHOPS=[{id:'meridian',name:'Meridian Scale Works',loc:'Portland, OR',av:'MS'
            {id:'atlas',name:'Atlas Model Fabrication',loc:'Toronto, ON',av:'AM'},
            {id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',av:'BM'}];
 var TECHS=[{id:'sam',name:'Sam Cole',av:'SC'},{id:'rosa',name:'Rosa Lim',av:'RL'}];
-var SPECIAL_REQS=['Integrated lighting','Display stand / base','Split into sections','Interior finishes','Furniture & fit-out','Custom travel case'];
-var MODEL_MATERIALS=['ABS','White acrylic','Frosted acrylic','Clear acrylic','Painted MDF','Resin (SLA/SLS print)','PLA (FDM print)','Basswood','Mixed / composite'];
-var BASE_MATERIALS=['Plywood','Black acrylic','White acrylic','Painted MDF','Walnut veneer','Aluminum','No base included'];
+var SPECIAL_REQS=['No Base','Engraved Base','Interior Lighting','External Lighting','Split into Sections (transport / access)','Display Stand / Plinth','Customized Protective Travel Case','Furniture','Interior Finishes','Removable Roof / Levels'];
+var MODEL_MATERIALS=['Full Color ABS / Realistic Visualization','Monochromatic ABS / Massing','Clear Acrylic','ABS with Wood Veneer','Hardwood','Foam','Wrought Iron'];
+var BASE_MATERIALS=['Plywood','Foam','Wrought Iron'];
 window.SPECIAL_REQS=SPECIAL_REQS; window.MODEL_MATERIALS=MODEL_MATERIALS; window.BASE_MATERIALS=BASE_MATERIALS;
 var MODEL_CATEGORIES=['Building only','Building with landscape','Topography / terrain model','Interior model','Section / cutaway model','Masterplan / site model','Product / industrial prototype','Mixed / other'];
 var OUR_SHOP='northpoint';            // Production Admin/Tech act for this shop in the demo
@@ -2932,13 +3395,17 @@ function saveSRC(){
 window.saveSRC=saveSRC;
 
 function winningQuote(b){
-  if(b.awarded==null)return null;
-  if(b.awardedVariantIndex!=null){
-    var arr=(b.variations&&b.variations[b.awarded])||[];
-    if(arr[b.awardedVariantIndex])return arr[b.awardedVariantIndex];
+  var shopId=basisShop(b), vi=basisVariantIndex(b);
+  if(shopId==null)return null;
+  if(vi!=null){
+    var arr=(b.variations&&b.variations[shopId])||[];
+    if(arr[vi])return arr[vi];
   }
-  return b.quotes[b.awarded];
+  return b.quotes[shopId];
 }
+/* Basis for the client quote: the confirmed award if production has been confirmed, else Carve's soft pick. */
+function basisShop(b){return b.awarded!=null?b.awarded:(b.picked!=null?b.picked:null);}
+function basisVariantIndex(b){return b.awarded!=null?b.awardedVariantIndex:(b.picked!=null?b.pickedVariantIndex:null);}
 function allOptionsFor(b,shopId){
   var out=[];
   if(b.quotes[shopId])out.push({variantIndex:null,data:b.quotes[shopId]});
@@ -3218,31 +3685,48 @@ window.SRC_updateBadges=function(){
   if(badgeF){ if(activeCount){badgeF.textContent=activeCount;badgeF.style.display='';} else {badgeF.style.display='none';} }
 };
 function SRC_carveAdmin(){
-  document.getElementById('srcNotice').innerHTML='<b>Carve Admin.</b> Send anonymized briefs to production shops, compare every quote option — including variations — and award the work. Client identity stays private from every shop.';
+  document.getElementById('srcNotice').innerHTML='<b>Carve Admin.</b> Send anonymized briefs to production shops and compare every quote option — including variations. Pick an option to build the client quote; you can send that to the client before confirming the job with production.';
   window.SRC_updateBadges();
-  var html='<div class="src-head"><div><h2>Outbound briefs</h2><div class="sub">Every model out for quote or in production. Quotes come back from partner shops — award one option to begin.</div></div></div>';
+  var html='<div class="src-head"><div><h2>Outbound briefs</h2><div class="sub">Every model out for quote or in production. Quotes come back from partner shops — pick one to price the client quote, then confirm with production whenever you\'re ready.</div></div></div>';
   if(!SDB.briefs.length){html+='<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects submitted yet. New requests from the website\'s contact form will appear here automatically.</div></div>';}
   SDB.briefs.forEach(function(b){
     var quoted=Object.keys(b.quotes);
     var best=null;quoted.forEach(function(s){if(best===null||b.quotes[s].price<best)best=b.quotes[s].price;});
     var totalOptions=0; SHOPS.forEach(function(s){totalOptions+=allOptionsFor(b,s.id).length;});
     var wq=winningQuote(b);
-    var chip=b.status==='awarded'?('<span class="chip done">Awarded · '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' · In production':'')+'</span>'):('<span class="chip active">Open · '+totalOptions+' option'+(totalOptions==1?'':'s')+'</span>');
-    html+='<div class="panel src-card"><div class="panel__head"><div><span class="src-card__code">'+b.code+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.6rem;">'+chip+(b.status==='awarded'?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'')+'</div></div><div class="panel__body">';
+    var confirmed=b.status==='awarded';
+    var pickedNotConfirmed=!confirmed&&b.picked!=null;
+    var chip=confirmed?('<span class="chip done">Confirmed with production · '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' · In production':'')+'</span>')
+      :pickedNotConfirmed?('<span class="chip await">Selected · '+shop(b.picked).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+' · not yet confirmed with production</span>')
+      :('<span class="chip active">Open · '+totalOptions+' option'+(totalOptions==1?'':'s')+'</span>');
+    html+='<div class="panel src-card"><div class="panel__head"><div><span class="src-card__code">'+b.code+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.6rem;">'+chip+(confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'')+'</div></div><div class="panel__body">';
     html+='<div class="src-spec">'+specBits(b)+'</div>';
+    if(!confirmed&&!b.picked&&quoted.length)html+='<div class="notice" style="margin-top:0.8rem;">'+quoted.length+' quote'+(quoted.length===1?'':'s')+' in. Pick an option below to build a client quote — nothing is sent to the shop yet.</div>';
     html+='<div style="margin-top:0.6rem;"><div class="qline2 head"><span>Shop</span><span>Cost</span><span>Prod. time</span><span></span></div>';
     SHOPS.forEach(function(s){
       allOptionsFor(b,s.id).forEach(function(opt){
         var q=opt.data;
         var isVariant=opt.variantIndex!=null;
+        var vi=isVariant?opt.variantIndex:null;
         var low=!isVariant&&q.price===best&&quoted.length>1&&!b.awarded;
         var isAward=isAwardedOption(b,s.id,opt.variantIndex);
-        var already=b.status==='awarded';
+        var isPicked=!confirmed&&b.picked===s.id&&(b.pickedVariantIndex==null?null:b.pickedVariantIndex)===vi;
         var awardArg=isVariant?opt.variantIndex:'null';
         var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===s.id;})[0];
+        var actionHtml;
+        if(isAward){
+          actionHtml='<span class="chip done">Awarded to production</span>';
+        }else if(confirmed){
+          actionHtml='<button class="btn btn--ghost btn--sm" onclick="SRC_award(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Award to production</button>';
+        }else{
+          actionHtml='<div style="display:flex;gap:0.4rem;justify-content:flex-end;flex-wrap:wrap;">'+
+            (isPicked?'<span class="chip await" style="align-self:center;">Selected for client quote</span>':'<button class="btn '+(b.picked?'btn--ghost':'btn--primary')+' btn--sm" onclick="SRC_pick(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Use for client quote</button>')+
+            '<button class="btn btn--ghost btn--sm" onclick="SRC_award(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Award to production</button>'+
+          '</div>';
+        }
         html+='<div class="qline2"><div class="qf-name"><span class="av">'+s.av+'</span><div><div class="nm">'+(admin?admin.name:s.name)+(isVariant&&q.label?(' <span style="color:var(--cm-text-subtle);font-weight:var(--w-regular);">— '+esc(q.label)+'</span>'):'')+(low?'<span class="lowtag">Lowest</span>':'')+'</div><div class="lc">'+(admin?admin.company:s.loc)+(isVariant?' · Variation':'')+'</div></div></div>'+
           '<div class="qf-price">'+money(q.price)+(q.priceRMB?'<div style="font-family:var(--font-mono);font-weight:var(--w-regular);font-size:0.62rem;color:var(--cm-text-subtle);margin-top:2px;">converted from '+moneyRMB(q.priceRMB)+' RMB</div>':'')+'</div><div class="qf-days">'+q.days+' days</div>'+
-          '<div style="text-align:right;">'+(isAward?'<span class="chip done">Awarded</span>':'<button class="btn '+(already?'btn--ghost':'btn--primary')+' btn--sm" onclick="SRC_award(\''+b.id+'\',\''+s.id+'\','+awardArg+')">'+(already?'Switch':'Award')+'</button>')+'</div>'+
+          '<div style="text-align:right;">'+actionHtml+'</div>'+
           quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+carveCommentBlock(b,s.id,opt.variantIndex,q)+'</div>';
       });
     });
@@ -3251,13 +3735,13 @@ function SRC_carveAdmin(){
       '<div class="row"><span class="l">Client</span><span>'+esc(b.client.Name)+'</span></div>'+
       '<div class="row"><span class="l">Company</span><span>'+esc(b.client.Company)+'</span></div>'+
       '<div class="row"><span class="l">Contact</span><span>'+esc(b.client.Contact)+'</span></div></div>';
-    if(b.status==='awarded')html+=clientQuoteSection(b);
+    if(confirmed||b.picked!=null)html+=clientQuoteSection(b);
     html+=historySection(b,null);
     html+='</div></div>';
   });
   document.getElementById('srcBody').innerHTML=html;
   SDB.briefs.forEach(function(b){
-    if(b.status==='awarded'&&(!b.clientQuote||!b.clientQuote.sent)&&document.getElementById('cq-pkgn-'+b.id))SRC_renderPkgDims('cq',b.id);
+    if((b.status==='awarded'||b.picked!=null)&&(!b.clientQuote||!b.clientQuote.sent)&&document.getElementById('cq-pkgn-'+b.id))SRC_renderPkgDims('cq',b.id);
   });
 }
 
@@ -3270,9 +3754,11 @@ function clientQuoteSection(b){
   var pkgDims=base.packageDimsList&&base.packageDimsList.length?base.packageDimsList:(base.packageDims?[base.packageDims]:[]);
   var pkgN=base.packages||pkgDims.length||1;
   var extrasSet={}; (base.extras||[]).forEach(function(x){extrasSet[x]=true;});
-  var srcLabel=shop(b.awarded).name+(srcQ.label?(' — '+srcQ.label):'');
+  var srcLabel=shop(basisShop(b)).name+(srcQ.label?(' — '+srcQ.label):'');
+  var confirmed=b.status==='awarded';
   var html='<div class="panel src-card" style="margin-top:1rem;border-color:var(--cm-border-strong);"><div class="panel__head"><h3 style="font-size:0.98rem;">Finalize quote for client</h3><span class="k">Carve Admin only</span></div><div class="panel__body">';
-  html+='<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);margin-bottom:0.9rem;">Based on — '+esc(srcLabel)+': '+moneyRMB(srcQ.priceRMB)+' <span style="opacity:0.7;">(≈ '+money(srcQ.price)+')</span> · '+ (srcQ.days||'—') +' days. Pick a different option above (Award/Switch) to change the basis.</div>';
+  html+='<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);margin-bottom:0.9rem;">Based on — '+esc(srcLabel)+': '+moneyRMB(srcQ.priceRMB)+' <span style="opacity:0.7;">(≈ '+money(srcQ.price)+')</span> · '+ (srcQ.days||'—') +' days. Pick a different option above to change the basis.</div>';
+  if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Not yet awarded to production — '+esc(shop(basisShop(b)).name)+' has not been notified. You can still finalize and send this price to the client now.</div>';
   html+='<div class="qform2">';
   html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" placeholder="e.g. 3200" value="'+(cq&&cq.price!=null?cq.price:'')+'"></div>';
   html+='<div><label>Production time (days)</label><input id="cq-days-'+b.id+'" type="number" placeholder="18" value="'+esc(base.days!=null?base.days:'')+'"></div>';
@@ -3296,24 +3782,33 @@ function clientQuoteSection(b){
     SPECIAL_REQS.map(function(r){return '<label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.8rem;color:var(--cm-text-muted);border:1px solid var(--cm-border);border-radius:var(--r-pill);padding:0.35rem 0.7rem;cursor:pointer;"><input type="checkbox" class="cq-extra-'+b.id+'" value="'+esc(r)+'" '+(extrasSet[r]?'checked':'')+' style="accent-color:var(--cm-silver);">'+esc(r)+'</label>';}).join('')+
   '</div></div>';
   html+='<div class="full"><label>Notes to client</label><textarea id="cq-notes-'+b.id+'" rows="2" placeholder="What the client should know…">'+esc(base.note||base.notes||'')+'</textarea></div>';
-  html+='<div class="full" style="text-align:right;"><button class="btn btn--primary btn--sm" onclick="SRC_saveClientQuote(\''+b.id+'\')">Send quote to client</button></div>';
+  html+='<div class="full" style="text-align:right;display:flex;justify-content:flex-end;gap:0.6rem;">'+(confirmed?'':'<button class="btn btn--ghost btn--sm" onclick="SRC_award(\''+b.id+'\',\''+basisShop(b)+'\','+(basisVariantIndex(b)==null?'null':basisVariantIndex(b))+')">Award to production</button>')+'<button class="btn btn--primary btn--sm" onclick="SRC_saveClientQuote(\''+b.id+'\')">Send quote to client</button></div>';
   html+='</div></div></div>';
   return html;
 }
 function clientQuoteSummary(b,cq){
-  var html='<div class="panel src-card" style="margin-top:1rem;"><div class="panel__head"><h3 style="font-size:0.98rem;">Client quote</h3><span class="chip done">Finalized</span></div><div class="panel__body">';
-  html+='<div class="qline2" style="grid-template-columns:1fr auto;border-bottom:0;padding-top:0;"><div><div class="qf-price">'+money(cq.price)+'</div><div class="lc" style="font-family:var(--font-mono);">'+cq.days+' days</div></div><div style="text-align:right;"><button class="btn btn--ghost btn--sm" onclick="SRC_editClientQuote(\''+b.id+'\')">Edit</button></div></div>';
+  var hasThread=cq.clientComments&&cq.clientComments.length;
+  var pending=hasThread&&cq.clientComments[0].from==='client';
+  var confirmed=b.status==='awarded';
+  var html='<div class="panel src-card" style="margin-top:1rem;'+(pending?'border-color:var(--cm-silver);':'')+'"><div class="panel__head"><h3 style="font-size:0.98rem;">Client quote</h3><span class="chip done">Finalized</span></div><div class="panel__body">';
+  if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Sent to the client, but not yet awarded to production \u2014 '+esc(shop(basisShop(b)).name)+' has not been notified. <a href="#" onclick="SRC_award(\''+b.id+'\',\''+basisShop(b)+'\','+(basisVariantIndex(b)==null?'null':basisVariantIndex(b))+');return false;" style="color:var(--cm-silver);">Award to production \u2192</a></div>';
+  html+='<div class="qline2" style="grid-template-columns:1fr auto;border-bottom:0;padding-top:0;"><div><div class="qf-price">'+money(cq.price)+'</div><div class="lc" style="font-family:var(--font-mono);">'+cq.days+' days</div></div><div style="text-align:right;"><button class="btn btn--ghost btn--sm" onclick="SRC_editClientQuote(\''+b.id+'\')">Edit &amp; resend</button></div></div>';
   html+=quoteSpecLine(cq)+extrasLine(cq);
   if(cq.note)html+='<div class="qf-note" style="margin-top:0.6rem;">'+esc(cq.note)+'</div>';
-  if(cq.clientComments&&cq.clientComments.length){
-    html+='<div style="margin-top:0.9rem;padding-top:0.8rem;border-top:1px solid var(--cm-line-faint);">';
-    html+='<div style="font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-silver);margin-bottom:0.5rem;">Client feedback · visible to Carve Admin only</div>';
-    cq.clientComments.forEach(function(c){
-      html+='<div style="font-size:0.83rem;color:var(--cm-text);padding:0.5rem 0.6rem;margin-bottom:0.4rem;background:var(--cm-ink-850);border-left:2px solid var(--cm-silver);border-radius:0 var(--r-sm) var(--r-sm) 0;">'+esc(c.text)+'<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);margin-top:0.3rem;">'+esc(c.time)+'</div></div>';
-    });
-    html+='</div>';
+  html+='<div style="margin-top:1rem;padding-top:0.9rem;border-top:1px solid var(--cm-line-faint);">';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;"><span style="font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-silver);">Conversation with client</span>'+(pending?'<span class="chip await">Awaiting your reply</span>':'')+'</div>';
+  if(hasThread){
+    var ordered=cq.clientComments.slice().reverse();
+    html+='<div class="thread" style="max-height:280px;">'+ordered.map(function(c){
+      var mine=c.from==='studio';
+      return '<div class="msg'+(mine?' me':'')+'"><span class="av '+(mine?'studio':'client')+'">'+(mine?'CM':'CL')+'</span><div><div class="nm">'+(mine?'Carve Model team':'Client')+'</div><div class="bub"><p>'+esc(c.text)+'</p><div class="t">'+esc(c.time)+'</div></div></div></div>';
+    }).join('')+'</div>';
+  }else{
+    html+='<p style="font-size:0.82rem;color:var(--cm-text-subtle);">No messages yet — the client can ask questions from their Quote view.</p>';
   }
-  html+='<div style="font-size:0.78rem;color:var(--cm-text-subtle);margin-top:0.8rem;padding-top:0.7rem;border-top:1px solid var(--cm-line-faint);">This is the price and spec the client sees — production cost stays internal.</div>';
+  html+='<form class="composer" style="margin-top:0.9rem;" onsubmit="return SRC_sendStudioReply(event,\''+b.id+'\');"><input type="text" id="cq-reply-'+b.id+'" placeholder="Reply to the client…"><button class="btn btn--primary btn--sm" type="submit">Send</button></form>';
+  html+='</div>';
+  html+='<div style="font-size:0.78rem;color:var(--cm-text-subtle);margin-top:0.8rem;padding-top:0.7rem;border-top:1px solid var(--cm-line-faint);">This is the price and spec the client sees — production cost stays internal. Changing figures above requires Edit &amp; resend.</div>';
   html+='</div></div>';
   return html;
 }
@@ -3339,8 +3834,25 @@ window.SRC_saveClientQuote=function(id){
   document.querySelectorAll('.cq-extra-'+id+':checked').forEach(function(cb){extras.push(cb.value);});
   var note=document.getElementById('cq-notes-'+id).value.trim();
   if(!price){alert('Enter the final price to send to the client.');return;}
-  b.clientQuote={price:price,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true};
+  var prevComments=(b.clientQuote&&b.clientQuote.clientComments)||[];
+  var wasSent=b.clientQuote&&b.clientQuote.sent===false; // resend after Edit & resend, vs. first send
+  b.clientQuote={price:price,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true,clientComments:prevComments};
   saveSRC();SRC_render();
+  showEmailToast((wasSent?'Updated quote resent to ':'Quote sent to ')+'the client — they\'ll see it in their portal.');
+};
+window.SRC_sendStudioReply=function(ev,id){
+  if(ev&&ev.preventDefault)ev.preventDefault();
+  var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
+  var box=document.getElementById('cq-reply-'+id);
+  if(!b||!box)return false;
+  var text=box.value.trim();
+  if(!text)return false;
+  if(!b.clientQuote){return false;}
+  if(!b.clientQuote.clientComments)b.clientQuote.clientComments=[];
+  b.clientQuote.clientComments.unshift({text:text,time:'just now',from:'studio'});
+  saveSRC();SRC_render();
+  showEmailToast('Reply sent to the client on "'+b.title+'".');
+  return false;
 };
 window.SRC_editClientQuote=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -3349,10 +3861,22 @@ window.SRC_editClientQuote=function(id){
 };
 window.SRC_reopenForQuotes=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
-  if(!confirm('Reopen "'+b.title+'" for quotes? This undoes the award — the assigned technician loses access, and Carve goes back to comparing options.'))return;
+  if(!confirm('Reopen "'+b.title+'" for quotes? This undoes the confirmed award — the assigned technician loses access, and Carve goes back to comparing options.'))return;
   var prevShop=b.awarded;
-  b.status='open';b.awarded=null;b.awardedVariantIndex=null;b.clientQuote=null;b.stage='sourcing';b.assignedTech=null;
+  b.status='open';b.awarded=null;b.awardedVariantIndex=null;b.picked=null;b.pickedVariantIndex=null;b.clientQuote=null;b.stage='sourcing';b.assignedTech=null;
   if(prevShop)notifyShop(prevShop,'"'+b.title+'" was reopened for quotes by Carve Model.');
+  saveSRC();SRC_render();
+};
+/* ---- Soft pick: choose the basis for the client quote WITHOUT notifying any shop. Freely switchable until confirmed with production. ---- */
+window.SRC_pick=function(id,shopId,variantIndex){
+  var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
+  var vi=(variantIndex===undefined||variantIndex===null||variantIndex==='')?null:parseInt(variantIndex,10);
+  if(isNaN(vi))vi=null;
+  var samePick=b.picked===shopId&&(b.pickedVariantIndex==null?null:b.pickedVariantIndex)===vi;
+  if(samePick)return;
+  if(b.clientQuote&&b.clientQuote.sent&&!confirm('A quote based on a different option was already sent to the client. Switching will clear that draft so you can re-finalize pricing from the new option. Continue?'))return;
+  b.picked=shopId;b.pickedVariantIndex=vi;
+  b.clientQuote=null;
   saveSRC();SRC_render();
 };
 window.SRC_award=function(id,shopId,variantIndex){
@@ -3363,9 +3887,10 @@ window.SRC_award=function(id,shopId,variantIndex){
   var label=shop(shopId).name+(opt&&opt.label?(' — '+opt.label):'');
   var already=b.status==='awarded';
   var prevShop=b.awarded;
-  if(!confirm((already?'Switch the award to ':'Award ')+b.title+' to '+label+'? '+(already?'The client quote will need to be finalized again from this option. ':'')+'Other shops/options are notified they were not selected. Client identity stays private.'))return;
-  b.status='awarded';b.awarded=shopId;b.awardedVariantIndex=vi;
-  b.clientQuote=null;
+  var sameBasis=b.picked===shopId&&(b.pickedVariantIndex==null?null:b.pickedVariantIndex)===vi;
+  if(!confirm((already?'Switch confirmed production to ':'Confirm ')+b.title+' with '+label+'? '+(already?'The previous shop will be told they are no longer awarded. ':'')+'They\u2019ll be notified the job is theirs; other quoted shops are told they weren\u2019t selected. Client identity stays private.'))return;
+  b.status='awarded';b.awarded=shopId;b.awardedVariantIndex=vi;b.picked=shopId;b.pickedVariantIndex=vi;
+  if(!sameBasis)b.clientQuote=null; // basis changed — the finalized client price no longer matches, needs re-review
   notifyShop(shopId,'You were awarded "'+b.title+'".');
   showEmailToast('Sent to '+shop(shopId).name+' — awarded "'+b.title+'".');
   if(prevShop&&prevShop!==shopId){
@@ -3593,15 +4118,19 @@ window.SRC_addClientComment=function(bid,text){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
   if(!b||!b.clientQuote)return false;
   if(!b.clientQuote.clientComments)b.clientQuote.clientComments=[];
-  b.clientQuote.clientComments.unshift({text:text,time:'just now'});
+  b.clientQuote.clientComments.unshift({text:text,time:'just now',from:'client'});
   saveSRC();
   return true;
 };
 window.SRC_renderLeads=function(){
   var list=document.getElementById('leadList'), empty=document.getElementById('leadsEmpty'), badge=document.getElementById('leadsBadge');
   if(!list)return;
-  var leads=SDB.leads||[];
+  var allLeads=SDB.leads||[];
+  var leads=allLeads.filter(function(l){return !l.archived;});
+  var archivedCount=allLeads.length-leads.length;
   if(badge){ if(leads.length){badge.textContent=leads.length;badge.style.display='';} else {badge.style.display='none';} }
+  var archLink=document.getElementById('leadsArchivedLink');
+  if(archLink){archLink.hidden=!archivedCount;archLink.textContent='View archived ('+archivedCount+')';}
   if(!leads.length){list.innerHTML='';if(empty)empty.hidden=false;return;}
   if(empty)empty.hidden=true;
   list.innerHTML=leads.map(function(l){
@@ -3616,9 +4145,10 @@ window.SRC_renderLeads=function(){
       '<div class="leadcard__top"><div><div class="leadcard__name">'+esc(l.title)+'</div><div class="leadcard__sub">'+esc(l.type)+'</div></div>'+
       '<div class="leadcard__tags"><span class="srctag srctag--web">\u25cf '+esc(l.source||'Website form')+'</span><span class="chip await">New</span></div></div>'+
       '<div class="leadcard__grid">'+
-        '<div><span class="mock__k">Contact</span><div class="lc-v">'+esc(l.client.Name)+(l.client.Company&&l.client.Company!=='\u2014'?(' \u00b7 '+esc(l.client.Company)):'')+'</div><div class="lc-m">'+esc(l.client.Email)+(l.client.Phone?(' \u00b7 '+esc(l.client.Phone)):'')+'</div></div>'+
+        '<div><span class="mock__k">Contact</span><div class="lc-v">'+esc(l.client.Name)+(l.client.Title?(', '+esc(l.client.Title)):'')+(l.client.Company&&l.client.Company!=='\u2014'?(' \u00b7 '+esc(l.client.Company)):'')+'</div><div class="lc-m">'+esc(l.client.Email)+(l.client.Phone?(' \u00b7 '+esc(l.client.Phone)):'')+'</div>'+(l.assignedCompanyName?('<div class="lc-m" style="color:var(--cm-silver);margin-top:2px;">\u2713 Assigned to '+esc(l.assignedCompanyName)+'</div>'):'')+'</div>'+
         '<div><span class="mock__k">Scale</span><div class="lc-v">'+esc(l.scale)+'</div></div>'+
         '<div><span class="mock__k">Approx. size</span><div class="lc-v">'+esc(l.modelsize)+'</div></div>'+
+        '<div><span class="mock__k">Quantity</span><div class="lc-v">'+esc(l.quantity||'1')+'</div></div>'+
         '<div><span class="mock__k">Timeline</span><div class="lc-v">'+esc(l.timeline)+'</div></div>'+
         '<div><span class="mock__k">Files</span><div class="lc-v">'+((l.files&&l.files.length)?(l.files.length+' uploaded'):(l.filelink?'Link shared':'None'))+'</div></div>'+
         '<div><span class="mock__k">Delivery to</span><div class="lc-v">'+esc(l.deliveryTo)+'</div></div>'+
@@ -3632,9 +4162,106 @@ window.SRC_renderLeads=function(){
       filesHtml+
       '</div><div class="leadcard__act"><span class="mock__k">Received '+esc(l.receivedAt)+' \u00b7 '+esc(l.source||'Website form')+'</span>'+
       '<button class="btn btn--primary btn--sm" onclick="convertLead(\''+esc(l.id)+'\')">Submit a quote \u2192</button>'+
-      '<button class="btn btn--ghost btn--sm" onclick="replyLead(\''+esc(l.client.Email)+'\',\''+esc(l.title)+'\')">Reply by email</button></div></article>';
+      '<button class="btn btn--ghost btn--sm" onclick="replyLead(\''+esc(l.client.Email)+'\',\''+esc(l.title)+'\')">Reply by email</button>'+
+      '<button class="btn btn--ghost btn--sm studio-only" onclick="openAssignLeadCompany(\''+esc(l.id)+'\')">'+(l.assignedCompanyName?'Change company':'Assign to company')+'</button>'+
+      '<button class="btn btn--ghost btn--sm studio-only" onclick="archiveLead(\''+esc(l.id)+'\')">Archive</button></div></article>';
   }).join('');
 };
+window.openArchivedLeads=function(){
+  window.SRC_renderArchivedLeads();
+  document.getElementById('archivedLeadsModal').hidden=false;
+}
+window.SRC_renderArchivedLeads=function(){
+  var list=document.getElementById('archivedLeadList');
+  var countEl=document.getElementById('archivedLeadCount');
+  if(!list)return;
+  var q=((document.getElementById('archivedLeadSearch')||{}).value||'').trim().toLowerCase();
+  var archived=(SDB.leads||[]).filter(function(l){return l.archived;});
+  archived.sort(function(a,b){return (b.receivedAt||'').localeCompare(a.receivedAt||'');});
+  if(q){
+    archived=archived.filter(function(l){
+      return (l.title||'').toLowerCase().indexOf(q)>-1||
+        (l.client.Name||'').toLowerCase().indexOf(q)>-1||
+        (l.client.Company||'').toLowerCase().indexOf(q)>-1||
+        (l.client.Email||'').toLowerCase().indexOf(q)>-1;
+    });
+  }
+  if(countEl)countEl.textContent=archived.length+' archived lead'+(archived.length===1?'':'s');
+  if(!archived.length){list.innerHTML='<p class="hint">'+(q?'No matches.':'No archived leads.')+'</p>';return;}
+  list.innerHTML=archived.map(function(l){
+    return '<div class="archlead-row"><div class="archlead-row__main">'+
+      '<div class="archlead-row__title">'+esc(l.title)+'</div>'+
+      '<div class="archlead-row__sub">'+esc(l.client.Name)+(l.client.Company&&l.client.Company!=='\u2014'?(' \u00b7 '+esc(l.client.Company)):'')+' \u00b7 '+esc(l.client.Email)+'</div></div>'+
+      '<div class="archlead-row__date">'+esc(l.receivedAt)+'</div>'+
+      '<button class="btn btn--ghost btn--sm" onclick="unarchiveLead(\''+esc(l.id)+'\')">Unarchive</button></div>';
+  }).join('');
+};
+window.openAssignLeadCompany=function(id){
+  var lead=(SDB.leads||[]).filter(function(l){return l.id===id;})[0];
+  if(!lead)return;
+  document.getElementById('assignLeadContactName').textContent=lead.client.Name+(lead.client.Company&&lead.client.Company!=='—'?(' ('+lead.client.Company+')'):'');
+  var sel=document.getElementById('assignLeadTargetCompany');
+  sel.innerHTML=(window.COMPANIES||[]).map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('');
+  if(lead.client.Company&&lead.client.Company!=='—'){
+    var match=(window.COMPANIES||[]).filter(function(c){return c.name.toLowerCase().indexOf(lead.client.Company.toLowerCase())>-1;})[0];
+    if(match)sel.value=match.id;
+  }
+  document.getElementById('assignLeadNewCompanyName').value=lead.client.Company&&lead.client.Company!=='—'?'':'';
+  sel.dataset.leadId=id;
+  document.getElementById('assignLeadCompanyModal').hidden=false;
+};
+window.confirmAssignLeadCompany=function(){
+  var sel=document.getElementById('assignLeadTargetCompany');
+  var leadId=sel.dataset.leadId;
+  var lead=(SDB.leads||[]).filter(function(l){return l.id===leadId;})[0];
+  if(!lead)return;
+  var newName=(document.getElementById('assignLeadNewCompanyName').value||'').trim();
+  var targetCo;
+  if(newName){
+    targetCo={id:'co'+Date.now(),name:newName,parentId:null,rep:(document.body.dataset.role==='sales'?'jordan':'jordan'),contacts:[]};
+    window.COMPANIES=window.COMPANIES||[];
+    window.COMPANIES.push(targetCo);
+  }else{
+    targetCo=(window.COMPANIES||[]).filter(function(c){return c.id===sel.value;})[0];
+  }
+  if(!targetCo)return;
+  var existing=targetCo.contacts.filter(function(c){return c.email.toLowerCase()===lead.client.Email.toLowerCase();})[0];
+  if(existing){
+    existing.quoteRequests=(existing.quoteRequests||0)+1;
+  }else{
+    targetCo.contacts.push({
+      id:'c'+Date.now(),
+      name:lead.client.Name,
+      title:lead.client.Title||'',
+      email:lead.client.Email,
+      phone:lead.client.Phone||'',
+      quoteRequests:1,
+      projects:[]
+    });
+  }
+  lead.assignedCompanyId=targetCo.id;
+  lead.assignedCompanyName=targetCo.name;
+  saveSRC();
+  document.getElementById('assignLeadCompanyModal').hidden=true;
+  window.SRC_renderLeads();
+  if(window.scopeClients)window.scopeClients(document.body.dataset.role);
+};
+window.archiveLead=function(id){
+  if(!confirm('Archive this lead? It stays on record but drops out of the leads inbox.'))return;
+  var lead=(SDB.leads||[]).filter(function(l){return l.id===id;})[0];
+  if(!lead)return;
+  lead.archived=true;
+  saveSRC();
+  window.SRC_renderLeads();
+}
+window.unarchiveLead=function(id){
+  var lead=(SDB.leads||[]).filter(function(l){return l.id===id;})[0];
+  if(!lead)return;
+  delete lead.archived;
+  saveSRC();
+  window.SRC_renderArchivedLeads&&window.SRC_renderArchivedLeads();
+  window.SRC_renderLeads();
+}
 var SRC_PENDING_LEAD_ID=null;
 window.convertLead=function(id){
   var lead=(SDB.leads||[]).filter(function(l){return l.id===id;})[0];
@@ -3673,6 +4300,7 @@ window.SRC_confirmSendLead=function(){
       'Model type':lead.type,
       'Scale':lead.scale,
       'Approx. size':lead.modelsize,
+      'Quantity':lead.quantity||'1',
       'Materials':lead.prefMaterial||'To be proposed by production',
       'Base':lead.prefBase||'To be proposed by production',
       'Special requirements':(lead.extras&&lead.extras.length)?lead.extras.join(' \u00b7 '):'None specified',
@@ -3682,7 +4310,7 @@ window.SRC_confirmSendLead=function(){
     notes:lead.notes+(lead.boundaryMap?'\n\n(Client marked a scope boundary on a site plan \u2014 see attached image.)':''),
     files:(lead.files||[]).map(function(f){return {name:f.name,size:f.size,by:'Client',date:lead.receivedAt,url:f.url||null};}).concat(lead.boundaryMap?[{name:'scope-boundary-marked.jpg',size:'\u2014',by:'Client',date:lead.receivedAt,url:lead.boundaryMap}]:[]),
     link:lead.filelink||null,
-    client:{Name:lead.client.Name,Company:lead.client.Company,Contact:lead.client.Email+(lead.client.Phone?(' \u00b7 '+lead.client.Phone):''),Address:lead.deliveryTo,Email:lead.client.Email},
+    client:{Name:lead.client.Name,Title:lead.client.Title||null,Company:lead.client.Company,Contact:lead.client.Email+(lead.client.Phone?(' \u00b7 '+lead.client.Phone):''),Address:lead.deliveryTo,Email:lead.client.Email},
     status:'open',awarded:null,awardedVariantIndex:null,assignedTech:null,stage:'sourcing',
     quotes:{},variations:{}
   };
