@@ -1,18 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Get a Free Quote — Contact Carve Model</title>
-<meta name="description" content="Tell us about your project and get a free quote. Carve Model builds architectural scale models, sales-gallery pieces, product prototypes, and film miniatures from Los Angeles.">
-<link rel="canonical" href="https://www.physical-model.com/contact">
-<meta property="og:title" content="Get a Free Quote | Carve Model">
-<meta property="og:description" content="Tell us what decision your model needs to support.">
-<meta property="og:type" content="website">
-<link rel="icon" type="image/png" href="assets/logo-mark.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Get a Free Quote — Contact Carve Model"
+  description="Tell us about your project and get a free quote. Carve Model builds architectural scale models, sales-gallery pieces, product prototypes, and film miniatures from Los Angeles."
+  canonicalPath="/contact"
+  ogTitle="Get a Free Quote | Carve Model"
+  ogDescription="Tell us what decision your model needs to support."
+  active="contact"
+  imageSlot={false}
+>
+<Fragment slot="head">
 <style>
 .contact-wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(2rem,5vw,5rem);align-items:start;padding-top:clamp(3rem,6vw,5rem);}
 .contact-info h1{margin-top:1.4rem;}
@@ -128,15 +126,7 @@
 .success h3{font-size:1.4rem;}.success p{color:var(--cm-text-muted);margin-top:0.7rem;}
 @media(max-width:820px){.contact-wrap{grid-template-columns:1fr;}.row2{grid-template-columns:1fr;}.seg{grid-template-columns:1fr;}}
 </style>
-</head>
-<body>
-<header class="site-header"><div class="container nav">
-  <a class="nav__brand" href="index.html"><img src="assets/logo-lockup.png" alt="Carve Model"></a>
-  <nav><ul class="nav__links"><li><a href="services.html">Services</a></li><li><a href="process.html">Process</a></li><li><a href="works.html">Works</a></li><li><a href="about.html">About</a></li><li><a href="blog.html">Blog</a></li><li><a href="faq.html">FAQ</a></li></ul></nav>
-  <div class="nav__actions"><div class="nav__social"><a href="https://www.linkedin.com/company/109973397" target="_blank" rel="noopener" aria-label="Carve Model on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5 2.5 2.5 0 01.02-5zM3 8.98h4v12H3v-12zM9 8.98h3.83v1.64h.05c.53-1 1.84-2.06 3.79-2.06 4.05 0 4.8 2.67 4.8 6.14v6.28h-4v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9v-12z"/></svg></a><a href="https://www.instagram.com/carvemodel" target="_blank" rel="noopener" aria-label="Carve Model on Instagram"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg></a></div><a class="nav__login" href="login.html">Client Login</a><a class="btn btn--primary" href="contact.html" aria-current="page">Get a Free Quote</a><button class="nav__toggle" data-menu-toggle aria-label="Menu"><span></span></button></div>
-</div>
-<div class="mobile-menu" id="mobileMenu"><a href="services.html">Services</a><a href="process.html">Process</a><a href="works.html">Works</a><a href="about.html">About</a><a href="blog.html">Blog</a><a href="faq.html">FAQ</a><a href="login.html">Client Login</a><a href="contact.html">Get a Free Quote</a></div>
-</header>
+</Fragment>
 
 <main>
 <div class="container contact-wrap">
@@ -321,7 +311,7 @@
           <ul class="filelist" id="fileList"></ul>
           <div class="orlink"><span>or share a link</span></div>
           <input id="filelink" name="filelink" type="url" placeholder="Dropbox, Google Drive, WeTransfer, or OneDrive link">
-          <div class="hint">Architectural files are often large — a shared cloud link is perfect. Please set it to “anyone with the link can view.”</div>
+          <div class="hint">Architectural files are often large — a shared cloud link is perfect. Please set it to "anyone with the link can view."</div>
         </div>
       </fieldset>
 
@@ -364,7 +354,7 @@
       <h3>Thanks — we've got it.</h3>
       <p>We'll review your project and reply within one business day. Once we've looked over your scope, we'll set up your private workspace and place a <strong style="color:var(--cm-text);">preliminary quote</strong> inside for you to review — no payment due until you approve.</p>
       <p class="form-note" style="margin-top:1.2rem;">Already been invited? You can open your client portal anytime.</p>
-      <a class="btn btn--ghost mt-3" href="app.html" style="margin-top:1rem;">Open the Studio Portal →</a>
+      <a class="btn btn--ghost mt-3" href="/app" style="margin-top:1rem;">Open the Studio Portal →</a>
     </div>
   </div>
 </div>
@@ -372,17 +362,8 @@
 <section class="section"><div class="container"><hr class="rule"></div></section>
 </main>
 
-<footer class="site-footer"><div class="container">
-  <div class="footer__top">
-    <div class="footer__brand"><img src="assets/logo-lockup.png" alt="Carve Model"><p>A Los Angeles physical model studio. Architectural, product, film, and art models — built for confident decisions, tracked end to end.</p></div>
-    <div class="footer__col"><h4>Services</h4><ul><li><a href="services.html#architectural">Architectural Models</a></li><li><a href="services.html#sales">Sales Gallery Models</a></li><li><a href="services.html#product">Product Prototypes</a></li><li><a href="services.html#film">Film Miniatures</a></li><li><a href="services.html#art">Art &amp; Sculpture</a></li></ul></div>
-    <div class="footer__col"><h4>Studio</h4><ul><li><a href="about.html">About</a></li><li><a href="process.html">Process</a></li><li><a href="works.html">Works</a></li><li><a href="blog.html">Blog</a></li><li><a href="faq.html">FAQ</a></li></ul></div>
-    <div class="footer__col"><h4>Get in touch</h4><ul><li><a href="contact.html">Get a Free Quote</a></li><li><a href="app.html">Client Portal</a></li><li><a href="mailto:support@physical-model.com">support@physical-model.com</a></li><li><a href="#">Los Angeles, CA</a></li></ul></div>
-  </div>
-  <div class="footer__bottom"><p>© 2026 Carve Model. All rights reserved.</p><div class="footer__social"><a class="social-link" href="https://www.linkedin.com/company/109973397" target="_blank" rel="noopener" aria-label="Carve Model on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5 2.5 2.5 0 01.02-5zM3 8.98h4v12H3v-12zM9 8.98h3.83v1.64h.05c.53-1 1.84-2.06 3.79-2.06 4.05 0 4.8 2.67 4.8 6.14v6.28h-4v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9v-12z"/></svg></a><a class="social-link" href="https://www.instagram.com/carvemodel" target="_blank" rel="noopener" aria-label="Carve Model on Instagram"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg></a></div></div>
-</div></footer>
-<script src="site.js"></script>
-<script>
+<Fragment slot="scripts">
+<script is:inline>
 /* ---- Wizard navigation ---- */
 var wizStep=1, wizMax=4;
 function showStep(n){
@@ -582,7 +563,7 @@ function changePlan(){
 var STANDARD_FRACTIONS=[[3,'3"'],[2,'2"'],[1.5,'1 1/2"'],[1,'1"'],[0.75,'3/4"'],[0.5,'1/2"'],[0.375,'3/8"'],[0.25,'1/4"'],[0.1875,'3/16"'],[0.125,'1/8"'],[0.09375,'3/32"'],[0.0625,'1/16"'],[0.03125,'1/32"'],[0.015625,'1/64"'],[0.0078125,'1/128"']];
 (function(){
   var sel=document.getElementById('scaleImp');
-  sel.innerHTML='<option value="">Select\u2026</option>'+STANDARD_FRACTIONS.map(function(f){return '<option value="'+f[0]+'">'+f[1]+'</option>';}).join('');
+  sel.innerHTML='<option value="">Select…</option>'+STANDARD_FRACTIONS.map(function(f){return '<option value="'+f[0]+'">'+f[1]+'</option>';}).join('');
 })();
 function syncScaleFromIntl(){
   var n=parseFloat(document.getElementById('scaleIntl').value);
@@ -651,7 +632,7 @@ function submitQuote(e){
   var today=new Date().toISOString().slice(0,10);
   var leadId='L'+Date.now();
   var submitBtn=document.getElementById('wizSubmit');
-  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Uploading files\u2026';}
+  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Uploading files…';}
 
   var uploadTasks=pickedFiles.map(function(f){
     if(!window.__fsStorage)return Promise.resolve({name:f.name,size:fmtSize(f.size),url:null});
@@ -688,7 +669,7 @@ function submitQuote(e){
     };
     if(!window.__fsDoc){
       alert('Live submission isn\'t connected right now — please email support@physical-model.com directly.');
-      if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Send project details \u2192';}
+      if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Send project details →';}
       return;
     }
     return window.__fsDoc.set({leads:firebase.firestore.FieldValue.arrayUnion(lead)},{merge:true}).then(function(){
@@ -699,15 +680,15 @@ function submitQuote(e){
   }).catch(function(err){
     console.error('Submission failed:',err);
     alert('Something went wrong sending your project — please try again or email support@physical-model.com directly.');
-    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Send project details \u2192';}
+    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Send project details →';}
   });
   return false;
 }
 </script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" is:inline></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js" is:inline></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js" is:inline></script>
+<script is:inline>
 var firebaseConfig={apiKey:"AIzaSyDAErAhr3G1PO1Vr2wHddA8-b8awihJDwM",authDomain:"carve-model-pilot.firebaseapp.com",projectId:"carve-model-pilot",storageBucket:"carve-model-pilot.firebasestorage.app",messagingSenderId:"494671559334",appId:"1:494671559334:web:a60ade35ca64597dd01267"};
 try{
   firebase.initializeApp(firebaseConfig);
@@ -715,5 +696,5 @@ try{
   window.__fsStorage=firebase.storage();
 }catch(e){console.error('Firebase init failed:',e);}
 </script>
-</body>
-</html>
+</Fragment>
+</BaseLayout>

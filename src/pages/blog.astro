@@ -1,0 +1,67 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Blog — Insights on Architectural Model Making | Carve Model"
+  description="Guides and insights on architectural model making: choosing the right scale, file preparation, materials, and how physical models drive faster decisions."
+  canonicalPath="/blog"
+  ogTitle="Blog | Carve Model"
+  ogDescription="Guides and insights on architectural model making."
+  active="blog"
+  imageSlot={true}
+>
+<Fragment slot="head">
+<style>
+.page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,3rem);border-bottom:1px solid var(--cm-line-faint);}
+.page-hero h1{margin-top:1.4rem;}.page-hero p{margin-top:1.4rem;}
+.feat{display:grid;grid-template-columns:1.1fr 0.9fr;gap:clamp(2rem,4vw,3.5rem);align-items:center;padding-block:clamp(2.5rem,4vw,3.5rem);border-bottom:1px solid var(--cm-line-faint);}
+.feat image-slot{width:100%;aspect-ratio:16/10;}
+.feat h2{font-size:clamp(1.6rem,2.8vw,2.4rem);letter-spacing:-0.02em;margin-top:1rem;}
+.feat p{margin-top:1rem;color:var(--cm-gray-300);}
+.feat .meta{font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);letter-spacing:0.04em;text-transform:uppercase;}
+.posts{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:3rem;}
+.post{border-top:1px solid var(--cm-border);padding-top:1.4rem;}
+.post .meta{font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);letter-spacing:0.04em;text-transform:uppercase;}
+.post h3{font-family:var(--font-display);font-size:1.25rem;font-weight:var(--w-semibold);margin-top:0.9rem;letter-spacing:-0.01em;line-height:1.2;}
+.post p{margin-top:0.7rem;color:var(--cm-text-muted);font-size:0.92rem;}
+.post a.read{display:inline-flex;gap:0.4rem;margin-top:1rem;font-family:var(--font-mono);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--cm-silver);}
+@media(max-width:820px){.feat{grid-template-columns:1fr;}.posts{grid-template-columns:1fr;}}
+</style>
+</Fragment>
+
+<main>
+<section class="page-hero"><div class="container">
+  <span class="eyebrow">Journal</span>
+  <h1 class="display-lg measure">Notes from the studio.</h1>
+  <p class="lead measure">Practical guides on scale, file prep, materials, and how physical models help teams decide faster.</p>
+</div></section>
+
+<div class="container">
+  <article class="feat">
+    <div><image-slot id="blog-feat" placeholder="Drop article hero image"></image-slot></div>
+    <div>
+      <span class="meta">Guide · Scale · 6 min</span>
+      <h2>How to Choose the Right Scale for an Architectural Model</h2>
+      <p>Choosing the right scale depends on the model's purpose, level of detail, and the actual dimensions of the object. Before selecting, calculate how big the model will be — a model that becomes unusually tall or tiny is a sign the scale needs adjusting.</p>
+      <a class="btn btn--ghost mt-2" href="/blog/how-to-choose-architectural-model-scale">Read the guide →</a>
+    </div>
+  </article>
+</div>
+
+<section class="section"><div class="container">
+  <div class="posts">
+    <article class="post"><span class="meta">Guide · Pricing</span><h3>How Much Does an Architectural Scale Model Cost?</h3><p>A breakdown of 2025 U.S. price ranges by model type — from concept and feasibility models to high-detail sales-gallery and large urban-planning models — and the factors that drive cost.</p><a class="read" href="/blog/how-much-does-architectural-model-cost">Read →</a></article>
+    <article class="post"><span class="meta">Guide · Timeline</span><h3>How Long Does It Take to Build an Architectural Scale Model?</h3><p>A day-by-day look at production — file prep, fabrication, painting, lighting, QC, and shipping — plus what affects your timeline and how to avoid rush fees.</p><a class="read" href="/blog/how-long-to-build-architectural-model">Read →</a></article>
+    <article class="post"><span class="meta">Guide · Types</span><h3>Types of Architectural Scale Models</h3><p>Concept, presentation, masterplan, and interior models — what each is best for, and how to choose the right type for clear communication and maximum impact.</p><a class="read" href="/blog/types-of-architectural-scale-models">Read →</a></article>
+  </div>
+</div></section>
+
+<section class="section" style="padding-top:0;"><div class="container">
+  <div class="cta reveal" style="position:relative;text-align:center;background:var(--cm-black);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:clamp(3rem,6vw,5rem) var(--gutter);">
+    <h2 class="display-md">Have a project in mind?</h2>
+    <p class="muted mt-2" style="max-width:44ch;margin-inline:auto;">We're happy to advise on scale and scope before you commit to anything.</p>
+    <div class="mt-4"><a class="btn btn--primary btn--lg" href="/contact">Get a Free Quote →</a></div>
+  </div>
+</div></section>
+</main>
+</BaseLayout>

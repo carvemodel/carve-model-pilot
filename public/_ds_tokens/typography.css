@@ -1,0 +1,43 @@
+/* Carve Model — Typography tokens */
+
+:root {
+  /* Families */
+  --cm-font-display: "Montserrat", "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cm-font-sans:    "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --cm-font-mono:    "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* Weights */
+  --cm-weight-regular: 400;
+  --cm-weight-medium:  500;
+  --cm-weight-semibold:600;
+  --cm-weight-bold:    700;
+  --cm-weight-black:   800;  /* display only */
+
+  /* Type scale (rem @ 16px root) */
+  --cm-text-xs:   0.75rem;   /* 12 — micro labels, captions */
+  --cm-text-sm:   0.8125rem; /* 13 — meta, mono ticks */
+  --cm-text-base: 0.9375rem; /* 15 — dense UI */
+  --cm-text-md:   1rem;      /* 16 — body */
+  --cm-text-lg:   1.125rem;  /* 18 — lead body */
+  --cm-text-xl:   1.375rem;  /* 22 — small heading */
+  --cm-text-2xl:  1.75rem;   /* 28 */
+  --cm-text-3xl:  2.25rem;   /* 36 */
+  --cm-text-4xl:  3rem;      /* 48 */
+  --cm-text-5xl:  clamp(3rem, 5.4vw, 5rem);     /* section display */
+  --cm-text-6xl:  clamp(3.5rem, 9vw, 7.5rem);   /* hero display */
+
+  /* Line heights */
+  --cm-leading-none:    1;
+  --cm-leading-tight:   1.06;  /* display */
+  --cm-leading-snug:    1.18;  /* headings */
+  --cm-leading-normal:  1.45;
+  --cm-leading-relaxed: 1.62;  /* body copy */
+
+  /* Tracking (letter-spacing) */
+  --cm-track-tight:  -0.02em;  /* large display */
+  --cm-track-snug:   -0.01em;  /* headings */
+  --cm-track-normal: 0;          /* @kind other */
+  --cm-track-wide:   0.08em;
+  --cm-track-eyebrow:0.22em;   /* uppercase eyebrows / "MODEL" lockup style */
+  --cm-track-mono:   0.04em;
+}

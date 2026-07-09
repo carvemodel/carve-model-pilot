@@ -1,33 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Carve Model — Architectural Scale Model Maker for Developers & Architects</title>
-<meta name="description" content="Carve Model is a Los Angeles physical model studio designing and fabricating architectural scale models, sales-gallery models, film miniatures, and product prototypes for teams who need clarity when decisions matter. Serving the U.S. & Canada.">
-<link rel="canonical" href="https://www.physical-model.com/">
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Carve Model — Architectural Scale Model Maker for Developers & Architects"
+  description="Carve Model is a Los Angeles physical model studio designing and fabricating architectural scale models, sales-gallery models, film miniatures, and product prototypes for teams who need clarity when decisions matter. Serving the U.S. & Canada."
+  canonicalPath="/"
+  ogTitle="Carve Model — Architectural Scale Model Maker"
+  ogDescription="Physical models built for clarity, scale, and realism. Architectural scale models, sales-gallery models, film miniatures, and product prototypes."
+  ogImage="https://www.physical-model.com/assets/og-home.jpg"
+  imageSlot={false}
+>
+<Fragment slot="head">
 <meta name="robots" content="index,follow">
-
-<!-- Open Graph -->
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Carve Model">
-<meta property="og:title" content="Carve Model — Architectural Scale Model Maker">
-<meta property="og:description" content="Physical models built for clarity, scale, and realism. Architectural scale models, sales-gallery models, film miniatures, and product prototypes.">
-<meta property="og:url" content="https://www.physical-model.com/">
-<meta property="og:image" content="https://www.physical-model.com/assets/og-home.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Carve Model — Architectural Scale Model Maker">
 <meta name="twitter:description" content="Physical models built for clarity, scale, and realism.">
-
-<link rel="icon" type="image/png" href="assets/logo-mark.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
-
-<!-- JSON-LD: LocalBusiness -->
-<script type="application/ld+json">
-{
+<script type="application/ld+json" is:inline set:html={`{
   "@context":"https://schema.org",
   "@type":"ProfessionalService",
   "name":"Carve Model",
@@ -48,9 +36,7 @@
     {"@type":"Offer","itemOffered":{"@type":"Service","name":"Film & Commercial Miniatures"}},
     {"@type":"Offer","itemOffered":{"@type":"Service","name":"Art Installations & Sculpture"}}
   ]
-}
-</script>
-
+}`} />
 <style>
 /* ===== Homepage-specific ===== */
 .hero{position:relative;padding-top:clamp(3rem,6vw,6rem);padding-bottom:clamp(3rem,5vw,5rem);overflow:hidden;}
@@ -62,8 +48,7 @@
 }
 .hero__grid{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0.5;
   background-image:linear-gradient(var(--cm-line-faint) 1px,transparent 1px),linear-gradient(90deg,var(--cm-line-faint) 1px,transparent 1px);
-  background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0,#000,transparent 80%);
-}
+  background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0,#000,transparent 80%);}
 .hero__inner{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr 0.95fr;gap:clamp(2rem,4vw,4.5rem);align-items:center;}
 .hero h1{margin-top:1.6rem;}
 .hero h1 em{font-style:normal;color:var(--cm-silver);}
@@ -197,43 +182,7 @@
 .faq-item[open] summary .pm::after{transform:scaleY(0);}
 .faq-item p{padding:0 0 1.6rem;color:var(--cm-text-muted);max-width:70ch;}
 </style>
-</head>
-<body>
-
-<!-- ===== Header ===== -->
-<header class="site-header">
-  <div class="container nav">
-    <a class="nav__brand" href="index.html" aria-label="Carve Model home">
-      <img src="assets/logo-lockup.png" alt="Carve Model">
-    </a>
-    <nav aria-label="Primary">
-      <ul class="nav__links">
-        <li><a href="services.html">Services</a></li>
-        <li><a href="process.html">Process</a></li>
-        <li><a href="works.html">Works</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="blog.html">Blog</a></li>
-        <li><a href="faq.html">FAQ</a></li>
-      </ul>
-    </nav>
-    <div class="nav__actions">
-      <div class="nav__social"><a href="https://www.linkedin.com/company/109973397" target="_blank" rel="noopener" aria-label="Carve Model on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5 2.5 2.5 0 01.02-5zM3 8.98h4v12H3v-12zM9 8.98h3.83v1.64h.05c.53-1 1.84-2.06 3.79-2.06 4.05 0 4.8 2.67 4.8 6.14v6.28h-4v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9v-12z"/></svg></a><a href="https://www.instagram.com/carvemodel" target="_blank" rel="noopener" aria-label="Carve Model on Instagram"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg></a></div>
-      <a class="nav__login" href="login.html">Client Login</a>
-      <a class="btn btn--primary" href="contact.html">Get a Free Quote</a>
-      <button class="nav__toggle" data-menu-toggle aria-label="Menu"><span></span></button>
-    </div>
-  </div>
-  <div class="mobile-menu" id="mobileMenu">
-    <a href="services.html">Services</a>
-    <a href="process.html">Process</a>
-    <a href="works.html">Works</a>
-    <a href="about.html">About</a>
-    <a href="blog.html">Blog</a>
-    <a href="faq.html">FAQ</a>
-    <a href="login.html">Client Login</a>
-    <a href="contact.html">Get a Free Quote</a>
-  </div>
-</header>
+</Fragment>
 
 <main>
 <!-- ===== Hero ===== -->
@@ -246,8 +195,8 @@
         <h1 class="display-xl">Physical models for <em>confident</em> decisions.</h1>
         <p class="hero__sub lead">Carve Model is a physical model studio that designs and fabricates architectural scale models, sales-gallery pieces, product prototypes, film miniatures, and art installations — built for the moments where decisions are made.</p>
         <div class="hero__cta">
-          <a class="btn btn--primary btn--lg" href="contact.html">Get a Free Quote <span class="arrow">→</span></a>
-          <a class="btn btn--ghost btn--lg" href="works.html">View Our Work</a>
+          <a class="btn btn--primary btn--lg" href="/contact">Get a Free Quote <span class="arrow">→</span></a>
+          <a class="btn btn--ghost btn--lg" href="/works">View Our Work</a>
         </div>
       </div>
       <div class="hero__visual reveal">
@@ -275,15 +224,15 @@
     <span class="clients__label">Trusted by teams who present with confidence</span>
     <div class="marquee" id="clientMarquee">
       <div class="marquee__track">
-        <div class="logo-cell"><img src="assets/client-gensler.png" alt="Gensler"></div>
-        <div class="logo-cell"><img src="assets/client-populous.jpeg" alt="Populous" class="logo-populous"></div>
-        <div class="logo-cell"><img src="assets/client-turner.png" alt="Turner Construction" class="on-light"></div>
-        <div class="logo-cell"><img src="assets/client-gensler.png" alt="Gensler" aria-hidden="true"></div>
-        <div class="logo-cell"><img src="assets/client-populous.jpeg" alt="" class="logo-populous" aria-hidden="true"></div>
-        <div class="logo-cell"><img src="assets/client-turner.png" alt="" class="on-light" aria-hidden="true"></div>
-        <div class="logo-cell"><img src="assets/client-gensler.png" alt="" aria-hidden="true"></div>
-        <div class="logo-cell"><img src="assets/client-populous.jpeg" alt="" class="logo-populous" aria-hidden="true"></div>
-        <div class="logo-cell"><img src="assets/client-turner.png" alt="" class="on-light" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-gensler.png" alt="Gensler"></div>
+        <div class="logo-cell"><img src="/assets/client-populous.jpeg" alt="Populous" class="logo-populous"></div>
+        <div class="logo-cell"><img src="/assets/client-turner.png" alt="Turner Construction" class="on-light"></div>
+        <div class="logo-cell"><img src="/assets/client-gensler.png" alt="Gensler" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-populous.jpeg" alt="" class="logo-populous" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-turner.png" alt="" class="on-light" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-gensler.png" alt="" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-populous.jpeg" alt="" class="logo-populous" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-turner.png" alt="" class="on-light" aria-hidden="true"></div>
       </div>
     </div>
   </div>
@@ -305,44 +254,44 @@
         <span class="eyebrow reveal">What we build</span>
         <h2 class="display-md reveal mt-3">A model for every decision.</h2>
       </div>
-      <a class="btn btn--ghost reveal" href="services.html">All services <span class="arrow">→</span></a>
+      <a class="btn btn--ghost reveal" href="/scale-model-services">All services <span class="arrow">→</span></a>
     </div>
     <div class="svc-grid">
       <article class="svc reveal">
         <span class="svc__idx">01 / Architecture</span>
         <h3>Architectural Scale Models</h3>
         <p>Massing studies to fully detailed replicas — for planning approvals, investor meetings, and sales galleries. Façade, glazing, and structure rendered at the right level of detail.</p>
-        <a class="svc__more" href="services.html#architectural">Explore →</a>
+        <a class="svc__more" href="/scale-model-services#architectural">Explore →</a>
       </article>
       <article class="svc reveal" data-delay="60">
         <span class="svc__idx">02 / Marketing</span>
         <h3>Sales Gallery &amp; Presentation</h3>
         <p>High-finish display models with lighting and premium bases, designed to make a strong visual impression in marketing suites and investment pitches.</p>
-        <a class="svc__more" href="services.html#sales">Explore →</a>
+        <a class="svc__more" href="/scale-model-services#sales">Explore →</a>
       </article>
       <article class="svc reveal" data-delay="120">
         <span class="svc__idx">03 / Product</span>
         <h3>Product Prototypes</h3>
         <p>We transform sketches and CAD files into fully built physical mockups for product designers, engineers, and hardware startups.</p>
-        <a class="svc__more" href="services.html#product">Explore →</a>
+        <a class="svc__more" href="/scale-model-services#product">Explore →</a>
       </article>
       <article class="svc reveal" data-delay="180">
         <span class="svc__idx">04 / Film</span>
         <h3>Film &amp; Commercial Miniatures</h3>
         <p>Miniature sets for previsualization and cinematic planning, built from lightweight film-grade materials, ready for transport or on-location staging.</p>
-        <a class="svc__more" href="services.html#film">Explore →</a>
+        <a class="svc__more" href="/scale-model-services#film">Explore →</a>
       </article>
       <article class="svc reveal" data-delay="240">
         <span class="svc__idx">05 / Site</span>
         <h3>Topographic &amp; Site Models</h3>
         <p>Accurate terrain, hardscape, and landscape — grade changes, roads, and water features — for planning, design reviews, and context massing.</p>
-        <a class="svc__more" href="services.html#topographic">Explore →</a>
+        <a class="svc__more" href="/scale-model-services#topographic">Explore →</a>
       </article>
       <article class="svc reveal" data-delay="300">
         <span class="svc__idx">06 / Art</span>
         <h3>Art Installations &amp; Sculpture</h3>
         <p>We work with artists and cultural institutions to fabricate sculptural works and installations — from maquette to precise, exhibition-ready object.</p>
-        <a class="svc__more" href="services.html#art">Explore →</a>
+        <a class="svc__more" href="/scale-model-services#art">Explore →</a>
       </article>
     </div>
   </div>
@@ -380,7 +329,7 @@
         <span class="eyebrow reveal">How it works</span>
         <h2 class="display-md reveal mt-3">From files to finished model.</h2>
       </div>
-      <a class="btn btn--ghost reveal" href="process.html">Full process <span class="arrow">→</span></a>
+      <a class="btn btn--ghost reveal" href="/model-making-process">Full process <span class="arrow">→</span></a>
     </div>
     <div class="proc">
       <div class="proc__step reveal"><span class="n">STEP 01</span><h4>Goal &amp; Audience</h4><p>We identify how the model will be used — approvals, investor meetings, or design reviews — and align on scope.</p></div>
@@ -399,7 +348,7 @@
         <span class="eyebrow reveal">Selected work</span>
         <h2 class="display-md reveal mt-3">Built for the room it enters.</h2>
       </div>
-      <a class="btn btn--ghost reveal" href="works.html">View portfolio <span class="arrow">→</span></a>
+      <a class="btn btn--ghost reveal" href="/works">View portfolio <span class="arrow">→</span></a>
     </div>
     <div class="works-grid">
       <figure class="work reveal" style="margin:0;">
@@ -442,8 +391,8 @@
           <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Provider &amp; client views — one source of truth</li>
         </ul>
         <div class="hero__cta" style="margin-top:2rem;">
-          <a class="btn btn--primary" href="app.html">Open the Portal <span class="arrow">→</span></a>
-          <a class="btn btn--ghost" href="app.html">See how it works</a>
+          <a class="btn btn--primary" href="/app">Open the Portal <span class="arrow">→</span></a>
+          <a class="btn btn--ghost" href="/app">See how it works</a>
         </div>
       </div>
       <div class="platform__visual">
@@ -504,7 +453,7 @@
         <p>Common scales include 1:50, 1:100, 1:200, and 1:500 — each suited to different needs. Scale selection is guided by model size, viewing distance, and required detail, and we provide recommendations during review.</p>
       </details>
     </div>
-    <div class="mt-4"><a class="btn btn--ghost" href="faq.html">All FAQs <span class="arrow">→</span></a></div>
+    <div class="mt-4"><a class="btn btn--ghost" href="/faq">All FAQs <span class="arrow">→</span></a></div>
   </div>
 </section>
 
@@ -525,7 +474,7 @@
           <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> We review scope and recommend scale</li>
           <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> A free, no-obligation reply</li>
         </ul>
-        <a class="btn btn--primary mt-3" href="contact.html" style="margin-top:1.6rem;">Get a Free Quote <span class="arrow">→</span></a>
+        <a class="btn btn--primary mt-3" href="/contact" style="margin-top:1.6rem;">Get a Free Quote <span class="arrow">→</span></a>
       </article>
       <article class="path reveal" data-delay="100">
         <span class="path__num">02</span>
@@ -536,7 +485,7 @@
           <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Accept or request changes online</li>
           <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> No payment until you approve</li>
         </ul>
-        <a class="btn btn--ghost mt-3" href="app.html" style="margin-top:1.6rem;">Open the Portal <span class="arrow">→</span></a>
+        <a class="btn btn--ghost mt-3" href="/app" style="margin-top:1.6rem;">Open the Portal <span class="arrow">→</span></a>
       </article>
     </div>
   </div>
@@ -550,60 +499,12 @@
         <h2 class="mt-3">Tell us what decision your model needs to support.</h2>
         <p>If you need a display object, we may not be the right fit. If you need confidence when decisions matter, Carve Model is built for that purpose.</p>
         <div class="cta__btns">
-          <a class="btn btn--primary btn--lg" href="contact.html">Get a Free Quote <span class="arrow">→</span></a>
-          <a class="btn btn--ghost btn--lg" href="works.html">View Our Work</a>
+          <a class="btn btn--primary btn--lg" href="/contact">Get a Free Quote <span class="arrow">→</span></a>
+          <a class="btn btn--ghost btn--lg" href="/works">View Our Work</a>
         </div>
       </div>
     </div>
   </div>
 </section>
 </main>
-
-<!-- ===== Footer ===== -->
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer__top">
-      <div class="footer__brand">
-        <img src="assets/logo-lockup.png" alt="Carve Model">
-        <p>A Los Angeles physical model studio. Architectural, product, film, and art models — built for confident decisions, tracked end to end.</p>
-      </div>
-      <div class="footer__col">
-        <h4>Services</h4>
-        <ul>
-          <li><a href="services.html#architectural">Architectural Models</a></li>
-          <li><a href="services.html#sales">Sales Gallery Models</a></li>
-          <li><a href="services.html#product">Product Prototypes</a></li>
-          <li><a href="services.html#film">Film Miniatures</a></li>
-          <li><a href="services.html#art">Art &amp; Sculpture</a></li>
-        </ul>
-      </div>
-      <div class="footer__col">
-        <h4>Studio</h4>
-        <ul>
-          <li><a href="about.html">About</a></li>
-          <li><a href="process.html">Process</a></li>
-          <li><a href="works.html">Works</a></li>
-          <li><a href="blog.html">Blog</a></li>
-          <li><a href="faq.html">FAQ</a></li>
-        </ul>
-      </div>
-      <div class="footer__col">
-        <h4>Get in touch</h4>
-        <ul>
-          <li><a href="contact.html">Get a Free Quote</a></li>
-          <li><a href="app.html">Client Portal</a></li>
-          <li><a href="mailto:support@physical-model.com">support@physical-model.com</a></li>
-          <li><a href="#">Los Angeles, CA</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer__bottom">
-      <p>© 2026 Carve Model. All rights reserved.</p>
-      <div class="footer__social"><a class="social-link" href="https://www.linkedin.com/company/109973397" target="_blank" rel="noopener" aria-label="Carve Model on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5 2.5 2.5 0 01.02-5zM3 8.98h4v12H3v-12zM9 8.98h3.83v1.64h.05c.53-1 1.84-2.06 3.79-2.06 4.05 0 4.8 2.67 4.8 6.14v6.28h-4v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9v-12z"/></svg></a><a class="social-link" href="https://www.instagram.com/carvemodel" target="_blank" rel="noopener" aria-label="Carve Model on Instagram"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg></a></div>
-    </div>
-  </div>
-</footer>
-
-<script src="site.js"></script>
-</body>
-</html>
+</BaseLayout>

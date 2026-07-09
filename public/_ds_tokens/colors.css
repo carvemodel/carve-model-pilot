@@ -1,0 +1,81 @@
+/* Carve Model — Color tokens
+   Monochrome system. The brand lives on near-black; the only chromatic
+   note is the logo's silver (#B6B6B6). "Accent" is white-on-black or
+   black-on-white — contrast, never color. */
+
+:root {
+  /* ---- Base neutral ramp (raw values) ---- */
+  --cm-black:    #000000;   /* logo plate / hero plate */
+  --cm-ink-950:  #08090B;
+  --cm-ink-900:  #0D0E11;   /* page background */
+  --cm-ink-850:  #121317;
+  --cm-ink-800:  #17191D;   /* surface */
+  --cm-ink-700:  #1F2126;   /* raised surface / card */
+  --cm-ink-600:  #2A2D33;   /* hover surface / hairline-strong */
+  --cm-ink-500:  #3A3E45;
+  --cm-ink-400:  #54595F;
+  --cm-gray-500: #6E737B;
+  --cm-gray-400: #888D95;   /* muted text on dark */
+  --cm-gray-300: #A4A8AF;
+  --cm-silver:   #B6B6B6;   /* brand silver, sampled from logo mark */
+  --cm-gray-200: #C9CCD0;
+  --cm-gray-100: #E4E6E9;
+  --cm-paper-2:  #ECECEA;
+  --cm-paper:    #F5F5F3;   /* warm off-white light surface */
+  --cm-white:    #FFFFFF;
+
+  /* Hairlines via alpha (sit cleanly over any dark surface) */
+  --cm-line:        rgba(255,255,255,0.10);
+  --cm-line-strong: rgba(255,255,255,0.20);
+  --cm-line-faint:  rgba(255,255,255,0.06);
+  --cm-scrim:       rgba(0,0,0,0.55);
+  --cm-scrim-strong:rgba(0,0,0,0.78);
+
+  /* ---- Semantic aliases (default = dark, the brand's primary mode) ---- */
+  --cm-bg:            var(--cm-ink-900);
+  --cm-bg-plate:      var(--cm-black);      /* full-black hero / imagery plate */
+  --cm-surface:       var(--cm-ink-800);
+  --cm-surface-2:     var(--cm-ink-700);
+  --cm-surface-hover: var(--cm-ink-600);
+
+  --cm-border:        var(--cm-line);
+  --cm-border-strong: var(--cm-line-strong);
+
+  --cm-text:          #ECEDEE;   /* primary copy */
+  --cm-text-strong:   var(--cm-white);
+  --cm-text-muted:    var(--cm-gray-400);
+  --cm-text-subtle:   var(--cm-gray-500);
+  --cm-text-invert:   var(--cm-ink-900);
+
+  /* Action: monochrome contrast */
+  --cm-accent:          var(--cm-white);   /* primary fill */
+  --cm-accent-hover:    var(--cm-gray-100);
+  --cm-accent-contrast: var(--cm-ink-900); /* text on accent fill */
+  --cm-on-dark:         var(--cm-white);
+
+  --cm-focus-ring:    rgba(255,255,255,0.55);
+}
+
+/* ---- Light scope: inverted plate for light sections / light pages ---- */
+[data-theme="light"] {
+  --cm-bg:            var(--cm-paper);
+  --cm-bg-plate:      var(--cm-white);
+  --cm-surface:       var(--cm-white);
+  --cm-surface-2:     var(--cm-paper-2);
+  --cm-surface-hover: var(--cm-paper-2);
+
+  --cm-border:        rgba(13,14,17,0.12);
+  --cm-border-strong: rgba(13,14,17,0.24);
+
+  --cm-text:          #1A1B1E;
+  --cm-text-strong:   var(--cm-ink-900);
+  --cm-text-muted:    #5C616A;
+  --cm-text-subtle:   #898E96;
+  --cm-text-invert:   var(--cm-white);
+
+  --cm-accent:          var(--cm-ink-900);
+  --cm-accent-hover:    var(--cm-black);
+  --cm-accent-contrast: var(--cm-white);
+
+  --cm-focus-ring:    rgba(13,14,17,0.45);
+}
