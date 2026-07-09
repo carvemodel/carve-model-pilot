@@ -1,0 +1,56 @@
+/* Carve Model — Spacing, radius, border, elevation & motion
+   Architectural precision: a strict 4px grid, near-zero radii (carved,
+   sharp edges), hairline borders, restrained elevation. */
+
+:root {
+  /* ---- Spacing (4px base) ---- */
+  --cm-space-0:  0;
+  --cm-space-1:  0.25rem;  /* 4  */
+  --cm-space-2:  0.5rem;   /* 8  */
+  --cm-space-3:  0.75rem;  /* 12 */
+  --cm-space-4:  1rem;     /* 16 */
+  --cm-space-5:  1.5rem;   /* 24 */
+  --cm-space-6:  2rem;     /* 32 */
+  --cm-space-7:  3rem;     /* 48 */
+  --cm-space-8:  4rem;     /* 64 */
+  --cm-space-9:  6rem;     /* 96 */
+  --cm-space-10: 8rem;     /* 128 */
+  --cm-space-12: 12rem;    /* 192 — section rhythm */
+
+  --cm-gutter:    var(--cm-space-5);
+  --cm-section-y: clamp(4rem, 2rem + 8vw, 9rem);  /* @kind spacing */
+  --cm-container:  1280px;
+  --cm-container-narrow: 760px;
+
+  /* ---- Radii (sharp by intent) ---- */
+  --cm-radius-0:    0;
+  --cm-radius-sm:   2px;    /* default control / card edge */
+  --cm-radius-md:   4px;
+  --cm-radius-lg:   8px;
+  --cm-radius-pill: 999px;  /* tags / pills only */
+
+  /* ---- Borders ---- */
+  --cm-border-width: 1px;
+  --cm-border-width-strong: 1.5px;
+
+  /* ---- Elevation ----
+     Mostly flat on dark (separation via hairlines + surface step).
+     Shadows carry weight on light surfaces / floating layers. */
+  --cm-shadow-none: none;
+  --cm-shadow-sm:   0 1px 2px rgba(0,0,0,0.30);
+  --cm-shadow-md:   0 8px 24px -8px rgba(0,0,0,0.45);
+  --cm-shadow-lg:   0 24px 60px -16px rgba(0,0,0,0.55);
+  --cm-shadow-float:0 32px 80px -24px rgba(0,0,0,0.65);
+  /* subtle inner top-light, used on raised dark cards */
+  --cm-inset-top:   inset 0 1px 0 rgba(255,255,255,0.05);
+
+  /* ---- Motion ---- */
+  --cm-dur-1: 120ms;  /* @kind other */
+  --cm-dur-2: 200ms;  /* @kind other */
+  --cm-dur-3: 320ms;  /* @kind other */
+  --cm-dur-4: 520ms;  /* @kind other */
+  --cm-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);     /* @kind other */
+  /* --cm-ease-out: decisive settle curve */
+  --cm-ease-out:      cubic-bezier(0.22, 1, 0.36, 1);   /* @kind other */
+  --cm-ease-in-out:   cubic-bezier(0.65, 0, 0.35, 1);   /* @kind other */
+}

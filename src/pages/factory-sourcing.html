@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factory Sourcing — Carve Studio Portal | Carve Model</title>
+<meta name="robots" content="noindex,follow">
+<link rel="icon" type="image/png" href="/assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<style>
+body{background:var(--cm-ink-950);color:var(--cm-text);overflow:hidden;}
+.wrap{display:grid;grid-template-rows:auto 1fr;height:100vh;}
+
+/* ---- Top bar ---- */
+.bar{display:flex;align-items:center;gap:1.2rem;padding:0.7rem 1.4rem;background:var(--cm-ink-900);border-bottom:1px solid var(--cm-line-faint);}
+.bar__brand{display:flex;align-items:center;gap:0.9rem;}
+.bar__brand img{height:24px;}
+.bar__back{font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);display:inline-flex;align-items:center;gap:0.45rem;padding:0.4rem 0.7rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);transition:0.18s;}
+.bar__back:hover{color:var(--cm-text);border-color:var(--cm-border-strong);}
+.bar__crumb{min-width:0;}
+.bar__crumb .k{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.bar__crumb .t{font-family:var(--font-display);font-weight:var(--w-semibold);font-size:0.98rem;color:var(--cm-text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.bar__spacer{flex:1;}
+.demo-as{display:flex;align-items:center;gap:0.6rem;}
+.demo-as .lbl{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-silver);}
+.roleswitch{display:flex;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:3px;gap:3px;}
+.roleswitch button{border:0;background:transparent;color:var(--cm-text-muted);font-size:0.76rem;font-weight:var(--w-semibold);padding:0.42rem 0.8rem;border-radius:2px;transition:0.16s;display:flex;align-items:center;gap:0.4rem;}
+.roleswitch button .av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:var(--w-bold);font-size:0.56rem;}
+.roleswitch button.on{background:var(--cm-surface-2);color:var(--cm-text-strong);box-shadow:var(--shadow-md);}
+.av.studio{background:linear-gradient(135deg,#3A3E45,#1F2126);color:var(--cm-silver);}
+.av.fac{background:linear-gradient(135deg,var(--cm-ink-500),var(--cm-ink-700));color:var(--cm-text-strong);}
+.seatbox{margin-top:1rem;padding:0.8rem;border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);border-radius:var(--r-sm);background:rgba(182,182,182,0.04);}
+.seatbox[hidden]{display:none;}
+.seatbox__lbl{font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;color:var(--cm-silver);display:block;margin-bottom:0.55rem;}
+.roleswitch.sm{display:grid;grid-template-columns:1fr 1fr;}
+.roleswitch.sm button{justify-content:center;padding:0.42rem 0.5rem;}
+.seatbox__note{display:block;font-size:0.73rem;color:var(--cm-text-subtle);line-height:1.5;margin-top:0.6rem;}
+.assignbar{display:flex;align-items:center;gap:1rem;padding:0.85rem 1.1rem;border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);border-radius:var(--r-sm);background:rgba(182,182,182,0.04);margin-bottom:1.3rem;}
+.assignbar .ab-tx{font-size:0.85rem;color:var(--cm-text-muted);line-height:1.5;}
+.assignbar .ab-tx b{color:var(--cm-text);}
+.assignbtn{margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:0.5rem;font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.04em;text-transform:uppercase;border:1px solid var(--cm-border-strong);background:transparent;color:var(--cm-text-muted);border-radius:var(--r-pill);padding:0.4rem 0.7rem;transition:0.15s;}
+.assignbtn:hover{color:var(--cm-text-strong);}
+.assignbtn.on{background:var(--cm-white);color:var(--cm-ink-900);border-color:var(--cm-white);}
+.assignbtn .dotsw{width:8px;height:8px;border-radius:50%;background:currentColor;}
+
+/* ---- 2-column body ---- */
+.body{display:grid;grid-template-columns:300px 1fr;min-height:0;}
+.rail,.main{min-height:0;overflow-y:auto;}
+
+/* Left rail — briefs */
+.rail{background:var(--cm-ink-900);border-right:1px solid var(--cm-line-faint);}
+.rail__head{padding:1.1rem 1.2rem 0.6rem;}
+.rail__head .k{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.rail__head h2{font-family:var(--font-display);font-size:1.12rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);margin-top:0.3rem;letter-spacing:-0.01em;}
+.rail__head p{font-size:0.78rem;color:var(--cm-text-muted);margin-top:0.4rem;line-height:1.5;}
+.briefs{padding:0.3rem 0.7rem 1rem;}
+.briefbtn{display:block;width:100%;text-align:left;border:1px solid transparent;background:transparent;border-radius:var(--r-sm);padding:0.75rem 0.85rem;margin-bottom:3px;transition:0.15s;}
+.briefbtn:hover{background:var(--cm-ink-800);}
+.briefbtn.on{background:var(--cm-surface-2);border-color:var(--cm-border);}
+.briefbtn__code{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.05em;color:var(--cm-text-subtle);}
+.briefbtn__t{font-size:0.88rem;color:var(--cm-text);font-weight:var(--w-medium);line-height:1.3;margin-top:0.25rem;}
+.briefbtn.on .briefbtn__t{color:var(--cm-text-strong);}
+.briefbtn__m{display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;}
+.rchip{font-family:var(--font-mono);font-size:0.56rem;text-transform:uppercase;letter-spacing:0.05em;padding:0.18rem 0.45rem;border-radius:var(--r-pill);border:1px solid var(--cm-border);color:var(--cm-text-muted);white-space:nowrap;}
+.rchip.open{background:var(--cm-white);color:var(--cm-ink-900);border-color:transparent;}
+.rchip.awarded{background:rgba(182,182,182,0.18);color:var(--cm-gray-100);border-color:transparent;}
+.rchip.draft{background:transparent;color:var(--cm-silver);border-color:var(--cm-border-strong);}
+.rchip.quoted{background:rgba(182,182,182,0.18);color:var(--cm-gray-100);border-color:transparent;}
+.rchip.invited{background:transparent;color:var(--cm-silver);border-color:var(--cm-border-strong);}
+.rchip.notsel{background:transparent;color:var(--cm-text-subtle);border-color:var(--cm-border);}
+.bmeta{font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);margin-left:auto;}
+
+/* Main */
+.main{background:var(--cm-ink-950);}
+.mpad{padding:1.6rem 2rem;max-width:1000px;}
+.mhead{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;}
+.mhead .k{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.mhead h1{font-family:var(--font-display);font-size:1.5rem;font-weight:var(--w-bold);color:var(--cm-text-strong);letter-spacing:-0.015em;margin-top:0.4rem;}
+.mhead .sub{font-size:0.86rem;color:var(--cm-text-muted);margin-top:0.5rem;}
+
+.panel{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);margin-bottom:1.3rem;}
+.panel__head{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.95rem 1.2rem;border-bottom:1px solid var(--cm-line-faint);}
+.panel__head h3{font-size:1rem;font-weight:var(--w-semibold);}
+.panel__head .k{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.panel__body{padding:1.1rem 1.2rem;}
+
+/* spec rows */
+.specrow{display:grid;grid-template-columns:170px 1fr;gap:1rem;padding:0.6rem 0;border-bottom:1px solid var(--cm-line-faint);align-items:baseline;}
+.specrow:last-child{border-bottom:0;}
+.specrow .sl{font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.specrow .sv{font-size:0.9rem;color:var(--cm-text);line-height:1.5;}
+.specrow .sv.mono{font-family:var(--font-mono);font-size:0.82rem;color:var(--cm-gray-100);}
+
+/* withheld / redaction */
+.withheld{border:1px dashed var(--cm-border-strong);border-radius:var(--r-sm);background:rgba(182,182,182,0.03);}
+.withheld .panel__head{border-bottom:1px dashed var(--cm-line);}
+.lockrow{display:grid;grid-template-columns:170px 1fr;gap:1rem;padding:0.55rem 0;align-items:baseline;}
+.lockrow .sl{font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.lockrow .sv{font-size:0.88rem;color:var(--cm-text-muted);}
+.redact{display:inline-block;background:var(--cm-ink-600);color:transparent;border-radius:2px;padding:0 0.5rem;letter-spacing:0.1em;user-select:none;}
+.lockhint{font-size:0.8rem;color:var(--cm-text-subtle);line-height:1.55;padding:0.3rem 0 0.1rem;}
+.lockhint b{color:var(--cm-silver);font-weight:var(--w-semibold);}
+.lock-ic{color:var(--cm-silver);}
+
+/* factory quote table */
+.qtable{width:100%;}
+.qrow{display:grid;grid-template-columns:1.6fr 0.9fr 0.8fr 1.2fr;gap:1rem;padding:0.95rem 0;border-bottom:1px solid var(--cm-line-faint);align-items:center;}
+.qrow.head{padding:0.6rem 0;}
+.qrow.head span{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.qrow:last-child{border-bottom:0;}
+.facname{display:flex;align-items:center;gap:0.65rem;}
+.facname .av{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:var(--w-bold);font-size:0.62rem;}
+.facname .nm{font-size:0.88rem;color:var(--cm-text-strong);font-weight:var(--w-medium);}
+.facname .lc{font-family:var(--font-mono);font-size:0.58rem;color:var(--cm-text-subtle);margin-top:1px;}
+.qprice{font-family:var(--font-display);font-weight:var(--w-bold);font-size:1.05rem;color:var(--cm-text-strong);letter-spacing:-0.01em;}
+.qprice.muted{color:var(--cm-text-subtle);font-weight:var(--w-regular);font-size:0.84rem;font-family:var(--font-mono);}
+.qdays{font-family:var(--font-mono);font-size:0.82rem;color:var(--cm-gray-100);}
+.qdays.muted{color:var(--cm-text-subtle);}
+.qact{display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;}
+.qnote{grid-column:1/-1;font-size:0.82rem;color:var(--cm-text-muted);line-height:1.5;padding:0.1rem 0 0.2rem;border:0;}
+.qrow.best{position:relative;}
+.besttag{font-family:var(--font-mono);font-size:0.54rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-ink-900);background:var(--cm-silver);border-radius:var(--r-pill);padding:1px 6px;margin-left:0.5rem;}
+.awardtag{font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-ink-900);background:var(--cm-white);border-radius:var(--r-pill);padding:2px 8px;display:inline-flex;align-items:center;gap:0.3rem;}
+
+.btn--sm{padding:0.5rem 0.95rem;font-size:0.8rem;}
+.btn--xs{padding:0.42rem 0.8rem;font-size:0.74rem;}
+
+.emptywrap{padding:3rem 2rem;text-align:center;color:var(--cm-text-subtle);max-width:420px;margin:0 auto;}
+.emptywrap .ic{font-size:2rem;color:var(--cm-gray-500);}
+.emptywrap h3{font-family:var(--font-display);font-size:1.15rem;color:var(--cm-text);font-weight:var(--w-semibold);margin-top:0.8rem;}
+.emptywrap p{font-size:0.86rem;margin-top:0.6rem;line-height:1.6;}
+
+/* notice */
+.notice{border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);background:rgba(182,182,182,0.04);border-radius:var(--r-sm);padding:0.9rem 1.1rem;font-size:0.86rem;color:var(--cm-text-muted);line-height:1.55;margin-bottom:1.3rem;}
+.notice b{color:var(--cm-text);}
+
+/* quote form (factory) */
+.qform{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.qform .full{grid-column:1/-1;}
+.qfield label{display:block;font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-text-muted);margin-bottom:0.4rem;}
+.qfield input,.qfield textarea{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);color:var(--cm-text);font-family:var(--font-sans);font-size:0.88rem;padding:0.6rem 0.7rem;}
+.qfield input:focus,.qfield textarea:focus{outline:none;border-color:var(--cm-border-strong);}
+.qfield .pfx{position:relative;}
+.qfield .pfx span{position:absolute;left:0.7rem;top:50%;transform:translateY(-50%);font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;}
+.qfield .pfx input{padding-left:1.7rem;}
+.qform-actions{grid-column:1/-1;display:flex;gap:0.6rem;justify-content:flex-end;margin-top:0.3rem;}
+
+.statusbig{display:flex;align-items:center;gap:0.8rem;padding:0.4rem 0;}
+.statusbig .dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex:none;}
+.statusbig .dot.win{background:var(--cm-white);color:var(--cm-ink-900);}
+.statusbig .dot.wait{background:var(--cm-ink-700);color:var(--cm-silver);border:1px solid var(--cm-border-strong);}
+.statusbig .dot.lose{background:var(--cm-ink-800);color:var(--cm-text-subtle);border:1px solid var(--cm-border);}
+.statusbig .tx h4{font-family:var(--font-display);font-size:1rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
+.statusbig .tx p{font-size:0.82rem;color:var(--cm-text-muted);margin-top:0.2rem;line-height:1.5;}
+
+/* factory picker modal */
+.modal-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.7);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+.modal-overlay[hidden]{display:none;}
+.modal{width:100%;max-width:480px;background:var(--cm-ink-900);border:1px solid var(--cm-border-strong);border-radius:var(--r-md);box-shadow:var(--shadow-float);}
+.modal__head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--cm-line-faint);}
+.modal__head h3{font-size:1.1rem;font-weight:var(--w-semibold);}
+.modal__x{background:none;border:0;color:var(--cm-text-muted);font-size:1.5rem;line-height:1;padding:0 0.2rem;}
+.modal__x:hover{color:var(--cm-text-strong);}
+.modal__body{padding:1.3rem 1.4rem;}
+.modal__intro{font-size:0.86rem;color:var(--cm-text-muted);margin-bottom:1.1rem;line-height:1.55;}
+.facpick{display:flex;align-items:center;gap:0.8rem;padding:0.75rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);margin-bottom:0.6rem;cursor:pointer;transition:0.15s;}
+.facpick:hover{border-color:var(--cm-border-strong);}
+.facpick.sel{background:var(--cm-surface-2);border-color:var(--cm-border-strong);}
+.facpick.dis{opacity:0.45;pointer-events:none;}
+.facpick .ck{width:18px;height:18px;border:1.5px solid var(--cm-border-strong);border-radius:2px;flex:none;display:flex;align-items:center;justify-content:center;color:transparent;font-size:0.7rem;}
+.facpick.sel .ck{background:var(--cm-white);border-color:var(--cm-white);color:var(--cm-ink-900);}
+.facpick .av{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:var(--w-bold);font-size:0.62rem;}
+.facpick .fb .nm{font-size:0.88rem;color:var(--cm-text-strong);font-weight:var(--w-medium);}
+.facpick .fb .tg{font-family:var(--font-mono);font-size:0.58rem;color:var(--cm-text-subtle);margin-top:2px;}
+.facpick .already{margin-left:auto;font-family:var(--font-mono);font-size:0.56rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--cm-text-subtle);}
+.modal__foot{display:flex;justify-content:flex-end;gap:0.6rem;padding:1rem 1.4rem;border-top:1px solid var(--cm-line-faint);}
+
+.tags{display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.3rem;}
+.tag{font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.03em;text-transform:uppercase;color:var(--cm-gray-300);border:1px solid var(--cm-border);border-radius:var(--r-pill);padding:0.15rem 0.5rem;}
+
+.railtoggle{display:none;}
+@media(max-width:1080px){
+  .body{grid-template-columns:1fr;}
+  .rail{position:fixed;top:0;bottom:0;left:-320px;width:300px;z-index:60;transition:left 0.22s;}
+  .rail.open{left:0;box-shadow:var(--shadow-float);}
+  .railtoggle{display:inline-flex;}
+  .scrim2{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:55;}
+  .scrim2[hidden]{display:none;}
+}
+@media(max-width:680px){
+  .qrow{grid-template-columns:1fr;gap:0.5rem;}
+  .qrow.head{display:none;}
+  .specrow,.lockrow{grid-template-columns:1fr;gap:0.2rem;}
+  .qform{grid-template-columns:1fr;}
+  .demo-as .lbl{display:none;}
+}
+</style>
+</head>
+<body data-role="owner">
+<div class="wrap">
+
+  <header class="bar">
+    <a class="bar__back" href="/app" aria-label="Back to portal">← Portal</a>
+    <button class="bar__back railtoggle" onclick="toggleRail()" aria-label="Briefs">☰ Briefs</button>
+    <div class="bar__brand"><img src="/assets/logo-lockup.png" alt="Carve Model"></div>
+    <div class="bar__crumb">
+      <div class="k">Carve Model · Factory Sourcing</div>
+      <div class="t" id="crumbT">Outbound fabrication briefs</div>
+    </div>
+    <div class="bar__spacer"></div>
+    <div class="demo-as">
+      <span class="lbl">◆ Demo · view as</span>
+      <div class="roleswitch" id="roleswitch"></div>
+    </div>
+  </header>
+
+  <div class="body">
+    <aside class="rail" id="rail">
+      <div class="rail__head">
+        <span class="k" id="railK">Carve Model studio</span>
+        <h2 id="railH">Fabrication briefs</h2>
+        <p id="railP">Send an anonymized model brief to outside factories, collect competing quotes, and award the work — client identity stays private until you choose.</p>
+        <div class="seatbox" id="seatBox" hidden>
+          <span class="seatbox__lbl">◆ Demo · your seat at this factory</span>
+          <div class="roleswitch sm">
+            <button id="seat-admin" class="on" onclick="setSeat('admin')">Admin</button>
+            <button id="seat-staff" onclick="setSeat('staff')">Staff</button>
+          </div>
+          <span class="seatbox__note" id="seatNote"></span>
+        </div>
+      </div>
+      <div class="briefs" id="briefList"></div>
+    </aside>
+
+    <main class="main" id="main"></main>
+  </div>
+</div>
+
+<!-- Factory picker modal -->
+<div class="modal-overlay" id="pickModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Send to factories">
+    <div class="modal__head"><h3>Send brief to factories</h3><button class="modal__x" onclick="closePick()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <p class="modal__intro">Each factory gets a secure link to the <b>anonymized brief</b> — specs, scale, materials and deadline only. Client name, company, contact and exact address are <b>never shared</b> with a factory, even the one you award.</p>
+      <div id="pickList"></div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--ghost btn--sm" onclick="closePick()">Cancel</button>
+      <button class="btn btn--primary btn--sm" onclick="confirmPick()">Send anonymized brief</button>
+    </div>
+  </div>
+</div>
+<div class="scrim2" id="scrim2" hidden onclick="toggleRail(true)"></div>
+
+<script>
+/* ============================================================
+   DIRECTORY + DATA
+   ============================================================ */
+var FACTORIES=[
+  {id:'meridian', name:'Meridian Scale Works', loc:'Portland, OR', av:'MS', tags:['Architecture','CNC acrylic','Edge-lit bases']},
+  {id:'atlas', name:'Atlas Model Fabrication', loc:'Toronto, ON', av:'AM', tags:['Masterplan','3D print','Landscape']},
+  {id:'northpoint', name:'Northpoint Prototyping', loc:'San Diego, CA', av:'NP', tags:['Product','Resin casting','Fast turnaround']}
+];
+function fac(id){return FACTORIES.filter(function(f){return f.id===id;})[0];}
+// One demo fabrication-staff member per factory (real accounts would have many).
+var STAFF={meridian:{name:'Theo Park',av:'TP'},atlas:{name:'Lena Ortiz',av:'LO'},northpoint:{name:'Sam Cole',av:'SC'}};
+var PHOTO_ROUNDS=[
+  {id:'s3r1',label:'Stage 3 · After cut & pre-assembled'},
+  {id:'s4r1',label:'Stage 4 · After paint'},
+  {id:'s4r2',label:'Stage 4 · After final fixed'},
+  {id:'s4r3',label:'Stage 4 · Cleaned & polished — ready to pack'},
+  {id:'s4r4',label:'Stage 4 · After packaged'}
+];
+
+function seed(){return {
+  role:'owner',
+  briefs:[
+    {id:'b-aria', code:'CM-2041', title:'1:96 architectural massing — tower', stamp:'Sent Mar 6',
+     spec:{Type:'Architectural massing',Scale:'1:96 · 1/8" = 1\'-0"',Dimensions:'610 × 460 × 720 mm',Material:'White acrylic + frosted glazing',Base:'Black acrylic · edge-lit',Features:'CNC façade reveals · removable crown · LED night-lighting channel',Deadline:'Apr 2, 2026 · 28 days',Region:'West Coast, United States',Files:'massing-rebuild.3dm · façade-elevations.pdf — title blocks stripped'},
+     withheld:{Client:'Daniel Reyes',Company:'Reyes Development Group',Contact:'d.reyes@reyesdev.com · (310) 555-0148',Address:'Grand Ave, Los Angeles, CA 90071',Budget:'Studio target ≈ $2,270'},
+     status:'open', awarded:null,
+     invites:[
+       {factory:'meridian',status:'quoted',price:1950,days:18,note:'We can hold the 1:96 façade reveals on our 3-axis CNC and frost the glazing in-house. Crown built removable as specced. Edge-lit base included.'},
+       {factory:'atlas',status:'quoted',price:2300,days:14,note:'Faster turnaround by running the cut and print in parallel. Premium on speed; finish quality unaffected.'},
+       {factory:'northpoint',status:'invited',price:null,days:null,note:''}
+     ]},
+    {id:'b-harbor', code:'CM-2038', title:'1:500 masterplan — waterfront', stamp:'Awarded Feb 20',
+     spec:{Type:'Urban masterplan',Scale:'1:500',Dimensions:'1200 × 900 mm',Material:'MDF terrain + acrylic massing',Base:'Painted MDF',Features:'Topographic contour base · road-network inlay · 60+ massing blocks',Deadline:'May 15, 2026',Region:'Pacific Northwest, United States',Files:'site-survey.dwg · massing-set.skp — anonymized'},
+     withheld:{Client:'Withheld',Company:'Halcyon Capital',Contact:'Withheld',Address:'Seattle, WA',Budget:'—'},
+     status:'awarded', awarded:'northpoint', staffAssigned:true,
+     invites:[
+       {factory:'atlas',status:'quoted',price:8400,days:30,note:'Masterplans are our core work. Contour CNC plus hand-finished landscape and water.'},
+       {factory:'northpoint',status:'quoted',price:7950,days:34,note:'Competitive on price with a slightly longer lead — full contour base and painted roads included.'}
+     ]},
+    {id:'b-nova', code:'CM-2044', title:'1:50 sales-gallery interior', stamp:'Draft',
+     spec:{Type:'Sales gallery / interior cutaway',Scale:'1:50',Dimensions:'500 × 400 mm',Material:'Resin + acrylic',Base:'White acrylic',Features:'Removable roof · furnished interior · warm interior lighting',Deadline:'To be confirmed',Region:'South Central, United States',Files:'Not yet attached'},
+     withheld:{Client:'Withheld',Company:'Nova Residences',Contact:'Withheld',Address:'Austin, TX',Budget:'—'},
+     status:'draft', awarded:null, invites:[]}
+  ]
+};}
+
+/* ============================================================
+   STATE + PERSISTENCE
+   ============================================================ */
+var KEY='cm_sourcing_v2';
+var DB=load();
+var currentRole=DB.role||'owner';
+var factorySeat=DB.seat||'admin';
+var currentBriefId=null;
+var pickSel={};
+
+function load(){try{var raw=localStorage.getItem(KEY);if(raw){var d=JSON.parse(raw);if(d&&d.briefs)return d;}}catch(e){}return seed();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+function brief(id){return DB.briefs.filter(function(b){return b.id===id;})[0];}
+function isFactory(){return currentRole!=='owner';}
+function myInvite(b){return b.invites.filter(function(i){return i.factory===currentRole;})[0];}
+function visibleBriefs(){
+  if(!isFactory())return DB.briefs;
+  if(factorySeat==='staff'){
+    // Staff only see jobs awarded to their factory AND assigned to them.
+    return DB.briefs.filter(function(b){return b.awarded===currentRole && b.staffAssigned;});
+  }
+  // Admin sees every project the factory is working on with Carve (quoting + awarded).
+  return DB.briefs.filter(function(b){return b.status!=='draft' && myInvite(b);});
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function money(n){return n==null?'—':'$'+n.toLocaleString('en-US');}
+
+/* ============================================================
+   ROLE SWITCH
+   ============================================================ */
+function setSeat(s){
+  factorySeat=s; DB.seat=s; save();
+  setRole(currentRole); // re-derives visibility + header for the new seat
+}
+function updateSeatBox(){
+  var box=document.getElementById('seatBox');
+  if(!isFactory()){box.hidden=true;return;}
+  box.hidden=false;
+  document.getElementById('seat-admin').classList.toggle('on',factorySeat==='admin');
+  document.getElementById('seat-staff').classList.toggle('on',factorySeat==='staff');
+  var note=document.getElementById('seatNote');
+  if(factorySeat==='staff'){
+    var st=STAFF[currentRole];
+    note.innerHTML='Signed in as <b style="color:var(--cm-text);">'+st.name+'</b> \u00b7 fabrication staff. You only see jobs assigned to you \u2014 no quotes, prices, or other projects.';
+  }else{
+    note.innerHTML='Admin seat. You manage quotations for every Carve project and assign staff to awarded jobs.';
+  }
+}
+function renderRoles(){
+  var html='<button id="role-owner" class="'+(currentRole==='owner'?'on':'')+'" onclick="setRole(\'owner\')"><span class="av studio">MO</span>Owner</button>';
+  FACTORIES.forEach(function(f){
+    html+='<button id="role-'+f.id+'" class="'+(currentRole===f.id?'on':'')+'" onclick="setRole(\''+f.id+'\')"><span class="av fac">'+f.av+'</span>'+f.name.split(' ')[0]+'</button>';
+  });
+  document.getElementById('roleswitch').innerHTML=html;
+}
+function setRole(r){
+  currentRole=r; DB.role=r; save();
+  document.body.dataset.role=isFactory()?'factory':'owner';
+  renderRoles();
+  // rail header reframes per role
+  if(isFactory()){
+    document.getElementById('railK').textContent=fac(r).name;
+    if(factorySeat==='staff'){
+      document.getElementById('railH').textContent='Assigned jobs';
+      document.getElementById('railP').textContent='The projects your factory admin has assigned to you. Review the build spec and post photos — quotations and pricing aren’t shown to staff.';
+    }else{
+      document.getElementById('railH').textContent='Quotation';
+      document.getElementById('railP').textContent='Every project your shop is working on with Carve Model — anonymized briefs to quote, plus jobs you’ve won. Client identity stays private throughout.';
+    }
+  }else{
+    document.getElementById('railK').textContent='Carve Model studio';
+    document.getElementById('railH').textContent='Fabrication briefs';
+    document.getElementById('railP').textContent='Send an anonymized model brief to outside factories, collect competing quotes, and award the work — client identity stays private until you choose.';
+  }
+  updateSeatBox();
+  var vis=visibleBriefs();
+  if(!vis.length){currentBriefId=null;}
+  else if(!currentBriefId || !vis.filter(function(b){return b.id===currentBriefId;}).length){currentBriefId=vis[0].id;}
+  renderRail(); renderMain();
+}
+
+/* ============================================================
+   LEFT RAIL
+   ============================================================ */
+function renderRail(){
+  var vis=visibleBriefs();
+  if(!vis.length){document.getElementById('briefList').innerHTML='<div style="padding:1rem;color:var(--cm-text-subtle);font-size:0.82rem;line-height:1.5;">No briefs have been sent to you yet.</div>';return;}
+  var html='';
+  vis.forEach(function(b){
+    var chip=railChip(b);
+    html+='<button class="briefbtn'+(b.id===currentBriefId?' on':'')+'" onclick="openBrief(\''+b.id+'\')">'+
+      '<div class="briefbtn__code">'+b.code+'</div>'+
+      '<div class="briefbtn__t">'+b.title+'</div>'+
+      '<div class="briefbtn__m">'+chip+'<span class="bmeta">'+railMeta(b)+'</span></div>'+
+    '</button>';
+  });
+  document.getElementById('briefList').innerHTML=html;
+}
+function railChip(b){
+  if(isFactory()){
+    if(factorySeat==='staff')return '<span class="rchip awarded">Assigned</span>';
+    var mi=myInvite(b);
+    if(b.awarded===currentRole)return '<span class="rchip awarded">Awarded to you</span>';
+    if(b.status==='awarded')return '<span class="rchip notsel">Not selected</span>';
+    if(mi&&mi.status==='quoted')return '<span class="rchip quoted">Quote sent</span>';
+    return '<span class="rchip invited">Action needed</span>';
+  }
+  if(b.status==='awarded')return '<span class="rchip awarded">Awarded</span>';
+  if(b.status==='draft')return '<span class="rchip draft">Draft</span>';
+  return '<span class="rchip open">Open · '+b.invites.filter(function(i){return i.status==='quoted';}).length+' quotes</span>';
+}
+function railMeta(b){
+  if(isFactory())return b.code;
+  return b.invites.length+' invited';
+}
+
+/* ============================================================
+   MAIN
+   ============================================================ */
+function openBrief(id){currentBriefId=id;renderRail();renderMain();if(window.innerWidth<=1080)toggleRail(true);}
+
+function renderMain(){
+  var main=document.getElementById('main');
+  if(!currentBriefId){
+    var emptyMsg, emptyTitle;
+    if(!isFactory()){emptyTitle='No brief selected';emptyMsg='Pick a brief from the left, or start a new one.';}
+    else if(factorySeat==='staff'){emptyTitle='No jobs assigned to you';emptyMsg='Your factory admin hasn’t assigned you to a project yet. Assigned jobs — with build specs and photo upload — will appear here.';}
+    else {emptyTitle='No projects yet';emptyMsg='Carve Model will invite your shop to quote when a model suits you. Quoting and awarded jobs both show here.';}
+    main.innerHTML='<div class="emptywrap"><div class="ic">⊹</div><h3>'+emptyTitle+'</h3><p>'+emptyMsg+'</p></div>';return;}
+  var b=brief(currentBriefId);
+  document.getElementById('crumbT').textContent=b.code+' · '+b.title;
+  main.innerHTML='<div class="mpad">'+(isFactory()?factoryView(b):ownerView(b))+'</div>';
+}
+
+/* ---------- spec (shared with factories) ---------- */
+function specPanel(b){
+  var rows='';
+  Object.keys(b.spec).forEach(function(k){
+    var mono=/Scale|Dimensions|Deadline/.test(k);
+    rows+='<div class="specrow"><span class="sl">'+k+'</span><span class="sv'+(mono?' mono':'')+'">'+esc(b.spec[k])+'</span></div>';
+  });
+  return '<div class="panel"><div class="panel__head"><h3>Model brief</h3><span class="k">Shared with factories</span></div><div class="panel__body">'+rows+'</div></div>';
+}
+
+/* ============================================================
+   OWNER VIEW
+   ============================================================ */
+function ownerView(b){
+  var html='';
+  html+='<div class="mhead"><div><div class="k">'+b.code+' · '+b.stamp+'</div><h1>'+b.title+'</h1>'+
+    '<div class="sub">'+(b.status==='draft'?'Draft brief — not sent to any factory yet.':b.status==='awarded'?('Awarded to '+fac(b.awarded).name+'.'):('Out for quotes · '+b.invites.filter(function(i){return i.status==='quoted';}).length+' of '+b.invites.length+' factories responded.'))+'</div></div>';
+  if(b.status!=='awarded')html+='<div><button class="btn btn--ghost btn--sm" onclick="openPick()">+ Send to factories</button></div>';
+  html+='</div>';
+
+  // anonymization notice
+  html+='<div class="notice"><b>Privacy:</b> factories only ever see the model brief below. The client block is <b>never shared</b> with any factory — not even the one you award. Carve Model coordinates delivery on the client’s behalf.</div>';
+
+  html+=specPanel(b);
+
+  // withheld block (studio only)
+  var wrows='';
+  Object.keys(b.withheld).forEach(function(k){
+    wrows+='<div class="lockrow"><span class="sl">'+k+'</span><span class="sv">'+esc(b.withheld[k])+'</span></div>';
+  });
+  html+='<div class="panel withheld"><div class="panel__head"><h3><span class="lock-ic">⚿</span> Client &amp; contact</h3><span class="k">Studio only · never sent</span></div><div class="panel__body">'+wrows+
+    '<div class="lockhint"><b>Never shared with any factory.</b> No outside shop sees who the client is or where this delivers — before or after award. You coordinate delivery for them.</div></div></div>';
+
+  // quotes
+  if(!b.invites.length){
+    html+='<div class="panel"><div class="panel__body"><div class="emptywrap" style="padding:2rem 1rem;"><div class="ic">⊹</div><h3>No factories invited yet</h3><p>Send this anonymized brief to one or more factories to start collecting competing quotes.</p><button class="btn btn--primary btn--sm" style="margin-top:1rem;" onclick="openPick()">Send to factories</button></div></div></div>';
+  }else{
+    html+=quoteTable(b);
+  }
+  return html;
+}
+
+function quoteTable(b){
+  var quoted=b.invites.filter(function(i){return i.status==='quoted';});
+  var best=null; quoted.forEach(function(i){if(best===null||i.price<best)best=i.price;});
+  var rows='<div class="qrow head"><span>Factory</span><span>Quote</span><span>Lead time</span><span style="text-align:right;">Action</span></div>';
+  b.invites.forEach(function(inv){
+    var f=fac(inv.factory);
+    var isAward=b.awarded===inv.factory;
+    var isBest=inv.status==='quoted'&&inv.price===best&&quoted.length>1;
+    rows+='<div class="qrow'+(isBest?' best':'')+'">';
+    rows+='<div class="facname"><span class="av fac">'+f.av+'</span><div><div class="nm">'+f.name+(isBest&&!b.awarded?'<span class="besttag">Lowest</span>':'')+'</div><div class="lc">'+f.loc+'</div></div></div>';
+    if(inv.status==='quoted'){
+      rows+='<div class="qprice">'+money(inv.price)+'</div><div class="qdays">'+inv.days+' days</div>';
+      rows+='<div class="qact">';
+      if(b.status==='awarded'){
+        rows+= isAward?'<span class="awardtag">✓ Awarded</span>':'<span class="rchip notsel">Not selected</span>';
+      }else{
+        rows+='<button class="btn btn--primary btn--xs" onclick="award(\''+b.id+'\',\''+inv.factory+'\')">Award</button>';
+      }
+      rows+='</div>';
+      rows+='<div class="qnote">'+esc(inv.note)+'</div>';
+    }else{
+      rows+='<div class="qprice muted">Awaiting quote</div><div class="qdays muted">—</div>';
+      rows+='<div class="qact">'+(b.status==='awarded'?'<span class="rchip notsel">Closed</span>':'<button class="btn btn--ghost btn--xs" onclick="nudge(\''+f.name+'\')">Nudge</button>')+'</div>';
+    }
+    rows+='</div>';
+  });
+  var head=b.status==='awarded'?'Quotes — awarded':'Compare quotes';
+  return '<div class="panel"><div class="panel__head"><h3>'+head+'</h3><span class="k">'+quoted.length+' of '+b.invites.length+' responded</span></div><div class="panel__body"><div class="qtable">'+rows+'</div></div></div>';
+}
+
+/* ============================================================
+   FACTORY VIEW
+   ============================================================ */
+function factoryView(b){
+  return factorySeat==='staff' ? factoryStaffView(b) : factoryAdminView(b);
+}
+function factoryAdminView(b){
+  var f=fac(currentRole); var inv=myInvite(b);
+  var html='';
+  var statusLine = b.awarded===currentRole?'You won this job.':b.status==='awarded'?'This job was awarded to another factory.':inv.status==='quoted'?'Your quote is in — Carve Model is reviewing.':'Carve Model invited you to quote this model.';
+  html+='<div class="mhead"><div><div class="k">'+b.code+' · invited by Carve Model</div><h1>'+b.title+'</h1><div class="sub">'+statusLine+'</div></div></div>';
+
+  // result banner if decided
+  if(b.awarded===currentRole){
+    html+='<div class="panel"><div class="panel__body"><div class="statusbig"><span class="dot win">✓</span><div class="tx"><h4>Awarded to you — '+money(inv.price)+' · '+inv.days+' days</h4><p>Carve Model will coordinate scheduling and delivery with you directly. Client identity and address stay with Carve Model.</p></div></div></div></div>';
+    // admin assigns staff to the job so they can see it and post photos
+    var on=!!b.staffAssigned, st=STAFF[currentRole];
+    html+='<div class="assignbar"><div class="ab-tx"><b>Staff assignment.</b> '+(on?(st.name+' can see this job and post photos.'):('No staff assigned yet — '+st.name+' can\u2019t see this job until you assign it.'))+'</div>'+
+      '<button class="assignbtn'+(on?' on':'')+'" onclick="toggleAssign(\''+b.id+'\')"><span class="dotsw"></span>'+(on?'Assigned to staff':'Assign to staff')+'</button></div>';
+  }else if(b.status==='awarded'){
+    html+='<div class="panel"><div class="panel__body"><div class="statusbig"><span class="dot lose">—</span><div class="tx"><h4>Not selected this time</h4><p>Thanks for quoting. This brief was awarded to another shop — we\u2019ll keep your shop in the loop for the next fit.</p></div></div></div></div>';
+  }
+
+  html+='<div class="notice"><b>Anonymized brief.</b> Carve Model keeps the client’s name, company, contact and address private — on every brief, before and after award. Quote from the specs below; Carve Model handles delivery.</div>';
+
+  html+=specPanel(b);
+
+  // redacted client block — always withheld, even after award
+  html+=redactedClientBlock(b);
+
+  // quote form / your quote
+  if(b.status==='awarded' && b.awarded!==currentRole){
+    // closed, show their submitted quote read-only
+    if(inv&&inv.status==='quoted')html+=myQuoteReadonly(inv);
+  }else if(inv&&inv.status==='quoted'){
+    html+=myQuoteReadonly(inv,true);
+  }else{
+    html+=quoteForm(b);
+  }
+  return html;
+}
+
+/* Reusable redacted client block — factories never see real client identity */
+function redactedClientBlock(b){
+  return '<div class="panel withheld"><div class="panel__head"><h3><span class="lock-ic">⚿</span> Client &amp; contact</h3><span class="k">Never shared with factories</span></div><div class="panel__body">'+
+      '<div class="lockrow"><span class="sl">Client</span><span class="sv"><span class="redact">REDACTED NAME</span></span></div>'+
+      '<div class="lockrow"><span class="sl">Company</span><span class="sv"><span class="redact">REDACTED COMPANY</span></span></div>'+
+      '<div class="lockrow"><span class="sl">Contact</span><span class="sv"><span class="redact">REDACTED CONTACT</span></span></div>'+
+      '<div class="lockrow"><span class="sl">Delivery</span><span class="sv">'+esc(b.spec.Region)+' <span style="color:var(--cm-text-subtle);">(region only)</span></span></div>'+
+      '<div class="lockhint">Carve Model never releases client identity or address to a factory — they coordinate delivery on the client’s behalf, even after a job is awarded.</div></div></div>';
+}
+
+/* Factory STAFF view — only assigned jobs; build spec + photo upload, no pricing */
+function factoryStaffView(b){
+  var st=STAFF[currentRole];
+  var html='';
+  html+='<div class="mhead"><div><div class="k">'+b.code+' · assigned to '+st.name+'</div><h1>'+b.title+'</h1><div class="sub">Active job — review the build spec and post photos for each review round.</div></div>'+
+    '<div><a class="btn btn--primary btn--sm" href="/photo-markup-review?round=s3r1">Upload photos →</a></div></div>';
+  html+='<div class="notice"><b>Staff access.</b> You can see everything needed to build this model and upload photos for each round. Pricing and quotations are managed by your factory admin and aren’t shown here.</div>';
+  html+=specPanel(b);
+  html+=redactedClientBlock(b);
+  var rows='';
+  PHOTO_ROUNDS.forEach(function(r){
+    rows+='<a class="qrow" style="text-decoration:none;grid-template-columns:1fr auto;" href="/photo-markup-review?round='+r.id+'">'+
+      '<div class="facname"><span class="av fac">▦</span><div><div class="nm">'+r.label+'</div><div class="lc">Post / review photos</div></div></div>'+
+      '<div class="qact"><span style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);">Open photo review →</span></div>'+
+    '</a>';
+  });
+  html+='<div class="panel"><div class="panel__head"><h3>Photo rounds</h3><span class="k">Fabrication → finishing</span></div><div class="panel__body"><div class="qtable">'+rows+'</div></div></div>';
+  return html;
+}
+
+function quoteForm(b){
+  return '<div class="panel"><div class="panel__head"><h3>Submit your quote</h3><span class="k">Carve Model · '+fac(currentRole).name+'</span></div><div class="panel__body">'+
+    '<div class="qform">'+
+      '<div class="qfield"><label>Your price (USD)</label><div class="pfx"><span>$</span><input id="qf-price" type="number" min="0" placeholder="0"></div></div>'+
+      '<div class="qfield"><label>Lead time (days)</label><input id="qf-days" type="number" min="1" placeholder="e.g. 18"></div>'+
+      '<div class="qfield full"><label>Notes to the studio</label><textarea id="qf-note" rows="3" placeholder="Capabilities, materials, anything affecting the quote…"></textarea></div>'+
+      '<div class="qform-actions"><button class="btn btn--primary btn--sm" onclick="submitQuote(\''+b.id+'\')">Send quote to Carve Model</button></div>'+
+    '</div></div></div>';
+}
+function myQuoteReadonly(inv,editable){
+  return '<div class="panel"><div class="panel__head"><h3>Your quote</h3><span class="k">'+(inv.status==='quoted'?'Submitted':'')+'</span></div><div class="panel__body">'+
+    '<div class="specrow"><span class="sl">Price</span><span class="sv mono">'+money(inv.price)+'</span></div>'+
+    '<div class="specrow"><span class="sl">Lead time</span><span class="sv mono">'+inv.days+' days</span></div>'+
+    '<div class="specrow"><span class="sl">Notes</span><span class="sv">'+esc(inv.note||'—')+'</span></div>'+
+    (editable?'<div style="margin-top:0.9rem;"><button class="btn btn--ghost btn--xs" onclick="reopenQuote(\''+currentBriefId+'\')">Revise quote</button></div>':'')+
+    '</div></div>';
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+function submitQuote(id){
+  var b=brief(id);
+  var price=parseInt(document.getElementById('qf-price').value,10);
+  var days=parseInt(document.getElementById('qf-days').value,10);
+  var note=document.getElementById('qf-note').value.trim();
+  if(!price||!days){alert('Add a price and a lead time to send your quote.');return;}
+  var inv=myInvite(b);
+  if(!inv){inv={factory:currentRole};b.invites.push(inv);}
+  inv.status='quoted';inv.price=price;inv.days=days;inv.note=note;
+  save();renderRail();renderMain();
+}
+function reopenQuote(id){var b=brief(id);var inv=myInvite(b);if(inv)inv.status='invited';save();renderMain();}
+function award(id,factoryId){
+  var b=brief(id);
+  if(!confirm('Award '+b.title+' to '+fac(factoryId).name+'? Other factories will be notified they were not selected. Client identity stays private — Carve Model coordinates delivery.'))return;
+  b.awarded=factoryId;b.status='awarded';
+  save();renderRail();renderMain();
+}
+function nudge(name){alert('Reminder sent to '+name+'.');}
+function toggleAssign(id){
+  var b=brief(id);
+  b.staffAssigned=!b.staffAssigned;
+  save();renderRail();renderMain();
+}
+
+/* ---- factory picker ---- */
+function openPick(){
+  var b=brief(currentBriefId);
+  pickSel={};
+  var html='';
+  FACTORIES.forEach(function(f){
+    var already=b.invites.filter(function(i){return i.factory===f.id;}).length>0;
+    html+='<div class="facpick'+(already?' dis':'')+'" onclick="togglePick(\''+f.id+'\',this)" data-f="'+f.id+'">'+
+      '<span class="ck">✓</span>'+
+      '<span class="av fac">'+f.av+'</span>'+
+      '<div class="fb"><div class="nm">'+f.name+'</div><div class="tg">'+f.loc+' · '+f.tags.join(' · ')+'</div></div>'+
+      (already?'<span class="already">Already invited</span>':'')+
+    '</div>';
+  });
+  document.getElementById('pickList').innerHTML=html;
+  document.getElementById('pickModal').hidden=false;
+}
+function togglePick(id,el){pickSel[id]=!pickSel[id];el.classList.toggle('sel',pickSel[id]);}
+function closePick(){document.getElementById('pickModal').hidden=true;}
+function confirmPick(){
+  var b=brief(currentBriefId);
+  var chosen=Object.keys(pickSel).filter(function(k){return pickSel[k];});
+  if(!chosen.length){closePick();return;}
+  chosen.forEach(function(id){
+    if(!b.invites.filter(function(i){return i.factory===id;}).length)
+      b.invites.push({factory:id,status:'invited',price:null,days:null,note:''});
+  });
+  if(b.status==='draft')b.status='open';
+  save();closePick();renderRail();renderMain();
+}
+
+/* ---- responsive ---- */
+function toggleRail(forceClose){
+  var r=document.getElementById('rail');
+  if(forceClose)r.classList.remove('open');else r.classList.toggle('open');
+  document.getElementById('scrim2').hidden=!(r.classList.contains('open')&&window.innerWidth<=1080);
+}
+
+/* ---- init ---- */
+(function init(){
+  renderRoles();
+  var q=new URLSearchParams(location.search).get('role');
+  if(q&&(q==='owner'||fac(q)))currentRole=q;
+  setRole(currentRole);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path only, e.g. "/" or "/about-carve-model" — combined with the site's canonical domain */
+  canonicalPath: string;
+  ogType?: 'website' | 'article';
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  robotsNoIndex?: boolean;
+  /** Which primary-nav item is active, for aria-current="page" */
+  active?: 'services' | 'process' | 'works' | 'about' | 'blog' | 'faq' | 'contact';
+  /** Whether this page loads image-slot.js (some source pages use <image-slot> without it — preserved as-is) */
+  imageSlot?: boolean;
+}
+
+const {
+  title,
+  description,
+  canonicalPath,
+  ogType = 'website',
+  ogTitle,
+  ogDescription,
+  ogImage,
+  robotsNoIndex = false,
+  active,
+  imageSlot = false,
+} = Astro.props;
+
+const SITE = 'https://www.physical-model.com';
+const canonical = SITE + (canonicalPath === '/' ? '/' : canonicalPath);
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{title}</title>
+<meta name="description" content={description}>
+{robotsNoIndex && <meta name="robots" content="noindex,nofollow">}
+<link rel="canonical" href={canonical}>
+<meta property="og:type" content={ogType}>
+<meta property="og:title" content={ogTitle || title}>
+<meta property="og:description" content={ogDescription || description}>
+<meta property="og:url" content={canonical}>
+{ogImage && <meta property="og:image" content={ogImage}>}
+<link rel="icon" type="image/png" href="/assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<slot name="head" />
+</head>
+<body>
+<Header active={active} />
+<slot />
+<Footer />
+{imageSlot && <script src="/image-slot.js" is:inline></script>}
+<script src="/site.js" is:inline></script>
+<slot name="scripts" />
+</body>
+</html>

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /quotation
+Disallow: /factory-sourcing
+Disallow: /photo-markup-review
+Disallow: /login
+
+Sitemap: https://www.physical-model.com/sitemap-index.xml

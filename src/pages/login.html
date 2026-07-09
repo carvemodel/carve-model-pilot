@@ -6,10 +6,10 @@
 <title>Client Sign In — Carve Studio Portal | Carve Model</title>
 <meta name="description" content="Sign in to your Carve Model client workspace to review quotes, track milestones, and exchange files.">
 <meta name="robots" content="noindex,nofollow">
-<link rel="icon" type="image/png" href="assets/logo-mark.png">
+<link rel="icon" type="image/png" href="/assets/logo-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="/styles.css">
 <style>
 body{background:var(--cm-ink-950);min-height:100vh;}
 .auth{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem var(--gutter);position:relative;}
@@ -54,7 +54,7 @@ body{background:var(--cm-ink-950);min-height:100vh;}
 <body>
 <main class="auth">
   <div class="auth__card">
-    <a class="auth__brand" href="index.html" aria-label="Carve Model home"><img src="assets/logo-lockup.png" alt="Carve Model"></a>
+    <a class="auth__brand" href="/" aria-label="Carve Model home"><img src="/assets/logo-lockup.png" alt="Carve Model"></a>
 
     <!-- SIGN IN -->
     <div class="auth-panel" id="panel-login">
@@ -71,7 +71,7 @@ body{background:var(--cm-ink-950);min-height:100vh;}
         <button class="linkbtn" onclick="showPanel('magic')">Email me a link instead</button>
         <button class="linkbtn" onclick="showPanel('forgot')">Forgot password?</button>
       </div>
-      <div class="auth__foot">New client? <a href="contact.html">Request a quote</a> to get started.</div>
+      <div class="auth__foot">New client? <a href="/contact">Request a quote</a> to get started.</div>
     </div>
 
     <!-- MAGIC LINK -->
@@ -147,7 +147,7 @@ function togglePw(id,btn){
   var i=document.getElementById(id);
   if(i.type==='password'){i.type='text';btn.textContent='Hide';}else{i.type='password';btn.textContent='Show';}
 }
-function go(){ try{localStorage.setItem('cm_session','1');}catch(e){} location.href='app.html'; }
+function go(){ try{localStorage.setItem('cm_session','1');}catch(e){} location.href='/app'; }
 function signIn(e){e.preventDefault();go();return false;}
 function setPassword(e){
   e.preventDefault();
@@ -158,7 +158,7 @@ function setPassword(e){
 function sendMagic(e){e.preventDefault();document.getElementById('magicAddr').textContent=document.getElementById('magicEmail').value||'that email';showPanel('magic-sent');return false;}
 function sendReset(e){e.preventDefault();document.getElementById('resetAddr').textContent=document.getElementById('resetEmail').value||'that email';showPanel('reset-sent');return false;}
 
-// Route: an invite link (login.html?invite=TOKEN&email=...) opens the set-password panel.
+// Route: an invite link (/login?invite=TOKEN&email=...) opens the set-password panel.
 (function(){
   var q=new URLSearchParams(location.search);
   if(q.get('invite')!==null){

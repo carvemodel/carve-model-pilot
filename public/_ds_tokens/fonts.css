@@ -1,0 +1,7 @@
+/* Carve Model — Webfonts
+   NOTE: The exact wordmark font is not supplied. These are close free matches:
+   - Montserrat   → display / wordmark geometry (wide geometric grotesque, double-story 'a')
+   - Hanken Grotesk → body & UI text (neutral, highly legible)
+   - JetBrains Mono → technical labels: scales, dimensions, spec ticks
+   Google Fonts @import declares the @font-face closure shipped to consumers. */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');

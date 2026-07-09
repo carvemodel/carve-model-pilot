@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Our Model-Making Process | How Carve Model Works"
+  description="From early design files to final delivery — Carve Model's process delivers high-quality architectural scale models with accuracy, speed, and consistency. See the five steps."
+  canonicalPath="/model-making-process"
+  ogTitle="Our Model-Making Process | Carve Model"
+  ogDescription="From design files to final delivery — accuracy, speed, and consistency at every step."
+  active="process"
+  imageSlot={false}
+>
+<Fragment slot="head">
+<style>
+.page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
+.page-hero h1{margin-top:1.4rem;}.page-hero p{margin-top:1.4rem;}
+.step{display:grid;grid-template-columns:auto 1fr;gap:clamp(1.5rem,4vw,3.5rem);padding-block:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
+.step__n{font-family:var(--font-display);font-weight:var(--w-black);font-size:clamp(2.5rem,6vw,5rem);line-height:0.9;color:var(--cm-ink-600);letter-spacing:-0.03em;}
+.step__n .of{display:block;font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);letter-spacing:0.1em;margin-top:0.6rem;font-weight:var(--w-regular);}
+.step h2{font-size:clamp(1.5rem,2.6vw,2.2rem);letter-spacing:-0.02em;}
+.step p{margin-top:1rem;color:var(--cm-gray-300);max-width:62ch;}
+.step ul{list-style:none;padding:0;margin:1.4rem 0 0;display:flex;flex-wrap:wrap;gap:0.6rem;}
+.step ul li{font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.03em;color:var(--cm-gray-300);border:1px solid var(--cm-border);border-radius:var(--r-pill);padding:0.4rem 0.85rem;text-transform:uppercase;}
+.formats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--cm-line-faint);border:1px solid var(--cm-line-faint);margin-top:2.5rem;}
+.fmt{background:var(--cm-ink-900);padding:1.4rem 1rem;text-align:center;font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-gray-300);letter-spacing:0.03em;}
+@media(max-width:760px){.step{grid-template-columns:1fr;gap:1rem;}.formats{grid-template-columns:repeat(3,1fr);}}
+</style>
+</Fragment>
+
+<main>
+<section class="page-hero"><div class="container">
+  <span class="eyebrow">Process</span>
+  <h1 class="display-lg measure">From files to finished model — engineered for accuracy and speed.</h1>
+  <p class="lead measure">Each step is optimized to support tight development schedules and presentation-ready results. We combine advanced digital manufacturing with traditional craftsmanship.</p>
+</div></section>
+
+<div class="container">
+  <div class="step"><div class="step__n">01<span class="of">/ 05</span></div><div>
+    <h2>Design Review &amp; Planning</h2>
+    <p>Before any fabrication begins, we review all provided drawings, plans, and 3D models. We confirm scale, level of detail, materials, finishes, special requests, and delivery expectations — and identify how the model will be used.</p>
+    <ul><li>Scope alignment</li><li>Scale selection</li><li>Audience &amp; goal</li></ul>
+  </div></div>
+  <div class="step"><div class="step__n">02<span class="of">/ 05</span></div><div>
+    <h2>Model Engineering</h2>
+    <p>Once scope is confirmed, we prepare the digital model for fabrication. We clean, simplify, or rebuild your geometry to ensure accuracy at the selected scale — ensuring the finished model is clean, accurate, and manufacturable.</p>
+    <ul><li>Geometry cleanup</li><li>Scale optimization</li><li>Manufacturability</li></ul>
+  </div></div>
+  <div class="step"><div class="step__n">03<span class="of">/ 05</span></div><div>
+    <h2>Fabrication</h2>
+    <p>We combine advanced digital manufacturing — laser cutting, CNC, and 3D printing — with hand craftsmanship. Models are built from durable materials suitable for transport and presentation.</p>
+    <ul><li>Laser &amp; CNC</li><li>3D printing</li><li>Hand assembly</li></ul>
+  </div></div>
+  <div class="step"><div class="step__n">04<span class="of">/ 05</span></div><div>
+    <h2>Detailing, Paint &amp; QC</h2>
+    <p>Finishing, painting, and assembly bring the model to its final standard. Quality control photos are shared throughout so you always know where things stand.</p>
+    <ul><li>Finishing</li><li>Lighting</li><li>Quality control</li></ul>
+  </div></div>
+  <div class="step" style="border-bottom:0;"><div class="step__n">05<span class="of">/ 05</span></div><div>
+    <h2>Delivery &amp; Setup</h2>
+    <p>Your model is professionally packed and arrives presentation-ready — easy to unpack and install. For local projects, we offer on-site installation.</p>
+    <ul><li>Professional packing</li><li>Nationwide shipping</li><li>On-site install</li></ul>
+  </div></div>
+</div>
+
+<section class="section"><div class="container">
+  <span class="eyebrow">File formats we accept</span>
+  <h2 class="display-md mt-3">Bring whatever you have.</h2>
+  <p class="muted mt-2 measure">To ensure accuracy and a smooth production process, we accept a wide range of formats from architectural and design software. Our team can prepare, clean, and optimize your model for fabrication.</p>
+  <div class="formats">
+    <div class="fmt">CAD / DWG</div><div class="fmt">PDF</div><div class="fmt">Revit</div><div class="fmt">Rhino</div><div class="fmt">SketchUp</div><div class="fmt">Sketches</div>
+  </div>
+</div></section>
+
+<section class="section" style="padding-top:0;"><div class="container">
+  <div class="cta reveal" style="position:relative;text-align:center;background:var(--cm-black);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:clamp(3rem,6vw,5rem) var(--gutter);">
+    <h2 class="display-md">Every project, tracked in one place.</h2>
+    <p class="muted mt-2" style="max-width:48ch;margin-inline:auto;">Each Carve project includes the Studio Portal — see milestones, approve stages, exchange files, and message the team in real time.</p>
+    <div class="mt-4" style="display:flex;gap:0.9rem;justify-content:center;flex-wrap:wrap;"><a class="btn btn--primary btn--lg" href="/contact">Start a project →</a><a class="btn btn--ghost btn--lg" href="/app">Open the portal</a></div>
+  </div>
+</div></section>
+</main>
+</BaseLayout>

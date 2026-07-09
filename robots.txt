@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /app.html
-
-Sitemap: https://www.physical-model.com/sitemap.xml
