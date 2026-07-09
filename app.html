@@ -1390,15 +1390,15 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="panel__head"><h3>Team members</h3><button class="btn btn--ghost btn--sm" onclick="alert('Add-member form opens here — name, email, and role. They receive an invite to set their password.')">+ Add member</button></div>
           <div class="panel__body">
             <div class="teamrow">
-              <div class="teamrow__who"><span class="av studio">MO</span><div><div class="teamrow__name">Maya Okafor <span class="you-tag">You</span></div><div class="teamrow__email">maya@physical-model.com</div></div></div>
+              <div class="teamrow__who"><span class="av studio">MO</span><div><div class="teamrow__name">Maya Okafor <span class="you-tag">You</span></div><div class="teamrow__email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5a373b233b1a2a32232933393b367737353e3f3674393537">[email&#160;protected]</a></div></div></div>
               <span class="rolepill rolepill--owner">Owner</span>
             </div>
             <div class="teamrow">
-              <div class="teamrow__who"><span class="av" style="background:linear-gradient(135deg,#2A6FDB,#1a4a99);color:#fff;">JL</span><div><div class="teamrow__name">Jordan Lee</div><div class="teamrow__email">jordan@physical-model.com</div></div></div>
+              <div class="teamrow__who"><span class="av" style="background:linear-gradient(135deg,#2A6FDB,#1a4a99);color:#fff;">JL</span><div><div class="teamrow__name">Jordan Lee</div><div class="teamrow__email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="046e6b7660656a44746c7d776d67656829696b6061682a676b69">[email&#160;protected]</a></div></div></div>
               <span class="rolepill rolepill--sales">Sales</span>
             </div>
             <div class="teamrow">
-              <div class="teamrow__who"><span class="av" style="background:linear-gradient(135deg,#C2703D,#8a4e29);color:#fff;">RT</span><div><div class="teamrow__name">Ravi Sharma</div><div class="teamrow__email">ravi@physical-model.com</div></div></div>
+              <div class="teamrow__who"><span class="av" style="background:linear-gradient(135deg,#C2703D,#8a4e29);color:#fff;">RT</span><div><div class="teamrow__name">Ravi Sharma</div><div class="teamrow__email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="601201160920100819130903010c4d0d0f04050c4e030f0d">[email&#160;protected]</a></div></div></div>
               <span class="rolepill rolepill--factory">Factory</span>
             </div>
           </div>
@@ -1752,7 +1752,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 function openInvite(){
   document.getElementById('inviteForm').hidden=false;
   document.getElementById('inviteResult').hidden=true;
@@ -2363,10 +2363,15 @@ function createLead(e){
   if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Adding\u2026';}
 
   var uploadTasks=pickedFiles.map(function(f){
-    if(!window.__fsStorage)return Promise.resolve({name:f.name,size:f.size,url:null});
-    var ref=window.__fsStorage.ref().child('leads/'+id+'/'+f.name);
-    return ref.put(f).then(function(){return ref.getDownloadURL();}).then(function(url){
-      return {name:f.name,size:f.size,url:url};
+    return fetch('/api/upload?path=leads/'+encodeURIComponent(id),{
+      method:'POST',
+      headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},
+      body:f
+    }).then(function(r){
+      if(!r.ok)throw new Error('Upload failed: '+r.status);
+      return r.json();
+    }).then(function(data){
+      return {name:f.name,size:f.size,url:data.url};
     }).catch(function(err){console.error('Upload failed',f.name,err);return {name:f.name,size:f.size,url:null};});
   });
 
@@ -3169,11 +3174,8 @@ function resetTestData(){
   if(!confirm('This clears every test lead and brief from Sourcing & Quotes \u2014 for everyone on the pilot, since it\u2019s a shared live doc. Sample client-side projects (Aria Tower, etc.) are unaffected. Continue?'))return;
   try{localStorage.removeItem('cm_portal_sourcing_v22');}catch(e){}
   var done=function(){location.reload();};
-  if(window.__fsDoc){
-    window.__fsDoc.set({briefs:[],leads:[]}).then(done).catch(function(e){console.error('Firestore reset failed:',e);alert('Could not clear the shared Firestore doc (see console). Local test data was still cleared.');done();});
-  }else{
-    done();
-  }
+  fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:[],leads:[]})})
+    .then(done).catch(function(e){console.error('Shared reset failed:',e);alert('Could not clear the shared store (see console). Local test data was still cleared.');done();});
 }
 (function(){
   var raw=localStorage.getItem(SESSION_KEY);
@@ -3187,15 +3189,7 @@ function resetTestData(){
   });
 })();
 </script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script>
-var firebaseConfig={apiKey:"AIzaSyDAErAhr3G1PO1Vr2wHddA8-b8awihJDwM",authDomain:"carve-model-pilot.firebaseapp.com",projectId:"carve-model-pilot",storageBucket:"carve-model-pilot.firebasestorage.app",messagingSenderId:"494671559334",appId:"1:494671559334:web:a60ade35ca64597dd01267"};
-try{
-  firebase.initializeApp(firebaseConfig);
-  window.__fsDoc=firebase.firestore().collection('pilot').doc('sourcing');
-}catch(e){console.error('Firebase init failed — falling back to local-only storage:',e);}
-</script>
+
 <script>
 /* ===== Sourcing & Quotes — integrated into the portal, role-adaptive ===== */
 (function(){
@@ -3385,12 +3379,15 @@ function readDimTriplet(prefix,bid){
 }
 
 function seedSRC(){return {briefs:[],leads:[]};}
-var SKEY='cm_portal_sourcing_v22', SDB=loadSRC(), fsReady=false;
+var SKEY='cm_portal_sourcing_v22', SDB=loadSRC(), apiReady=false;
 window.SDB=SDB;
 function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];return d;}}}catch(e){}return seedSRC();}
 function saveSRC(){
   try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
-  if(window.__fsDoc&&fsReady)window.__fsDoc.set({briefs:SDB.briefs,leads:SDB.leads||[]},{merge:true}).catch(function(e){console.error('Firestore sync failed:',e);});
+  if(apiReady){
+    fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:SDB.briefs,leads:SDB.leads||[]})})
+      .catch(function(e){console.error('Sourcing API sync failed:',e);});
+  }
 }
 window.saveSRC=saveSRC;
 
@@ -4161,7 +4158,7 @@ window.SRC_renderLeads=function(){
       (l.boundaryMap?('<div class="leadcard__note"><span class="mock__k">Scope boundary \u2014 marked by client</span><div style="margin-top:0.6rem;"><a href="'+l.boundaryMap+'" target="_blank" rel="noopener"><img src="'+l.boundaryMap+'" style="max-width:280px;border:1px solid var(--cm-border);border-radius:var(--r-sm);display:block;"></a></div></div>'):'')+
       filesHtml+
       '</div><div class="leadcard__act"><span class="mock__k">Received '+esc(l.receivedAt)+' \u00b7 '+esc(l.source||'Website form')+'</span>'+
-      '<button class="btn btn--primary btn--sm" onclick="convertLead(\''+esc(l.id)+'\')">Submit a quote \u2192</button>'+
+      '<button class="btn btn--primary btn--sm" onclick="convertLead(\''+esc(l.id)+'\')">Send to production \u2192</button>'+
       '<button class="btn btn--ghost btn--sm" onclick="replyLead(\''+esc(l.client.Email)+'\',\''+esc(l.title)+'\')">Reply by email</button>'+
       '<button class="btn btn--ghost btn--sm studio-only" onclick="openAssignLeadCompany(\''+esc(l.id)+'\')">'+(l.assignedCompanyName?'Change company':'Assign to company')+'</button>'+
       '<button class="btn btn--ghost btn--sm studio-only" onclick="archiveLead(\''+esc(l.id)+'\')">Archive</button></div></article>';
@@ -4322,32 +4319,33 @@ window.SRC_confirmSendLead=function(){
   var names=shopIds.map(function(sid){var a=(window.PRODUCTION_ADMINS||[]).filter(function(x){return x.shopId===sid;})[0];return a?a.name:sid;}).join(', ');
   alert('Sent to '+names+' \u2014 now visible to them in Sourcing & Quotes.');
 };
-/* ---- Firestore live sync (Phase 1 pilot): shared doc holds the whole briefs array ---- */
-if(window.__fsDoc){
-  window.__fsDoc.get().then(function(doc){
-    if(doc.exists&&doc.data().briefs){
-      SDB.briefs=doc.data().briefs;
-      SDB.leads=doc.data().leads||[];
+/* ---- Shared store live sync (Phase 1 pilot): /api/sourcing (same-origin, Redis-backed) ---- */
+var POLL_MS=5000, pollTimer=null;
+function pullSourcing(){
+  return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
+    if(data&&(data.briefs||data.leads)){
+      SDB.briefs=data.briefs||[];
+      SDB.leads=data.leads||[];
       try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
-    }else{
-      window.__fsDoc.set({briefs:SDB.briefs,leads:SDB.leads||[]},{merge:true}).catch(function(e){console.error('Firestore seed failed:',e);});
+      if(window.SRC_updateBadges)window.SRC_updateBadges();
+      if(window.SRC_render)window.SRC_render();
+      if(window.SRC_renderLeads)window.SRC_renderLeads();
     }
-    fsReady=true;
-    if(window.SRC_updateBadges)window.SRC_updateBadges();
-    if(window.SRC_render)window.SRC_render();
-    if(window.SRC_renderLeads)window.SRC_renderLeads();
-    window.__fsDoc.onSnapshot(function(doc){
-      if(doc.exists&&doc.data().briefs){
-        SDB.briefs=doc.data().briefs;
-        SDB.leads=doc.data().leads||[];
-        try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
-        if(window.SRC_updateBadges)window.SRC_updateBadges();
-        if(window.SRC_render)window.SRC_render();
-        if(window.SRC_renderLeads)window.SRC_renderLeads();
-      }
-    });
-  }).catch(function(e){console.error('Firestore init failed \u2014 staying local-only:',e);});
+  });
 }
+pullSourcing().then(function(){
+  apiReady=true;
+  // Nothing existed yet server-side (fresh store) — seed it with whatever local data we have.
+  return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
+    if(!data||(!data.briefs&&!data.leads)){
+      return fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:SDB.briefs,leads:SDB.leads||[]})});
+    }
+  });
+}).catch(function(e){console.error('Sourcing API init failed \u2014 staying local-only:',e);apiReady=true;})
+  .then(function(){
+    if(pollTimer)clearInterval(pollTimer);
+    pollTimer=setInterval(pullSourcing,POLL_MS);
+  });
 })();
 </script>
 </body>
