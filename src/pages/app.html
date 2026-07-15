@@ -399,7 +399,7 @@ body{background:var(--cm-ink-950);}
 .qtotal .qv{font-family:var(--font-display);font-weight:var(--w-bold);font-size:1.5rem;color:var(--cm-text-strong);letter-spacing:-0.02em;}
 .specsheet{border-top:1px solid var(--cm-line-faint);margin-bottom:0.4rem;}
 .specrow{display:flex;justify-content:space-between;gap:1.5rem;padding:0.85rem 0;border-bottom:1px solid var(--cm-line-faint);}
-.specrow .sl{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);flex:none;padding-top:2px;width:140px;}
+.specrow .sl{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-strong);flex:none;padding-top:2px;width:140px;}
 .specrow .sv{font-size:0.95rem;color:var(--cm-text);text-align:right;flex:1;font-weight:var(--w-medium);}
 .specrow .sv-alt{font-family:var(--font-mono);font-size:0.78rem;color:var(--cm-text-subtle);font-weight:var(--w-regular);}
 .changes{margin-top:1.3rem;border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);border-radius:var(--r-sm);background:rgba(182,182,182,0.04);padding:1.1rem 1.2rem;}
@@ -3709,6 +3709,17 @@ function srcRestoreDraft(draft){
       // Only fill in fields the fresh render left empty — never overwrite a
       // value the re-render legitimately populated from updated state.
       el.value=d.value;
+      // The Full/Mono color picker is a hidden input driven by two <button>s
+      // that get an "on" class on click (SRC_setColor) — buttons aren't
+      // form fields, so restoring the hidden input's value alone doesn't
+      // bring back the highlighted state. Re-sync it here.
+      if(id.indexOf('-color-')!==-1){
+        var parts=id.split('-color-'), colorPrefix=parts[0], colorBid=parts[1];
+        var fullBtn=document.getElementById(colorPrefix+'-color-full-'+colorBid);
+        var monoBtn=document.getElementById(colorPrefix+'-color-mono-'+colorBid);
+        if(fullBtn)fullBtn.classList.toggle('on',d.value==='full');
+        if(monoBtn)monoBtn.classList.toggle('on',d.value==='mono');
+      }
     }
   });
 }
