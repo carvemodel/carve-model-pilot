@@ -134,11 +134,11 @@ body{background:var(--cm-ink-950);}
 .src-head .sub{font-size:0.86rem;color:var(--cm-text-muted);margin-top:0.4rem;max-width:62ch;line-height:1.5;}
 .src-card{margin-bottom:1.2rem;}
 .src-card .panel__head{align-items:flex-start;}
-.src-card__t{font-family:var(--font-display);font-size:1.02rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
+.src-card__t{font-family:var(--font-display);font-size:1.05rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
 .src-card__code{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.05em;color:var(--cm-text-subtle);text-transform:uppercase;margin-bottom:0.25rem;display:block;}
 .src-spec{display:flex;flex-wrap:wrap;gap:0.5rem 1.6rem;margin:0.2rem 0 0.2rem;}
 .src-spec div{font-size:0.82rem;color:var(--cm-text-muted);}
-.src-spec b{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-strong);font-weight:var(--w-regular);display:block;margin-bottom:1px;}
+.src-spec b{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-strong);font-weight:var(--w-regular);display:block;margin-bottom:1px;}
 .qline2{display:grid;grid-template-columns:1.5fr 0.8fr 0.7fr auto;gap:1rem;align-items:center;padding:0.85rem 0;border-bottom:1px solid var(--cm-line-faint);}
 .qline2:last-child{border-bottom:0;}
 .qline2.head span{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);}
@@ -158,13 +158,13 @@ body{background:var(--cm-ink-950);}
 .src-withheld .row .l{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);min-width:90px;}
 .src-withheld .hint{font-size:0.78rem;color:var(--cm-text-subtle);margin-top:0.5rem;line-height:1.5;}
 .assignrow{display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;padding:0.9rem 0 0.2rem;}
-.assignrow .lbl{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.assignrow .lbl{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-strong);}
 .techbtn{display:inline-flex;align-items:center;gap:0.5rem;border:1px solid var(--cm-border-strong);background:transparent;color:var(--cm-text-muted);border-radius:var(--r-pill);padding:0.4rem 0.8rem;font-size:0.82rem;font-weight:var(--w-medium);transition:0.15s;}
 .techbtn:hover{color:var(--cm-text-strong);}
 .techbtn.on{background:var(--cm-white);color:var(--cm-ink-900);border-color:var(--cm-white);}
 .qform2{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-top:0.3rem;}
 .qform2 .full{grid-column:1/-1;}
-.qform2 label{display:block;font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-strong);margin-bottom:0.35rem;}
+.qform2 label{display:block;font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-strong);margin-bottom:0.35rem;}
 .qform2 input:not([type="checkbox"]):not([type="radio"]),.qform2 textarea,.qform2 select{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);color:var(--cm-text);font-family:var(--font-sans);font-size:0.86rem;padding:0.55rem 0.65rem;appearance:none;-webkit-appearance:none;}
 .qform2 input[type="checkbox"],.qform2 input[type="radio"]{width:15px;height:15px;flex:none;accent-color:var(--cm-silver);color-scheme:dark;}
 .qform2 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23808080' stroke-width='1.6'%3E%3Cpath d='M5.5 7.5l4.5 4.5 4.5-4.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.6rem center;background-size:14px;padding-right:2rem;}
@@ -3471,9 +3471,9 @@ function productionBriefBody(b){
     html+='<div style="margin-top:1rem;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.4rem;">Client files</div>';
     b.files.forEach(function(f){
       if(f.url){
-        html+='<a class="msround" href="'+esc(f.url)+'" target="_blank" rel="noopener" download="'+esc(f.name)+'"><span class="msround__t">'+esc(f.name)+'</span><span class="msround__go">'+esc(f.size)+' \u00b7 '+esc(f.by)+' \u00b7 '+esc(f.date)+' \u00b7 \u2193 Download</span></a>';
+        html+='<a class="msround" href="'+esc(f.url)+'" target="_blank" rel="noopener" download="'+esc(f.name)+'"><span class="msround__t" style="color:var(--cm-text-muted);">'+esc(f.name)+'</span><span class="msround__go">'+esc(f.size)+' \u00b7 '+esc(f.by)+' \u00b7 '+esc(f.date)+' \u00b7 \u2193 Download</span></a>';
       }else{
-        html+='<a class="msround" href="#" onclick="return false;" style="cursor:default;"><span class="msround__t">'+esc(f.name)+'</span><span class="msround__go">'+esc(f.size)+' \u00b7 '+esc(f.by)+' \u00b7 '+esc(f.date)+'</span></a>';
+        html+='<a class="msround" href="#" onclick="return false;" style="cursor:default;"><span class="msround__t" style="color:var(--cm-text-muted);">'+esc(f.name)+'</span><span class="msround__go">'+esc(f.size)+' \u00b7 '+esc(f.by)+' \u00b7 '+esc(f.date)+'</span></a>';
       }
     });
   }
@@ -3481,7 +3481,7 @@ function productionBriefBody(b){
   return html;
 }
 function productionBrief(b){
-  return '<div class="panel src-card" style="margin-top:0.1rem;"><div class="panel__head"><h3 style="font-size:0.98rem;">Project brief</h3><span class="mock__k">From the client\u2019s request</span></div><div class="panel__body">'+productionBriefBody(b)+'</div></div>';
+  return '<div class="panel src-card" style="margin-top:0.1rem;"><div class="panel__head"><h3>Project brief</h3><span class="mock__k">From the client\u2019s request</span></div><div class="panel__body">'+productionBriefBody(b)+'</div></div>';
 }
 
 /* ---- Shared quote-form field builder — used for both a shop's primary quote and any variation quote.
@@ -3826,7 +3826,7 @@ function clientQuoteSection(b){
   var extrasSet={}; (base.extras||[]).forEach(function(x){extrasSet[x]=true;});
   var srcLabel=shop(basisShop(b)).name+(srcQ.label?(' — '+srcQ.label):'');
   var confirmed=b.status==='awarded';
-  var html='<div class="panel src-card" style="margin-top:1rem;border-color:var(--cm-border-strong);"><div class="panel__head"><h3 style="font-size:0.98rem;">Finalize quote for client</h3><span class="k">Carve Admin only</span></div><div class="panel__body">';
+  var html='<div class="panel src-card" style="margin-top:1rem;border-color:var(--cm-border-strong);"><div class="panel__head"><h3>Finalize quote for client</h3><span class="k">Carve Admin only</span></div><div class="panel__body">';
   html+='<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);margin-bottom:0.9rem;">Based on — '+esc(srcLabel)+': '+moneyRMB(srcQ.priceRMB)+' <span style="opacity:0.7;">(≈ '+money(srcQ.price)+')</span> · '+ (srcQ.days||'—') +' days. Pick a different option above to change the basis.</div>';
   if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Not yet awarded to production — '+esc(shop(basisShop(b)).name)+' has not been notified. You can still finalize and send this price to the client now.</div>';
   html+='<div class="qform2">';
@@ -3860,7 +3860,7 @@ function clientQuoteSummary(b,cq){
   var hasThread=cq.clientComments&&cq.clientComments.length;
   var pending=hasThread&&cq.clientComments[0].from==='client';
   var confirmed=b.status==='awarded';
-  var html='<div class="panel src-card" style="margin-top:1rem;'+(pending?'border-color:var(--cm-silver);':'')+'"><div class="panel__head"><h3 style="font-size:0.98rem;">Client quote</h3><span class="chip done">Finalized</span></div><div class="panel__body">';
+  var html='<div class="panel src-card" style="margin-top:1rem;'+(pending?'border-color:var(--cm-silver);':'')+'"><div class="panel__head"><h3>Client quote</h3><span class="chip done">Finalized</span></div><div class="panel__body">';
   if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Sent to the client, but not yet awarded to production \u2014 '+esc(shop(basisShop(b)).name)+' has not been notified. <a href="#" onclick="SRC_award(\''+b.id+'\',\''+basisShop(b)+'\','+(basisVariantIndex(b)==null?'null':basisVariantIndex(b))+');return false;" style="color:var(--cm-silver);">Award to production \u2192</a></div>';
   html+='<div class="qline2" style="grid-template-columns:1fr auto;border-bottom:0;padding-top:0;"><div><div class="qf-price">'+money(cq.price)+'</div><div class="lc" style="font-family:var(--font-mono);">'+cq.days+' days</div></div><div style="text-align:right;"><button class="btn btn--ghost btn--sm" onclick="SRC_editClientQuote(\''+b.id+'\')">Edit &amp; resend</button></div></div>';
   html+=quoteSpecLine(cq)+extrasLine(cq);
@@ -4023,7 +4023,7 @@ function renderProdAdminCard(b){
   return html;
 }
 function sectionLabel(text){
-  return '<div style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-subtle);margin:1.1rem 0 0.6rem;">'+text+'</div>';
+  return '<div style="font-family:var(--font-mono);font-size:0.74rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-strong);font-weight:var(--w-medium);margin:1.1rem 0 0.6rem;">'+text+'</div>';
 }
 function SRC_prodAdmin(){
   document.getElementById('srcNotice').innerHTML='<b>Production Admin · '+shop(OUR_SHOP).name+'.</b> Quote the briefs Carve sends you — add variation quotes if a different scale or spec makes sense — and assign technicians to jobs you win. Everything the client submitted is shared with production.';
