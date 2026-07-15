@@ -1568,9 +1568,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 <!-- Add lead modal (manual: referral / cold call / email) -->
 <div class="modal-overlay" id="addLeadModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Add a lead">
-    <div class="modal__head"><h3>Add a lead</h3><button class="modal__x" onclick="closeAddLead()" aria-label="Close">×</button></div>
+    <div class="modal__head"><h3 id="addLeadTitle">Add a lead</h3><button class="modal__x" onclick="closeAddLead()" aria-label="Close">×</button></div>
     <div class="modal__body">
-      <p class="modal__intro">Capture an enquiry that came in by referral, cold call, or email. It joins the inbox like any other lead — review it, then submit a quote.</p>
+      <p class="modal__intro" id="addLeadIntro">Capture an enquiry that came in by referral, cold call, or email. It joins the inbox like any other lead — review it, then submit a quote.</p>
       <form onsubmit="return createLead(event)">
         <div class="efield-row">
           <div class="efield"><label for="al-contact">Contact name</label><input id="al-contact" type="text" required placeholder="Jane Doe"></div>
@@ -1691,8 +1691,12 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <span id="al-files-label">Drop files or click to upload — CAD, PDF, Rhino, images.</span>
           </div>
         </div>
-        <div class="efield"><label for="al-dropbox">Or share a file link <span class="optional">(Dropbox, Drive, WeTransfer)</span></label>
-          <input id="al-dropbox" type="url" placeholder="https://www.dropbox.com/…">
+        <div class="efield"><label for="al-dropbox">Or share a file link <span class="optional">(Dropbox, Drive, WeTransfer — add as many as you need)</span></label>
+          <div id="al-link-list" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.5rem;"></div>
+          <div style="display:flex;gap:0.4rem;">
+            <input id="al-dropbox" type="url" placeholder="https://www.dropbox.com/…" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();alAddLink();}">
+            <button type="button" class="btn btn--ghost btn--sm" onclick="alAddLink()">+ Add</button>
+          </div>
         </div>
         <div class="changes__act" style="margin-top:0.4rem;">
           <button class="btn btn--primary" type="submit">Add to inbox</button>
@@ -2225,6 +2229,7 @@ function openAddLead(){
   document.getElementById('al-type-select').value='';
   var fi=document.getElementById('al-file-input');if(fi)fi.value='';
   document.getElementById('al-files-label').textContent='Drop files or click to upload — CAD, PDF, Rhino, images.';
+  alPickedLinks=[];alRenderLinks();
   var extraWrap=document.getElementById('al-extras-wrap');
   if(extraWrap&&!extraWrap.childElementCount){
     (window.SPECIAL_REQS||[]).forEach(function(r){var lab=document.createElement('label');lab.innerHTML='<input type="checkbox" name="al-extras" value="'+esc(r)+'"'+(r==='No Base'?' id="al-noBaseChk"':'')+'><span class="ck"></span><span>'+esc(r)+'</span>';extraWrap.appendChild(lab);});
@@ -2244,8 +2249,65 @@ function openAddLead(){
   var useSel=document.getElementById('al-use');if(useSel)useSel.value='';
   alChangePlan();
   document.getElementById('al-scopeBlock').hidden=true;
+  document.getElementById('addLeadTitle').textContent='Add a lead';
+  document.getElementById('addLeadIntro').textContent='Capture an enquiry that came in by referral, cold call, or email. It joins the inbox like any other lead — review it, then submit a quote.';
   document.getElementById('addLeadModal').hidden=false;
 }
+/* Split a combined "Project — Location, Country" string back into parts —
+   best-effort inverse of how createLead() joins them into lead.title /
+   lead.deliveryTo. Used to pre-fill the Add Lead form when creating a
+   variation, since those parts aren't stored separately on the lead. */
+function alSplitLoc(str){
+  str=str||'';
+  var m=str.split(' — ');
+  var first=m[0]||'', rest=m.slice(1).join(' — ');
+  if(!rest)return {a:first,b:'',c:''};
+  var parts=rest.split(', ');
+  return {a:first,b:parts[0]||'',c:parts.slice(1).join(', ')};
+}
+/* Open the Add Lead modal pre-filled from an existing lead — client and
+   project details carry over as-is; the admin then adjusts whatever
+   requirements should differ (scale, size, extras, etc.) and saves it as a
+   brand-new lead, leaving the original untouched. */
+window.openLeadVariation=function(id){
+  var src=(SDB.leads||[]).filter(function(x){return x.id===id;})[0];
+  if(!src){alert('Could not find that lead.');return;}
+  openAddLead();
+  document.getElementById('addLeadTitle').textContent='Create a variation';
+  document.getElementById('addLeadIntro').textContent='Client and project details are copied from the original enquiry — adjust whatever requirements should differ (scale, size, extras, etc.), then save. The original lead is left untouched.';
+  var proj=alSplitLoc(src.title||'');
+  var deliv=alSplitLoc(src.deliveryTo||'');
+  document.getElementById('al-contact').value=(src.client&&src.client.Name&&src.client.Name!=='(name not given)')?src.client.Name:'';
+  document.getElementById('al-title').value=(src.client&&src.client.Title)||'';
+  document.getElementById('al-company').value=(src.client&&src.client.Company&&src.client.Company!=='—')?src.client.Company:'';
+  document.getElementById('al-email').value=(src.client&&src.client.Email)||'';
+  document.getElementById('al-phone').value=(src.client&&src.client.Phone)||'';
+  document.getElementById('al-project').value=proj.a;
+  document.getElementById('al-location').value=proj.b;
+  document.getElementById('al-country').value=proj.c;
+  document.getElementById('al-delivery-location').value=deliv.b?deliv.a:'';
+  document.getElementById('al-delivery-country').value=deliv.b?deliv.c:deliv.b;
+  document.getElementById('al-type-select').value=src.type||'';
+  onALTypeChange();
+  document.getElementById('al-use').value=src.intendedUse||'';
+  var scaleParsed=parseScaleString(src.scale||'');
+  document.getElementById('al-scale-intl-new').value=scaleParsed.intl;
+  document.getElementById('al-scale-imp-new').value=scaleParsed.imp;
+  document.getElementById('al-size').value=(src.modelsize&&src.modelsize!=='Not specified')?src.modelsize:'';
+  document.getElementById('al-quantity').value=src.quantity||'1';
+  document.getElementById('al-timeline').value=(src.timeline&&src.timeline!=='Not specified')?src.timeline:'';
+  document.getElementById('al-prefMaterial').value=src.prefMaterial||'';
+  document.getElementById('al-prefBase').value=src.prefBase||'';
+  document.getElementById('al-notes').value='Variation of the original enquiry (received '+(src.receivedAt||'')+').'+((src.notes&&src.notes!=='(no additional notes)')?('\n\n'+src.notes):'');
+  var srcExtras=src.extras||[];
+  document.querySelectorAll('input[name="al-extras"]').forEach(function(cb){cb.checked=srcExtras.indexOf(cb.value)!==-1;});
+  var unmatched=srcExtras.filter(function(x){return !Array.from(document.querySelectorAll('input[name="al-extras"]')).some(function(cb){return cb.value===x;});});
+  document.getElementById('al-extras-other').value=unmatched.join(', ');
+  var srcLinks=Array.isArray(src.filelink)?src.filelink:(src.filelink?[src.filelink]:[]);
+  alPickedLinks=srcLinks.slice();
+  alRenderLinks();
+  document.getElementById('al-contact').focus();
+};
 var AL_DETAILED_MATERIALS=['Full Color ABS / Realistic Visualization'];
 var AL_MASSING_MATERIALS=['Monochromatic ABS / Massing','Clear Acrylic','ABS with Wood Veneer','Hardwood','Foam','Wrought Iron'];
 function alFilterMaterialOptions(type){
@@ -2317,6 +2379,21 @@ function alChangePlan(){
   var input=document.getElementById('al-planInput');if(input)input.value='';
 }
 function closeAddLead(){ document.getElementById('addLeadModal').hidden=true; }
+/* ---- Link list (for files too large to upload directly — supports more than one) ---- */
+var alPickedLinks=[];
+function alRenderLinks(){
+  var c=document.getElementById('al-link-list');if(!c)return;
+  c.innerHTML=alPickedLinks.map(function(l,i){return '<span class="filechip">'+esc(l)+'<button type="button" onclick="alRemoveLink('+i+')" aria-label="Remove" style="background:none;border:0;color:var(--cm-text-subtle);cursor:pointer;font-size:0.95rem;line-height:1;padding:0;margin-left:0.4rem;">×</button></span>';}).join('');
+}
+window.alRemoveLink=function(i){alPickedLinks.splice(i,1);alRenderLinks();};
+function alAddLink(){
+  var el=document.getElementById('al-dropbox');
+  var v=(el.value||'').trim();
+  if(!v)return;
+  alPickedLinks.push(v);
+  el.value='';
+  alRenderLinks();
+}
 function alFilesPicked(input){
   var n=input.files?input.files.length:0;
   document.getElementById('al-files-label').textContent=n?(n+' file'+(n>1?'s':'')+' attached — '+[].map.call(input.files,function(f){return f.name;}).slice(0,3).join(', ')+(n>3?'…':'')):'Drop files or click to upload — CAD, PDF, Rhino, images.';
@@ -2348,7 +2425,9 @@ function createLead(e){
   var useVal=document.getElementById('al-use').value;
   var source=document.getElementById('al-source').value;
   var notes=document.getElementById('al-notes').value.trim()||'(no additional notes)';
-  var dropbox=document.getElementById('al-dropbox').value.trim();
+  var pendingDropbox=document.getElementById('al-dropbox').value.trim();
+  if(pendingDropbox)alAddLink(); // capture anything still sitting in the box, not yet added
+  var dropboxLinks=alPickedLinks.slice();
   var scaleIntl=scaleIntlCheck;
   var scaleImp=scaleImpCheck;
   var scale=scaleIntl?('1:'+scaleIntl+(scaleImp?(' ('+scaleImp+' = 1\'-0")'):'')):(scaleImp?(scaleImp+' = 1\'-0"'):'Not specified');
@@ -2413,7 +2492,7 @@ function createLead(e){
       extras:extras,
       notes:notes,
       files:uploadedFiles,
-      filelink:dropbox||null,
+      filelink:dropboxLinks.length?dropboxLinks:null,
       boundaryMap:boundaryMap,
       receivedAt:today,
       source:source||'Manual entry'
@@ -3477,7 +3556,9 @@ function productionBriefBody(b){
       }
     });
   }
-  if(b.link)html+='<div style="margin-top:0.7rem;font-size:0.82rem;color:var(--cm-text-muted);word-break:break-all;"><span style="font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);margin-right:0.4rem;">Shared link</span>'+esc(b.link)+'</div>';
+  (Array.isArray(b.link)?b.link:(b.link?[b.link]:[])).forEach(function(lk,i,arr){
+    html+='<div style="margin-top:0.7rem;font-size:0.82rem;color:var(--cm-text-muted);word-break:break-all;"><span style="font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);margin-right:0.4rem;">Shared link'+(arr.length>1?' '+(i+1):'')+'</span>'+esc(lk)+'</div>';
+  });
   return html;
 }
 function productionBrief(b){
@@ -4204,11 +4285,12 @@ window.SRC_renderLeads=function(){
   if(!leads.length){list.innerHTML='';if(empty)empty.hidden=false;return;}
   if(empty)empty.hidden=true;
   list.innerHTML=leads.map(function(l){
+    var lLinks=Array.isArray(l.filelink)?l.filelink:(l.filelink?[l.filelink]:[]);
     var filesHtml='';
-    if((l.files&&l.files.length)||l.filelink){
+    if((l.files&&l.files.length)||lLinks.length){
       filesHtml='<div class="leadcard__files"><span class="mock__k">Attachments</span><div class="filechips">'+
         (l.files||[]).map(function(f){return f.url?('<a class="filechip filechip--link" href="'+esc(f.url)+'" target="_blank" rel="noopener" download="'+esc(f.name)+'">'+esc(f.name)+' <span class="filechip__sz">'+esc(f.size)+'</span> \u2193</a>'):('<span class="filechip">'+esc(f.name)+' <span class="filechip__sz">'+esc(f.size)+'</span></span>');}).join('')+
-        (l.filelink?('<a class="filechip filechip--link" href="'+esc(l.filelink)+'" target="_blank" rel="noopener">Open link \u2197</a>'):'')+
+        lLinks.map(function(lk,i){return '<a class="filechip filechip--link" href="'+esc(lk)+'" target="_blank" rel="noopener">Open link'+(lLinks.length>1?' '+(i+1):'')+' \u2197</a>';}).join('')+
         '</div></div>';
     }
     return '<article class="leadcard" data-lead="'+esc(l.id)+'"><div class="leadcard__main">'+
@@ -4220,7 +4302,7 @@ window.SRC_renderLeads=function(){
         '<div><span class="mock__k">Approx. size</span><div class="lc-v">'+esc(l.modelsize)+'</div></div>'+
         '<div><span class="mock__k">Quantity</span><div class="lc-v">'+esc(l.quantity||'1')+'</div></div>'+
         '<div><span class="mock__k">Timeline</span><div class="lc-v">'+esc(l.timeline)+'</div></div>'+
-        '<div><span class="mock__k">Files</span><div class="lc-v">'+((l.files&&l.files.length)?(l.files.length+' uploaded'):(l.filelink?'Link shared':'None'))+'</div></div>'+
+        '<div><span class="mock__k">Files</span><div class="lc-v">'+((l.files&&l.files.length)?(l.files.length+' uploaded'):(lLinks.length?(lLinks.length>1?(lLinks.length+' links shared'):'Link shared'):'None'))+'</div></div>'+
         '<div><span class="mock__k">Delivery to</span><div class="lc-v">'+esc(l.deliveryTo)+'</div></div>'+
         (l.intendedUse?('<div><span class="mock__k">Intended use</span><div class="lc-v">'+esc(l.intendedUse)+'</div></div>'):'')+
         (l.prefMaterial?('<div><span class="mock__k">Preferred material</span><div class="lc-v">'+esc(l.prefMaterial)+'</div></div>'):'')+
@@ -4233,6 +4315,7 @@ window.SRC_renderLeads=function(){
       '</div><div class="leadcard__act"><span class="mock__k">Received '+esc(l.receivedAt)+' \u00b7 '+esc(l.source||'Website form')+'</span>'+
       '<button class="btn btn--primary btn--sm" onclick="convertLead(\''+esc(l.id)+'\')">Send to production \u2192</button>'+
       '<button class="btn btn--ghost btn--sm" onclick="replyLead(\''+esc(l.client.Email)+'\',\''+esc(l.title)+'\')">Reply by email</button>'+
+      '<button class="btn btn--ghost btn--sm studio-only" onclick="openLeadVariation(\''+esc(l.id)+'\')">+ Create variation</button>'+
       '<button class="btn btn--ghost btn--sm studio-only" onclick="openAssignLeadCompany(\''+esc(l.id)+'\')">'+(l.assignedCompanyName?'Change company':'Assign to company')+'</button>'+
       '<button class="btn btn--ghost btn--sm studio-only" onclick="archiveLead(\''+esc(l.id)+'\')">Archive</button></div></article>';
   }).join('');
