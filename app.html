@@ -4342,18 +4342,38 @@ window.SRC_confirmSendLead=function(){
 };
 /* ---- Shared store live sync (Phase 1 pilot): /api/sourcing (same-origin, Redis-backed) ---- */
 var POLL_MS=5000, pollTimer=null;
+// The quote-entry fields (Cost, Production time, scale, dimensions, notes, etc.)
+// are plain scratch inputs with no value= binding to any saved state — they're
+// only read at submit time. That means ANY re-render while one is mid-fill wipes
+// it. Checking document.activeElement alone isn't quite enough: tabbing between
+// two of these fields, or clicking a checkbox/button in the same form, can leave
+// activeElement pointed at something that isn't itself an INPUT/TEXTAREA/SELECT
+// for a moment even though the admin is clearly still filling out the form — and
+// if a 5s poll lands in that exact window, it still wipes everything. So track
+// recent typing activity too, and treat the form as "in use" for a few seconds
+// after the last keystroke, not just while a field is focused at this instant.
+var srcLastInputAt=0;
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(t&&t.closest&&(t.closest('#srcBody')||t.closest('#view-sourcing'))){
+    srcLastInputAt=Date.now();
+  }
+},true);
 function pullSourcing(){
   return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
     if(data&&(data.briefs||data.leads)){
       SDB.briefs=data.briefs||[];
       SDB.leads=data.leads||[];
       try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
-      // Skip the re-render while a field is actively focused (e.g. mid-typing a quote) —
-      // SRC_render()/SRC_renderLeads() rebuild the form markup from scratch via innerHTML,
-      // which would wipe out an in-progress, not-yet-submitted value on every 5s poll.
-      // The data above is still refreshed in the background either way.
+      // Skip the re-render while a field is actively focused OR was typed into in
+      // the last few seconds (e.g. mid-typing a quote, or just tabbed to the next
+      // field) — SRC_render()/SRC_renderLeads() rebuild the form markup from
+      // scratch via innerHTML, which would wipe out an in-progress, not-yet-
+      // submitted value. The data above is still refreshed in the background
+      // either way, so nothing is lost — the visible re-render is just deferred
+      // until the admin pauses.
       var ae=document.activeElement;
-      var isEditing=ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
+      var isEditing=(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))||(Date.now()-srcLastInputAt<4000);
       if(!isEditing){
         if(window.SRC_updateBadges)window.SRC_updateBadges();
         if(window.SRC_render)window.SRC_render();
