@@ -12,6 +12,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
+<script type="module">
+  // Direct-to-storage upload helper. Large files (CAD/.nwd, video, etc.) must
+  // bypass the /api/upload serverless function entirely — Vercel enforces a
+  // hard ~4.5MB request body limit on serverless functions, so anything
+  // buffered through one silently fails above that size. This uses Vercel
+  // Blob's client-upload flow instead: the browser gets a short-lived upload
+  // token from /api/upload, then PUTs the file bytes straight to Blob storage.
+  import { upload } from 'https://esm.sh/@vercel/blob@0.27.3/client';
+  window.__blobUpload = upload;
+</script>
 <style>
 body{background:var(--cm-ink-950);}
 .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh;}
@@ -2363,15 +2373,26 @@ function createLead(e){
   if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Adding\u2026';}
 
   var uploadTasks=pickedFiles.map(function(f){
-    return fetch('/api/upload?path=leads/'+encodeURIComponent(id),{
-      method:'POST',
-      headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},
-      body:f
-    }).then(function(r){
-      if(!r.ok)throw new Error('Upload failed: '+r.status);
-      return r.json();
-    }).then(function(data){
-      return {name:f.name,size:f.size,url:data.url};
+    if(!window.__blobUpload){
+      // Module script hasn't loaded yet (e.g. very old browser) — fall back to
+      // the old direct-through-the-function path, which still works for small files.
+      return fetch('/api/upload?path=leads/'+encodeURIComponent(id),{
+        method:'POST',
+        headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},
+        body:f
+      }).then(function(r){
+        if(!r.ok)throw new Error('Upload failed: '+r.status);
+        return r.json();
+      }).then(function(data){
+        return {name:f.name,size:f.size,url:data.url};
+      }).catch(function(err){console.error('Upload failed',f.name,err);return {name:f.name,size:f.size,url:null};});
+    }
+    return window.__blobUpload('leads/'+id+'/'+f.name,f,{
+      access:'public',
+      handleUploadUrl:'/api/upload',
+      multipart:true
+    }).then(function(blob){
+      return {name:f.name,size:f.size,url:blob.url};
     }).catch(function(err){console.error('Upload failed',f.name,err);return {name:f.name,size:f.size,url:null};});
   });
 
@@ -3953,7 +3974,7 @@ function sectionLabel(text){
   return '<div style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-subtle);margin:1.1rem 0 0.6rem;">'+text+'</div>';
 }
 function SRC_prodAdmin(){
-  document.getElementById('srcNotice').innerHTML='<b>Production Admin · '+shop(OUR_SHOP).name+'.</b> Quote the briefs Carve sends you — add variation quotes if a different scale or spec makes sense — and assign technicians to jobs you win. Client identity is never shown.';
+  document.getElementById('srcNotice').innerHTML='<b>Production Admin · '+shop(OUR_SHOP).name+'.</b> Quote the briefs Carve sends you — add variation quotes if a different scale or spec makes sense — and assign technicians to jobs you win. Everything the client submitted is shared with production. Carve Model handles client communication and delivery — client name, company, and contact aren\'t shown here.';
   window.SRC_updateBadges();
   var ours=SDB.briefs.filter(function(b){return (b.invited&&b.invited.indexOf(OUR_SHOP)>=0)||b.quotes[OUR_SHOP]||b.awarded===OUR_SHOP;});
   var byDate=function(a,c){return (a.sentDate||'').localeCompare(c.sentDate||'');};
@@ -4321,15 +4342,43 @@ window.SRC_confirmSendLead=function(){
 };
 /* ---- Shared store live sync (Phase 1 pilot): /api/sourcing (same-origin, Redis-backed) ---- */
 var POLL_MS=5000, pollTimer=null;
+// The quote-entry fields (Cost, Production time, scale, dimensions, notes, etc.)
+// are plain scratch inputs with no value= binding to any saved state — they're
+// only read at submit time. That means ANY re-render while one is mid-fill wipes
+// it. Checking document.activeElement alone isn't quite enough: tabbing between
+// two of these fields, or clicking a checkbox/button in the same form, can leave
+// activeElement pointed at something that isn't itself an INPUT/TEXTAREA/SELECT
+// for a moment even though the admin is clearly still filling out the form — and
+// if a 5s poll lands in that exact window, it still wipes everything. So track
+// recent typing activity too, and treat the form as "in use" for a few seconds
+// after the last keystroke, not just while a field is focused at this instant.
+var srcLastInputAt=0;
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(t&&t.closest&&(t.closest('#srcBody')||t.closest('#view-sourcing'))){
+    srcLastInputAt=Date.now();
+  }
+},true);
 function pullSourcing(){
   return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
     if(data&&(data.briefs||data.leads)){
       SDB.briefs=data.briefs||[];
       SDB.leads=data.leads||[];
       try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
-      if(window.SRC_updateBadges)window.SRC_updateBadges();
-      if(window.SRC_render)window.SRC_render();
-      if(window.SRC_renderLeads)window.SRC_renderLeads();
+      // Skip the re-render while a field is actively focused OR was typed into in
+      // the last few seconds (e.g. mid-typing a quote, or just tabbed to the next
+      // field) — SRC_render()/SRC_renderLeads() rebuild the form markup from
+      // scratch via innerHTML, which would wipe out an in-progress, not-yet-
+      // submitted value. The data above is still refreshed in the background
+      // either way, so nothing is lost — the visible re-render is just deferred
+      // until the admin pauses.
+      var ae=document.activeElement;
+      var isEditing=(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))||(Date.now()-srcLastInputAt<4000);
+      if(!isEditing){
+        if(window.SRC_updateBadges)window.SRC_updateBadges();
+        if(window.SRC_render)window.SRC_render();
+        if(window.SRC_renderLeads)window.SRC_renderLeads();
+      }
     }
   });
 }
