@@ -164,9 +164,9 @@ body{background:var(--cm-ink-950);}
 .techbtn.on{background:var(--cm-white);color:var(--cm-ink-900);border-color:var(--cm-white);}
 .qform2{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-top:0.3rem;}
 .qform2 .full{grid-column:1/-1;}
-.qform2 label{display:block;font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-muted);margin-bottom:0.35rem;}
+.qform2 label{display:block;font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-strong);margin-bottom:0.35rem;}
 .qform2 input:not([type="checkbox"]):not([type="radio"]),.qform2 textarea,.qform2 select{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);color:var(--cm-text);font-family:var(--font-sans);font-size:0.86rem;padding:0.55rem 0.65rem;appearance:none;-webkit-appearance:none;}
-.qform2 input[type="checkbox"],.qform2 input[type="radio"]{width:15px;height:15px;flex:none;accent-color:var(--cm-silver);}
+.qform2 input[type="checkbox"],.qform2 input[type="radio"]{width:15px;height:15px;flex:none;accent-color:var(--cm-silver);color-scheme:dark;}
 .qform2 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23808080' stroke-width='1.6'%3E%3Cpath d='M5.5 7.5l4.5 4.5 4.5-4.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.6rem center;background-size:14px;padding-right:2rem;}
 .qform2 input:focus:not([type="checkbox"]):not([type="radio"]),.qform2 textarea:focus,.qform2 select:focus{outline:none;border-color:var(--cm-border-strong);}
 @media(max-width:680px){.qline2{grid-template-columns:1fr 1fr;}.qform2{grid-template-columns:1fr;}}
@@ -3478,7 +3478,6 @@ function productionBriefBody(b){
     });
   }
   if(b.link)html+='<div style="margin-top:0.7rem;font-size:0.82rem;color:var(--cm-text-muted);word-break:break-all;"><span style="font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);margin-right:0.4rem;">Shared link</span>'+esc(b.link)+'</div>';
-  html+='<div style="margin-top:1rem;padding-top:0.9rem;border-top:1px solid var(--cm-line-faint);font-size:0.78rem;color:var(--cm-text-subtle);line-height:1.55;">Everything the client submitted is shared with production. Carve Model handles client communication and delivery — client name, company, and contact aren\u2019t shown here.</div>';
   return html;
 }
 function productionBrief(b){
@@ -3677,6 +3676,48 @@ window.SRC_setColor=function(prefix,bid,val){
   if(monoBtn)monoBtn.classList.toggle('on',val==='mono');
 };
 
+/* ---- Draft-preserving re-render for #srcBody ----
+   The quote-entry scratch fields (Cost, Production time, scale, dimensions,
+   notes, etc.) have no value= binding to saved state — they only get read at
+   submit time — so a plain innerHTML rebuild wipes anything typed but not yet
+   submitted. The 5s poll skips re-rendering while a field is focused/recently
+   edited, but that only covers ONE trigger; SRC_render() also gets called
+   directly by plenty of other actions (toggling a card open, awarding a shop,
+   syncing a scale/dimension field, etc.) that aren't guarded at all. Rather
+   than chase every trigger individually, capture whatever's currently typed
+   into every #srcBody field before ANY rebuild and restore it into the fresh
+   markup afterward — this is a backstop that works regardless of what caused
+   the rebuild.
+*/
+function srcCaptureDraft(){
+  var draft={};
+  document.querySelectorAll('#srcBody input[id], #srcBody textarea[id], #srcBody select[id]').forEach(function(el){
+    if(el.type==='file')return;
+    if(el.type==='checkbox'||el.type==='radio'){draft[el.id]={checked:el.checked};}
+    else{draft[el.id]={value:el.value};}
+  });
+  return draft;
+}
+function srcRestoreDraft(draft){
+  Object.keys(draft).forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    var d=draft[id];
+    if('checked' in d){
+      if(d.checked&&!el.checked)el.checked=true;
+    }else if(d.value!=null&&d.value!==''&&(el.value==null||el.value==='')){
+      // Only fill in fields the fresh render left empty — never overwrite a
+      // value the re-render legitimately populated from updated state.
+      el.value=d.value;
+    }
+  });
+}
+function setSrcBody(html){
+  var draft=srcCaptureDraft();
+  document.getElementById('srcBody').innerHTML=html;
+  srcRestoreDraft(draft);
+}
+
 function SRC_render(){
   var role=document.body.dataset.role;
   var title=(role==='prodtech')?'My Assignments':'Quotes';
@@ -3757,7 +3798,7 @@ function SRC_carveAdmin(){
     html+=historySection(b,null);
     html+='</div></div>';
   });
-  document.getElementById('srcBody').innerHTML=html;
+  setSrcBody(html);
   SDB.briefs.forEach(function(b){
     if((b.status==='awarded'||b.picked!=null)&&(!b.clientQuote||!b.clientQuote.sent)&&document.getElementById('cq-pkgn-'+b.id))SRC_renderPkgDims('cq',b.id);
   });
@@ -3974,13 +4015,13 @@ function sectionLabel(text){
   return '<div style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-subtle);margin:1.1rem 0 0.6rem;">'+text+'</div>';
 }
 function SRC_prodAdmin(){
-  document.getElementById('srcNotice').innerHTML='<b>Production Admin · '+shop(OUR_SHOP).name+'.</b> Quote the briefs Carve sends you — add variation quotes if a different scale or spec makes sense — and assign technicians to jobs you win. Everything the client submitted is shared with production. Carve Model handles client communication and delivery — client name, company, and contact aren\'t shown here.';
+  document.getElementById('srcNotice').innerHTML='<b>Production Admin · '+shop(OUR_SHOP).name+'.</b> Quote the briefs Carve sends you — add variation quotes if a different scale or spec makes sense — and assign technicians to jobs you win. Everything the client submitted is shared with production.';
   window.SRC_updateBadges();
   var ours=SDB.briefs.filter(function(b){return (b.invited&&b.invited.indexOf(OUR_SHOP)>=0)||b.quotes[OUR_SHOP]||b.awarded===OUR_SHOP;});
   var byDate=function(a,c){return (a.sentDate||'').localeCompare(c.sentDate||'');};
   var activeList=ours.filter(function(b){return !b.quotes[OUR_SHOP];}).sort(byDate);
   var submittedList=ours.filter(function(b){return !!b.quotes[OUR_SHOP];}).sort(byDate);
-  var html='<div class="src-head"><div><h2>Your shop’s projects with Carve</h2><div class="sub">Active quotations need your bid first; submitted quotes sit below, earliest first, collapsed until you open them.</div></div></div>';
+  var html='<div class="src-head"><div><h2>Your shop’s projects with Carve</h2><div class="sub" style="max-width:none;white-space:nowrap;">Active quotations need your bid first; submitted quotes sit below, earliest first, collapsed until you open them.</div></div></div>';
   var unread=(SDB.notifications&&SDB.notifications[OUR_SHOP]||[]).filter(function(n){return !n.read;});
   if(unread.length){
     html+='<div style="border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);background:rgba(182,182,182,0.05);border-radius:var(--r-sm);padding:0.9rem 1.1rem;margin-bottom:1.2rem;">'+
@@ -3997,7 +4038,7 @@ function SRC_prodAdmin(){
     html+=sectionLabel('Submitted quotes · '+submittedList.length);
     submittedList.forEach(function(b){html+=renderProdAdminCard(b);});
   }
-  document.getElementById('srcBody').innerHTML=html;
+  setSrcBody(html);
   ours.forEach(function(b){
     if(document.getElementById('src-pkgdims-'+b.id))SRC_renderPkgDims('src',b.id);
     if(document.getElementById('varnew-pkgdims-'+b.id))SRC_renderPkgDims('varnew',b.id);
@@ -4113,7 +4154,7 @@ function SRC_prodTech(){
       }).join('')+'</div>';
     html+='</div></div>';
   });
-  document.getElementById('srcBody').innerHTML=html;
+  setSrcBody(html);
 }
 window.SRC_render=SRC_render;
 window.SRC_getClientQuote=function(bid){var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];return b?b.clientQuote:null;};
