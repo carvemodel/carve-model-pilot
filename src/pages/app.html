@@ -133,6 +133,7 @@ body{background:var(--cm-ink-950);}
 .src-head h2{font-family:var(--font-display);font-size:1.2rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
 .src-head .sub{font-size:0.86rem;color:var(--cm-text-muted);margin-top:0.4rem;max-width:62ch;line-height:1.5;}
 .src-card{margin-bottom:1.2rem;}
+.src-card--stale{border-color:#C2703D;}
 .src-card .panel__head{align-items:flex-start;}
 .src-card__t{font-family:var(--font-display);font-size:1.05rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
 .src-card__code{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.05em;color:var(--cm-text-subtle);text-transform:uppercase;margin-bottom:0.25rem;display:block;}
@@ -3847,10 +3848,14 @@ function SRC_carveAdmin(){
     var wq=winningQuote(b);
     var confirmed=b.status==='awarded';
     var pickedNotConfirmed=!confirmed&&b.picked!=null;
+    var noResponseYet=!confirmed&&!pickedNotConfirmed&&totalOptions===0;
+    var daysSinceSent=b.sentDate?Math.max(0,Math.floor((Date.now()-new Date(b.sentDate+'T00:00:00').getTime())/86400000)):null;
     var chip=confirmed?('<span class="chip done">Confirmed with production · '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' · In production':'')+'</span>')
       :pickedNotConfirmed?('<span class="chip await">Selected · '+shop(b.picked).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+' · not yet confirmed with production</span>')
+      :noResponseYet?('<span class="chip await">Awaiting response'+(daysSinceSent!=null?(' · sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):'')+'</span>')
       :('<span class="chip active">Open · '+totalOptions+' option'+(totalOptions==1?'':'s')+'</span>');
-    html+='<div class="panel src-card"><div class="panel__head"><div><span class="src-card__code">'+b.code+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.6rem;">'+chip+(confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'')+'</div></div><div class="panel__body">';
+    var invitedNames=(b.invited||[]).map(function(sid){var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===sid;})[0];var s=shop(sid);return admin?admin.name:(s?s.name:sid);});
+    html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+'"><div class="panel__head"><div><span class="src-card__code">'+b.code+(b.sentDate?' · sent '+esc(b.sentDate)+(invitedNames.length?' to '+esc(invitedNames.join(', ')):''):'')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.6rem;">'+chip+(confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'')+'</div></div><div class="panel__body">';
     html+='<div class="src-spec">'+specBits(b)+'</div>';
     if(!confirmed&&!b.picked&&quoted.length)html+='<div class="notice" style="margin-top:0.8rem;">'+quoted.length+' quote'+(quoted.length===1?'':'s')+' in. Pick an option below to build a client quote — nothing is sent to the shop yet.</div>';
     html+='<div style="margin-top:0.6rem;"><div class="qline2 head"><span>Shop</span><span>Cost</span><span>Prod. time</span><span></span></div>';
