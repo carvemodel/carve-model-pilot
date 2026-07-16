@@ -3308,6 +3308,7 @@ window.SRC_setShop=function(id){if(id)OUR_SHOP=id;};
 var ME_TECH='sam';                    // Production Technician identity
 var RMB_PER_USD=7.2;                  // demo FX rate — production shops quote in RMB, Carve sees USD
 var SRC_PENDING_BFILE={};             // holds boundary-file metadata picked but not yet submitted, keyed by "<prefix>-<briefId>"
+var SRC_BFILE_UPLOADING={};           // true while a boundary file's upload is still in flight, same keys as above
 var SRC_OPEN_VARIATION={};            // briefId -> true while a shop's "add variation" form is open
 var SRC_EXPANDED={};                  // briefId -> true/false; production admin's per-brief expand state
 window.SRC_toggleExpand=function(bid){SRC_EXPANDED[bid]=!SRC_EXPANDED[bid];SRC_render();};
@@ -3539,7 +3540,11 @@ function extrasLine(q){
 }
 function boundaryFileLine(q){
   if(!q.boundaryFile)return '';
-  return '<div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;font-size:0.8rem;color:var(--cm-text-muted);"><span style="font-family:var(--font-mono);">📎</span>'+esc(q.boundaryFile.name)+'<span style="color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.72rem;">'+(q.boundaryFile.size?(q.boundaryFile.size/1024/1024>=1?(q.boundaryFile.size/1024/1024).toFixed(1)+' MB':Math.round(q.boundaryFile.size/1024)+' KB'):'')+'</span></div>';
+  var sizeStr=q.boundaryFile.size?(q.boundaryFile.size/1024/1024>=1?(q.boundaryFile.size/1024/1024).toFixed(1)+' MB':Math.round(q.boundaryFile.size/1024)+' KB'):'';
+  if(q.boundaryFile.url){
+    return '<a class="filechip filechip--link" href="'+esc(q.boundaryFile.url)+'" target="_blank" rel="noopener" download="'+esc(q.boundaryFile.name)+'" style="margin-top:0.5rem;">📎 '+esc(q.boundaryFile.name)+' <span class="filechip__sz">'+sizeStr+'</span> ↓</a>';
+  }
+  return '<div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;font-size:0.8rem;color:var(--cm-text-muted);"><span style="font-family:var(--font-mono);">📎</span>'+esc(q.boundaryFile.name)+'<span style="color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.72rem;">'+sizeStr+'</span></div>';
 }
 function specBits(b){return Object.keys(b.brief).map(function(k){return '<div><b>'+k+'</b>'+esc(b.brief[k])+'</div>';}).join('');}
 
@@ -3635,10 +3640,36 @@ function collectQuoteFormData(prefix,bid,b){
 }
 
 window.SRC_boundaryFilePicked=function(prefix,bid,input){
+  var key=prefix+'-'+bid;
   var f=input.files&&input.files[0];
-  SRC_PENDING_BFILE[prefix+'-'+bid]=f?{name:f.name,size:f.size}:null;
   var lbl=document.getElementById(prefix+'-bfile-label-'+bid);
-  if(lbl)lbl.textContent=f?(f.name+' · '+(f.size/1024/1024>=1?(f.size/1024/1024).toFixed(1)+' MB':Math.round(f.size/1024)+' KB')):'Drop a file or click to upload';
+  if(!f){
+    SRC_PENDING_BFILE[key]=null;
+    delete SRC_BFILE_UPLOADING[key];
+    if(lbl)lbl.textContent='Drop a file or click to upload';
+    return;
+  }
+  var sizeStr=f.size/1024/1024>=1?(f.size/1024/1024).toFixed(1)+' MB':Math.round(f.size/1024)+' KB';
+  // This used to only remember {name,size} locally and never actually upload
+  // the file anywhere — meaning Carve Admin could never open or download it,
+  // no matter what. Upload it for real now, the same way Add Lead does.
+  SRC_BFILE_UPLOADING[key]=true;
+  if(lbl)lbl.textContent='Uploading '+f.name+' ('+sizeStr+')…';
+  var uploadPromise=window.__blobUpload
+    ? window.__blobUpload('quotes/'+key+'/'+Date.now()+'-'+f.name,f,{access:'public',handleUploadUrl:'/api/upload',multipart:true}).then(function(blob){return blob.url;})
+    : fetch('/api/upload?path=quotes/'+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},body:f}).then(function(r){if(!r.ok)throw new Error('Upload failed: '+r.status);return r.json();}).then(function(data){return data.url;});
+  uploadPromise.then(function(url){
+    SRC_PENDING_BFILE[key]={name:f.name,size:f.size,url:url};
+    delete SRC_BFILE_UPLOADING[key];
+    var lbl2=document.getElementById(prefix+'-bfile-label-'+bid);
+    if(lbl2)lbl2.textContent=f.name+' · '+sizeStr;
+  }).catch(function(err){
+    console.error('Boundary file upload failed',f.name,err);
+    SRC_PENDING_BFILE[key]={name:f.name,size:f.size,url:null};
+    delete SRC_BFILE_UPLOADING[key];
+    var lbl3=document.getElementById(prefix+'-bfile-label-'+bid);
+    if(lbl3)lbl3.textContent=f.name+' · '+sizeStr+' — upload failed, try again';
+  });
 };
 function parseScaleString(s){
   s=s||'';
@@ -4168,6 +4199,7 @@ window.SRC_openVariationForm=function(bid){SRC_OPEN_VARIATION[bid]=true;SRC_rend
 window.SRC_cancelVariationForm=function(bid){delete SRC_OPEN_VARIATION[bid];SRC_render();};
 window.SRC_addVariation=function(bid){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(SRC_BFILE_UPLOADING['varnew-'+bid]){alert('The dimension/boundary file is still uploading — please wait a moment and try again.');return;}
   var labelEl=document.getElementById('varnew-label-'+bid);
   var label=labelEl?labelEl.value.trim():'';
   if(!label){alert('Give this variation a short label, e.g. "Smaller scale option".');return;}
@@ -4201,6 +4233,7 @@ window.SRC_reviseVariation=function(bid,idx){
 };
 window.SRC_quote=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
+  if(SRC_BFILE_UPLOADING['src-'+id]){alert('The dimension/boundary file is still uploading — please wait a moment and try again.');return;}
   var data=collectQuoteFormData('src',id,b);
   if(!data){alert('Add a cost and a production time.');return;}
   b.quotes[OUR_SHOP]=data;
