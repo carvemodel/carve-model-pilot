@@ -58,7 +58,14 @@ module.exports = async (req, res) => {
         body,
         request: req,
         onBeforeGenerateToken: async () => ({
-          allowedContentTypes: ['*/*'],
+          // No allowedContentTypes here on purpose: Vercel Blob only supports
+          // real wildcard patterns like "image/*", not a bare "*/*" — passing
+          // that literal string caused the Blob backend to reject every
+          // upload with "Content type mismatch ... is not allowed", since no
+          // real file ever has a contentType of exactly "*/*". Omitting the
+          // field entirely defaults to allowing all content types, which is
+          // what we actually want (CAD/Rhino/SketchUp files report all sorts
+          // of generic or missing MIME types).
           addRandomSuffix: true,
         }),
         onUploadCompleted: async () => {
