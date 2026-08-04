@@ -39,7 +39,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 }`} />
 <style>
 /* ===== Homepage-specific ===== */
-.hero{position:relative;padding-top:clamp(3rem,6vw,6rem);padding-bottom:clamp(3rem,5vw,5rem);overflow:hidden;}
+.hero{position:relative;padding-top:clamp(2.9rem,3.6vw,3.75rem);padding-bottom:clamp(3rem,5vw,5rem);overflow:hidden;}
 .hero::before{
   content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
   background:
@@ -50,19 +50,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   background-image:linear-gradient(var(--cm-line-faint) 1px,transparent 1px),linear-gradient(90deg,var(--cm-line-faint) 1px,transparent 1px);
   background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0,#000,transparent 80%);}
 .hero__inner{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr 0.95fr;gap:clamp(2rem,4vw,4.5rem);align-items:center;}
-.hero h1{margin-top:1.6rem;}
-.hero h1 em{font-style:normal;color:var(--cm-silver);}
-.hero__sub{margin-top:1.8rem;max-width:48ch;}
+.hero__inner .eyebrow:not(.eyebrow--sub){color:var(--cm-text-strong);}
+.hero h1{margin-top:2.75rem;font-size:clamp(2.1rem,4.4vw,3.6rem);line-height:1.05;}
+.hero h1 em{font-style:normal;color:var(--cm-text-muted);}
+.hero__sub{margin-top:2.75rem;max-width:48ch;}
+.hero__inner .eyebrow--sub{
+  display:block;font-family:var(--font-mono);font-size:0.72rem;
+  letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);
+  margin-top:2.75rem;
+}
+.hero__inner .eyebrow--sub::before{content:none;}
 .hero__cta{display:flex;gap:0.9rem;flex-wrap:wrap;margin-top:2.4rem;}
+.hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
+.hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .hero__visual{position:relative;}
-.hero__visual image-slot{width:100%;aspect-ratio:4/5;border-radius:var(--r-sm);}
+.hero__visual img.hero-photo{display:block;width:100%;aspect-ratio:6/5;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
 .hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
 .hero__spec{position:absolute;right:-12px;bottom:24px;z-index:4;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);padding:0.9rem 1.1rem;box-shadow:var(--shadow-lg);}
 .hero__spec .tick{display:block;}
 .hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.1rem;letter-spacing:-0.01em;}
-.hero__meta{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:2.5rem;margin-top:clamp(2.5rem,4vw,4rem);padding-top:2rem;border-top:1px solid var(--cm-line-faint);}
+.hero__meta{position:relative;z-index:1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:1.5rem 2.5rem;margin-top:clamp(1.5rem,2.5vw,2.5rem);padding-top:1.5rem;border-top:1px solid var(--cm-line-faint);}
+.hero__meta .stat__num{font-size:clamp(1.8rem,3.5vw,3rem);}
 @media(max-width:900px){.hero__inner{grid-template-columns:1fr;}.hero__visual{order:-1;max-width:440px;}}
 
 /* clients strip */
@@ -191,17 +201,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <div class="container">
     <div class="hero__inner">
       <div>
-        <span class="eyebrow">Los Angeles, CA · Serving the U.S. & Canada</span>
-        <h1 class="display-xl">Physical models for <em>confident</em> decisions.</h1>
-        <p class="hero__sub lead">Carve Model is a physical model studio that designs and fabricates architectural scale models, sales-gallery pieces, product prototypes, film miniatures, and art installations — built for the moments where decisions are made.</p>
+        <span class="eyebrow">Physical models for confident decisions</span>
+        <h1 class="display-xl">Turn<br>Digital Designs<br>Into<br><em>Physical</em> Evidence</h1>
+        <p class="hero__sub lead">Carve Model creates architectural models, product prototypes, film miniatures, and art maquettes that help teams present ideas, review decisions, and test physical outcomes before committing to the next stage.</p>
+        <span class="eyebrow eyebrow--sub">Los Angeles, CA · Serving the U.S. &amp; Canada</span>
         <div class="hero__cta">
           <a class="btn btn--primary btn--lg" href="/contact">Get a Free Quote <span class="arrow">→</span></a>
-          <a class="btn btn--ghost btn--lg" href="/works">View Our Work</a>
+          <a class="btn btn--ghost btn--lg" href="/works">View Our Work <span class="arrow">→</span></a>
         </div>
       </div>
       <div class="hero__visual reveal">
         <span class="corner tl"></span><span class="corner br"></span>
-        <image-slot id="hero-model" placeholder="Drop a hero model photo" fit="cover"></image-slot>
+        <img class="hero-photo" src="/assets/hero-photo.png" alt="Carve Model architectural scale model">
         <span class="slot-label">Featured · Mixed-use development · 1:144</span>
         <div class="hero__spec">
           <span class="tick">PROJECTS DELIVERED</span>
