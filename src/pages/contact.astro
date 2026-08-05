@@ -2,10 +2,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 <BaseLayout
-  title="Get a Free Quote — Contact Carve Model"
+  title="Get a Preliminary Estimate — Contact Carve Model"
   description="Tell us about your project and get a free quote. Carve Model builds architectural scale models, sales-gallery pieces, product prototypes, and film miniatures from Los Angeles."
   canonicalPath="/contact"
-  ogTitle="Get a Free Quote | Carve Model"
+  ogTitle="Get a Preliminary Estimate | Carve Model"
   ogDescription="Tell us what decision your model needs to support."
   active="contact"
   imageSlot={false}
@@ -310,8 +310,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <input id="fileInput" type="file" multiple hidden onchange="addFiles(this.files)">
           <ul class="filelist" id="fileList"></ul>
           <div class="orlink"><span>or share a link</span></div>
-          <input id="filelink" name="filelink" type="url" placeholder="Dropbox, Google Drive, WeTransfer, or OneDrive link">
-          <div class="hint">Architectural files are often large — a shared cloud link is perfect. Please set it to "anyone with the link can view."</div>
+          <ul class="filelist" id="linkList"></ul>
+          <div style="display:flex;gap:0.5rem;">
+            <input id="filelink" name="filelink" type="url" placeholder="Dropbox, Google Drive, WeTransfer, or OneDrive link" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addLink();}">
+            <button type="button" class="btn btn--ghost btn--sm" onclick="addLink()">+ Add link</button>
+          </div>
+          <div class="hint">Architectural files are often large — a shared cloud link is perfect. Please set it to "anyone with the link can view." Have more than one large file? Add a link for each, then click "+ Add link" (or just leave the last one in the box — it's included automatically).</div>
         </div>
       </fieldset>
 
@@ -473,6 +477,25 @@ function renderFiles(){
     ul.appendChild(li);
   });
 }
+/* ---- Link list (for files too large to upload directly — supports more than one) ---- */
+var pickedLinks=[];
+function renderLinks(){
+  var ul=document.getElementById('linkList');ul.innerHTML='';
+  pickedLinks.forEach(function(l,i){
+    var li=document.createElement('li');
+    li.innerHTML='<span style="word-break:break-all;">'+l.replace(/[<>]/g,'')+'</span><button type="button" class="rm" aria-label="Remove">×</button>';
+    li.querySelector('.rm').onclick=function(){pickedLinks.splice(i,1);renderLinks();};
+    ul.appendChild(li);
+  });
+}
+function addLink(){
+  var el=document.getElementById('filelink');
+  var v=(el.value||'').trim();
+  if(!v)return;
+  pickedLinks.push(v);
+  el.value='';
+  renderLinks();
+}
 var MAX_UPLOAD_SIZE=25*1024*1024; // 25 MB per file — larger files must use the shared link field instead
 function addFiles(list){
   for(var i=0;i<list.length;i++){
@@ -621,7 +644,9 @@ function submitQuote(e){
   var scale=scaleIntlVal?('1:'+scaleIntlVal+(scaleImpLabel?(' ('+scaleImpLabel+' = 1\'-0")'):'')):(scaleImpLabel?(scaleImpLabel+' = 1\'-0"'):'');
   var modelsize=(document.getElementById('modelsize').value||'').trim();
   var quantity=(document.getElementById('quantity').value||'').trim();
-  var filelink=(document.getElementById('filelink').value||'').trim();
+  var pendingLink=(document.getElementById('filelink').value||'').trim();
+  if(pendingLink)addLink(); // capture anything still sitting in the box, not yet added
+  var filelinks=pickedLinks.slice();
   var useVal=(document.getElementById('use').value||'').trim();
   var prefMaterial=(document.getElementById('prefMaterial').value||'').trim();
   var prefBase=(document.getElementById('prefBase').value||'').trim();
@@ -662,7 +687,7 @@ function submitQuote(e){
       extras:extras,
       notes:message||'(no additional notes)',
       files:uploadedFiles,
-      filelink:filelink||null,
+      filelink:filelinks.length?filelinks:null,
       boundaryMap:boundaryMap,
       receivedAt:today,
       source:'Website form'

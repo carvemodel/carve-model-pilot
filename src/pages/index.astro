@@ -49,7 +49,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .hero__grid{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0.5;
   background-image:linear-gradient(var(--cm-line-faint) 1px,transparent 1px),linear-gradient(90deg,var(--cm-line-faint) 1px,transparent 1px);
   background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0,#000,transparent 80%);}
-.hero__inner{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr 0.95fr;gap:clamp(2rem,4vw,4.5rem);align-items:center;}
+.hero__inner{position:relative;z-index:1;display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
 .hero__inner .eyebrow:not(.eyebrow--sub){color:var(--cm-text-strong);}
 .hero h1{margin-top:2.75rem;font-size:clamp(2.1rem,4.4vw,3.6rem);line-height:1.05;}
 .hero h1 em{font-style:normal;color:var(--cm-text-muted);}
@@ -64,7 +64,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
 .hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .hero__visual{position:relative;}
-.hero__visual img.hero-photo{display:block;width:100%;aspect-ratio:6/5;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
+.hero__visual img.hero-photo{display:block;width:100%;aspect-ratio:4/3;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
 .hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
@@ -74,19 +74,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .hero__meta{position:relative;z-index:1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:1.5rem 2.5rem;margin-top:clamp(1.5rem,2.5vw,2.5rem);padding-top:1.5rem;border-top:1px solid var(--cm-line-faint);}
 .hero__meta .stat__num{font-size:clamp(1.8rem,3.5vw,3rem);}
 @media(max-width:900px){.hero__inner{grid-template-columns:1fr;}.hero__visual{order:-1;max-width:440px;}}
+#services{padding-top:clamp(0.75rem,0.25rem + 2vw,2.25rem);}
+.svc-all-btn{background:transparent;color:var(--cm-text-strong);}
+.svc-all-btn:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
+
+.statement{padding-top:clamp(2rem,1rem + 4vw,5rem);}
 
 /* clients strip */
 .clients{border-block:1px solid var(--cm-line-faint);padding-block:1.6rem;}
 .clients__row{display:flex;align-items:center;gap:clamp(1.5rem,4vw,3.5rem);flex-wrap:wrap;justify-content:space-between;}
 .clients__label{display:block;font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:1.2rem;}
 .marquee{overflow:hidden;position:relative;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);}
-.marquee__track{display:flex;align-items:center;width:max-content;animation:marquee 30s linear infinite;}
+.marquee__track{display:flex;align-items:center;gap:clamp(1.2rem,3vw,2.6rem);width:max-content;animation:marquee 30s linear infinite;}
 .marquee:hover .marquee__track{animation-play-state:paused;}
-.logo-cell{flex:none;display:flex;align-items:center;justify-content:center;height:64px;width:170px;margin-right:clamp(1.2rem,3vw,2.6rem);background:var(--cm-bg);border-radius:var(--r-sm);overflow:hidden;opacity:0.92;transition:opacity var(--dur-2);}
+.logo-cell{flex:none;display:flex;align-items:center;justify-content:center;height:64px;width:170px;background:var(--cm-bg);border-radius:var(--r-sm);overflow:hidden;opacity:0.92;transition:opacity var(--dur-2);}
 .marquee:hover .logo-cell{opacity:1;}
 .logo-cell img{max-width:96%;max-height:92%;width:auto;height:auto;object-fit:contain;display:block;}
 .logo-cell img.on-light{max-height:62%;filter:invert(1);}
 .logo-cell img.logo-populous{max-width:100%;max-height:100%;mix-blend-mode:screen;transform:scale(2.1);}
+.logo-cell img.logo-mackenzie{filter:invert(1);mix-blend-mode:screen;}
 @keyframes marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 @media(prefers-reduced-motion:reduce){.marquee__track{animation:none;}}
 @media(max-width:640px){.logo-cell{width:128px;height:54px;}}
@@ -202,11 +208,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="hero__inner">
       <div>
         <span class="eyebrow">Physical models for confident decisions</span>
-        <h1 class="display-xl">Turn<br>Digital Designs<br>Into<br><em>Physical</em> Evidence</h1>
-        <p class="hero__sub lead">Carve Model creates architectural models, product prototypes, film miniatures, and art maquettes that help teams present ideas, review decisions, and test physical outcomes before committing to the next stage.</p>
-        <span class="eyebrow eyebrow--sub">Los Angeles, CA · Serving the U.S. &amp; Canada</span>
+        <h1 class="display-xl">Turn<br>Digital Designs<br>Into<br><em>Physical</em><br>Evidence</h1>
+        <p class="hero__sub lead">Carve Model creates architectural models, product prototypes, film miniatures, and art maquettes that help teams present ideas, evaluate designs, and verify physical outcomes before moving to the next stage.</p>
         <div class="hero__cta">
-          <a class="btn btn--primary btn--lg" href="/contact">Get a Free Quote <span class="arrow">→</span></a>
+          <a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
           <a class="btn btn--ghost btn--lg" href="/works">View Our Work <span class="arrow">→</span></a>
         </div>
       </div>
@@ -232,18 +237,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <!-- ===== Clients ===== -->
 <section class="clients">
   <div class="container">
-    <span class="clients__label">Trusted by teams who present with confidence</span>
+    <span class="clients__label">Trusted by teams that need confidence when decisions matter.</span>
     <div class="marquee" id="clientMarquee">
       <div class="marquee__track">
         <div class="logo-cell"><img src="/assets/client-gensler.png" alt="Gensler"></div>
         <div class="logo-cell"><img src="/assets/client-populous.jpeg" alt="Populous" class="logo-populous"></div>
         <div class="logo-cell"><img src="/assets/client-turner.png" alt="Turner Construction" class="on-light"></div>
+        <div class="logo-cell"><img src="/assets/client-fentress.svg" alt="Fentress Architects"></div>
+        <div class="logo-cell"><img src="/assets/client-FC.png" alt="Chicago Fire FC"></div>
+        <div class="logo-cell"><img src="/assets/client-Mackenzie.png" alt="Mackenzie" class="logo-mackenzie"></div>
+        <div class="logo-cell"><img src="/assets/client-saltz.png" alt="Saltz"></div>
         <div class="logo-cell"><img src="/assets/client-gensler.png" alt="Gensler" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-populous.jpeg" alt="" class="logo-populous" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-turner.png" alt="" class="on-light" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-fentress.svg" alt="" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-FC.png" alt="" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-Mackenzie.png" alt="" class="logo-mackenzie" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-saltz.png" alt="" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-gensler.png" alt="" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-populous.jpeg" alt="" class="logo-populous" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-turner.png" alt="" class="on-light" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-fentress.svg" alt="" aria-hidden="true"></div>
       </div>
     </div>
   </div>
@@ -253,7 +267,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <section class="section statement">
   <div class="container">
     <span class="eyebrow reveal">What "confident decisions" means</span>
-    <p class="measure reveal mt-3">Confidence comes from two things. <em>A model that convinces the room</em> — stakeholders, investors, buyers, and government agencies see scale, massing, and intent at a glance, with nothing left to interpretation. <em>And a process you can trust</em> — every step is guided and clearly informed on our Studio Portal, so the decision is made with full visibility, never guesswork.</p>
+    <p class="measure reveal mt-3">Confidence comes from two things. <em>A model the room can understand</em> — stakeholders, investors, buyers, and approval agencies can see scale, massing, spatial relationships, and design intent at a glance, reducing ambiguity across technical and nontechnical audiences. <em>And a process you can trust</em> — scope, milestones, approvals, files, and updates are managed through the Carve Studio Portal, so you always know what has been decided, what happens next, and where your project stands.</p>
   </div>
 </section>
 
@@ -263,45 +277,33 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="flex justify-between items-center wrap gap">
       <div>
         <span class="eyebrow reveal">What we build</span>
-        <h2 class="display-md reveal mt-3">A model for every decision.</h2>
+        <h2 class="display-md reveal mt-3">Built for the decision it needs to support.</h2>
       </div>
-      <a class="btn btn--ghost reveal" href="/scale-model-services">All services <span class="arrow">→</span></a>
+      <a class="btn btn--ghost reveal svc-all-btn" href="/scale-model-services">All services <span class="arrow">→</span></a>
     </div>
     <div class="svc-grid">
       <article class="svc reveal">
         <span class="svc__idx">01 / Architecture</span>
-        <h3>Architectural Scale Models</h3>
-        <p>Massing studies to fully detailed replicas — for planning approvals, investor meetings, and sales galleries. Façade, glazing, and structure rendered at the right level of detail.</p>
+        <h3>Architectural &amp; Real Estate Model</h3>
+        <p>From early massing studies to detailed sales-gallery models—for design reviews, planning approvals, investor presentations, and marketing environments. Scale, circulation, context, façades, and structural relationships are represented at the right level of detail.</p>
         <a class="svc__more" href="/scale-model-services#architectural">Explore →</a>
       </article>
       <article class="svc reveal" data-delay="60">
-        <span class="svc__idx">02 / Marketing</span>
-        <h3>Sales Gallery &amp; Presentation</h3>
-        <p>High-finish display models with lighting and premium bases, designed to make a strong visual impression in marketing suites and investment pitches.</p>
-        <a class="svc__more" href="/scale-model-services#sales">Explore →</a>
-      </article>
-      <article class="svc reveal" data-delay="120">
-        <span class="svc__idx">03 / Product</span>
-        <h3>Product Prototypes</h3>
-        <p>We transform sketches and CAD files into fully built physical mockups for product designers, engineers, and hardware startups.</p>
+        <span class="svc__idx">02 / Product</span>
+        <h3>Product Prototype and Mockup</h3>
+        <p>Physical prototypes that transform sketches and CAD files into objects teams can present, evaluate, and refine. Built for form studies, material reviews, investor demonstrations, and fabrication planning.</p>
         <a class="svc__more" href="/scale-model-services#product">Explore →</a>
       </article>
-      <article class="svc reveal" data-delay="180">
-        <span class="svc__idx">04 / Film</span>
+      <article class="svc reveal" data-delay="120">
+        <span class="svc__idx">03 / Film</span>
         <h3>Film &amp; Commercial Miniatures</h3>
-        <p>Miniature sets for previsualization and cinematic planning, built from lightweight film-grade materials, ready for transport or on-location staging.</p>
+        <p>Miniature sets and physical models for previsualization, camera planning, and production. Built with lightweight, film-grade materials for presentation, transport, and on-location use.</p>
         <a class="svc__more" href="/scale-model-services#film">Explore →</a>
       </article>
-      <article class="svc reveal" data-delay="240">
-        <span class="svc__idx">05 / Site</span>
-        <h3>Topographic &amp; Site Models</h3>
-        <p>Accurate terrain, hardscape, and landscape — grade changes, roads, and water features — for planning, design reviews, and context massing.</p>
-        <a class="svc__more" href="/scale-model-services#topographic">Explore →</a>
-      </article>
-      <article class="svc reveal" data-delay="300">
-        <span class="svc__idx">06 / Art</span>
-        <h3>Art Installations &amp; Sculpture</h3>
-        <p>We work with artists and cultural institutions to fabricate sculptural works and installations — from maquette to precise, exhibition-ready object.</p>
+      <article class="svc reveal" data-delay="180">
+        <span class="svc__idx">04 / Art</span>
+        <h3>Art Maquettes &amp; Prototypes</h3>
+        <p>Physical maquettes and prototypes that help artists and cultural institutions evaluate scale, proportion, placement, materials, and fabrication direction before producing the final work.</p>
         <a class="svc__more" href="/scale-model-services#art">Explore →</a>
       </article>
     </div>
@@ -485,7 +487,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> We review scope and recommend scale</li>
           <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> A free, no-obligation reply</li>
         </ul>
-        <a class="btn btn--primary mt-3" href="/contact" style="margin-top:1.6rem;">Get a Free Quote <span class="arrow">→</span></a>
+        <a class="btn btn--primary mt-3" href="/contact" style="margin-top:1.6rem;">Get a Preliminary Estimate <span class="arrow">→</span></a>
       </article>
       <article class="path reveal" data-delay="100">
         <span class="path__num">02</span>
@@ -510,7 +512,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <h2 class="mt-3">Tell us what decision your model needs to support.</h2>
         <p>If you need a display object, we may not be the right fit. If you need confidence when decisions matter, Carve Model is built for that purpose.</p>
         <div class="cta__btns">
-          <a class="btn btn--primary btn--lg" href="/contact">Get a Free Quote <span class="arrow">→</span></a>
+          <a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
           <a class="btn btn--ghost btn--lg" href="/works">View Our Work</a>
         </div>
       </div>
