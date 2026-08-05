@@ -50,6 +50,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   background-image:linear-gradient(var(--cm-line-faint) 1px,transparent 1px),linear-gradient(90deg,var(--cm-line-faint) 1px,transparent 1px);
   background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0,#000,transparent 80%);}
 .hero__inner{position:relative;z-index:1;display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
+.hero__inner{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr 0.95fr;gap:clamp(2rem,4vw,4.5rem);align-items:center;}
 .hero__inner .eyebrow:not(.eyebrow--sub){color:var(--cm-text-strong);}
 .hero h1{margin-top:2.75rem;font-size:clamp(2.1rem,4.4vw,3.6rem);line-height:1.05;}
 .hero h1 em{font-style:normal;color:var(--cm-text-muted);}
@@ -65,6 +66,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .hero__visual{position:relative;}
 .hero__visual img.hero-photo{display:block;width:100%;aspect-ratio:4/3;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
+.hero__visual img.hero-photo{display:block;width:100%;aspect-ratio:6/5;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
 .hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
