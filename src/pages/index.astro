@@ -50,7 +50,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   background-image:linear-gradient(var(--cm-line-faint) 1px,transparent 1px),linear-gradient(90deg,var(--cm-line-faint) 1px,transparent 1px);
   background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0,#000,transparent 80%);}
 .hero__inner{position:relative;z-index:1;display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
-.hero__inner{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr 0.95fr;gap:clamp(2rem,4vw,4.5rem);align-items:center;}
 .hero__inner .eyebrow:not(.eyebrow--sub){color:var(--cm-text-strong);}
 .hero h1{margin-top:2.75rem;font-size:clamp(2.1rem,4.4vw,3.6rem);line-height:1.05;}
 .hero h1 em{font-style:normal;color:var(--cm-text-muted);}
@@ -66,7 +65,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .hero__visual{position:relative;}
 .hero__visual img.hero-photo{display:block;width:100%;aspect-ratio:4/3;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
-.hero__visual img.hero-photo{display:block;width:100%;aspect-ratio:6/5;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
 .hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
@@ -80,7 +78,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .svc-all-btn{background:transparent;color:var(--cm-text-strong);}
 .svc-all-btn:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 
-.statement{padding-top:clamp(2rem,1rem + 4vw,5rem);}
+.statement{padding-top:clamp(2rem,1rem + 4vw,5rem);padding-bottom:clamp(2rem,1rem + 4vw,5rem);}
+.statement .why-physical__p{font-size:0.96rem;line-height:1.6;letter-spacing:normal;font-family:var(--font-sans);font-weight:var(--w-regular);color:var(--cm-text-muted);}
+.statement__grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,4vw,3rem);margin-top:1.5rem;}
+@media(max-width:820px){.statement__grid{grid-template-columns:1fr;}}
+.why-physical__grid{display:grid;grid-template-columns:0.8fr 1.2fr;gap:clamp(2rem,4vw,4rem);align-items:start;margin-top:1.5rem;}
+.why-physical__grid .why-physical__p{max-width:38ch;}
+.why-physical__visual{position:relative;}
+.why-physical__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:1;}
+.why-physical__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
+.why-physical__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
+.why-physical__placeholder{width:100%;aspect-ratio:16/9;border:1px dashed var(--cm-border-strong);border-radius:var(--r-sm);background:var(--cm-ink-850);display:flex;align-items:center;justify-content:center;text-align:center;padding:1.5rem;}
+.why-physical__placeholder span{font-family:var(--font-mono);font-size:0.78rem;letter-spacing:0.02em;line-height:1.6;color:var(--cm-text-subtle);max-width:24ch;}
+@media(max-width:820px){.why-physical__grid{grid-template-columns:1fr;}}
 
 /* clients strip */
 .clients{border-block:1px solid var(--cm-line-faint);padding-block:1.6rem;}
@@ -100,7 +110,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 @media(max-width:640px){.logo-cell{width:128px;height:54px;}}
 
 /* statement */
-.statement p{font-size:clamp(1.5rem,2.8vw,2.4rem);line-height:1.32;letter-spacing:-0.02em;font-family:var(--font-display);font-weight:var(--w-semibold);color:var(--cm-text-strong);}
 .statement em{font-style:normal;color:var(--cm-text-subtle);}
 
 /* services */
@@ -114,11 +123,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 @media(max-width:720px){.svc-grid{grid-template-columns:1fr;}}
 
 /* value props */
-.values{display:grid;grid-template-columns:repeat(3,1fr);gap:2.5rem;margin-top:3rem;}
+.values{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--cm-line-faint);border:1px solid var(--cm-line-faint);margin-top:3rem;}
+.values--no-eyebrow{margin-top:0;}
+.value{background:var(--cm-ink-900);padding:clamp(1.6rem,2.5vw,2.4rem);transition:background var(--dur-3);}
+.value:hover{background:var(--cm-ink-850);}
 .value__num{font-family:var(--font-mono);font-size:0.74rem;color:var(--cm-silver);letter-spacing:0.06em;}
 .value h3{font-size:1.25rem;margin-top:1rem;}
 .value p{margin-top:0.7rem;color:var(--cm-text-muted);font-size:0.96rem;}
-@media(max-width:820px){.values{grid-template-columns:1fr;gap:1.8rem;}}
+@media(max-width:820px){.values{grid-template-columns:1fr;gap:1px;}}
+#values-section{padding-top:clamp(0.4rem,0.15rem + 1vw,1.1rem);}
 
 /* process strip */
 .proc{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--cm-line-faint);border:1px solid var(--cm-line-faint);margin-top:3rem;}
@@ -230,7 +243,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="hero__meta">
       <div><div class="stat__num">12+</div><div class="stat__label">Years of craft</div></div>
       <div><div class="stat__num">Any scale</div><div class="stat__label">Built to your requirements</div></div>
-      <div><div class="stat__num">U.S. + CA</div><div class="stat__label">Delivered nationwide</div></div>
+      <div><div class="stat__num">U.S. + Canada</div><div class="stat__label">Delivered across North America</div></div>
       <div><div class="stat__num">Tracked</div><div class="stat__label">Live in your client portal</div></div>
     </div>
   </div>
@@ -265,11 +278,24 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </div>
 </section>
 
-<!-- ===== Statement ===== -->
-<section class="section statement">
+<!-- ===== Why Physical Verification Matters ===== -->
+<section class="section statement why-physical">
   <div class="container">
-    <span class="eyebrow reveal">What "confident decisions" means</span>
-    <p class="measure reveal mt-3">Confidence comes from two things. <em>A model the room can understand</em> — stakeholders, investors, buyers, and approval agencies can see scale, massing, spatial relationships, and design intent at a glance, reducing ambiguity across technical and nontechnical audiences. <em>And a process you can trust</em> — scope, milestones, approvals, files, and updates are managed through the Carve Studio Portal, so you always know what has been decided, what happens next, and where your project stands.</p>
+    <span class="eyebrow reveal">Why physical verification matters</span>
+    <h2 class="display-md reveal mt-3">More design possibilities create<br>a greater need for physical evidence.</h2>
+  </div>
+  <div class="container why-physical__grid">
+    <div>
+      <p class="measure reveal why-physical__p">AI and digital design tools are making it faster to generate, visualize, and revise ideas. But producing more options does not necessarily make the right decision clearer.</p>
+      <p class="measure reveal mt-3 why-physical__p">Before a design moves into approval, fabrication, construction, or production, teams still need to understand how it works in physical space—its scale, proportion, relationships, materials, assembly, and effect on the people who experience it.</p>
+      <p class="measure reveal mt-3 why-physical__p">A physical model gives teams something tangible to examine together. It helps make complex ideas easier to understand, reveals questions that may be missed on a screen, and builds confidence before committing to the next stage.</p>
+    </div>
+    <div class="why-physical__visual reveal">
+      <span class="corner tl"></span><span class="corner br"></span>
+      <div class="why-physical__placeholder">
+        <span>Side-by-side comparison — physical model vs. Revit digital model</span>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -286,13 +312,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="svc-grid">
       <article class="svc reveal">
         <span class="svc__idx">01 / Architecture</span>
-        <h3>Architectural &amp; Real Estate Model</h3>
+        <h3>Architectural &amp; Real Estate Models</h3>
         <p>From early massing studies to detailed sales-gallery models—for design reviews, planning approvals, investor presentations, and marketing environments. Scale, circulation, context, façades, and structural relationships are represented at the right level of detail.</p>
         <a class="svc__more" href="/scale-model-services#architectural">Explore →</a>
       </article>
       <article class="svc reveal" data-delay="60">
         <span class="svc__idx">02 / Product</span>
-        <h3>Product Prototype and Mockup</h3>
+        <h3>Product Prototypes &amp; Mockups</h3>
         <p>Physical prototypes that transform sketches and CAD files into objects teams can present, evaluate, and refine. Built for form studies, material reviews, investor demonstrations, and fabrication planning.</p>
         <a class="svc__more" href="/scale-model-services#product">Explore →</a>
       </article>
@@ -312,11 +338,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </div>
 </section>
 
-<!-- ===== Values ===== -->
-<section class="section section--tight">
+<!-- ===== Statement ===== -->
+<section class="section statement">
   <div class="container">
-    <span class="eyebrow reveal">The Carve difference</span>
-    <div class="values">
+    <div class="flex justify-between items-center wrap gap">
+      <div>
+        <span class="eyebrow reveal">What "confident decisions" means</span>
+        <h2 class="display-md reveal mt-3">Physical models for confident decisions.</h2>
+      </div>
+      <a class="btn btn--ghost reveal svc-all-btn" href="/about-carve-model">About us <span class="arrow">→</span></a>
+    </div>
+    <div class="statement__grid">
+      <p class="measure reveal why-physical__p">A model the room can understand — stakeholders, investors, buyers, and approval agencies can see and evaluate scale, massing, spatial relationships, and design intent at a glance, reducing ambiguity across technical and nontechnical audiences.</p>
+      <p class="measure reveal why-physical__p">A process you can trust — scope, milestones, approvals, files, and updates are managed through the Carve Studio Portal, so you always know what has been decided, what happens next, and where your project stands.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Values ===== -->
+<section class="section section--tight" id="values-section">
+  <div class="container">
+    <div class="values values--no-eyebrow">
       <div class="value reveal">
         <span class="value__num">01</span>
         <h3>A transparent journey</h3>
@@ -324,8 +366,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </div>
       <div class="value reveal" data-delay="80">
         <span class="value__num">02</span>
-        <h3>Clarity over decoration</h3>
-        <p>We focus on what a model needs to clarify, not what it needs to impress. Every model is tailored to its purpose — nothing more, nothing less.</p>
+        <h3>Purpose before detail</h3>
+        <p>We begin with what the model needs to communicate, evaluate, or verify. Scale, detail, materials, and finishes are then developed around that purpose.</p>
       </div>
       <div class="value reveal" data-delay="160">
         <span class="value__num">03</span>
@@ -344,7 +386,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <span class="eyebrow reveal">How it works</span>
         <h2 class="display-md reveal mt-3">From files to finished model.</h2>
       </div>
-      <a class="btn btn--ghost reveal" href="/model-making-process">Full process <span class="arrow">→</span></a>
+      <a class="btn btn--ghost reveal svc-all-btn" href="/model-making-process">Full process <span class="arrow">→</span></a>
     </div>
     <div class="proc">
       <div class="proc__step reveal"><span class="n">STEP 01</span><h4>Goal &amp; Audience</h4><p>We identify how the model will be used — approvals, investor meetings, or design reviews — and align on scope.</p></div>
@@ -363,7 +405,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <span class="eyebrow reveal">Selected work</span>
         <h2 class="display-md reveal mt-3">Built for the room it enters.</h2>
       </div>
-      <a class="btn btn--ghost reveal" href="/works">View portfolio <span class="arrow">→</span></a>
+      <a class="btn btn--ghost reveal svc-all-btn" href="/works">View portfolio <span class="arrow">→</span></a>
     </div>
     <div class="works-grid">
       <figure class="work reveal" style="margin:0;">
@@ -403,11 +445,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Live milestone timeline — design review to install</li>
           <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Approve scope, scale, and finishes online</li>
           <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Share CAD files, photos, and invoices securely</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Provider &amp; client views — one source of truth</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Client and studio views — one source of truth</li>
         </ul>
         <div class="hero__cta" style="margin-top:2rem;">
           <a class="btn btn--primary" href="/app">Open the Portal <span class="arrow">→</span></a>
-          <a class="btn btn--ghost" href="/app">See how it works</a>
+          <a class="btn btn--ghost" href="/app">See how it works <span class="arrow">→</span></a>
         </div>
       </div>
       <div class="platform__visual">
@@ -468,7 +510,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <p>Common scales include 1:50, 1:100, 1:200, and 1:500 — each suited to different needs. Scale selection is guided by model size, viewing distance, and required detail, and we provide recommendations during review.</p>
       </details>
     </div>
-    <div class="mt-4"><a class="btn btn--ghost" href="/faq">All FAQs <span class="arrow">→</span></a></div>
+    <div class="mt-4"><a class="btn btn--ghost svc-all-btn" href="/faq">All FAQs <span class="arrow">→</span></a></div>
   </div>
 </section>
 
@@ -489,7 +531,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> We review scope and recommend scale</li>
           <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> A free, no-obligation reply</li>
         </ul>
-        <a class="btn btn--primary mt-3" href="/contact" style="margin-top:1.6rem;">Get a Preliminary Estimate <span class="arrow">→</span></a>
+        <a class="btn btn--ghost mt-3 svc-all-btn" href="/contact" style="margin-top:1.6rem;">Get a Preliminary Estimate <span class="arrow">→</span></a>
       </article>
       <article class="path reveal" data-delay="100">
         <span class="path__num">02</span>
@@ -500,7 +542,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Accept or request changes online</li>
           <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> No payment until you approve</li>
         </ul>
-        <a class="btn btn--ghost mt-3" href="/app" style="margin-top:1.6rem;">Open the Portal <span class="arrow">→</span></a>
+        <a class="btn btn--ghost mt-3 svc-all-btn" href="/app" style="margin-top:1.6rem;">Open the Portal <span class="arrow">→</span></a>
       </article>
     </div>
   </div>
@@ -514,8 +556,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <h2 class="mt-3">Tell us what decision your model needs to support.</h2>
         <p>If you need a display object, we may not be the right fit. If you need confidence when decisions matter, Carve Model is built for that purpose.</p>
         <div class="cta__btns">
-          <a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
-          <a class="btn btn--ghost btn--lg" href="/works">View Our Work</a>
+          <a class="btn btn--ghost btn--lg svc-all-btn" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
+          <a class="btn btn--ghost btn--lg svc-all-btn" href="/works">View Our Work <span class="arrow">→</span></a>
         </div>
       </div>
     </div>
