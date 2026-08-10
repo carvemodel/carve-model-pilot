@@ -14,76 +14,92 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <style>
 .page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,4rem);}
 .page-hero h1{margin-top:1.4rem;}.page-hero p{margin-top:1.4rem;}
-.about-media image-slot{width:100%;aspect-ratio:16/7;}
+.page-hero h1 em{font-style:normal;color:var(--cm-text-muted);}
+.page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
+@media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
+.page-hero__visual{position:relative;}
+.page-hero__visual .hero-photo{display:block;width:100%;aspect-ratio:4/3;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
+.page-hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
+.page-hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
+.page-hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
+.hero__spec{position:absolute;right:-12px;bottom:24px;z-index:4;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);padding:0.9rem 1.1rem;box-shadow:var(--shadow-lg);}
+.hero__spec .tick{display:block;}
+.hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.1rem;letter-spacing:-0.01em;}
+.hero__cta{display:flex;gap:0.9rem;flex-wrap:wrap;margin-top:1.8rem;}
+.hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
+.hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,5rem);align-items:start;}
 .split h2{font-size:clamp(1.7rem,2.8vw,2.4rem);letter-spacing:-0.02em;}
 .split p{margin-top:1.1rem;color:var(--cm-gray-300);}
-.carve-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--cm-line-faint);border:1px solid var(--cm-line-faint);margin-top:3rem;}
-.carve-letter{background:var(--cm-ink-900);padding:1.8rem 1.3rem;}
-.carve-letter .L{font-family:var(--font-display);font-weight:var(--w-black);font-size:2.4rem;color:var(--cm-silver);letter-spacing:-0.02em;}
-.carve-letter h4{font-family:var(--font-display);font-size:1rem;font-weight:var(--w-semibold);margin-top:0.8rem;color:var(--cm-text-strong);}
-.carve-letter p{font-size:0.84rem;color:var(--cm-text-muted);margin-top:0.5rem;}
+.guides-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem;}
 .who-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:2.5rem;}
 .who-card{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:1.5rem;}
 .who-card h4{font-family:var(--font-display);font-size:1.1rem;font-weight:var(--w-semibold);}
 .who-card p{font-size:0.9rem;color:var(--cm-text-muted);margin-top:0.5rem;}
-@media(max-width:820px){.split{grid-template-columns:1fr;}.carve-grid{grid-template-columns:1fr;}.who-grid{grid-template-columns:1fr;}}
+@media(max-width:820px){.split{grid-template-columns:1fr;}.guides-grid{grid-template-columns:1fr;}.who-grid{grid-template-columns:1fr;}}
 </style>
 </Fragment>
 
 <main>
 <section class="page-hero"><div class="container">
-  <span class="eyebrow">About</span>
-  <h1 class="display-lg measure">We carve every model with purpose.</h1>
-  <p class="lead measure">Carve Model is a Los Angeles-based model-making studio crafting architectural models, sales-gallery pieces, product prototypes, film miniatures, and art installations — built for moments where clarity matters: approvals, presentations, filming, and internal decision-making. We work with architects, developers, general contractors, agencies, production teams, product designers, and artists across the U.S. and Canada.</p>
+  <div class="page-hero__inner">
+    <div>
+      <span class="eyebrow">About</span>
+      <h1 class="display-lg">We <em>carve</em><br>every <em>model</em><br>with<br>purpose.</h1>
+      <p class="lead">Carve Model is a Los Angeles-based physical model studio creating architectural models, sales-gallery pieces, product prototypes, film miniatures, and art maquettes. We build for moments when ideas must be understood, evaluated, approved, or presented with confidence.</p>
+    </div>
+    <div class="page-hero__visual reveal">
+      <span class="corner tl"></span><span class="corner br"></span>
+      <img class="hero-photo" src="/assets/hero-photo.png" alt="Carve Model architectural scale model">
+      <span class="slot-label">Featured · Mixed-use development · 1:144</span>
+      <div class="hero__spec">
+        <span class="tick">PROJECTS DELIVERED</span>
+        <strong>500+ models</strong>
+      </div>
+    </div>
+  </div>
 </div></section>
 
-<div class="container about-media"><image-slot id="about-studio" placeholder="Drop a studio / workshop photo"></image-slot></div>
 
 <section class="section"><div class="container">
   <div class="split">
     <div>
       <span class="eyebrow">Our approach</span>
-      <h2 class="mt-3">Built for alignment, not decoration.</h2>
+      <h2 class="mt-3">Built to communicate with purpose.</h2>
     </div>
     <div>
-      <p>Our clients include architects, developers, production designers, agencies, and product teams across the United States and Canada who rely on physical models not as decoration, but as tools for alignment and action.</p>
-      <p>Digital tools are powerful — but important decisions are still made around tables, in rooms, and in real space. We focus on what a model needs to clarify, not what it needs to impress. Every model is tailored to its purpose — nothing more, nothing less.</p>
+      <p>Every model begins with what it needs to communicate, who needs to understand it, and what decision or experience it must support. These answers guide its scale, content, materials, finishes, and level of detail.</p>
+      <p>As digital and AI-generated design becomes increasingly abundant, physical models provide something different: tangible evidence that people can examine together, understand in real space, and respond to with greater confidence.</p>
     </div>
   </div>
 </div></section>
 
 <section class="section section--tight"><div class="container">
-  <span class="eyebrow">Our name</span>
-  <h2 class="display-md mt-3">C·A·R·V·E</h2>
-  <p class="muted mt-2 measure">Our name reflects the values that shape every project we deliver. We build with care, accuracy, and pride.</p>
-  <div class="carve-grid">
-    <div class="carve-letter"><div class="L">C</div><h4>Craft</h4><p>Traditional techniques paired with advanced fabrication.</p></div>
-    <div class="carve-letter"><div class="L">A</div><h4>Accuracy</h4><p>Precision at every scale, from massing to detail.</p></div>
-    <div class="carve-letter"><div class="L">R</div><h4>Realism</h4><p>Models that read clearly and convince in the room.</p></div>
-    <div class="carve-letter"><div class="L">V</div><h4>Vision</h4><p>We help clients communicate intent with confidence.</p></div>
-    <div class="carve-letter"><div class="L">E</div><h4>Execution</h4><p>End-to-end delivery, managed entirely in-house.</p></div>
+  <h2 class="display-md">What guides our work</h2>
+  <div class="guides-grid">
+    <div class="who-card"><h4>Purpose before detail</h4><p>We define the audience, use, and required decisions before determining scale, content, and finish.</p></div>
+    <div class="who-card"><h4>A model the room can understand</h4><p>We translate complex design information into physical form that technical and nontechnical audiences can understand together.</p></div>
+    <div class="who-card"><h4>A process you can trust</h4><p>Files, milestones, feedback, approvals, and updates are coordinated through a standardized process and the Carve Studio Portal.</p></div>
   </div>
 </div></section>
 
 <section class="section" style="padding-top:0;"><div class="container">
   <span class="eyebrow">Who we work with</span>
   <div class="who-grid">
-    <div class="who-card"><h4>Architecture firms &amp; developers</h4><p>Planning approvals, investor meetings, and sales galleries.</p></div>
-    <div class="who-card"><h4>Urban planners &amp; design consultants</h4><p>Masterplans, context massing, and design reviews.</p></div>
-    <div class="who-card"><h4>Film production &amp; art departments</h4><p>Previsualization sets and cinematic miniatures.</p></div>
-    <div class="who-card"><h4>Product designers &amp; hardware startups</h4><p>Physical mockups from sketches and CAD files.</p></div>
-    <div class="who-card"><h4>Artists &amp; cultural institutions</h4><p>Sculptural works and installations, from maquette to final piece.</p></div>
-    <div class="who-card"><h4>General contractors</h4><p>Coordination models and presentation pieces for bids and stakeholder buy-in.</p></div>
-    <div class="who-card"><h4>Marketing &amp; creative agencies</h4><p>Display models and campaign props for launches, events, and brand activations.</p></div>
+    <div class="who-card"><h4>Architecture firms, developers and planners</h4></div>
+    <div class="who-card"><h4>General contractors and design consultants</h4></div>
+    <div class="who-card"><h4>Product designers and hardware teams</h4></div>
+    <div class="who-card"><h4>Film, commercial and creative teams</h4></div>
+    <div class="who-card"><h4>Artists and cultural institutions</h4></div>
   </div>
 </div></section>
 
+
 <section class="section" style="padding-top:0;"><div class="container">
   <div class="cta reveal" style="position:relative;text-align:center;background:var(--cm-black);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:clamp(3rem,6vw,5rem) var(--gutter);">
-    <h2 class="display-md">Let's bring your vision into the room.</h2>
-    <p class="muted mt-2" style="max-width:46ch;margin-inline:auto;">Serving clients across the U.S. from our Los Angeles studio. Every project is handled end-to-end.</p>
-    <div class="mt-4" style="display:flex;gap:0.9rem;justify-content:center;flex-wrap:wrap;"><a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate →</a><a class="btn btn--ghost btn--lg" href="/works">View Our Work</a></div>
+    <h2 class="display-md">Bring your design into the room.</h2>
+    <p class="muted mt-2" style="max-width:46ch;margin-inline:auto;">Tell us what you are creating, who needs to understand it, and what the model needs to help them decide.</p>
+    <div class="hero__cta" style="justify-content:center;margin-top:2.4rem;"><a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a><a class="btn btn--ghost btn--lg" href="/works">View Our Work <span class="arrow">→</span></a></div>
   </div>
 </div></section>
 </main>
