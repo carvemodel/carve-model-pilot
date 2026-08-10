@@ -3,79 +3,237 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 <BaseLayout
   title="Our Model-Making Process | How Carve Model Works"
-  description="From early design files to final delivery — Carve Model's process delivers high-quality architectural scale models with accuracy, speed, and consistency. See the five steps."
+  description="A controlled path from project definition to delivery. See how Carve Model manages scope, digital preparation, samples, fabrication, quality control, and delivery through the Carve Studio Portal."
   canonicalPath="/model-making-process"
   ogTitle="Our Model-Making Process | Carve Model"
-  ogDescription="From design files to final delivery — accuracy, speed, and consistency at every step."
+  ogDescription="A controlled path from project definition to delivery — visible in the Carve Studio Portal at every step."
   active="process"
   imageSlot={false}
 >
 <Fragment slot="head">
 <style>
 .page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
-.page-hero h1{margin-top:1.4rem;}.page-hero p{margin-top:1.4rem;}
-.step{display:grid;grid-template-columns:auto 1fr;gap:clamp(1.5rem,4vw,3.5rem);padding-block:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
+.page-hero h1{margin-top:1.4rem;font-size:clamp(2.1rem,4.4vw,3.6rem);line-height:1.05;}.page-hero p{margin-top:1.4rem;}
+.page-hero h1 em{font-style:normal;color:var(--cm-text-muted);}
+.nowrap-line{white-space:nowrap;}
+@media(max-width:420px){.nowrap-line{white-space:normal;}}
+.page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
+@media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
+.page-hero__visual{position:relative;}
+.page-hero__visual .hero-photo{display:block;width:100%;aspect-ratio:4/3;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
+.page-hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
+.page-hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
+.page-hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
+.hero__spec{position:absolute;right:-12px;bottom:24px;z-index:4;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);padding:0.9rem 1.1rem;box-shadow:var(--shadow-lg);}
+.hero__spec .tick{display:block;}
+.hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.1rem;letter-spacing:-0.01em;}
+.hero__cta{display:flex;gap:0.9rem;flex-wrap:wrap;margin-top:1.8rem;}
+.hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
+.hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
+.step{display:grid;grid-template-columns:clamp(4.5rem,10vw,7rem) 1fr;gap:clamp(1.5rem,4vw,3.5rem);padding-block:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
 .step__n{font-family:var(--font-display);font-weight:var(--w-black);font-size:clamp(2.5rem,6vw,5rem);line-height:0.9;color:var(--cm-ink-600);letter-spacing:-0.03em;}
 .step__n .of{display:block;font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);letter-spacing:0.1em;margin-top:0.6rem;font-weight:var(--w-regular);}
 .step h2{font-size:clamp(1.5rem,2.6vw,2.2rem);letter-spacing:-0.02em;}
 .step p{margin-top:1rem;color:var(--cm-gray-300);max-width:62ch;}
-.step ul{list-style:none;padding:0;margin:1.4rem 0 0;display:flex;flex-wrap:wrap;gap:0.6rem;}
-.step ul li{font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.03em;color:var(--cm-gray-300);border:1px solid var(--cm-border);border-radius:var(--r-pill);padding:0.4rem 0.85rem;text-transform:uppercase;}
-.formats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--cm-line-faint);border:1px solid var(--cm-line-faint);margin-top:2.5rem;}
-.fmt{background:var(--cm-ink-900);padding:1.4rem 1rem;text-align:center;font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-gray-300);letter-spacing:0.03em;}
-@media(max-width:760px){.step{grid-template-columns:1fr;gap:1rem;}.formats{grid-template-columns:repeat(3,1fr);}}
+.step p+p{margin-top:0.8rem;}
+.step ul{list-style:none;padding:0;margin:1.4rem 0 0;display:grid;gap:0.7rem;}
+.step ul li{display:flex;gap:0.7rem;align-items:flex-start;font-size:0.95rem;color:var(--cm-text-muted);}
+.step ul li svg{flex:none;margin-top:4px;color:var(--cm-silver);}
+.formats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--cm-line-faint);border:1px solid var(--cm-line-faint);margin-top:2.5rem;}
+.fmt{position:relative;background:var(--cm-ink-900);padding:1.4rem 1rem;text-align:center;font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-gray-300);letter-spacing:0.03em;transition:background var(--dur-3),color var(--dur-3);}
+.fmt[data-tip]{cursor:help;}
+.fmt[data-tip]:hover{background:var(--cm-ink-850);color:var(--cm-text-strong);}
+.fmt[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%) translateY(4px);width:260px;max-width:70vw;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);border-radius:var(--r-sm);padding:0.85rem 1rem;font-family:var(--font-sans);font-size:0.8rem;line-height:1.45;color:var(--cm-text);text-transform:none;letter-spacing:normal;text-align:left;opacity:0;pointer-events:none;transition:opacity var(--dur-2),transform var(--dur-2);box-shadow:var(--shadow-lg);z-index:10;}
+.fmt[data-tip]:hover::after{opacity:1;transform:translateX(-50%) translateY(0);}
+@media(max-width:760px){.step{grid-template-columns:1fr;gap:1rem;}.formats{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:480px){.formats{grid-template-columns:1fr;}}
+.ocp-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,4vw,4rem);align-items:center;margin-top:1.5rem;}
+@media(max-width:900px){.ocp-grid{grid-template-columns:1fr;}}
+.mock{width:100%;background:var(--cm-ink-850);border:1px solid var(--cm-border-strong);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-lg);font-size:0.78rem;}
+.mock__bar{display:flex;align-items:center;gap:0.5rem;padding:0.7rem 0.9rem;border-bottom:1px solid var(--cm-border);background:var(--cm-ink-800);}
+.mock__bar i{width:9px;height:9px;border-radius:50%;background:var(--cm-ink-500);display:block;}
+.mock__bar span{margin-left:auto;font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);}
+.mock__body{padding:1rem;display:grid;grid-template-columns:0.8fr 1.2fr;gap:0.8rem;}
+.mock__side{display:flex;flex-direction:column;gap:0.5rem;}
+.mock__row{display:flex;align-items:center;gap:0.55rem;padding:0.5rem 0.6rem;border-radius:var(--r-sm);color:var(--cm-gray-300);font-size:0.74rem;}
+.mock__row.active{background:var(--cm-surface-2);color:var(--cm-text-strong);}
+.mock__row b{width:6px;height:6px;border-radius:50%;background:var(--cm-silver);display:block;}
+.mock__main{display:flex;flex-direction:column;gap:0.6rem;}
+.mock__card{background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.75rem;}
+.mock__progress{height:5px;background:var(--cm-ink-600);border-radius:99px;margin-top:0.5rem;overflow:hidden;}
+.mock__progress i{display:block;height:100%;background:var(--cm-silver);}
+.mock__k{font-family:var(--font-mono);font-size:0.64rem;color:var(--cm-text-subtle);text-transform:uppercase;letter-spacing:0.06em;}
+.mock__v{color:var(--cm-text-strong);font-weight:var(--w-semibold);margin-top:2px;}
 </style>
 </Fragment>
 
 <main>
 <section class="page-hero"><div class="container">
-  <span class="eyebrow">Process</span>
-  <h1 class="display-lg measure">From files to finished model — engineered for accuracy and speed.</h1>
-  <p class="lead measure">Each step is optimized to support tight development schedules and presentation-ready results. We combine advanced digital manufacturing with traditional craftsmanship.</p>
+  <div class="page-hero__inner">
+    <div>
+      <span class="eyebrow">Process</span>
+      <h1 class="display-lg">A<br><em>controlled path</em><br>from<br><span class="nowrap-line">project definition</span><br>to delivery.</h1>
+      <p class="lead">Every Carve project begins by defining what the model or prototype needs to communicate, evaluate, test, or help an audience approve.</p>
+      <p class="lead">We then coordinate scope, constraints, digital preparation, samples, approvals, fabrication, quality control, packaging, delivery, and setup through a structured process visible in the Carve Studio Portal.</p>
+      <div class="hero__cta">
+        <a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
+        <a class="btn btn--ghost btn--lg" href="/works">View Our Work <span class="arrow">→</span></a>
+      </div>
+    </div>
+    <div class="page-hero__visual reveal">
+      <span class="corner tl"></span><span class="corner br"></span>
+      <img class="hero-photo" src="/assets/hero-photo.png" alt="Carve Model architectural scale model">
+      <span class="slot-label">Featured · Mixed-use development · 1:144</span>
+      <div class="hero__spec">
+        <span class="tick">PROJECTS DELIVERED</span>
+        <strong>500+ models</strong>
+      </div>
+    </div>
+  </div>
 </div></section>
 
 <div class="container">
-  <div class="step"><div class="step__n">01<span class="of">/ 05</span></div><div>
-    <h2>Design Review &amp; Planning</h2>
-    <p>Before any fabrication begins, we review all provided drawings, plans, and 3D models. We confirm scale, level of detail, materials, finishes, special requests, and delivery expectations — and identify how the model will be used.</p>
-    <ul><li>Scope alignment</li><li>Scale selection</li><li>Audience &amp; goal</li></ul>
+  <div class="step"><div class="step__n">01<span class="of">/ 07</span></div><div>
+    <h2>Goal &amp; Audience</h2>
+    <p>We begin by understanding how the model will be used, who needs to understand it, and what decision, presentation, evaluation, or test it must support.</p>
+    <ul>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Intended use</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Audience and objective</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Required outcome</li>
+    </ul>
   </div></div>
-  <div class="step"><div class="step__n">02<span class="of">/ 05</span></div><div>
-    <h2>Model Engineering</h2>
-    <p>Once scope is confirmed, we prepare the digital model for fabrication. We clean, simplify, or rebuild your geometry to ensure accuracy at the selected scale — ensuring the finished model is clean, accurate, and manufacturable.</p>
-    <ul><li>Geometry cleanup</li><li>Scale optimization</li><li>Manufacturability</li></ul>
+  <div class="step"><div class="step__n">02<span class="of">/ 07</span></div><div>
+    <h2>Scope &amp; Constraints</h2>
+    <p>We define the dimensions or scale, content, detail, materials, finishes, schedule, and delivery requirements.</p>
+    <p>We also review lighting, power, bases, stands, display cases, handling, building access, transportation limits, installation conditions, and whether the model needs to be divided into sections.</p>
+    <ul>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Dimensions and detail</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Display and functional requirements</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Access, transport, and installation</li>
+    </ul>
   </div></div>
-  <div class="step"><div class="step__n">03<span class="of">/ 05</span></div><div>
-    <h2>Fabrication</h2>
-    <p>We combine advanced digital manufacturing — laser cutting, CNC, and 3D printing — with hand craftsmanship. Models are built from durable materials suitable for transport and presentation.</p>
-    <ul><li>Laser &amp; CNC</li><li>3D printing</li><li>Hand assembly</li></ul>
+  <div class="step"><div class="step__n">03<span class="of">/ 07</span></div><div>
+    <h2>Digital Preparation</h2>
+    <p>When usable CAD, BIM, or 3D files are provided, we review, clean, simplify, and prepare the geometry for physical production.</p>
+    <p>When a project begins only with sketches, photographs, renderings, reference images, or AI-generated concepts, a separately scoped Digital Model Development service may be required to create the geometry needed for fabrication.</p>
+    <ul>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> File and reference review</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Geometry development or cleanup</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Production preparation</li>
+    </ul>
   </div></div>
-  <div class="step"><div class="step__n">04<span class="of">/ 05</span></div><div>
-    <h2>Detailing, Paint &amp; QC</h2>
-    <p>Finishing, painting, and assembly bring the model to its final standard. Quality control photos are shared throughout so you always know where things stand.</p>
-    <ul><li>Finishing</li><li>Lighting</li><li>Quality control</li></ul>
+  <div class="step"><div class="step__n">04<span class="of">/ 07</span></div><div>
+    <h2>Samples, Mockups &amp; Approval</h2>
+    <p>When required, we produce samples or mockups to confirm materials, colors, finishes, details, lighting, connections, or functional elements.</p>
+    <p>Client feedback is incorporated and key decisions are approved before full fabrication proceeds.</p>
+    <ul>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Material and finish samples</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Detail and functional mockups</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Client review and approval</li>
+    </ul>
   </div></div>
-  <div class="step" style="border-bottom:0;"><div class="step__n">05<span class="of">/ 05</span></div><div>
-    <h2>Delivery &amp; Setup</h2>
-    <p>Your model is professionally packed and arrives presentation-ready — easy to unpack and install. For local projects, we offer on-site installation.</p>
-    <ul><li>Professional packing</li><li>Nationwide shipping</li><li>On-site install</li></ul>
+  <div class="step"><div class="step__n">05<span class="of">/ 07</span></div><div>
+    <h2>Fabrication &amp; Assembly</h2>
+    <p>The approved model or prototype is produced using the appropriate combination of laser cutting, CNC machining, 3D printing, other digital manufacturing methods, and skilled handcraft.</p>
+    <ul>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Digital manufacturing</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Component production</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Assembly and integration</li>
+    </ul>
+  </div></div>
+  <div class="step"><div class="step__n">06<span class="of">/ 07</span></div><div>
+    <h2>Finishing &amp; Quality Control</h2>
+    <p>Components are painted, finished, assembled, and tested according to the approved scope. Key stages are reviewed for accuracy, appearance, lighting, function, stability, and readiness for delivery.</p>
+    <p>Progress and quality-control information are shared through the Carve Studio Portal.</p>
+    <ul>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Finishing and detailing</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Lighting and functional testing</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Quality-control review</li>
+    </ul>
+  </div></div>
+  <div class="step" style="border-bottom:0;"><div class="step__n">07<span class="of">/ 07</span></div><div>
+    <h2>Packaging, Delivery &amp; Setup</h2>
+    <p>The finished model is inspected and packaged according to its size, fragility, destination, and handling requirements.</p>
+    <p>The model is delivered ready for its intended use. On-site assembly, installation, testing, and setup support are included when required.</p>
+    <ul>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Protective packaging</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Coordinated transportation</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Assembly, installation, and setup</li>
+    </ul>
   </div></div>
 </div>
 
 <section class="section"><div class="container">
-  <span class="eyebrow">File formats we accept</span>
-  <h2 class="display-md mt-3">Bring whatever you have.</h2>
-  <p class="muted mt-2 measure">To ensure accuracy and a smooth production process, we accept a wide range of formats from architectural and design software. Our team can prepare, clean, and optimize your model for fabrication.</p>
+  <span class="eyebrow">Start with what you have</span>
+  <h2 class="display-md mt-3">Complete files are not required to begin.</h2>
+  <p class="muted mt-2 measure">We can review a wide range of design information and reference material:</p>
   <div class="formats">
-    <div class="fmt">CAD / DWG</div><div class="fmt">PDF</div><div class="fmt">Revit</div><div class="fmt">Rhino</div><div class="fmt">SketchUp</div><div class="fmt">Sketches</div>
+    <div class="fmt">CAD and DWG files</div>
+    <div class="fmt">Revit and BIM files</div>
+    <div class="fmt">Rhino and SketchUp files</div>
+    <div class="fmt">STL and OBJ files</div>
+    <div class="fmt">PDFs and dimensioned drawings</div>
+    <div class="fmt" data-tip="When production-ready geometry is unavailable, we will identify the additional information and separately scoped digital-model development required before fabrication can begin.">Sketches and concept drawings</div>
+    <div class="fmt" data-tip="When production-ready geometry is unavailable, we will identify the additional information and separately scoped digital-model development required before fabrication can begin.">Renderings and photographs</div>
+    <div class="fmt" data-tip="When production-ready geometry is unavailable, we will identify the additional information and separately scoped digital-model development required before fabrication can begin.">AI-generated reference images</div>
+    <div class="fmt" data-tip="When production-ready geometry is unavailable, we will identify the additional information and separately scoped digital-model development required before fabrication can begin.">Existing objects and physical references</div>
   </div>
 </div></section>
 
-<section class="section" style="padding-top:0;"><div class="container">
+<section class="section section--tight"><div class="container">
+  <span class="eyebrow reveal">The Carve Studio Portal</span>
+  <div class="ocp-grid">
+    <div>
+      <h2 class="display-md reveal mt-3">Every project, tracked in one place.</h2>
+      <p class="muted reveal mt-3">The Carve Studio Portal provides one shared workspace for project milestones, files, messages, estimates, approvals, progress updates, and quality-control information.</p>
+      <p class="muted reveal mt-3">You can see what has been decided, what requires your input, what happens next, and where the project stands throughout the process.</p>
+      <div class="hero__cta reveal">
+        <a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
+        <a class="btn btn--ghost btn--lg" href="/app">Open the Studio Portal <span class="arrow">→</span></a>
+      </div>
+    </div>
+    <div class="ocp-visual">
+      <div class="mock" aria-hidden="true">
+        <div class="mock__bar"><i></i><i></i><i></i><span>studio.physical-model.com</span></div>
+        <div class="mock__body">
+          <div class="mock__side">
+            <div class="mock__row active"><b></b> Overview</div>
+            <div class="mock__row">Milestones</div>
+            <div class="mock__row">Files</div>
+            <div class="mock__row">Messages</div>
+            <div class="mock__row">Invoices</div>
+          </div>
+          <div class="mock__main">
+            <div class="mock__card">
+              <span class="mock__k">Active project</span>
+              <div class="mock__v">Aria Tower · 1:144</div>
+              <div class="mock__progress"><i style="width:68%"></i></div>
+              <span class="mock__k" style="display:block;margin-top:6px;">68% · Fabrication</span>
+            </div>
+            <div class="mock__card">
+              <span class="mock__k">Next milestone</span>
+              <div class="mock__v">Finishing &amp; paint</div>
+              <span class="mock__k" style="display:block;margin-top:4px;">Due in 6 days</span>
+            </div>
+            <div class="mock__card" style="display:flex;gap:0.6rem;align-items:center;">
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--cm-surface-2);flex:none;"></div>
+              <div><div class="mock__v" style="font-size:0.72rem;">Studio · Maya</div><span class="mock__k">QC photos uploaded →</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="section"><div class="container">
   <div class="cta reveal" style="position:relative;text-align:center;background:var(--cm-black);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:clamp(3rem,6vw,5rem) var(--gutter);">
-    <h2 class="display-md">Every project, tracked in one place.</h2>
-    <p class="muted mt-2" style="max-width:48ch;margin-inline:auto;">Each Carve project includes the Studio Portal — see milestones, approve stages, exchange files, and message the team in real time.</p>
-    <div class="mt-4" style="display:flex;gap:0.9rem;justify-content:center;flex-wrap:wrap;"><a class="btn btn--primary btn--lg" href="/contact">Start a project →</a><a class="btn btn--ghost btn--lg" href="/app">Open the portal</a></div>
+    <h2 class="display-md">Ready to discuss your model?</h2>
+    <p class="muted mt-2" style="max-width:52ch;margin-inline:auto;">Tell us what it needs to help people understand, evaluate, test, or approve.</p>
+    <div class="hero__cta" style="justify-content:center;margin-top:2.4rem;">
+      <a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
+      <a class="btn btn--ghost btn--lg" href="/app">Open the Studio Portal <span class="arrow">→</span></a>
+    </div>
   </div>
 </div></section>
 </main>
