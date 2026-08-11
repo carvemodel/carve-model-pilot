@@ -14,7 +14,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","serviceType":"Physical model making","provider":{"@type":"ProfessionalService","name":"Carve Model","areaServed":["United States","Canada"]},"hasOfferCatalog":{"@type":"OfferCatalog","name":"Model making services","itemListElement":[{"@type":"Offer","itemOffered":{"@type":"Service","name":"Architectural & Real Estate Models"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Product Prototypes & Mockups"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Film & Commercial Miniatures"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Art Maquettes & Prototypes"}}]}}`} />
 <style>
 .page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
-.page-hero h1{margin-top:1.4rem;font-size:clamp(2.1rem,4.4vw,3.6rem);line-height:1.05;}
+.page-hero h1{margin-top:1.4rem;}
 .page-hero h1 em{font-style:normal;color:var(--cm-text-muted);}
 .page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
 @media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
@@ -27,7 +27,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .hero__spec .tick{display:block;}
 .hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.1rem;letter-spacing:-0.01em;}
 .page-hero p{margin-top:1.4rem;}
-.hero__cta{display:flex;gap:0.9rem;flex-wrap:wrap;margin-top:1.8rem;}
+.hero__cta{display:flex;gap:0.9rem;flex-wrap:nowrap;margin-top:1.8rem;}
+@media(max-width:560px){.hero__cta{flex-wrap:wrap;}}
 .hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
 .hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .svc-block{display:grid;grid-template-columns:0.72fr 1.28fr;gap:clamp(2rem,4vw,4rem);align-items:center;padding-block:clamp(3rem,5vw,5rem);border-bottom:1px solid var(--cm-line-faint);}

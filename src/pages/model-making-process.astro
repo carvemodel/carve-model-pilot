@@ -13,7 +13,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <Fragment slot="head">
 <style>
 .page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
-.page-hero h1{margin-top:1.4rem;font-size:clamp(2.1rem,4.4vw,3.6rem);line-height:1.05;}.page-hero p{margin-top:1.4rem;}
+.page-hero h1{margin-top:1.4rem;}.page-hero p{margin-top:1.4rem;}
 .page-hero h1 em{font-style:normal;color:var(--cm-text-muted);}
 .nowrap-line{white-space:nowrap;}
 @media(max-width:420px){.nowrap-line{white-space:normal;}}
@@ -27,7 +27,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .hero__spec{position:absolute;right:-12px;bottom:24px;z-index:4;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);padding:0.9rem 1.1rem;box-shadow:var(--shadow-lg);}
 .hero__spec .tick{display:block;}
 .hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.1rem;letter-spacing:-0.01em;}
-.hero__cta{display:flex;gap:0.9rem;flex-wrap:wrap;margin-top:1.8rem;}
+.hero__cta{display:flex;gap:0.9rem;flex-wrap:nowrap;margin-top:1.8rem;}
+@media(max-width:560px){.hero__cta{flex-wrap:wrap;}}
 .hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
 .hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .step{display:grid;grid-template-columns:clamp(4.5rem,10vw,7rem) 1fr;gap:clamp(1.5rem,4vw,3.5rem);padding-block:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
@@ -72,7 +73,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <div class="page-hero__inner">
     <div>
       <span class="eyebrow">Process</span>
-      <h1 class="display-lg">A<br><em>controlled path</em><br>from<br><span class="nowrap-line">project definition</span><br>to delivery.</h1>
+      <h1 class="display-lg">A<br><em>controlled</em><br><em>path</em><br>from<br>project<br>definition<br>to delivery.</h1>
       <p class="lead">Every Carve project begins by defining what the model or prototype needs to communicate, evaluate, test, or help an audience approve.</p>
       <p class="lead">We then coordinate scope, constraints, digital preparation, samples, approvals, fabrication, quality control, packaging, delivery, and setup through a structured process visible in the Carve Studio Portal.</p>
       <div class="hero__cta">

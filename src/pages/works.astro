@@ -81,24 +81,26 @@ if (process.env.REDIS_URL) {
 .gallery{columns:3 320px;column-gap:1.25rem;margin-top:3rem;}
 .proj{break-inside:avoid;margin:0 0 1.25rem;}
 .proj img,.proj image-slot{display:block;width:100%;height:auto;}
-.proj__tag{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;background:var(--cm-scrim-strong);padding:0.4rem 0.6rem;}
-.proj__catlabel{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-gray-300);}
-.tag-pill{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-gray-100);background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.28);border-radius:var(--r-pill);padding:0.15rem 0.55rem;cursor:pointer;transition:0.14s;}
-.tag-pill:hover,.tag-pill.on{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
-.tag-active{display:flex;align-items:center;gap:0.6rem;margin-top:1rem;font-family:var(--font-mono);font-size:0.78rem;color:var(--cm-text-muted);}
-.tag-active strong{color:var(--cm-text-strong);text-transform:capitalize;}
-.tag-active button{background:none;border:1px solid var(--cm-border);border-radius:50%;width:22px;height:22px;color:var(--cm-gray-300);cursor:pointer;line-height:1;}
-.tag-active button:hover{color:var(--cm-text-strong);border-color:var(--cm-border-strong);}
 .proj{position:relative;}
 .proj .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .proj .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .proj .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
 @media(max-width:820px){.gallery{columns:2 240px;}}
 @media(max-width:520px){.gallery{columns:1;}}
-.hero__cta{display:flex;gap:0.9rem;flex-wrap:wrap;margin-top:1.8rem;}
+.hero__cta{display:flex;gap:0.9rem;flex-wrap:nowrap;margin-top:1.8rem;}
+@media(max-width:560px){.hero__cta{flex-wrap:wrap;}}
 .hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
 .hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
-.proj img[data-full]{cursor:zoom-in;}
+.proj__tag{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;background:var(--cm-scrim-strong);padding:0.4rem 0.6rem;}
+.proj__catlabel{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-gray-300);}
+.tag-pill{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-gray-100);background:none;border:0;padding:0;cursor:pointer;transition:0.14s;}
+.tag-pill::before{content:'/';margin-right:0.35rem;color:var(--cm-gray-400);}
+.tag-pill:hover,.tag-pill.on{color:var(--cm-accent);}
+.tag-active{display:flex;align-items:center;gap:0.6rem;margin-top:1rem;font-family:var(--font-mono);font-size:0.78rem;color:var(--cm-text-muted);}
+.tag-active strong{color:var(--cm-text-strong);text-transform:capitalize;}
+.tag-active button{background:none;border:1px solid var(--cm-border);border-radius:50%;width:22px;height:22px;color:var(--cm-gray-300);cursor:pointer;line-height:1;}
+.tag-active button:hover{color:var(--cm-text-strong);border-color:var(--cm-border-strong);}
+.proj img[data-full]{cursor:pointer;}
 .lightbox{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:clamp(1.5rem,5vw,4rem);background:rgba(6,6,8,0.92);}
 .lightbox.open{display:flex;}
 .lightbox__img{max-width:100%;max-height:82vh;object-fit:contain;border-radius:var(--r-sm);box-shadow:var(--shadow-lg);}
@@ -233,8 +235,6 @@ function filterByTag(el){
   currentFilter = cat;
   currentTag = tag;
   applyFilter();
-  var gallery = document.getElementById('gallery');
-  if(gallery) gallery.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function clearTagFilter(){
