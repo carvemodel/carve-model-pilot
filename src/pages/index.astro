@@ -51,7 +51,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0,#000,transparent 80%);}
 .hero__inner{position:relative;z-index:1;display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
 .hero__inner .eyebrow:not(.eyebrow--sub){color:var(--cm-text-strong);}
-.hero h1{margin-top:2.75rem;font-size:clamp(2.1rem,4.4vw,3.6rem);line-height:1.05;}
+.hero h1{margin-top:2.75rem;}
 .hero h1 em{font-style:normal;color:var(--cm-text-muted);}
 .hero__sub{margin-top:2.75rem;max-width:48ch;}
 .hero__inner .eyebrow--sub{
@@ -60,7 +60,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   margin-top:2.75rem;
 }
 .hero__inner .eyebrow--sub::before{content:none;}
-.hero__cta{display:flex;gap:0.9rem;flex-wrap:wrap;margin-top:2.4rem;}
+.hero__cta{display:flex;gap:0.9rem;flex-wrap:nowrap;margin-top:2.4rem;}
+@media(max-width:560px){.hero__cta{flex-wrap:wrap;}}
 .hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
 .hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .hero__visual{position:relative;}
@@ -223,7 +224,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="hero__inner">
       <div>
         <span class="eyebrow">Physical models for confident decisions</span>
-        <h1 class="display-xl">Turn<br>Digital Designs<br>Into<br><em>Physical</em><br>Evidence</h1>
+        <h1 class="display-lg">Turn<br>Digital Designs<br>Into<br><em>Physical</em><br>Evidence</h1>
         <p class="hero__sub lead">Carve Model creates architectural models, product prototypes, film miniatures, and art maquettes that help teams present ideas, evaluate designs, and verify physical outcomes before moving to the next stage.</p>
         <div class="hero__cta">
           <a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
@@ -427,7 +428,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="platform__copy">
         <span class="new-pill">● Included with every project</span>
         <h2>A shared view from approval to delivery.</h2>
-        <p>Every Carve project now comes with a shared workspace. See progress in real time, approve milestones, exchange files, and message the studio — all in one place. No more email threads or guessing where things stand.</p>
+        <p>Every Carve project now comes with a shared workspace. Follow milestones, review files, provide approvals, and message the studio—all in one organized workspace.</p>
         <ul class="platform__list">
           <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Live milestone timeline — design review to install</li>
           <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Approve scope, scale, and finishes online</li>

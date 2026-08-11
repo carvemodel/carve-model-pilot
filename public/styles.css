@@ -98,6 +98,7 @@ p{margin:0;text-wrap:pretty;}
 .btn--primary:hover{background:var(--cm-accent-hover);}
 .btn--ghost{background:transparent;color:var(--cm-text-strong);border-color:var(--cm-border-strong);}
 .btn--ghost:hover{background:var(--cm-surface);border-color:var(--cm-text-subtle);}
+.nav__actions .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .btn--lg{padding:1.15rem 2rem;font-size:1rem;}
 .btn .arrow{transition:transform var(--dur-2) var(--ease-out);}
 .btn:hover .arrow{transform:translateX(4px);}
