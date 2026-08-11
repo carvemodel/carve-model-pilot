@@ -3,33 +3,56 @@ import BlogPostLayout from '../../layouts/BlogPostLayout.astro';
 ---
 <BlogPostLayout
   title="How to Choose the Right Scale for an Architectural Model | Carve Model"
-  description="Choosing the right scale depends on purpose, level of detail, and the real dimensions of the object. A practical guide with common scales and what each is best for."
+  description="The right scale is determined by what the model needs to communicate, how much detail it must show, and how large the finished model can practically be."
   slug="how-to-choose-architectural-model-scale"
   metaLabel="Guide · Scale"
-  readTime="6 min read"
   heading="How to Choose the Right Scale for an Architectural Model"
-  lead="Scale is one of the first — and most consequential — decisions in any model project. The right choice keeps the model legible, practical to transport, and powerful in the room."
+  headingHtml="How to Choose the <em>Right Scale</em> for an Architectural Model"
+  lead="The right scale is determined by what the model needs to communicate, how much detail it must show, and how large the finished model can practically be."
+  leadExtra="A larger scale allows more detail. A smaller scale shows more context. The goal is not to choose the most impressive scale, but the one that makes the right information clear."
   coverId="how-to-choose-architectural-model-scale-cover"
+  coverImage="/assets/hero-photo.png"
+  coverCaption="Mixed Use Development · 1:144 · ABS"
 >
-<p>Choosing the right scale for an architectural model depends on the model's purpose, the level of detail required, and the actual dimensions of the real object. The guidelines below are useful rules of thumb, but every project deserves its own evaluation.</p>
-<h2>Start by calculating the model's size</h2>
-<p>Before selecting a scale, work out how large the finished model will physically be. A model that becomes unusually tall, sprawling, or tiny is a clear sign the scale needs adjusting. The goal is a piece that's comfortable to view at arm's length and easy to move and display.</p>
-<h2>Common scales — and what each is for</h2>
-<p>These ranges cover the majority of architectural work. Actual dimensions always override these guidelines.</p>
-<div class="spec-table">
-  <div class="r"><span class="l">Interiors, units, hotel rooms</span><span class="v">1:50</span></div>
-  <div class="r"><span class="l">Building architecture</span><span class="v">1:100</span></div>
-  <div class="r"><span class="l">Mixed-use blocks, TODs</span><span class="v">1:200</span></div>
-  <div class="r"><span class="l">Masterplans, large sites</span><span class="v">1:500</span></div>
-  <div class="r"><span class="l">City-scale overview</span><span class="v">1:1000</span></div>
-</div>
-<h2>How we recommend a scale</h2>
-<p>When we review a project, scale selection is guided by a few practical factors:</p>
-<ul>
-<li><strong>Purpose</strong> — what decision the model needs to support, from concept massing to a sales-gallery centerpiece.</li>
-<li><strong>Level of detail</strong> — finer façade, glazing, and landscaping detail reads better at a larger scale.</li>
-<li><strong>Viewing distance</strong> — a model seen across a gallery has different needs than one studied around a table.</li>
-<li><strong>Real dimensions</strong> — the size of the building or site ultimately sets the practical bounds.</li>
-</ul>
-<div class="callout">The right scale ensures clarity, practicality, and visual impact. If you're unsure, send us your dimensions and intended use — we'll recommend a scale during review.</div>
+<h2>Start with the dimensions you know</h2>
+<p>You do not need complete drawings to estimate an appropriate scale. An approximate building height, footprint, site boundary, or desired model size is enough for an initial calculation.</p>
+<p>If you know the actual dimensions, calculate the model size using:</p>
+<div class="callout" style="text-align:center;font-family:var(--font-mono);font-size:1rem;">Model dimension = Actual dimension ÷ Scale</div>
+<p>For example, a 30-meter building represented at 1:100 will be approximately 300 millimeters tall.</p>
+
+<h3>If you know the desired model size</h3>
+<p>You can also work backward from the space available:</p>
+<div class="callout" style="text-align:center;font-family:var(--font-mono);font-size:1rem;">Scale = Actual dimension ÷ Desired model dimension</div>
+<p>Make sure both measurements use the same unit.</p>
+<p>For example, a building approximately 200 feet tall is 2,400 inches tall. If the model should be about 20 inches tall:</p>
+<div class="callout" style="text-align:center;font-family:var(--font-mono);font-size:1rem;">2,400 ÷ 20 = 120</div>
+<p>This suggests a scale near 1:120. A standard scale such as 1:144 could then be considered, producing a building approximately 16.7 inches tall before adding the base or display case.</p>
+<p>These calculations provide a starting point. The final scale may be adjusted to accommodate detail, context, transportation, or presentation requirements.</p>
+
+<h2>Common architectural model scales</h2>
+<h3>1:50 or 1:48</h3>
+<p>Suitable for interiors, residential units, sections, and projects where material or architectural detail is important.</p>
+<h3>1:100 or 1:96</h3>
+<p>Common for individual buildings and detailed architectural presentation models. In imperial notation, 1:96 is equivalent to ⅛ inch representing 1 foot.</p>
+<h3>1:144 to 1:200</h3>
+<p>Useful for larger buildings, mixed-use developments, campuses, and projects that need both architecture and surrounding context.</p>
+<h3>1:500</h3>
+<p>Appropriate for masterplans, large sites, urban relationships, and overall massing.</p>
+<h3>1:1000 and smaller</h3>
+<p>Used for city-scale studies, regional context, and large planning areas.</p>
+<p>These are general guidelines. The actual project dimensions and intended use should determine the final selection.</p>
+
+<h2>Four factors that determine the right scale</h2>
+<h3>Purpose</h3>
+<p>A concept or planning model may emphasize massing, site relationships, and circulation. A sales-gallery model may require larger-scale façade, landscape, lighting, and material detail.</p>
+<h3>Audience and viewing distance</h3>
+<p>A model examined closely around a meeting table has different requirements from one viewed across a sales gallery, exhibition, or public hearing room.</p>
+<h3>Required detail</h3>
+<p>Windows, mullions, railings, landscaping, interiors, and façade treatments become difficult to represent clearly below certain sizes. If a detail is important to the decision, the scale must allow it to remain legible.</p>
+<h3>Display and transportation</h3>
+<p>Available display space, doorways, elevators, shipping limits, handling, and installation all affect the practical model size. Large models may need to be designed in sections.</p>
+
+<h2>Choose clarity over convention</h2>
+<p>There is no single correct scale for every building type. The best scale is the one that presents the required information clearly while remaining practical to fabricate, transport, install, and use.</p>
+<div class="callout">Not sure which scale fits your project? Share the approximate dimensions and intended use, and we'll recommend a starting scale during review.</div>
 </BlogPostLayout>
