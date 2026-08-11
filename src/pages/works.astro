@@ -1,12 +1,62 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { createClient } from 'redis';
+
+const CATEGORY_LABEL = {
+  architecture: 'Architecture & Real Estate',
+  product: 'Product',
+  film: 'Film & Commercial',
+  art: 'Art',
+};
+
+// Shown until real projects are saved through /admin-works — keeps the page
+// looking intentional (and still demonstrates varied photo orientation)
+// before anyone has added anything in the admin tool.
+const FALLBACK_PROJECTS = [
+  { id: 'p1', name: 'Harbor District', category: 'architecture', tag: 'Masterplan', scale: '1:500', material: 'ABS', imageUrl: '', imageWidth: 5, imageHeight: 3 },
+  { id: 'p2', name: 'Cedar Civic Center', category: 'architecture', tag: 'Presentation model', scale: '1:100', material: 'ABS', imageUrl: '', imageWidth: 3, imageHeight: 4 },
+  { id: 'p3', name: 'Helix Device', category: 'product', tag: 'Prototype', scale: '1:1', material: 'Resin', imageUrl: '', imageWidth: 1, imageHeight: 1 },
+  { id: 'p4', name: 'Backlot Miniature', category: 'film', tag: 'Miniature', scale: 'Film-grade', material: 'Foam & wood', imageUrl: '', imageWidth: 9, imageHeight: 16 },
+  { id: 'p5', name: 'Meridian Campus', category: 'architecture', tag: 'Campus model', scale: '1:200', material: 'ABS', imageUrl: '', imageWidth: 4, imageHeight: 3 },
+  { id: 'p6', name: 'Reclaimed Line', category: 'art', tag: 'Maquette', scale: '1:10', material: 'Resin', imageUrl: '', imageWidth: 3, imageHeight: 5 },
+  { id: 'p7', name: 'Skyline Previs Set', category: 'film', tag: 'Set piece', scale: 'Film-grade', material: 'Foam & wood', imageUrl: '', imageWidth: 16, imageHeight: 9 },
+  { id: 'p8', name: 'Pavilion Study', category: 'art', tag: 'Installation model', scale: '1:20', material: 'Acrylic', imageUrl: '', imageWidth: 3, imageHeight: 4 },
+  { id: 'p9', name: 'Contour Charging Dock', category: 'product', tag: 'Mockup', scale: '1:1', material: 'Resin', imageUrl: '', imageWidth: 1, imageHeight: 1 },
+  { id: 'p10', name: 'Ridgeline Sales Gallery', category: 'architecture', tag: 'Sales gallery', scale: '1:50', material: 'ABS', imageUrl: '', imageWidth: 5, imageHeight: 3 },
+  { id: 'p11', name: 'Aria Console', category: 'product', tag: 'Functional mockup', scale: '1:1', material: 'Resin', imageUrl: '', imageWidth: 1, imageHeight: 1 },
+  { id: 'p12', name: 'Lowland Set Extension', category: 'film', tag: 'Set extension', scale: 'Film-grade', material: 'Foam & wood', imageUrl: '', imageWidth: 3, imageHeight: 5 },
+];
+
+// Projects are managed at /admin-works and stored in the same Redis
+// database as the rest of the site's tools (see api/works.js). Fetched once
+// here at build time — REDIS_URL must be set in the build environment (it
+// already is in Production/Preview on Vercel; for local builds run
+// `vercel env pull .env` once). Falls back to sample data if the env var
+// is missing or the fetch fails, so the site never breaks a build.
+let projects = FALLBACK_PROJECTS;
+if (process.env.REDIS_URL) {
+  try {
+    const client = createClient({ url: process.env.REDIS_URL });
+    await client.connect();
+    const raw = await client.get('carve:works');
+    await client.disconnect();
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.projects) && data.projects.length) {
+        projects = data.projects;
+      }
+    }
+  } catch (err) {
+    console.warn('works.astro: could not load projects from Redis, using fallback data.', err);
+  }
+}
 ---
 <BaseLayout
-  title="Our Work — Architectural Scale Models Portfolio | Carve Model"
-  description="A selection of architectural scale models, sales-gallery pieces, masterplans, product prototypes, and film miniatures built by Carve Model in Los Angeles."
+  title="Our Work — Physical Model Portfolio | Carve Model"
+  description="Architectural models, product prototypes, film and commercial miniatures, and art maquettes built by Carve Model — developed for design evaluation, approvals, presentations, testing, and production."
   canonicalPath="/works"
   ogTitle="Our Work | Carve Model Portfolio"
-  ogDescription="Architectural scale models, masterplans, sales-gallery pieces, and more."
+  ogDescription="Models built for the decisions they support."
   active="works"
   imageSlot={true}
 >
@@ -14,67 +64,110 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <style>
 .page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,3rem);border-bottom:1px solid var(--cm-line-faint);}
 .page-hero h1{margin-top:1.4rem;}.page-hero p{margin-top:1.4rem;}
+.page-hero h1 em{font-style:normal;color:var(--cm-text-muted);}
+.page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
+@media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
+.page-hero__visual{position:relative;}
+.page-hero__visual .hero-photo{display:block;width:100%;aspect-ratio:4/3;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
+.page-hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
+.page-hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
+.page-hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
+.hero__spec{position:absolute;right:-12px;bottom:24px;z-index:4;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);padding:0.9rem 1.1rem;box-shadow:var(--shadow-lg);}
+.hero__spec .tick{display:block;}
+.hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.1rem;letter-spacing:-0.01em;}
 .filters{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:2rem;}
 .filter{font-family:var(--font-mono);font-size:0.74rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-gray-400);border:1px solid var(--cm-border);border-radius:var(--r-pill);padding:0.5rem 1rem;background:transparent;transition:0.16s;}
 .filter.on,.filter:hover{color:var(--cm-ink-900);background:var(--cm-silver);border-color:transparent;}
-.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:3rem;}
-.proj{position:relative;}
-.proj image-slot{width:100%;aspect-ratio:4/3;}
-.proj.tall image-slot{aspect-ratio:3/4;}
-.proj__cap{display:flex;justify-content:space-between;align-items:baseline;margin-top:0.8rem;gap:1rem;}
-.proj__cap h3{font-family:var(--font-display);font-size:1.05rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
-.proj__cap .meta{font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);white-space:nowrap;}
+.gallery{columns:3 320px;column-gap:1.25rem;margin-top:3rem;}
+.proj{break-inside:avoid;margin:0 0 1.25rem;}
+.proj img,.proj image-slot{display:block;width:100%;height:auto;}
 .proj__tag{position:absolute;top:0;left:0;font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.06em;text-transform:uppercase;background:var(--cm-scrim-strong);color:var(--cm-gray-100);padding:0.4rem 0.7rem;z-index:2;}
-@media(max-width:820px){.gallery{grid-template-columns:1fr 1fr;}}
-@media(max-width:520px){.gallery{grid-template-columns:1fr;}}
+.proj{position:relative;}
+.proj .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
+.proj .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
+.proj .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
+@media(max-width:820px){.gallery{columns:2 240px;}}
+@media(max-width:520px){.gallery{columns:1;}}
+.hero__cta{display:flex;gap:0.9rem;flex-wrap:wrap;margin-top:1.8rem;}
+.hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
+.hero__cta .btn--primary:hover,.hero__cta .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 </style>
 </Fragment>
 
 <main>
 <section class="page-hero"><div class="container">
-  <span class="eyebrow">Selected work</span>
-  <h1 class="display-lg measure">Models built for the rooms they enter.</h1>
-  <p class="lead measure">A selection across architecture, marketing, product, and film. Each project is customized by scale, purpose, and timeline — never a one-size-fits-all template.</p>
-  <div class="filters">
-    <button class="filter on" data-f="all" onclick="filterWorks('all',this)">All</button>
-    <button class="filter" data-f="arch" onclick="filterWorks('arch',this)">Architectural</button>
-    <button class="filter" data-f="sales" onclick="filterWorks('sales',this)">Sales Gallery</button>
-    <button class="filter" data-f="masterplan" onclick="filterWorks('masterplan',this)">Masterplan</button>
-    <button class="filter" data-f="product" onclick="filterWorks('product',this)">Product</button>
-    <button class="filter" data-f="film" onclick="filterWorks('film',this)">Film</button>
+  <div class="page-hero__inner">
+    <div>
+      <span class="eyebrow">Selected work</span>
+      <h1 class="display-lg measure">Models built<br>for the<br><em>decisions</em><br>they<br>support.</h1>
+      <p class="lead measure">Every project begins with what the model needs to communicate, who needs to understand it, and how it will be used.</p>
+      <div class="hero__cta">
+        <a class="btn btn--primary" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
+        <a class="btn btn--ghost" href="/scale-model-services">Explore our Services <span class="arrow">→</span></a>
+      </div>
+    </div>
+    <div class="page-hero__visual reveal">
+      <span class="corner tl"></span><span class="corner br"></span>
+      <img class="hero-photo" src="/assets/hero-photo.png" alt="Carve Model architectural scale model">
+      <span class="slot-label">Mixed Use Development · 1:144 · ABS</span>
+      <div class="hero__spec">
+        <span class="tick">PROJECTS DELIVERED</span>
+        <strong>500+ models</strong>
+      </div>
+    </div>
   </div>
 </div></section>
 
 <section class="section" style="padding-top:clamp(2rem,4vw,3rem);"><div class="container">
+  <p class="muted" style="max-width:none;">Explore architectural models, product prototypes, film and commercial miniatures, and art maquettes developed for design evaluation, approvals, presentations, testing, production, and documentation.</p>
+  <div class="filters">
+    <button class="filter on" data-f="all" onclick="filterWorks('all',this)">All</button>
+    <button class="filter" data-f="architecture" onclick="filterWorks('architecture',this)">Architecture &amp; Real Estate</button>
+    <button class="filter" data-f="product" onclick="filterWorks('product',this)">Product</button>
+    <button class="filter" data-f="film" onclick="filterWorks('film',this)">Film &amp; Commercial</button>
+    <button class="filter" data-f="art" onclick="filterWorks('art',this)">Art</button>
+  </div>
   <div class="gallery" id="gallery">
-    <figure class="proj" data-cat="arch" style="margin:0;"><span class="proj__tag">Architectural · 1:144</span><image-slot id="p1" placeholder="Drop project photo"></image-slot><figcaption class="proj__cap"><h3>Aria Tower</h3><span class="meta">DTLA · Investor</span></figcaption></figure>
-    <figure class="proj tall" data-cat="masterplan" style="margin:0;"><span class="proj__tag">Masterplan · 1:500</span><image-slot id="p2" placeholder="Drop project photo"></image-slot><figcaption class="proj__cap"><h3>Harbor District</h3><span class="meta">Mixed-use</span></figcaption></figure>
-    <figure class="proj" data-cat="sales" style="margin:0;"><span class="proj__tag">Sales Gallery · 1:50</span><image-slot id="p3" placeholder="Drop project photo"></image-slot><figcaption class="proj__cap"><h3>Nova Residences</h3><span class="meta">Lit · Marketing suite</span></figcaption></figure>
-    <figure class="proj" data-cat="arch" style="margin:0;"><span class="proj__tag">Architectural · 1:100</span><image-slot id="p4" placeholder="Drop project photo"></image-slot><figcaption class="proj__cap"><h3>Cedar Civic Center</h3><span class="meta">Planning approval</span></figcaption></figure>
-    <figure class="proj" data-cat="product" style="margin:0;"><span class="proj__tag">Product · 1:1</span><image-slot id="p5" placeholder="Drop project photo"></image-slot><figcaption class="proj__cap"><h3>Helix Device</h3><span class="meta">CAD mockup</span></figcaption></figure>
-    <figure class="proj tall" data-cat="film" style="margin:0;"><span class="proj__tag">Film · Film-grade</span><image-slot id="p6" placeholder="Drop project photo"></image-slot><figcaption class="proj__cap"><h3>Backlot Miniature</h3><span class="meta">Previs set</span></figcaption></figure>
-    <figure class="proj" data-cat="arch" style="margin:0;"><span class="proj__tag">Architectural · 1:200</span><image-slot id="p7" placeholder="Drop project photo"></image-slot><figcaption class="proj__cap"><h3>Meridian Campus</h3><span class="meta">TOD block</span></figcaption></figure>
-    <figure class="proj" data-cat="sales" style="margin:0;"><span class="proj__tag">Sales Gallery · 1:75</span><image-slot id="p8" placeholder="Drop project photo"></image-slot><figcaption class="proj__cap"><h3>The Quay</h3><span class="meta">Waterfront launch</span></figcaption></figure>
-    <figure class="proj" data-cat="masterplan" style="margin:0;"><span class="proj__tag">Masterplan · 1:1000</span><image-slot id="p9" placeholder="Drop project photo"></image-slot><figcaption class="proj__cap"><h3>Riverside Plan</h3><span class="meta">City overview</span></figcaption></figure>
+    {projects.map((p) => {
+      const ratio = p.imageWidth && p.imageHeight ? `${p.imageWidth}/${p.imageHeight}` : '4/3';
+      const label = [p.name, p.scale, p.material].filter(Boolean).join(' · ');
+      const tag = [CATEGORY_LABEL[p.category] || p.category, p.tag].filter(Boolean).join(' · ');
+      return (
+        <figure class="proj" data-cat={p.category}>
+          <span class="proj__tag">{tag}</span>
+          {p.imageUrl
+            ? <img src={p.imageUrl} alt={p.name} style={`aspect-ratio:${ratio};object-fit:cover;`} loading="lazy" />
+            : <image-slot id={p.id} placeholder="Drop project photo" style={`aspect-ratio:${ratio};`}></image-slot>}
+          <span class="corner tl"></span><span class="corner br"></span>
+          <span class="slot-label">{label}</span>
+        </figure>
+      );
+    })}
   </div>
 </div></section>
 
 <section class="section" style="padding-top:0;"><div class="container">
   <div class="cta reveal" style="position:relative;text-align:center;background:var(--cm-black);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:clamp(3rem,6vw,5rem) var(--gutter);">
-    <h2 class="display-md">Your project could be next.</h2>
-    <p class="muted mt-2" style="max-width:44ch;margin-inline:auto;">Tell us about the decision your model needs to support, and we'll recommend the right scope and scale.</p>
-    <div class="mt-4"><a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate →</a></div>
+    <h2 class="display-md">Bring your next decision into physical form.</h2>
+    <p class="muted mt-2" style="max-width:52ch;margin-inline:auto;">Tell us what you are creating, who needs to understand it, and what the model needs to help them evaluate, communicate, test, or approve. We will recommend an appropriate scope, scale, and level of detail.</p>
+    <div class="hero__cta" style="justify-content:center;margin-top:2.4rem;"><a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a></div>
   </div>
 </div></section>
 </main>
 
 <Fragment slot="scripts">
 <script is:inline>
-function filterWorks(cat,btn){
+// Every project shows on a single continuous grid — no pagination. The
+// .gallery uses native CSS multi-columns (column-fill: balance, the
+// default), which the browser packs as tightly as the real, un-resized
+// photo heights allow: it measures actual rendered card heights and
+// distributes them across columns to minimize the tallest column, so the
+// grid takes up the least vertical space possible for whatever is visible.
+function filterWorks(cat, btn){
   document.querySelectorAll('.filter').forEach(function(f){f.classList.remove('on');});
   btn.classList.add('on');
   document.querySelectorAll('.proj').forEach(function(p){
-    p.style.display=(cat==='all'||p.dataset.cat===cat)?'':'none';
+    p.style.display = (cat === 'all' || p.dataset.cat === cat) ? '' : 'none';
   });
 }
 </script>
