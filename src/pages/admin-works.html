@@ -144,7 +144,7 @@ function render(){
         '<div class="grid2">' +
           '<div class="f"><label>Project name</label><input value="' + escAttr(p.name) + '" oninput="updateField(' + i + ',\'name\',this.value)"></div>' +
           '<div class="f"><label>Category</label><select onchange="updateField(' + i + ',\'category\',this.value)">' + categoryOptions(p.category) + '</select></div>' +
-          '<div class="f"><label>Tag (subcategory)</label><input value="' + escAttr(p.tag) + '" placeholder="e.g. Masterplan" oninput="updateField(' + i + ',\'tag\',this.value)"></div>' +
+          '<div class="f"><label>Tags (comma-separated)</label><input value="' + escAttr(p.tag) + '" placeholder="e.g. Masterplan, Retail" oninput="updateField(' + i + ',\'tag\',this.value)"></div>' +
           '<div class="f"><label>Scale</label><input value="' + escAttr(p.scale) + '" placeholder="e.g. 1:500 or Film-grade" oninput="updateField(' + i + ',\'scale\',this.value)"></div>' +
           '<div class="f" style="grid-column:1/-1"><label>Material</label><input value="' + escAttr(p.material) + '" placeholder="e.g. ABS" oninput="updateField(' + i + ',\'material\',this.value)"></div>' +
         '</div>' +
@@ -216,6 +216,15 @@ function triggerDeploy(){
   return fetch(hook, { method: 'POST' }).then(function(){ return true; }).catch(function(){ return false; });
 }
 
+function resetGate(msg){
+  sessionStorage.removeItem(TOKEN_KEY);
+  document.getElementById('admin').hidden = true;
+  document.getElementById('gate').hidden = false;
+  document.getElementById('gateToken').value = '';
+  document.getElementById('gateErr').hidden = !msg;
+  if(msg) document.getElementById('gateErr').textContent = msg;
+}
+
 function saveAll(){
   setStatus('Saving…');
   fetch('/api/works', {
@@ -223,7 +232,10 @@ function saveAll(){
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token: getToken(), projects: projects }),
   }).then(function(r){
-    if(r.status === 401){ throw new Error('Admin token was rejected.'); }
+    if(r.status === 401){
+      resetGate('That token was rejected — the one stored in this browser no longer matches. Re-enter it.');
+      throw new Error('Admin token was rejected. Please re-enter it above.');
+    }
     if(!r.ok) throw new Error('Save failed (' + r.status + ')');
     return r.json();
   }).then(function(){
