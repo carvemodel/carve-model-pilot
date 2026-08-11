@@ -19,7 +19,7 @@
   // buffered through one silently fails above that size. This uses Vercel
   // Blob's client-upload flow instead: the browser gets a short-lived upload
   // token from /api/upload, then PUTs the file bytes straight to Blob storage.
-  import { upload } from 'https://esm.sh/@vercel/blob@0.27.3/client';
+  import { upload } from 'https://esm.sh/@vercel/blob@2.7.0/client';
   window.__blobUpload = upload;
 </script>
 <style>
@@ -3371,6 +3371,7 @@ window.SRC_saveComment=function(bid,shopId,vi){
   var txt=ta?ta.value.trim():'';
   if(!txt)return;
   opt.carveNote={text:txt,time:'just now'};
+  b.lastCommentAt=new Date().toISOString(); // bumps this brief to the top of the shop's Submitted quotes list
   delete SRC_OPEN_COMMENT[bid+'|'+shopId+'|'+optKey(vi)];
   notifyShop(shopId,'Carve requested a revision on "'+b.title+'".');
   showEmailToast('Sent to '+shop(shopId).name+' — revision requested on "'+b.title+'".');
@@ -3863,7 +3864,7 @@ window.SRC_updateBadges=function(){
   var badge=document.getElementById('sourcingBadge');
   if(badge){ if(openCount){badge.textContent=openCount;badge.style.display='';} else {badge.style.display='none';} }
   var ours=SDB.briefs.filter(function(b){return (b.invited&&b.invited.indexOf(OUR_SHOP)>=0)||b.quotes[OUR_SHOP]||b.awarded===OUR_SHOP;});
-  var activeCount=ours.filter(function(b){return !b.quotes[OUR_SHOP];}).length;
+  var activeCount=ours.filter(function(b){var q=b.quotes[OUR_SHOP];return !q||(!!(q&&q.carveNote)&&b.status!=='awarded');}).length;
   var badgeF=document.getElementById('sourcingBadgeFactory');
   if(badgeF){ if(activeCount){badgeF.textContent=activeCount;badgeF.style.display='';} else {badgeF.style.display='none';} }
 };
@@ -3887,7 +3888,7 @@ function SRC_carveAdmin(){
       :('<span class="chip active">Open · '+totalOptions+' option'+(totalOptions==1?'':'s')+'</span>');
     var invitedNames=(b.invited||[]).map(function(sid){var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===sid;})[0];var s=shop(sid);return admin?admin.name:(s?s.name:sid);});
     html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+'"><div class="panel__head"><div><span class="src-card__code">'+b.code+(b.sentDate?' · sent '+esc(b.sentDate)+(invitedNames.length?' to '+esc(invitedNames.join(', ')):''):'')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.6rem;">'+chip+(confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'')+'</div></div><div class="panel__body">';
-    html+='<div class="src-spec">'+specBits(b)+'</div>';
+    html+=productionBriefBody(b);
     if(!confirmed&&!b.picked&&quoted.length)html+='<div class="notice" style="margin-top:0.8rem;">'+quoted.length+' quote'+(quoted.length===1?'':'s')+' in. Pick an option below to build a client quote — nothing is sent to the shop yet.</div>';
     html+='<div style="margin-top:0.6rem;"><div class="qline2 head"><span>Shop</span><span>Cost</span><span>Prod. time</span><span></span></div>';
     SHOPS.forEach(function(s){
@@ -4097,7 +4098,7 @@ function renderProdAdminCard(b){
   var inProd=won&&b.stage==='production';
   if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=!q||!!(q&&q.carveNote); // open (no quote yet) or newly-commented starts expanded; otherwise submitted starts collapsed
   var expanded=SRC_EXPANDED[b.id];
-  var chip=inProd?'<span class="chip active">In production</span>':won?'<span class="chip done">Awarded to you</span>':lost?'<span class="chip await">Not selected</span>':q?'<span class="chip active">Quote sent</span>':'<span class="chip await">Action needed</span>';
+  var chip=inProd?'<span class="chip active">In production</span>':won?'<span class="chip done">Awarded to you</span>':lost?'<span class="chip await">Not selected</span>':(q&&q.carveNote)?'<span class="chip await">Revision requested</span>':q?'<span class="chip active">Quote sent</span>':'<span class="chip await">Action needed</span>';
   var html='<div class="panel src-card"><div class="panel__head" style="cursor:pointer;" onclick="SRC_toggleExpand(\''+b.id+'\')"><div><span class="src-card__code">'+b.code+(b.sentDate?' · sent '+esc(b.sentDate):'')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+chip+'<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);">'+(expanded?'▾ Collapse':'▸ Expand')+'</span></div></div>';
   if(!expanded){
     html+='<div class="panel__body"><div style="font-size:0.85rem;color:var(--cm-text-muted);">'+collapsedSummaryLine(b,q,won,lost,inProd)+'</div></div></div>';
@@ -4147,8 +4148,19 @@ function SRC_prodAdmin(){
   window.SRC_updateBadges();
   var ours=SDB.briefs.filter(function(b){return (b.invited&&b.invited.indexOf(OUR_SHOP)>=0)||b.quotes[OUR_SHOP]||b.awarded===OUR_SHOP;});
   var byDate=function(a,c){return (a.sentDate||'').localeCompare(c.sentDate||'');};
-  var activeList=ours.filter(function(b){return !b.quotes[OUR_SHOP];}).sort(byDate);
-  var submittedList=ours.filter(function(b){return !!b.quotes[OUR_SHOP];}).sort(byDate);
+  var byCommentThenDate=function(a,c){
+    var an=a.lastCommentAt||'', cn=c.lastCommentAt||'';
+    if(an||cn){ if(an!==cn) return cn.localeCompare(an); }
+    return byDate(a,c);
+  };
+  // A brief Carve just left a revision comment on needs a new bid, same as one
+  // that was never quoted — so it moves back into Active quotations (not just
+  // reordered within Submitted) until the shop resubmits. Doesn't apply to
+  // anything already awarded/in production, even if an old comment is still
+  // sitting on the record.
+  var needsRevision=function(b){var q=b.quotes[OUR_SHOP];return !!(q&&q.carveNote)&&b.status!=='awarded';};
+  var activeList=ours.filter(function(b){return !b.quotes[OUR_SHOP]||needsRevision(b);}).sort(byCommentThenDate);
+  var submittedList=ours.filter(function(b){return !!b.quotes[OUR_SHOP]&&!needsRevision(b);}).sort(byDate);
   var html='<div class="src-head"><div><h2>Your shop’s projects with Carve</h2><div class="sub" style="max-width:none;white-space:nowrap;">Active quotations need your bid first; submitted quotes sit below, earliest first, collapsed until you open them.</div></div></div>';
   var unread=(SDB.notifications&&SDB.notifications[OUR_SHOP]||[]).filter(function(n){return !n.read;});
   if(unread.length){
@@ -4241,7 +4253,7 @@ window.SRC_quote=function(id){
   delete SRC_PENDING_BFILE['src-'+id];
   saveSRC();SRC_render();
 };
-window.SRC_unquote=function(id){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];if(b.quotes[OUR_SHOP])logHistory(b,OUR_SHOP,b.quotes[OUR_SHOP],'Revised (previous version)');delete b.quotes[OUR_SHOP];saveSRC();SRC_render();};
+window.SRC_unquote=function(id){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];if(b.quotes[OUR_SHOP])logHistory(b,OUR_SHOP,b.quotes[OUR_SHOP],'Revised (previous version)');delete b.quotes[OUR_SHOP];delete b.lastCommentAt;saveSRC();SRC_render();};
 window.SRC_removeQuote=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   if(!confirm('Remove your quote for "'+b.title+'"? Carve will no longer see it as an option.'))return;
@@ -4485,17 +4497,20 @@ window.SRC_confirmSendLead=function(){
   if(!shopIds.length){alert('Select at least one production shop to send this to.');return;}
   var today=new Date().toISOString().slice(0,10);
   var code='CM-'+Math.floor(1000+Math.random()*9000);
+  var proj=alSplitLoc(lead.title||'');
+  var projLoc=proj.b?(proj.b+(proj.c?', '+proj.c:'')):'Not specified';
   var brief={
     id:'b'+Date.now(),code:code,title:lead.title,invited:shopIds,sentDate:today,
     brief:{
       'Model type':lead.type,
+      'Project location':projLoc,
       'Scale':lead.scale,
       'Approx. size':lead.modelsize,
       'Quantity':lead.quantity||'1',
       'Materials':lead.prefMaterial||'To be proposed by production',
       'Base':lead.prefBase||'To be proposed by production',
       'Special requirements':(lead.extras&&lead.extras.length)?lead.extras.join(' \u00b7 '):'None specified',
-      'Timeline':lead.timeline,'Deadline':lead.timeline,'Region':lead.deliveryTo,
+      'Timeline':lead.timeline,'Deadline':lead.timeline,'Delivery location':lead.deliveryTo,
       'Intended use':lead.intendedUse||'Not specified'
     },
     notes:lead.notes+(lead.boundaryMap?'\n\n(Client marked a scope boundary on a site plan \u2014 see attached image.)':''),

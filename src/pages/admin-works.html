@@ -13,7 +13,7 @@
   // Same direct-to-storage upload helper used by app.html — bypasses the
   // serverless function's body-size cap by PUTting bytes straight to Blob
   // storage after getting a short-lived token from /api/upload.
-  import { upload } from 'https://esm.sh/@vercel/blob@0.27.3/client';
+  import { upload } from 'https://esm.sh/@vercel/blob@2.7.0/client';
   window.__blobUpload = upload;
 </script>
 <style>
