@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Works Admin | Carve Model</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/png" href="/assets/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<script type="module">
+  // Same direct-to-storage upload helper used by app.html — bypasses the
+  // serverless function's body-size cap by PUTting bytes straight to Blob
+  // storage after getting a short-lived token from /api/upload.
+  import { upload } from 'https://esm.sh/@vercel/blob@2.7.0/client';
+  window.__blobUpload = upload;
+</script>
+<style>
+body{background:var(--cm-ink-950);}
+.admin{max-width:960px;margin:0 auto;padding:2.5rem var(--gutter) 6rem;}
+.admin__head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:2rem;}
+.admin__head h1{font-size:1.7rem;letter-spacing:-0.02em;}
+.admin__head p{color:var(--cm-text-muted);font-size:0.9rem;margin-top:0.4rem;}
+.gate{max-width:420px;margin:4rem auto;background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:2rem;}
+.gate h1{font-size:1.3rem;margin-bottom:0.6rem;}
+.gate p{color:var(--cm-text-muted);font-size:0.88rem;margin-bottom:1.2rem;}
+.gate input{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-text);border-radius:var(--r-sm);padding:0.8rem 1rem;font-size:0.95rem;margin-bottom:1rem;}
+[hidden]{display:none !important;}
+.card{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:1.2rem;margin-bottom:1rem;display:grid;grid-template-columns:120px 1fr auto;gap:1.1rem;align-items:start;}
+@media(max-width:680px){.card{grid-template-columns:1fr;}}
+.thumb{width:120px;height:90px;border-radius:6px;background:var(--cm-ink-800);border:1px dashed var(--cm-border);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;color:var(--cm-text-subtle);font-size:0.7rem;text-align:center;cursor:pointer;}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.thumb input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.thumb .dims{position:absolute;left:4px;bottom:3px;font-family:var(--font-mono);font-size:0.6rem;color:rgba(255,255,255,0.75);background:rgba(0,0,0,0.5);padding:1px 4px;border-radius:3px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;}
+@media(max-width:520px){.grid2{grid-template-columns:1fr;}}
+.f label{display:block;font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.3rem;}
+.f input,.f select{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-text);border-radius:6px;padding:0.55rem 0.7rem;font-size:0.86rem;}
+.card__actions{display:flex;flex-direction:column;gap:0.4rem;align-items:stretch;}
+.iconbtn{background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-gray-300);border-radius:6px;padding:0.4rem 0.6rem;font-size:0.78rem;cursor:pointer;transition:0.14s;}
+.iconbtn:hover{color:var(--cm-text-strong);border-color:var(--cm-border-strong);}
+.iconbtn.danger:hover{color:#e5837a;border-color:#e5837a;}
+.admin__foot{position:sticky;bottom:0;display:flex;align-items:center;gap:1rem;justify-content:space-between;background:var(--cm-ink-950);border-top:1px solid var(--cm-line-faint);padding:1rem 0;margin-top:1.5rem;}
+.status{font-size:0.85rem;color:var(--cm-text-muted);}
+.status.ok{color:#7fd0a0;}
+.status.err{color:#e5837a;}
+.empty{text-align:center;color:var(--cm-text-muted);padding:3rem 0;border:1px dashed var(--cm-border);border-radius:var(--r-sm);}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <h1>Works admin</h1>
+  <p>Enter the admin token to manage the /works project list.</p>
+  <input id="gateToken" type="password" placeholder="Admin token" autocomplete="off">
+  <button class="btn btn--primary full" onclick="enterGate()">Continue</button>
+  <p class="status err" id="gateErr" hidden>That token was rejected. Check WORKS_ADMIN_TOKEN in your Vercel project settings.</p>
+</div>
+
+<main class="admin" id="admin" hidden>
+  <div class="admin__head">
+    <div>
+      <h1>Works admin</h1>
+      <p>Add, edit, reorder, or remove projects shown on /works. This is a static site, so saving here updates the data — the live page updates on the next deploy (automatically, if a deploy hook is set below).</p>
+    </div>
+    <button class="btn btn--ghost" onclick="addProject()">+ Add project</button>
+  </div>
+
+  <div class="f" style="max-width:520px;margin-bottom:2rem;">
+    <label>Deploy hook URL (optional)</label>
+    <input id="deployHook" placeholder="https://api.vercel.com/v1/integrations/deploy/…" oninput="saveHookUrl(this.value)">
+    <p style="color:var(--cm-text-subtle);font-size:0.78rem;margin-top:0.35rem;">From Vercel → Project Settings → Git → Deploy Hooks. If set, saving here also triggers a rebuild so /works updates automatically within a minute or two.</p>
+  </div>
+
+  <div id="list"></div>
+  <div class="empty" id="emptyMsg" hidden>No projects yet. Click "Add project" to create one.</div>
+
+  <div class="admin__foot">
+    <span class="status" id="statusMsg"></span>
+    <button class="btn btn--primary btn--lg" onclick="saveAll()">Save changes</button>
+  </div>
+</main>
+
+<script>
+var TOKEN_KEY = 'cm_works_admin_token';
+var CATEGORIES = [
+  ['architecture', 'Architecture & Real Estate'],
+  ['product', 'Product'],
+  ['film', 'Film & Commercial'],
+  ['art', 'Art'],
+];
+var projects = [];
+
+function enterGate(){
+  var t = document.getElementById('gateToken').value.trim();
+  if(!t) return;
+  sessionStorage.setItem(TOKEN_KEY, t);
+  boot();
+}
+
+function getToken(){ return sessionStorage.getItem(TOKEN_KEY) || ''; }
+
+function uid(){ return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+function addProject(){
+  projects.push({ id: uid(), name: '', category: 'architecture', tag: '', scale: '', material: '', imageUrl: '', imageWidth: 0, imageHeight: 0 });
+  render();
+}
+
+function removeProject(i){
+  projects.splice(i, 1);
+  render();
+}
+
+function moveProject(i, dir){
+  var j = i + dir;
+  if(j < 0 || j >= projects.length) return;
+  var tmp = projects[i]; projects[i] = projects[j]; projects[j] = tmp;
+  render();
+}
+
+function updateField(i, key, val){
+  projects[i][key] = val;
+}
+
+function categoryOptions(selected){
+  return CATEGORIES.map(function(c){
+    return '<option value="' + c[0] + '"' + (c[0] === selected ? ' selected' : '') + '>' + c[1] + '</option>';
+  }).join('');
+}
+
+function render(){
+  var list = document.getElementById('list');
+  var empty = document.getElementById('emptyMsg');
+  empty.hidden = projects.length > 0;
+  list.innerHTML = projects.map(function(p, i){
+    var thumb = p.imageUrl
+      ? '<img src="' + p.imageUrl + '" alt="">' + (p.imageWidth ? '<span class="dims">' + p.imageWidth + '×' + p.imageHeight + '</span>' : '')
+      : 'Drop / click<br>to upload';
+    return (
+      '<div class="card" data-i="' + i + '">' +
+        '<label class="thumb">' + thumb + '<input type="file" accept="image/*" onchange="handleUpload(' + i + ', this)"></label>' +
+        '<div class="grid2">' +
+          '<div class="f"><label>Project name</label><input value="' + escAttr(p.name) + '" oninput="updateField(' + i + ',\'name\',this.value)"></div>' +
+          '<div class="f"><label>Category</label><select onchange="updateField(' + i + ',\'category\',this.value)">' + categoryOptions(p.category) + '</select></div>' +
+          '<div class="f"><label>Tag (subcategory)</label><input value="' + escAttr(p.tag) + '" placeholder="e.g. Masterplan" oninput="updateField(' + i + ',\'tag\',this.value)"></div>' +
+          '<div class="f"><label>Scale</label><input value="' + escAttr(p.scale) + '" placeholder="e.g. 1:500 or Film-grade" oninput="updateField(' + i + ',\'scale\',this.value)"></div>' +
+          '<div class="f" style="grid-column:1/-1"><label>Material</label><input value="' + escAttr(p.material) + '" placeholder="e.g. ABS" oninput="updateField(' + i + ',\'material\',this.value)"></div>' +
+        '</div>' +
+        '<div class="card__actions">' +
+          '<button class="iconbtn" onclick="moveProject(' + i + ',-1)">↑ Up</button>' +
+          '<button class="iconbtn" onclick="moveProject(' + i + ',1)">↓ Down</button>' +
+          '<button class="iconbtn danger" onclick="removeProject(' + i + ')">Delete</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+function escAttr(s){
+  return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function readImageDims(url){
+  return new Promise(function(resolve){
+    var img = new Image();
+    img.onload = function(){ resolve({ w: img.naturalWidth, h: img.naturalHeight }); };
+    img.onerror = function(){ resolve({ w: 0, h: 0 }); };
+    img.src = url;
+  });
+}
+
+function handleUpload(i, input){
+  var f = input.files && input.files[0];
+  if(!f) return;
+  var card = input.closest('.card');
+  var thumb = card.querySelector('.thumb');
+  thumb.innerHTML = 'Uploading…';
+  var uploadPromise = window.__blobUpload
+    ? window.__blobUpload('works/' + uid() + '-' + f.name, f, { access: 'public', handleUploadUrl: '/api/upload', multipart: true }).then(function(blob){ return blob.url; })
+    : fetch('/api/upload?path=works', { method: 'POST', headers: { 'Content-Type': f.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(f.name) }, body: f }).then(function(r){ return r.json(); }).then(function(d){ return d.url; });
+
+  uploadPromise.then(function(url){
+    return readImageDims(url).then(function(dims){
+      projects[i].imageUrl = url;
+      projects[i].imageWidth = dims.w;
+      projects[i].imageHeight = dims.h;
+      render();
+    });
+  }).catch(function(err){
+    console.error('Upload failed', err);
+    thumb.innerHTML = 'Upload failed — try again';
+  });
+}
+
+function setStatus(msg, cls){
+  var el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+var HOOK_KEY = 'cm_works_deploy_hook';
+function saveHookUrl(v){
+  try { localStorage.setItem(HOOK_KEY, v.trim()); } catch(e) {}
+}
+function getHookUrl(){
+  try { return localStorage.getItem(HOOK_KEY) || ''; } catch(e) { return ''; }
+}
+function triggerDeploy(){
+  var hook = getHookUrl();
+  if(!hook) return Promise.resolve(false);
+  // Deploy hooks are plain POST endpoints Vercel exposes per-project — no
+  // auth token needed beyond the URL itself, which is why it's optional and
+  // only ever stored locally in this browser, never sent to /api/works.
+  return fetch(hook, { method: 'POST' }).then(function(){ return true; }).catch(function(){ return false; });
+}
+
+function saveAll(){
+  setStatus('Saving…');
+  fetch('/api/works', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: getToken(), projects: projects }),
+  }).then(function(r){
+    if(r.status === 401){ throw new Error('Admin token was rejected.'); }
+    if(!r.ok) throw new Error('Save failed (' + r.status + ')');
+    return r.json();
+  }).then(function(){
+    var base = 'Saved ' + projects.length + ' project' + (projects.length === 1 ? '' : 's') + '.';
+    if(getHookUrl()){
+      setStatus(base + ' Triggering deploy…', 'ok');
+      return triggerDeploy().then(function(ok){
+        setStatus(base + (ok ? ' Deploy triggered — live in a minute or two.' : ' Deploy hook failed to trigger — redeploy manually in Vercel.'), ok ? 'ok' : 'err');
+      });
+    }
+    setStatus(base + ' Redeploy the site (or set a deploy hook above) to publish it.', 'ok');
+  }).catch(function(err){
+    setStatus(err.message || 'Save failed.', 'err');
+  });
+}
+
+function boot(){
+  document.getElementById('gate').hidden = true;
+  document.getElementById('admin').hidden = false;
+  document.getElementById('deployHook').value = getHookUrl();
+  setStatus('Loading…');
+  fetch('/api/works').then(function(r){ return r.json(); }).then(function(data){
+    projects = (data && Array.isArray(data.projects)) ? data.projects : [];
+    render();
+    setStatus('');
+  }).catch(function(){
+    setStatus('Could not load existing projects — starting empty.', 'err');
+    render();
+  });
+}
+
+(function(){
+  if(getToken()){ boot(); }
+})();
+</script>
+</body>
+</html>
