@@ -116,6 +116,8 @@ body{background:var(--cm-ink-950);}
 .chip.await{background:rgba(255,255,255,0.04);color:var(--cm-silver);border-color:var(--cm-border-strong);}
 .ms__action{margin-top:0.8rem;display:flex;gap:0.6rem;}
 .btn--sm{padding:0.55rem 1rem;font-size:0.82rem;}
+.btn--danger{color:#E5484D;border-color:#E5484D;}
+.btn--danger:hover{background:#E5484D;color:#fff;border-color:#E5484D;}
 .msrounds{margin-top:0.9rem;display:flex;flex-direction:column;gap:4px;}
 .msround{display:flex;align-items:center;gap:0.8rem;padding:0.6rem 0.8rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);background:var(--cm-ink-850);transition:0.15s;}
 .msround:hover{border-color:var(--cm-border-strong);background:var(--cm-ink-800);}
@@ -137,35 +139,41 @@ body{background:var(--cm-ink-950);}
 .src-card .panel__head{align-items:flex-start;}
 .src-card__t{font-family:var(--font-display);font-size:1.05rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
 .src-card__code{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.05em;color:var(--cm-text-subtle);text-transform:uppercase;margin-bottom:0.25rem;display:block;}
+.src-section-label{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.6rem;}
 .src-spec{display:flex;flex-wrap:wrap;gap:0.5rem 1.6rem;margin:0.2rem 0 0.2rem;}
-.src-spec div{font-size:0.82rem;color:var(--cm-text-muted);}
-.src-spec b{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-strong);font-weight:var(--w-regular);display:block;margin-bottom:1px;}
-.qline2{display:grid;grid-template-columns:1.5fr 0.8fr 0.7fr auto;gap:1rem;align-items:center;padding:0.85rem 0;border-bottom:1px solid var(--cm-line-faint);}
+.src-spec div{font-size:0.82rem;color:var(--cm-text-strong);}
+.src-spec b{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);font-weight:var(--w-regular);display:block;margin-bottom:1px;}
+.qline2{display:grid;grid-template-columns:1.5fr 0.8fr 0.7fr 240px;gap:1rem;align-items:start;padding:0.85rem 0;border-bottom:1px solid var(--cm-line-faint);}
 .qline2:last-child{border-bottom:0;}
 .qline2.head span{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.qline2.head{padding:0.6rem 0 0;border-bottom:0;border-top:1px solid var(--cm-line-faint);}
+.qline2.head+.qline2{padding-top:0;}
 .qf-name{display:flex;align-items:center;gap:0.6rem;}
 .qf-name .av{width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:var(--w-bold);font-size:0.6rem;background:linear-gradient(135deg,var(--cm-ink-500),var(--cm-ink-700));color:var(--cm-text-strong);}
-.qf-name .nm{font-size:0.85rem;color:var(--cm-text-strong);font-weight:var(--w-medium);}
-.qf-name .lc{font-family:var(--font-mono);font-size:0.56rem;color:var(--cm-text-subtle);}
+.qf-name .nm{font-family:var(--font-display);font-weight:var(--w-bold);font-size:1rem;color:var(--cm-text-strong);}
+.qf-name .lc{font-family:var(--font-mono);font-weight:var(--w-regular);font-size:0.62rem;color:var(--cm-text-subtle);margin-top:2px;}
 .qf-price{font-family:var(--font-display);font-weight:var(--w-bold);font-size:1rem;color:var(--cm-text-strong);}
 .qf-price.muted{font-family:var(--font-mono);font-weight:var(--w-regular);font-size:0.8rem;color:var(--cm-text-subtle);}
-.qf-days{font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-gray-100);}
+.qf-days{font-family:var(--font-display);font-weight:var(--w-bold);font-size:1rem;color:var(--cm-gray-100);}
 .qf-note{grid-column:1/-1;font-size:0.8rem;color:var(--cm-text-muted);line-height:1.5;padding-top:0.1rem;}
+.qf-extras{grid-column:1/-1;margin-top:0.4rem;}
+.qf-extras__label{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.35rem;}
 .lowtag{font-family:var(--font-mono);font-size:0.52rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-ink-900);background:var(--cm-silver);border-radius:var(--r-pill);padding:1px 6px;margin-left:0.4rem;}
+.btn--fill-hover:hover{background:var(--cm-white);color:var(--cm-ink-900);border-color:var(--cm-white);}
 .src-withheld{border:1px dashed var(--cm-border-strong);background:rgba(182,182,182,0.03);border-radius:var(--r-sm);padding:0.9rem 1.1rem;margin-top:0.9rem;}
 .src-withheld .wh-h{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-silver);margin-bottom:0.5rem;}
 .src-redact{display:inline-block;background:var(--cm-ink-600);color:transparent;border-radius:2px;padding:0 0.5rem;user-select:none;letter-spacing:0.1em;}
-.src-withheld .row{display:flex;gap:0.8rem;font-size:0.82rem;color:var(--cm-text-muted);padding:0.2rem 0;}
+.src-withheld .row{display:flex;gap:0.8rem;font-size:0.82rem;color:var(--cm-text-strong);padding:0.2rem 0;}
 .src-withheld .row .l{font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);min-width:90px;}
 .src-withheld .hint{font-size:0.78rem;color:var(--cm-text-subtle);margin-top:0.5rem;line-height:1.5;}
 .assignrow{display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;padding:0.9rem 0 0.2rem;}
-.assignrow .lbl{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-strong);}
+.assignrow .lbl{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);}
 .techbtn{display:inline-flex;align-items:center;gap:0.5rem;border:1px solid var(--cm-border-strong);background:transparent;color:var(--cm-text-muted);border-radius:var(--r-pill);padding:0.4rem 0.8rem;font-size:0.82rem;font-weight:var(--w-medium);transition:0.15s;}
 .techbtn:hover{color:var(--cm-text-strong);}
 .techbtn.on{background:var(--cm-white);color:var(--cm-ink-900);border-color:var(--cm-white);}
 .qform2{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-top:0.3rem;}
 .qform2 .full{grid-column:1/-1;}
-.qform2 label{display:block;font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-strong);margin-bottom:0.35rem;}
+.qform2 label{display:block;font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.35rem;}
 .qform2 input:not([type="checkbox"]):not([type="radio"]),.qform2 textarea,.qform2 select{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);color:var(--cm-text);font-family:var(--font-sans);font-size:0.86rem;padding:0.55rem 0.65rem;appearance:none;-webkit-appearance:none;}
 .qform2 input[type="checkbox"],.qform2 input[type="radio"]{width:15px;height:15px;flex:none;accent-color:var(--cm-silver);color-scheme:dark;}
 .qform2 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23808080' stroke-width='1.6'%3E%3Cpath d='M5.5 7.5l4.5 4.5 4.5-4.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.6rem center;background-size:14px;padding-right:2rem;}
@@ -232,6 +240,12 @@ body{background:var(--cm-ink-950);}
 .rolebanner{display:flex;align-items:center;gap:0.7rem;padding:0.6rem 0.9rem;border-radius:var(--r-sm);background:rgba(182,182,182,0.06);border:1px solid var(--cm-border);margin-bottom:1.1rem;font-size:0.82rem;color:var(--cm-text-muted);}
 .rolebanner b{color:var(--cm-text-strong);}
 .rolebanner .dotrole{width:7px;height:7px;border-radius:50%;background:var(--cm-silver);flex:none;}
+.leads-dash{display:grid;grid-template-columns:repeat(4,1fr);gap:0.9rem;margin-bottom:1.5rem;}
+.leads-dash .kpi{display:flex;flex-direction:column;}
+.leads-dash .mock__k{display:block;font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-text-subtle);white-space:nowrap;}
+.leads-dash .big{margin-top:auto;padding-top:0.5rem;}
+@media(max-width:860px){.leads-dash{grid-template-columns:1fr 1fr;}}
+@media(max-width:480px){.leads-dash{grid-template-columns:1fr;}}
 .leads-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;}
 .myproj-hero{padding-bottom:1.6rem;margin-bottom:1.6rem;border-bottom:1px solid var(--cm-line-faint);}
 .myproj-title{font-family:var(--font-display);font-size:clamp(1.4rem,2.4vw,1.9rem);font-weight:var(--w-bold);letter-spacing:-0.02em;color:var(--cm-text-strong);margin-top:0.4rem;}
@@ -252,6 +266,7 @@ body{background:var(--cm-ink-950);}
 .leadcard__main{padding:1.2rem 1.3rem;min-width:0;}
 .leadcard__top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding-bottom:0.9rem;margin-bottom:0.9rem;border-bottom:1px solid var(--cm-line-faint);}
 .leadcard__tags{display:flex;align-items:center;gap:0.5rem;flex:none;flex-wrap:wrap;justify-content:flex-end;}
+.leadcard__tags .srctag,.leadcard__tags .chip{border-radius:var(--r-sm);}
 .srctag{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.04em;text-transform:uppercase;padding:0.25rem 0.55rem;border-radius:var(--r-pill);border:1px solid var(--cm-border-strong);color:var(--cm-text-muted);white-space:nowrap;}
 .srctag--web{color:var(--cm-gray-200);}
 .srctag--portal{color:var(--cm-silver);border-color:var(--cm-silver);}
@@ -259,10 +274,11 @@ body{background:var(--cm-ink-950);}
 .leadcard__name{font-family:var(--font-display);font-size:1.15rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
 .leadcard__sub{font-size:0.82rem;color:var(--cm-text-subtle);margin-top:2px;}
 .leadcard__grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.9rem 1.2rem;}
-.lc-v{color:var(--cm-text);font-weight:var(--w-medium);font-size:0.9rem;margin-top:3px;}
-.lc-m{font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);margin-top:2px;}
+.leadcard__grid .mock__k,.leadcard__note .mock__k{display:block;font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-text-subtle);}
+.lc-v{color:var(--cm-text-strong);font-weight:var(--w-medium);font-size:0.9rem;margin-top:3px;}
+.lc-m{font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-strong);margin-top:2px;}
 .leadcard__note{margin-top:1rem;padding-top:0.9rem;border-top:1px solid var(--cm-line-faint);}
-.leadcard__note p{font-size:0.88rem;color:var(--cm-text-muted);margin-top:0.4rem;line-height:1.5;}
+.leadcard__note p{font-size:0.88rem;color:var(--cm-text-strong);margin-top:0.4rem;line-height:1.5;}
 .leadcard__files{margin-top:1rem;padding-top:0.9rem;border-top:1px solid var(--cm-line-faint);}
 .filechips{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.6rem;}
 .filechip{display:inline-flex;align-items:center;gap:0.5rem;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);color:var(--cm-text);font-family:var(--font-sans);font-size:0.82rem;padding:0.45rem 0.7rem;transition:border-color var(--dur-2),background var(--dur-2);}
@@ -272,11 +288,12 @@ body{background:var(--cm-ink-950);}
 .filechip__dl{color:var(--cm-silver);font-weight:var(--w-bold);}
 .filechip--all{background:transparent;color:var(--cm-silver);font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;}
 .filechip--link{color:var(--cm-silver);}
-.leadcard__act{background:var(--cm-ink-850);border-left:1px solid var(--cm-line-faint);padding:1.2rem;display:flex;flex-direction:column;gap:0.7rem;align-items:flex-start;justify-content:flex-end;}
+.leadcard__act{background:var(--cm-ink-850);border-left:1px solid var(--cm-line-faint);padding:1.2rem;display:flex;flex-direction:column;gap:0.7rem;align-items:stretch;justify-content:flex-end;}
+.leadcard__act .btn{width:100%;}
 .leads-empty{text-align:center;padding:3rem 1rem;color:var(--cm-text-muted);}
 .leads-empty h4{font-family:var(--font-display);font-size:1.15rem;color:var(--cm-text-strong);}
 .leads-empty p{font-size:0.9rem;margin-top:0.5rem;}
-@media(max-width:760px){.leadcard{grid-template-columns:1fr;}.leadcard__grid{grid-template-columns:1fr 1fr;}.leadcard__act{border-left:0;border-top:1px solid var(--cm-line-faint);flex-direction:row;flex-wrap:wrap;align-items:center;}}
+@media(max-width:760px){.leadcard{grid-template-columns:1fr;}.leadcard__grid{grid-template-columns:1fr 1fr;}.leadcard__act{border-left:0;border-top:1px solid var(--cm-line-faint);flex-direction:row;flex-wrap:wrap;align-items:center;}.leadcard__act .btn{width:auto;}}
 .projrow{display:flex;align-items:center;justify-content:space-between;gap:1rem;width:100%;text-align:left;background:var(--cm-ink-850);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:1rem 1.2rem;margin-bottom:0.7rem;transition:border-color var(--dur-2),background var(--dur-2);}
 .projrow:last-child{margin-bottom:0;}
 .projrow:hover{border-color:var(--cm-text-subtle);background:var(--cm-surface-2);}
@@ -507,6 +524,7 @@ body{background:var(--cm-ink-950);}
 body.at-portfolio[data-role="client"] .navbtn.projnav{display:none;}
 body.at-portfolio[data-role="owner"] .navbtn.projnav,body.at-portfolio[data-role="sales"] .navbtn.projnav{display:none;}
 body[data-role="client"] .side__project{display:none;}
+body[data-role="owner"] .side__project,body[data-role="sales"] .side__project,body[data-role="factory"] .side__project,body[data-role="prodtech"] .side__project{display:none;}
 body.quote-stage[data-role="client"] .navbtn.projnav[data-view="overview"],
 body.quote-stage[data-role="client"] .navbtn.projnav[data-view="milestones"],
 body.quote-stage[data-role="client"] .navbtn.projnav[data-view="invoices"]{display:none;}
@@ -581,7 +599,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="3" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="2.5" y="11" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
         My Projects
       </button>
-      <button class="navbtn on projnav" data-view="overview" onclick="go('overview')">
+      <button class="navbtn on projnav" data-view="overview" onclick="go('overview')" style="display:none;">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="2" width="6" height="6" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="10" width="6" height="6" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="10" width="6" height="6" stroke="currentColor" stroke-width="1.4"/></svg>
         Overview
       </button>
@@ -609,7 +627,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 2.5h10v13l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V2.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 6h4M7 9h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         Invoices
       </button>
-      <button class="navbtn cm-only" data-view="projects" onclick="go('projects')">
+      <button class="navbtn cm-only" data-view="projects" onclick="go('projects')" style="display:none;">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="3" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="2.5" y="11" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
         Projects
       </button>
@@ -651,7 +669,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <h1 id="viewTitle">Overview</h1>
       </div>
       <div class="topbar__right">
-        <button class="btn btn--ghost btn--sm cm-only" onclick="openInvite()">+ Invite client</button>
+        <button class="btn btn--primary btn--sm cm-only" id="addLeadBtn" onclick="openAddLead()">+ Add lead</button>
       </div>
     </header>
 
@@ -1295,9 +1313,26 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 
     <!-- LEADS / INBOX (owner + sales) -->
     <section class="view cm-only" id="view-leads" hidden>
-      <div class="leads-head">
-        <p class="leads-head__intro">New submissions land here from the website form and returning clients. You can also add a lead by hand — from a referral, cold call, or email.</p>
-        <button class="btn btn--primary btn--sm" onclick="openAddLead()">+ Add lead</button>
+      <div class="daterange">
+        <span class="daterange__label">Period</span>
+        <div class="daterange__seg">
+          <button type="button" class="on" data-range="all" onclick="setLeadsRange('all',this)">All time</button>
+          <button type="button" data-range="30" onclick="setLeadsRange('30',this)">Last 30 days</button>
+          <button type="button" data-range="90" onclick="setLeadsRange('90',this)">Last 90 days</button>
+          <button type="button" data-range="ytd" onclick="setLeadsRange('ytd',this)">Year to date</button>
+          <button type="button" data-range="custom" onclick="setLeadsRange('custom',this)">Custom</button>
+        </div>
+        <div class="daterange__custom" id="leadsCustom" hidden>
+          <input type="date" id="leadsFrom" aria-label="From date" onchange="applyLeadsRange()">
+          <span class="daterange__to">→</span>
+          <input type="date" id="leadsTo" aria-label="To date" onchange="applyLeadsRange()">
+        </div>
+      </div>
+      <div class="leads-dash" id="leadsDash">
+        <div class="kpi"><span class="mock__k">Total leads</span><div class="big" id="leadsDashTotal">0</div></div>
+        <div class="kpi"><span class="mock__k">Sent for quotation</span><div class="big" id="leadsDashSent">0</div></div>
+        <div class="kpi"><span class="mock__k">Pending info</span><div class="big" id="leadsDashPending">0</div></div>
+        <div class="kpi"><span class="mock__k">Avg. response time</span><div class="big" id="leadsDashResponse">—</div></div>
       </div>
       <button class="btn btn--ghost btn--sm" id="leadsArchivedLink" hidden onclick="openArchivedLeads()" style="margin-bottom:1rem;">View archived</button>
       <div class="leadlist" id="leadList"></div>
@@ -1540,8 +1575,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 
 <!-- Send lead to production admin(s) -->
 <div class="modal-overlay" id="sendLeadModal" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Send to production">
-    <div class="modal__head"><h3>Send to production</h3><button class="modal__x" onclick="closeSendLeadModal()" aria-label="Close">×</button></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Obtain Quotation from Vendor(s)">
+    <div class="modal__head"><h3>Obtain Quotation from Vendor(s)</h3><button class="modal__x" onclick="closeSendLeadModal()" aria-label="Close">×</button></div>
     <div class="modal__body">
       <p class="form-note" style="margin-bottom:0.9rem;">Choose which production shop(s) to invite to quote this project.</p>
       <div id="sendLeadList" style="display:flex;flex-direction:column;gap:0.6rem;"></div>
@@ -1594,26 +1629,24 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
         <div class="efield-row">
           <div class="efield"><label for="al-delivery-country">Delivery country <span class="optional">(optional)</span></label><input id="al-delivery-country" type="text" placeholder="e.g. United States"></div>
+          <div class="efield"><label for="al-quantity">Number of exact models</label>
+            <input id="al-quantity" type="number" min="1" step="1" value="1" required>
+          </div>
         </div>
         <div class="efield"><label for="al-type-select">Model type</label>
           <select id="al-type-select" onchange="onALTypeChange()">
             <option value="">Select one…</option>
-            <option value="Detailed Architectural Model — Building Alone">Detailed Architectural Model — Building Alone</option>
-            <option value="Detailed Architectural Model — with Surrounding Landscape and/or Urban Fabric">Detailed Architectural Model — with Surrounding Landscape and/or Urban Fabric</option>
-            <option value="Architectural Massing Model — Building Alone">Architectural Massing Model — Building Alone</option>
-            <option value="Architectural Massing Model — with Surrounding Landscape and/or Urban Fabric">Architectural Massing Model — with Surrounding Landscape and/or Urban Fabric</option>
-            <option value="Masterplan Model">Masterplan Model</option>
-            <option value="Topography / Site Model">Topography &amp; Site Model</option>
-            <option value="Interior / Section Model">Interior / Section Model</option>
-            <option value="Interior / Section Model — with Surrounding Landscape and/or Urban Fabric">Interior / Section Model — with Surrounding Landscape and/or Urban Fabric</option>
-            <option value="Product Prototype">Product Prototype</option>
-            <option value="Film / Commercial Miniature">Film / Commercial Miniature</option>
-            <option value="Art Installation / Sculpture">Art Installation / Sculpture</option>
-            <option value="Not sure which category">Not sure which category</option>
+            <option value="Architectural or Real Estate Model">Architectural or Real Estate Model</option>
+            <option value="Masterplan, Site or Topographic Model">Masterplan, Site or Topographic Model</option>
+            <option value="Interior or Section Model">Interior or Section Model</option>
+            <option value="Product Prototype or Mockup">Product Prototype or Mockup</option>
+            <option value="Film or Commercial Miniature">Film or Commercial Miniature</option>
+            <option value="Art Maquette or Prototype">Art Maquette or Prototype</option>
+            <option value="Not Sure Yet">Not Sure Yet</option>
           </select>
         </div>
-        <div class="efield"><label for="al-use">Intended use <span class="optional">(optional)</span></label>
-            <select id="al-use">
+        <div class="efield"><label for="al-use">What does the model need to support?</label>
+            <select id="al-use" required>
               <option value="">Select one…</option>
               <option>Government Review / Planning Approval</option><option>Investor / board meeting</option>
               <option>Sales gallery / marketing</option><option>Internal design review</option>
@@ -1645,51 +1678,38 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="efield-row">
           <div class="efield"><label for="al-source">Source</label>
             <select id="al-source">
-              <option value="Referral">Referral</option>
-              <option value="Cold call">Cold call</option>
-              <option value="Email enquiry">Email enquiry</option>
-              <option value="Phone enquiry">Phone enquiry</option>
-              <option value="Other">Other</option>
+              <optgroup label="Email">
+                <option value="Cold call">Cold call</option>
+                <option value="Referral">Referral</option>
+                <option value="Event">Event</option>
+                <option value="Public bidding opportunity">Public bidding opportunity</option>
+                <option value="Other">Other</option>
+              </optgroup>
             </select>
           </div>
-          <div class="efield"><label for="al-timeline">Timeline / deadline <span class="optional">(optional)</span></label>
+          <div class="efield"><label for="al-timeline">Deadline <span class="optional">(optional)</span></label>
             <input id="al-timeline" type="date">
           </div>
         </div>
         <div class="efield"><label>Scale <span class="optional">(required — or provide model size below)</span></label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-            <div style="display:flex;align-items:center;gap:0.3rem;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;">1:</span><input id="al-scale-intl-new" type="number" placeholder="e.g. 100" oninput="SRC_syncScaleFromIntl('al','new')"></div>
-            <div style="display:flex;align-items:center;gap:0.3rem;"><input id="al-scale-imp-new" type="text" placeholder="1/8&quot;" oninput="SRC_syncScaleFromImp('al','new')"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.8rem;white-space:nowrap;">= 1'-0"</span></div>
+            <div style="display:flex;align-items:center;gap:0.3rem;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;">1:</span><input id="al-scale-intl-new" type="number" placeholder="e.g. 100"></div>
+            <div style="display:flex;align-items:center;gap:0.3rem;"><input id="al-scale-imp-new" type="text" placeholder="1/8&quot;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.8rem;white-space:nowrap;">= 1'-0"</span></div>
           </div>
-          <div class="hint">Enter either the scale or the desired model size below — one of the two is required.</div>
         </div>
-        <div class="efield-row">
-          <div class="efield"><label for="al-size">Approx. model size <span class="optional">(if no scale)</span></label>
-            <input id="al-size" type="text" placeholder='e.g. 36" × 24" × 18"  or  90 × 60 × 45 cm'>
-          </div>
-          <div class="efield"><label for="al-quantity">Number of exact models</label>
-            <input id="al-quantity" type="number" min="1" step="1" value="1" required>
-          </div>
+        <div class="efield"><label for="al-size">Approx. model size <span class="optional">(if no scale)</span></label>
+          <input id="al-size" type="text" placeholder='e.g. 36" × 24" × 18"  or  90 × 60 × 45 cm'>
         </div>
         <div class="efield"><label>Special requirements <span class="optional">(select any that apply)</span></label>
           <div class="checks" id="al-extras-wrap"></div>
-          <input id="al-extras-other" type="text" placeholder="Other requirements — type anything specific…" style="margin-top:0.6rem;">
-        </div>
-        <div class="efield-row">
-          <div class="efield"><label for="al-prefMaterial">Preferred model/object material <span class="optional">(optional)</span></label>
-            <select id="al-prefMaterial"><option value="">No preference — let production recommend</option></select>
-          </div>
-          <div class="efield"><label for="al-prefBase">Preferred base material <span class="optional">(optional)</span></label>
-            <select id="al-prefBase"><option value="">No preference — let production recommend</option></select>
-          </div>
         </div>
         <div class="efield"><label for="al-notes">Details</label>
-          <textarea id="al-notes" class="changes__note" placeholder="What did they ask for? Scale, deadline, files they'll send, anything useful for the quote…"></textarea>
+          <textarea id="al-notes" class="changes__note" placeholder="What did they ask for? Any requirement not listed above, scale, deadline, files they'll send, anything useful for the quote…"></textarea>
         </div>
         <div class="efield"><label>Files <span class="optional">(optional)</span></label>
           <div class="reqfiles" onclick="document.getElementById('al-file-input').click()">
             <input id="al-file-input" type="file" multiple style="display:none;" onchange="alFilesPicked(this)">
-            <span id="al-files-label">Drop files or click to upload — CAD, PDF, Rhino, images.</span>
+            <span id="al-files-label">Drop files or click to upload — CAD, PDF, Rhino, renderings, reference photos, 3D digital models.</span>
           </div>
         </div>
         <div class="efield"><label for="al-dropbox">Or share a file link <span class="optional">(Dropbox, Drive, WeTransfer — add as many as you need)</span></label>
@@ -1893,6 +1913,8 @@ function go(v){
   if(v==='leads'&&window.SRC_renderLeads)window.SRC_renderLeads();
   if(v==='clients'&&window.scopeClients)window.scopeClients(document.body.dataset.role);
   if(v==='sourcing'&&window.SRC_render)SRC_render();
+  var addLeadBtn=document.getElementById('addLeadBtn');
+  if(addLeadBtn)addLeadBtn.style.display=(v==='leads')?'':'none';
   document.getElementById('side').classList.remove('open');
 }
 function openProject(val){
@@ -2193,12 +2215,14 @@ function submitReq(){
   document.getElementById('reqForm').hidden=true;
   document.getElementById('reqDone').hidden=false;
 }
-function replyLead(email,project){
+function replyLead(email,project,id){
   // Opens the user's default mail app (Outlook, Apple Mail, etc.) with the
-  // client's address in To: and a ready subject line. Uses a temporary anchor
-  // click (more reliable across browsers than setting location.href directly).
-  var subject='Carve Model - Reply to your physical model inquiry';
-  var body='Hi,\n\nThank you for your enquiry about '+project+'. ';
+  // client's address in To: and a ready subject line, asking for the extra
+  // detail needed before this lead can be sent out for a vendor quotation.
+  // Uses a temporary anchor click (more reliable across browsers than setting
+  // location.href directly).
+  var subject='Carve Model - A few more details needed for your quote';
+  var body='Hi,\n\nThank you for your enquiry about '+project+'. Before we can put together an accurate quote, could you share a bit more detail? ';
   var mailto='mailto:'+email+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
   var a=document.createElement('a');
   a.href=mailto;
@@ -2211,6 +2235,15 @@ function replyLead(email,project){
   setTimeout(function(){
     try{navigator.clipboard.writeText(email);}catch(err){}
   },300);
+  if(id){
+    var lead=(SDB.leads||[]).filter(function(l){return l.id===id;})[0];
+    if(lead){
+      var changed=false;
+      if(!lead.pendingInfo){lead.pendingInfo=true;changed=true;}
+      if(!lead.firstActionAt){lead.firstActionAt=new Date().toISOString().slice(0,10);changed=true;}
+      if(changed){saveSRC();window.SRC_renderLeads();}
+    }
+  }
 }
 function downloadLeadFile(name,type){
   // LIVE: point this at the file the client uploaded, served from your storage
@@ -2225,28 +2258,17 @@ function downloadLeadFile(name,type){
 }
 var leadSeq=2059;
 function openAddLead(){
-  ['al-contact','al-title','al-company','al-email','al-phone','al-project','al-location','al-country','al-delivery-location','al-delivery-country','al-notes','al-dropbox','al-size','al-quantity','al-scale-intl-new','al-scale-imp-new','al-extras-other','al-timeline'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
+  ['al-contact','al-title','al-company','al-email','al-phone','al-project','al-location','al-country','al-delivery-location','al-delivery-country','al-notes','al-dropbox','al-size','al-quantity','al-scale-intl-new','al-scale-imp-new','al-timeline'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
   document.getElementById('al-quantity').value='1';
   document.getElementById('al-type-select').value='';
   var fi=document.getElementById('al-file-input');if(fi)fi.value='';
-  document.getElementById('al-files-label').textContent='Drop files or click to upload — CAD, PDF, Rhino, images.';
+  document.getElementById('al-files-label').textContent='Drop files or click to upload — CAD, PDF, Rhino, renderings, reference photos, 3D digital models.';
   alPickedLinks=[];alRenderLinks();
   var extraWrap=document.getElementById('al-extras-wrap');
   if(extraWrap&&!extraWrap.childElementCount){
-    (window.SPECIAL_REQS||[]).forEach(function(r){var lab=document.createElement('label');lab.innerHTML='<input type="checkbox" name="al-extras" value="'+esc(r)+'"'+(r==='No Base'?' id="al-noBaseChk"':'')+'><span class="ck"></span><span>'+esc(r)+'</span>';extraWrap.appendChild(lab);});
-    var noBaseCb=document.getElementById('al-noBaseChk');
-    if(noBaseCb)noBaseCb.addEventListener('change',function(){
-      var sel=document.getElementById('al-prefBase');
-      if(!sel)return;
-      sel.disabled=this.checked;
-      if(this.checked)sel.value='';
-    });
+    (window.SPECIAL_REQS||[]).forEach(function(r){var lab=document.createElement('label');lab.innerHTML='<input type="checkbox" name="al-extras" value="'+esc(r)+'"'+(r==='Surrounding Landscape / Site Context'?' id="al-landscapeChk" onchange="onALTypeChange()"':'')+'><span class="ck"></span><span>'+esc(r)+'</span>';extraWrap.appendChild(lab);});
   }
   document.querySelectorAll('input[name="al-extras"]').forEach(function(cb){cb.checked=false;});
-  alFilterMaterialOptions('');
-  var baseSel=document.getElementById('al-prefBase');
-  if(baseSel&&baseSel.options.length<2){(window.BASE_MATERIALS||[]).forEach(function(m){var o=document.createElement('option');o.textContent=m;baseSel.appendChild(o);});}
-  if(baseSel){baseSel.value='';baseSel.disabled=false;}
   var useSel=document.getElementById('al-use');if(useSel)useSel.value='';
   alChangePlan();
   document.getElementById('al-scopeBlock').hidden=true;
@@ -2297,36 +2319,21 @@ window.openLeadVariation=function(id){
   document.getElementById('al-size').value=(src.modelsize&&src.modelsize!=='Not specified')?src.modelsize:'';
   document.getElementById('al-quantity').value=src.quantity||'1';
   document.getElementById('al-timeline').value=(src.timeline&&src.timeline!=='Not specified')?src.timeline:'';
-  document.getElementById('al-prefMaterial').value=src.prefMaterial||'';
-  document.getElementById('al-prefBase').value=src.prefBase||'';
-  document.getElementById('al-notes').value='Variation of the original enquiry (received '+(src.receivedAt||'')+').'+((src.notes&&src.notes!=='(no additional notes)')?('\n\n'+src.notes):'');
   var srcExtras=src.extras||[];
   document.querySelectorAll('input[name="al-extras"]').forEach(function(cb){cb.checked=srcExtras.indexOf(cb.value)!==-1;});
   var unmatched=srcExtras.filter(function(x){return !Array.from(document.querySelectorAll('input[name="al-extras"]')).some(function(cb){return cb.value===x;});});
-  document.getElementById('al-extras-other').value=unmatched.join(', ');
+  document.getElementById('al-notes').value='Variation of the original enquiry (received '+(src.receivedAt||'')+').'+(unmatched.length?('\n\nAdditional requirements: '+unmatched.join(', ')+'.'):'')+((src.notes&&src.notes!=='(no additional notes)')?('\n\n'+src.notes):'');
+  onALTypeChange(); // re-check scope visibility now that extras (incl. the landscape checkbox) are set
   var srcLinks=Array.isArray(src.filelink)?src.filelink:(src.filelink?[src.filelink]:[]);
   alPickedLinks=srcLinks.slice();
   alRenderLinks();
   document.getElementById('al-contact').focus();
 };
-var AL_DETAILED_MATERIALS=['Full Color ABS / Realistic Visualization'];
-var AL_MASSING_MATERIALS=['Monochromatic ABS / Massing','Clear Acrylic','ABS with Wood Veneer','Hardwood','Foam','Wrought Iron'];
-function alFilterMaterialOptions(type){
-  var sel=document.getElementById('al-prefMaterial');
-  if(!sel)return;
-  var all=window.MODEL_MATERIALS||[];
-  var list=all;
-  if(type.indexOf('Detailed Architectural Model')===0)list=AL_DETAILED_MATERIALS;
-  else if(type.indexOf('Architectural Massing Model')===0)list=AL_MASSING_MATERIALS;
-  var current=sel.value;
-  sel.innerHTML='<option value="">No preference — let production recommend</option>'+list.map(function(m){return '<option>'+esc(m)+'</option>';}).join('');
-  sel.value=(list.indexOf(current)>-1)?current:'';
-}
 function onALTypeChange(){
   var v=document.getElementById('al-type-select').value||'';
-  var needsScope=(v==='Masterplan Model'||v==='Topography / Site Model'||v==='Detailed Architectural Model — with Surrounding Landscape and/or Urban Fabric'||v==='Architectural Massing Model — with Surrounding Landscape and/or Urban Fabric'||v==='Interior / Section Model — with Surrounding Landscape and/or Urban Fabric');
+  var landscapeChk=document.getElementById('al-landscapeChk');
+  var needsScope=(v==='Masterplan, Site or Topographic Model')||(landscapeChk&&landscapeChk.checked);
   document.getElementById('al-scopeBlock').hidden=!needsScope;
-  alFilterMaterialOptions(v);
 }
 /* ---- Scope boundary canvas tool (Add lead — mirrors public quote form) ---- */
 var alPlanImg=null,alPoints=[],alCanvas,alCtx,alScale=1;
@@ -2397,7 +2404,7 @@ function alAddLink(){
 }
 function alFilesPicked(input){
   var n=input.files?input.files.length:0;
-  document.getElementById('al-files-label').textContent=n?(n+' file'+(n>1?'s':'')+' attached — '+[].map.call(input.files,function(f){return f.name;}).slice(0,3).join(', ')+(n>3?'…':'')):'Drop files or click to upload — CAD, PDF, Rhino, images.';
+  document.getElementById('al-files-label').textContent=n?(n+' file'+(n>1?'s':'')+' attached — '+[].map.call(input.files,function(f){return f.name;}).slice(0,3).join(', ')+(n>3?'…':'')):'Drop files or click to upload — CAD, PDF, Rhino, renderings, reference photos, 3D digital models.';
 }
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function createLead(e){
@@ -2435,11 +2442,7 @@ function createLead(e){
   var size=sizeCheck;
   var quantity=document.getElementById('al-quantity').value.trim();
   var timeline=document.getElementById('al-timeline').value;
-  var prefMaterial=document.getElementById('al-prefMaterial').value;
-  var prefBase=document.getElementById('al-prefBase').value;
   var extras=[]; document.querySelectorAll('input[name="al-extras"]:checked').forEach(function(cb){extras.push(cb.value);});
-  var extrasOther=document.getElementById('al-extras-other').value.trim();
-  if(extrasOther)extras.push(extrasOther);
   var boundaryMap=null;
   if(alCanvas&&alPlanImg){
     try{boundaryMap=alCanvas.toDataURL('image/jpeg',0.75);}catch(err){}
@@ -2482,8 +2485,6 @@ function createLead(e){
       title:title,
       type:type,
       intendedUse:useVal||null,
-      prefMaterial:prefMaterial||null,
-      prefBase:prefBase||null,
       client:{Name:contact,Title:contactTitle||null,Company:company||'—',Email:email,Phone:phone||''},
       scale:scale,
       modelsize:size||'Not specified',
@@ -2571,13 +2572,64 @@ function applyPerms(role){
   var curView=document.querySelector('.view:not([hidden])');
   if(curView){
     var navForView=document.querySelector('.navbtn[data-view="'+(curView.id.replace('view-',''))+'"]');
-    if(navForView && navForView.classList.contains('perm-off')) go('overview');
-    if(curView.classList.contains('perm-off')) go('overview');
+    var fallbackView=(role==='owner'||role==='sales')?'leads':'overview';
+    if(navForView && navForView.classList.contains('perm-off')) go(fallbackView);
+    if(curView.classList.contains('perm-off')) go(fallbackView);
   }
 }
 // Row-level data scoping: owner sees every client; a sales rep sees only their own.
 var REP_OF_ROLE={sales:'jordan'};
 var clientRange={mode:'all',from:null,to:null};
+var srcRange={mode:'all',from:null,to:null};
+function setSrcRange(mode,btn){
+  srcRange.mode=mode;
+  document.querySelectorAll('#view-sourcing .daterange__seg button').forEach(function(b){b.classList.toggle('on',b===btn);});
+  document.getElementById('srcCustom').hidden=(mode!=='custom');
+  if(mode!=='custom')SRC_render();
+}
+function applySrcRange(){
+  srcRange.from=document.getElementById('srcFrom').value||null;
+  srcRange.to=document.getElementById('srcTo').value||null;
+  SRC_render();
+}
+function inSrcRange(dateStr){
+  if(srcRange.mode==='all'||!dateStr)return true;
+  var d=new Date(dateStr+'T00:00:00');var now=new Date();
+  if(srcRange.mode==='30'){return d>=new Date(now.getTime()-30*864e5);}
+  if(srcRange.mode==='90'){return d>=new Date(now.getTime()-90*864e5);}
+  if(srcRange.mode==='ytd'){return d>=new Date(now.getFullYear(),0,1);}
+  if(srcRange.mode==='custom'){
+    if(srcRange.from&&d<new Date(srcRange.from+'T00:00:00'))return false;
+    if(srcRange.to&&d>new Date(srcRange.to+'T23:59:59'))return false;
+    return true;
+  }
+  return true;
+}
+var leadsRange={mode:'all',from:null,to:null};
+function setLeadsRange(mode,btn){
+  leadsRange.mode=mode;
+  document.querySelectorAll('#view-leads .daterange__seg button').forEach(function(b){b.classList.toggle('on',b===btn);});
+  document.getElementById('leadsCustom').hidden=(mode!=='custom');
+  if(mode!=='custom')window.renderLeadsDash();
+}
+function applyLeadsRange(){
+  leadsRange.from=document.getElementById('leadsFrom').value||null;
+  leadsRange.to=document.getElementById('leadsTo').value||null;
+  window.renderLeadsDash();
+}
+function inLeadsRange(dateStr){
+  if(leadsRange.mode==='all'||!dateStr)return true;
+  var d=new Date(dateStr+'T00:00:00');var now=new Date();
+  if(leadsRange.mode==='30'){return d>=new Date(now.getTime()-30*864e5);}
+  if(leadsRange.mode==='90'){return d>=new Date(now.getTime()-90*864e5);}
+  if(leadsRange.mode==='ytd'){return d>=new Date(now.getFullYear(),0,1);}
+  if(leadsRange.mode==='custom'){
+    if(leadsRange.from&&d<new Date(leadsRange.from+'T00:00:00'))return false;
+    if(leadsRange.to&&d>new Date(leadsRange.to+'T23:59:59'))return false;
+    return true;
+  }
+  return true;
+}
 function setClientRange(mode,btn){
   clientRange.mode=mode;
   document.querySelectorAll('#view-clients .daterange__seg button').forEach(function(b){b.classList.toggle('on',b===btn);});
@@ -2865,7 +2917,7 @@ function setRole(r){
   var sel=document.getElementById('projSelect');
   if(r==='owner'){
     sel.value='';
-    go('projects');
+    go('leads');
   }else if(r==='client'){
     if(!sel.value)sel.value='aria';
     onProjChange();
@@ -3193,6 +3245,65 @@ function downloadInvoice(id){
   d.open();d.write(html);d.close();
   setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print();}catch(e){alert('Unable to open the print dialog here. In a normal browser tab this downloads the PDF.');}},400);
 }
+/* ---- Print-to-PDF a single shop's quote option (Carve Admin compare table) ---- */
+window.SRC_generateQuotationPDF=function(bid,shopId,variantIndex){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b)return;
+  var vi=(variantIndex==null||variantIndex==='null')?null:variantIndex;
+  var opt=allOptionsFor(b,shopId).filter(function(o){return (o.variantIndex==null?null:o.variantIndex)===vi;})[0];
+  if(!opt)return;
+  var q=opt.data;
+  var s=shop(shopId);
+  var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===shopId;})[0];
+  var shopName=admin?admin.name:(s?s.name:shopId);
+  var shopLoc=admin?admin.company:(s?s.loc:'');
+  var today=new Date().toISOString().slice(0,10);
+  var refNo=b.code||('REF-'+b.id);
+  var pd=q.packageDimsList&&q.packageDimsList.length?q.packageDimsList:(q.packageDims?[q.packageDims]:[]);
+  var specRows=[];
+  if(q.category)specRows.push(['Work scope',q.category]);
+  if(q.material)specRows.push(['Model material',q.material]);
+  if(q.base)specRows.push(['Base material',q.base]);
+  if(q.scale)specRows.push(['Scale',q.scale]);
+  if(q.modelDims)specRows.push(['Model dimensions',q.modelDims]);
+  if(q.packages)specRows.push(['Packages',q.packages]);
+  pd.forEach(function(d,i){specRows.push(['Package #'+(i+1)+' dimensions',d]);});
+  if(q.extras&&q.extras.length)specRows.push(['Special requirements',q.extras.join(', ')]);
+  var css='*{box-sizing:border-box;margin:0;padding:0;}'+
+'body{font-family:Arial,Helvetica,sans-serif;color:#17191D;padding:44px 52px;font-size:12px;line-height:1.55;}'+
+'.hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #17191D;padding-bottom:18px;}'+
+'.brand{font-family:Georgia,serif;font-weight:bold;font-size:22px;letter-spacing:1px;}'+
+'.co{text-align:right;font-size:11px;color:#3A3E45;line-height:1.5;}'+
+'.tag{font-size:11px;color:#6E737B;margin-top:6px;}.tag b{font-size:18px;color:#17191D;letter-spacing:2px;}'+
+'.row{display:flex;justify-content:space-between;gap:24px;margin-top:24px;}'+
+'.b{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888D95;margin-bottom:5px;}'+
+'.sec{margin-top:26px;}'+
+'.sec h3{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#17191D;border-bottom:1px solid #C9CCD0;padding-bottom:6px;margin-bottom:10px;}'+
+'table{width:100%;border-collapse:collapse;margin-top:4px;}'+
+'th{text-align:left;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:#888D95;border-bottom:1px solid #17191D;padding:0 8px 8px 0;}'+
+'th.r,td.r{text-align:right;padding-right:0;}td{padding:10px 8px 10px 0;border-bottom:1px solid #E4E6E9;vertical-align:top;}'+
+'@media print{body{padding:22px;}.sec{break-inside:avoid;}}';
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carve Model — Quotation '+esc(refNo)+'</title><style>'+css+'</style></head><body>'+
+'<div class="hd"><div><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model" style="height:42px;width:auto;display:block;"></div>'+
+'<div class="tag"><b>QUOTATION</b></div></div>'+
+'<div class="co">Carve Model<br>1370 Valley Vista Dr. #200<br>Diamond Bar, CA 91765<br>www.physical-model.com<br>support@physical-model.com<br>877-856-6665</div></div>'+
+'<div class="row"><div><div class="b">Project</div><b>'+esc(b.title)+'</b>'+(b.brief&&b.brief['Model type']?('<br>'+esc(b.brief['Model type'])):'')+(q.label?('<br>'+esc(q.label)):'')+'</div>'+
+'<div><div class="b">Production shop</div>'+esc(shopName)+(shopLoc?('<br>'+esc(shopLoc)):'')+'</div>'+
+'<div style="text-align:right"><div class="b">Quotation</div>No. '+esc(refNo)+'<br>'+today+'</div></div>'+
+'<div class="sec"><h3>Quote</h3><table><tr><th>Item</th><th class="r">Cost</th><th class="r">Production time</th></tr>'+
+'<tr><td>'+esc(b.title)+'</td><td class="r">'+moneyRMB(q.priceRMB)+' (≈ '+money(q.price)+')</td><td class="r">'+esc(q.days)+' days</td></tr></table></div>'+
+(specRows.length?('<div class="sec"><h3>Specification</h3><table>'+specRows.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td class="r">'+esc(r[1])+'</td></tr>';}).join('')+'</table></div>'):'')+
+(q.note?('<div class="sec"><h3>Notes</h3><p>'+esc(q.note)+'</p></div>'):'')+
+'</body></html>';
+  var old=document.getElementById('quotationFrame');if(old)old.remove();
+  var f=document.createElement('iframe');
+  f.id='quotationFrame';
+  f.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:0;';
+  document.body.appendChild(f);
+  var d=f.contentWindow.document;
+  d.open();d.write(html);d.close();
+  setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print();}catch(e){alert('Unable to open the print dialog here. In a normal browser tab this downloads the PDF.');}},400);
+};
 function approveFinish(){
   var ms=document.getElementById('ms-finish');
   ms.classList.add('active');
@@ -3298,7 +3409,7 @@ var SHOPS=[{id:'meridian',name:'Meridian Scale Works',loc:'Portland, OR',av:'MS'
            {id:'atlas',name:'Atlas Model Fabrication',loc:'Toronto, ON',av:'AM'},
            {id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',av:'BM'}];
 var TECHS=[{id:'sam',name:'Sam Cole',av:'SC'},{id:'rosa',name:'Rosa Lim',av:'RL'}];
-var SPECIAL_REQS=['No Base','Engraved Base','Interior Lighting','External Lighting','Split into Sections (transport / access)','Display Stand / Plinth','Customized Protective Travel Case','Furniture','Interior Finishes','Removable Roof / Levels'];
+var SPECIAL_REQS=['Surrounding Landscape / Site Context','No Base','Engraved Base','Interior Lighting','External Lighting','Split into Sections (transport / access)','Display Stand / Plinth','Customized Protective Travel Case','Furniture','Interior Finishes','Removable Roof / Levels'];
 var MODEL_MATERIALS=['Full Color ABS / Realistic Visualization','Monochromatic ABS / Massing','Clear Acrylic','ABS with Wood Veneer','Hardwood','Foam','Wrought Iron'];
 var BASE_MATERIALS=['Plywood','Foam','Wrought Iron'];
 window.SPECIAL_REQS=SPECIAL_REQS; window.MODEL_MATERIALS=MODEL_MATERIALS; window.BASE_MATERIALS=BASE_MATERIALS;
@@ -3313,7 +3424,6 @@ var SRC_OPEN_VARIATION={};            // briefId -> true while a shop's "add var
 var SRC_EXPANDED={};                  // briefId -> true/false; production admin's per-brief expand state
 window.SRC_toggleExpand=function(bid){SRC_EXPANDED[bid]=!SRC_EXPANDED[bid];SRC_render();};
 var SRC_OPEN_COMMENT={};              // "briefId|shopId|optKey" -> true while Carve's revision-request textarea is open
-var SRC_OPEN_HISTORY={};              // briefId -> true while the quote-history list is expanded
 /* Simulated email notifications: an in-app inbox per shop + a toast confirming the "email" was sent. */
 function notifyShop(shopId,text){
   if(!SDB.notifications)SDB.notifications={};
@@ -3338,26 +3448,6 @@ window.SRC_dismissNotifications=function(){
 function logHistory(b,shopId,optData,action){
   if(!b.history)b.history=[];
   b.history.unshift({shop:shopId,label:optData.label||null,price:optData.price,priceRMB:optData.priceRMB,days:optData.days,action:action,time:'just now'});
-}
-window.SRC_toggleHistory=function(bid){SRC_OPEN_HISTORY[bid]=!SRC_OPEN_HISTORY[bid];SRC_render();};
-function historySection(b,filterShop){
-  var entries=(b.history||[]).filter(function(h){return !filterShop||h.shop===filterShop;});
-  if(!entries.length)return '';
-  var open=!!SRC_OPEN_HISTORY[b.id];
-  var html='<div style="margin-top:0.9rem;padding-top:0.9rem;border-top:1px solid var(--cm-line-faint);">';
-  html+='<button class="btn btn--ghost btn--sm" onclick="SRC_toggleHistory(\''+b.id+'\')">'+(open?'▾ Hide':'▸ Show')+' quote history · '+entries.length+'</button>';
-  if(open){
-    html+='<div style="margin-top:0.7rem;display:flex;flex-direction:column;gap:0.6rem;">';
-    entries.forEach(function(h){
-      html+='<div style="font-size:0.8rem;color:var(--cm-text-muted);padding:0.5rem 0.6rem;border-left:2px solid var(--cm-border-strong);background:var(--cm-ink-850);border-radius:0 var(--r-sm) var(--r-sm) 0;">'+
-        '<div style="font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.2rem;">'+esc(h.action)+' · '+esc(h.time)+(filterShop?'':(' · '+shop(h.shop).name))+(h.label?(' · '+esc(h.label)):'')+'</div>'+
-        '<div>'+moneyRMB(h.priceRMB)+' (≈ '+money(h.price)+') · '+h.days+' days</div>'+
-      '</div>';
-    });
-    html+='</div>';
-  }
-  html+='</div>';
-  return html;
 }
 function optKey(vi){return vi==null?'p':String(vi);}
 function getOption(b,shopId,vi){return vi==null?b.quotes[shopId]:((b.variations&&b.variations[shopId])||[])[vi];}
@@ -3398,7 +3488,7 @@ function carveCommentBlock(b,shopId,vi,q){
     return '<div style="margin-top:0.6rem;"><textarea id="cm-txt-'+b.id+'-'+shopId+'-'+optKey(vi)+'" rows="2" placeholder="What needs to change on this option?" style="width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);color:var(--cm-text);font-family:var(--font-sans);font-size:0.84rem;padding:0.55rem 0.65rem;"></textarea>'+
       '<div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.4rem;"><button class="btn btn--ghost btn--sm" onclick="SRC_cancelCommentForm(\''+b.id+'\',\''+shopId+'\','+viArg+')">Cancel</button><button class="btn btn--primary btn--sm" onclick="SRC_saveComment(\''+b.id+'\',\''+shopId+'\','+viArg+')">Send</button></div></div>';
   }
-  return '<div style="margin-top:0.5rem;"><button class="btn btn--ghost btn--sm" onclick="SRC_openCommentForm(\''+b.id+'\',\''+shopId+'\','+viArg+')">+ Request revision</button></div>';
+  return '<div style="margin-top:0.5rem;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_openCommentForm(\''+b.id+'\',\''+shopId+'\','+viArg+')">+ Request revision</button></div>';
 }
 /* Production side: read-only display of any comment Carve left on this option */
 function carveNoteReadonly(q){
@@ -3412,7 +3502,7 @@ function collapsedSummaryLine(b,q,won,lost,inProd){
   if(inProd)return flag+'In production'+(b.assignedTech?(' · assigned to '+TECHS.filter(function(t){return t.id===b.assignedTech;})[0].name):'');
   if(won)return flag+'Awarded to you — assign a technician to proceed to production.';
   if(lost)return 'Awarded to another shop.';
-  if(q)return flag+'Quote sent: '+moneyRMB(q.priceRMB)+' (≈ '+money(q.price)+') · '+q.days+' days';
+  if(q)return flag+'Quote submitted: <span style="color:var(--cm-text-strong);font-size:1.05em;">'+moneyRMB(q.priceRMB)+' (≈ '+money(q.price)+') · '+q.days+' days</span>';
   return 'Action needed — no quote submitted yet.';
 }
 
@@ -3484,6 +3574,30 @@ function readDimTriplet(prefix,bid){
 function seedSRC(){return {briefs:[],leads:[]};}
 var SKEY='cm_portal_sourcing_v22', SDB=loadSRC(), apiReady=false;
 window.SDB=SDB;
+// One-time cleanup: briefs sent before Materials/Base were dropped from the
+// client brief still carry those two placeholder keys on disk (local storage
+// or the shared API) — strip them so old data matches what new briefs look
+// like. Returns true if anything changed, so callers only persist when needed.
+function migrateBriefFields(briefs){
+  var changed=false;
+  (briefs||[]).forEach(function(b){
+    if(b.brief&&('Materials' in b.brief||'Base' in b.brief||'Deadline' in b.brief)){
+      delete b.brief['Materials'];
+      delete b.brief['Base'];
+      delete b.brief['Deadline']; // duplicate of Timeline, always identical
+      changed=true;
+    }
+    // A CM-#### invoice-style number was previously assigned the moment a
+    // brief went out to production shops, before any fee proposal existed.
+    // Any brief still sitting in that pre-proposal state just drops it — the
+    // real CM-#### only gets (re)assigned once SRC_saveClientQuote actually
+    // creates a fee proposal. No placeholder reference shown in the meantime.
+    if(b.code&&!b.clientQuote){delete b.code;changed=true;}
+    if(b.ref){delete b.ref;changed=true;}
+  });
+  return changed;
+}
+if(migrateBriefFields(SDB.briefs))saveSRC();
 function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];return d;}}}catch(e){}return seedSRC();}
 function saveSRC(){
   try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
@@ -3523,21 +3637,21 @@ function isAwardedOption(b,shopId,variantIndex){
    Pass the brief (b) so items that differ from the client's original request are flagged. */
 function quoteSpecLine(q,b){
   var bits=[];
-  if(q.category){var briefCat=b&&b.brief&&b.brief['Model type'];var diff=briefCat&&q.category!==briefCat;bits.push('Type '+esc(q.category)+(diff?' <span style="color:var(--cm-silver);">(differs from brief)</span>':''));}
-  if(q.material){var briefMat=b&&b.brief&&b.brief['Materials'];var diffMat=briefMat&&q.material!==briefMat;bits.push('Material '+esc(q.material)+(diffMat?' <span style="color:var(--cm-silver);">(differs from brief)</span>':''));}
-  if(q.base){var briefBase=b&&b.brief&&b.brief['Base'];var diffBase=briefBase&&q.base!==briefBase;bits.push('Base '+esc(q.base)+(diffBase?' <span style="color:var(--cm-silver);">(differs from brief)</span>':''));}
-  if(q.color)bits.push(q.color==='full'?'Full color':'Mono color');
-  if(q.scale)bits.push('Scale '+esc(q.scale));
-  if(q.modelDims)bits.push('Model '+esc(q.modelDims));
-  if(q.packages)bits.push(esc(q.packages)+' package'+(q.packages==1?'':'s'));
+  function lab(l){return '<span style="color:var(--cm-text-subtle);">'+l+'</span> ';}
+  if(q.category){var briefCat=b&&b.brief&&b.brief['Model type'];var diff=briefCat&&q.category!==briefCat;bits.push(lab('Type')+esc(q.category)+(diff?' <span style="color:var(--cm-silver);">(differs from brief)</span>':''));}
+  if(q.material){var briefMat=b&&b.brief&&b.brief['Materials'];var diffMat=briefMat&&q.material!==briefMat;bits.push(lab('Material')+esc(q.material)+(diffMat?' <span style="color:var(--cm-silver);">(differs from brief)</span>':''));}
+  if(q.base){var briefBase=b&&b.brief&&b.brief['Base'];var diffBase=briefBase&&q.base!==briefBase;bits.push(lab('Base')+esc(q.base)+(diffBase?' <span style="color:var(--cm-silver);">(differs from brief)</span>':''));}
+  if(q.scale)bits.push(lab('Scale')+esc(q.scale));
+  if(q.modelDims)bits.push(lab('Model')+esc(q.modelDims));
+  if(q.packages)bits.push(esc(q.packages)+' '+'<span style="color:var(--cm-text-subtle);">package'+(q.packages==1?'':'s')+'</span>');
   var pd=q.packageDimsList&&q.packageDimsList.length?q.packageDimsList:(q.packageDims?[q.packageDims]:[]);
-  if(pd.length)bits.push('Package'+(pd.length>1?'s':'')+' '+pd.map(function(d,i){return (pd.length>1?('#'+(i+1)+' '):'')+esc(d);}).join(', '));
+  if(pd.length)bits.push(lab('Package'+(pd.length>1?'s':''))+pd.map(function(d,i){return lab('#'+(i+1))+esc(d);}).join(', '));
   if(!bits.length)return '';
-  return '<div class="qf-note" style="color:var(--cm-gray-100);font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.02em;">'+bits.join(' · ')+'</div>';
+  return '<div class="qf-note" style="color:var(--cm-gray-100);font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.02em;display:flex;flex-direction:column;gap:0.3rem;">'+bits.map(function(x){return '<div>'+x+'</div>';}).join('')+'</div>';
 }
 function extrasLine(q){
   if(!q.extras||!q.extras.length)return '';
-  return '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;">'+q.extras.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join('')+'</div>';
+  return '<div class="qf-extras"><div class="qf-extras__label">Special requirements</div><div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.02em;color:var(--cm-gray-100);">'+q.extras.map(function(x){return esc(x);}).join(' · ')+'</div></div>';
 }
 function boundaryFileLine(q){
   if(!q.boundaryFile)return '';
@@ -3577,28 +3691,24 @@ function productionBrief(b){
 function quoteFormFields(prefix,bid,b){
   var briefScale=(b.brief&&b.brief['Scale'])||'';
   var briefCat=(b.brief&&b.brief['Model type'])||'';
-  var briefMat=(b.brief&&b.brief['Materials'])||'';
-  var briefBase=(b.brief&&b.brief['Base'])||'';
-  var briefSize=(b.brief&&b.brief['Approx. size'])||'';
   var scaleParsed=parseScaleString(briefScale);
   var idp=prefix+'-';
   var html='';
   html+='<div><label>Cost (¥ RMB)</label><input id="'+idp+'p-'+bid+'" type="number" placeholder="e.g. 14000"></div>';
   html+='<div><label>Production time (days)</label><input id="'+idp+'d-'+bid+'" type="number" placeholder="18"></div>';
-  html+='<div><label>Model category</label><select id="'+idp+'cat-'+bid+'"><option value="">Match client brief'+(briefCat?': '+esc(briefCat):'')+'</option>'+MODEL_CATEGORIES.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div>';
+  html+='<div><label>Work scope</label><select id="'+idp+'cat-'+bid+'"><option value="">Match client brief'+(briefCat?': '+esc(briefCat):'')+'</option>'+MODEL_CATEGORIES.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div>';
   html+='<div class="full"><label>Scale</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">'+
-    '<div style="display:flex;align-items:center;gap:0.3rem;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;">1:</span><input id="'+idp+'scale-intl-'+bid+'" type="number" value="'+esc(scaleParsed.intl)+'" placeholder="96" oninput="SRC_syncScaleFromIntl(\''+prefix+'\',\''+bid+'\')"></div>'+
-    '<div style="display:flex;align-items:center;gap:0.3rem;"><input id="'+idp+'scale-imp-'+bid+'" type="text" value="'+esc(scaleParsed.imp)+'" placeholder="1/8&quot;" oninput="SRC_syncScaleFromImp(\''+prefix+'\',\''+bid+'\')"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.8rem;white-space:nowrap;">= 1\'-0"</span></div>'+
-  '</div><div style="font-size:0.68rem;color:var(--cm-text-subtle);margin-top:0.35rem;">International or imperial — the other converts automatically. Brief asked for '+esc(briefScale||'no scale specified')+'.</div></div>';
-  html+='<div><label>Model material</label><select id="'+idp+'mat-'+bid+'"><option value="">Match client brief'+(briefMat?': '+esc(briefMat):'')+'</option>'+MODEL_MATERIALS.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div>';
-  html+='<div><label>Base material</label><select id="'+idp+'base-'+bid+'"><option value="">Match client brief'+(briefBase?': '+esc(briefBase):'')+'</option>'+BASE_MATERIALS.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div>';
-  html+='<div><label>Color</label><input type="hidden" id="'+idp+'color-'+bid+'" value=""><div style="display:flex;gap:0.4rem;"><button type="button" class="techbtn" id="'+idp+'color-full-'+bid+'" onclick="SRC_setColor(\''+prefix+'\',\''+bid+'\',\'full\')">Full color</button><button type="button" class="techbtn" id="'+idp+'color-mono-'+bid+'" onclick="SRC_setColor(\''+prefix+'\',\''+bid+'\',\'mono\')">Mono color</button></div></div>';
-  html+='<div class="full"><label>Model dimensions</label><div style="font-size:0.72rem;color:var(--cm-silver);margin-bottom:0.4rem;">Client said: '+esc(briefSize||'no size specified')+' \u2014 convert to L\u00d7W\u00d7H below.</div><div style="display:grid;grid-template-columns:40px 1fr 1fr 1fr;gap:0.5rem;align-items:center;">'+
+    '<div style="display:flex;align-items:center;gap:0.3rem;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;">1:</span><input id="'+idp+'scale-intl-'+bid+'" type="number" value="'+esc(scaleParsed.intl)+'" placeholder="96"></div>'+
+    '<div style="display:flex;align-items:center;gap:0.3rem;"><input id="'+idp+'scale-imp-'+bid+'" type="text" value="'+esc(scaleParsed.imp)+'" placeholder="1/8&quot;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.8rem;white-space:nowrap;">= 1\'-0"</span></div>'+
+  '</div></div>';
+  html+='<div><label>Model material</label><select id="'+idp+'mat-'+bid+'">'+MODEL_MATERIALS.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div>';
+  html+='<div><label>Base material</label><select id="'+idp+'base-'+bid+'">'+BASE_MATERIALS.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div>';
+  html+='<div class="full"><label>Model dimensions</label><div style="display:grid;grid-template-columns:40px 1fr 1fr 1fr;gap:0.5rem;align-items:center;">'+
     '<span></span><span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--cm-text-subtle);text-align:center;">Length</span><span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--cm-text-subtle);text-align:center;">Width</span><span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--cm-text-subtle);text-align:center;">Height</span>'+
     '<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">mm</span><input id="'+idp+'l-mm-'+bid+'" type="number" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'l\',\'mm\')"><input id="'+idp+'w-mm-'+bid+'" type="number" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'w\',\'mm\')"><input id="'+idp+'h-mm-'+bid+'" type="number" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'h\',\'mm\')">'+
     '<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">in</span><input id="'+idp+'l-in-'+bid+'" type="number" step="0.1" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'l\',\'in\')"><input id="'+idp+'w-in-'+bid+'" type="number" step="0.1" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'w\',\'in\')"><input id="'+idp+'h-in-'+bid+'" type="number" step="0.1" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'h\',\'in\')">'+
-  '</div><div style="font-size:0.68rem;color:var(--cm-text-subtle);margin-top:0.35rem;">Enter mm or in — the other converts automatically.</div></div>';
-  html+='<div class="full"><label>Model dimension / boundary file <span style="font-weight:var(--w-regular);color:var(--cm-text-subtle);text-transform:none;letter-spacing:0;">(optional — CAD, STEP, PDF, dimensioned drawing)</span></label>'+
+  '</div></div>';
+  html+='<div class="full"><label>Model Boundary Image</label>'+
     '<div class="reqfiles" onclick="document.getElementById(\''+idp+'bfile-'+bid+'\').click()">'+
       '<input id="'+idp+'bfile-'+bid+'" type="file" style="display:none;" onchange="SRC_boundaryFilePicked(\''+prefix+'\',\''+bid+'\',this)">'+
       '<span id="'+idp+'bfile-label-'+bid+'">Drop a file or click to upload</span>'+
@@ -3623,8 +3733,6 @@ function collectQuoteFormData(prefix,bid,b){
   var scale=scaleIntl?('1:'+scaleIntl+(scaleImp?(' ('+scaleImp+' = 1\'-0")'):'')):(scaleImp?(scaleImp+' = 1\'-0"'):((b.brief&&b.brief['Scale'])||''));
   var material=document.getElementById(idp+'mat-'+bid).value||((b.brief&&b.brief['Materials'])||'');
   var base=document.getElementById(idp+'base-'+bid).value||((b.brief&&b.brief['Base'])||'');
-  var colorEl=document.getElementById(idp+'color-'+bid);
-  var color=colorEl?colorEl.value:'';
   var mdim=readDimTriplet(prefix,bid);
   var pkgn=parseInt(document.getElementById(idp+'pkgn-'+bid).value,10);
   var pkgDimsList=[];
@@ -3637,7 +3745,7 @@ function collectQuoteFormData(prefix,bid,b){
   document.querySelectorAll('.'+idp+'extra-'+bid+':checked').forEach(function(cb){extras.push(cb.value);});
   var note=document.getElementById(idp+'n-'+bid).value.trim();
   var bfile=SRC_PENDING_BFILE[prefix+'-'+bid]||null;
-  return {priceRMB:rmb,price:rmbToUsd(rmb),days:d,category:category,scale:scale,material:material,base:base,color:color,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,boundaryFile:bfile,note:note};
+  return {priceRMB:rmb,price:rmbToUsd(rmb),days:d,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,boundaryFile:bfile,note:note};
 }
 
 window.SRC_boundaryFilePicked=function(prefix,bid,input){
@@ -3782,13 +3890,6 @@ window.SRC_renderPkgDims=function(prefix,bid){
     wrap.appendChild(buildPkgDimRow(prefix,bid,i,seedVals));
   }
 };
-window.SRC_setColor=function(prefix,bid,val){
-  var hidden=document.getElementById(prefix+'-color-'+bid);
-  if(hidden)hidden.value=val;
-  var fullBtn=document.getElementById(prefix+'-color-full-'+bid), monoBtn=document.getElementById(prefix+'-color-mono-'+bid);
-  if(fullBtn)fullBtn.classList.toggle('on',val==='full');
-  if(monoBtn)monoBtn.classList.toggle('on',val==='mono');
-};
 
 /* ---- Draft-preserving re-render for #srcBody ----
    The quote-entry scratch fields (Cost, Production time, scale, dimensions,
@@ -3823,17 +3924,6 @@ function srcRestoreDraft(draft){
       // Only fill in fields the fresh render left empty — never overwrite a
       // value the re-render legitimately populated from updated state.
       el.value=d.value;
-      // The Full/Mono color picker is a hidden input driven by two <button>s
-      // that get an "on" class on click (SRC_setColor) — buttons aren't
-      // form fields, so restoring the hidden input's value alone doesn't
-      // bring back the highlighted state. Re-sync it here.
-      if(id.indexOf('-color-')!==-1){
-        var parts=id.split('-color-'), colorPrefix=parts[0], colorBid=parts[1];
-        var fullBtn=document.getElementById(colorPrefix+'-color-full-'+colorBid);
-        var monoBtn=document.getElementById(colorPrefix+'-color-mono-'+colorBid);
-        if(fullBtn)fullBtn.classList.toggle('on',d.value==='full');
-        if(monoBtn)monoBtn.classList.toggle('on',d.value==='mono');
-      }
     }
   });
 }
@@ -3854,6 +3944,7 @@ function SRC_render(){
   if(role==='owner')return SRC_carveAdmin();
   if(role==='factory')return SRC_prodAdmin();
   if(role==='prodtech')return SRC_prodTech();
+  document.getElementById('srcNotice').hidden=false;
   document.getElementById('srcNotice').innerHTML='This workspace is for the Carve and production teams.';
   document.getElementById('srcBody').innerHTML='';
 }
@@ -3869,9 +3960,9 @@ window.SRC_updateBadges=function(){
   if(badgeF){ if(activeCount){badgeF.textContent=activeCount;badgeF.style.display='';} else {badgeF.style.display='none';} }
 };
 function SRC_carveAdmin(){
-  document.getElementById('srcNotice').innerHTML='<b>Carve Admin.</b> Send anonymized briefs to production shops and compare every quote option — including variations. Pick an option to build the client quote; you can send that to the client before confirming the job with production.';
+  document.getElementById('srcNotice').hidden=true;
   window.SRC_updateBadges();
-  var html='<div class="src-head"><div><h2>Outbound briefs</h2><div class="sub">Every model out for quote or in production. Quotes come back from partner shops — pick one to price the client quote, then confirm with production whenever you\'re ready.</div></div></div>';
+  var html='';
   if(!SDB.briefs.length){html+='<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects submitted yet. New requests from the website\'s contact form will appear here automatically.</div></div>';}
   SDB.briefs.forEach(function(b){
     var quoted=Object.keys(b.quotes);
@@ -3882,15 +3973,32 @@ function SRC_carveAdmin(){
     var pickedNotConfirmed=!confirmed&&b.picked!=null;
     var noResponseYet=!confirmed&&!pickedNotConfirmed&&totalOptions===0;
     var daysSinceSent=b.sentDate?Math.max(0,Math.floor((Date.now()-new Date(b.sentDate+'T00:00:00').getTime())/86400000)):null;
-    var chip=confirmed?('<span class="chip done">Confirmed with production · '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' · In production':'')+'</span>')
-      :pickedNotConfirmed?('<span class="chip await">Selected · '+shop(b.picked).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+' · not yet confirmed with production</span>')
-      :noResponseYet?('<span class="chip await">Awaiting response'+(daysSinceSent!=null?(' · sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):'')+'</span>')
-      :('<span class="chip active">Open · '+totalOptions+' option'+(totalOptions==1?'':'s')+'</span>');
-    var invitedNames=(b.invited||[]).map(function(sid){var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===sid;})[0];var s=shop(sid);return admin?admin.name:(s?s.name:sid);});
-    html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+'"><div class="panel__head"><div><span class="src-card__code">'+b.code+(b.sentDate?' · sent '+esc(b.sentDate)+(invitedNames.length?' to '+esc(invitedNames.join(', ')):''):'')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.6rem;">'+chip+(confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'')+'</div></div><div class="panel__body">';
+    var statusText=confirmed?('Confirmed with production · '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' · In production':''))
+      :pickedNotConfirmed?('Selected · '+shop(b.picked).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+' · not yet confirmed with production')
+      :noResponseYet?('Awaiting response'+(daysSinceSent!=null?(' · sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):''))
+      :('Open · '+totalOptions+' option'+(totalOptions==1?'':'s'));
+    var vendorCompany=function(sid){var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===sid;})[0];var s=shop(sid);return admin?admin.company:(s?s.name:sid);};
+    var invitedNames=(b.invited||[]).map(vendorCompany);
+    var codeBits=[]; if(b.code)codeBits.push(esc(b.code)); if(b.sentDate)codeBits.push('sent '+esc(b.sentDate)+(invitedNames.length?' to '+esc(invitedNames.join(', ')):''));
+    if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=false; // all briefs start collapsed by default
+    var expanded=SRC_EXPANDED[b.id];
+    html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+'"><div class="panel__head"><div><span class="src-card__code">'+codeBits.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+(confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'')+'<span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleExpand(\''+b.id+'\')">'+(expanded?'▾ Collapse':'▸ Expand')+'</span>'+'</div></div><div class="panel__body">';
+    if(!expanded){
+      html+='<div style="font-size:0.85rem;color:var(--cm-text-muted);">'+esc(statusText)+'</div></div></div>';
+      return;
+    }
     html+=productionBriefBody(b);
-    if(!confirmed&&!b.picked&&quoted.length)html+='<div class="notice" style="margin-top:0.8rem;">'+quoted.length+' quote'+(quoted.length===1?'':'s')+' in. Pick an option below to build a client quote — nothing is sent to the shop yet.</div>';
-    html+='<div style="margin-top:0.6rem;"><div class="qline2 head"><span>Shop</span><span>Cost</span><span>Prod. time</span><span></span></div>';
+    html+='<div class="src-withheld" style="border-style:solid;"><div class="wh-h">Client Contact</div>'+
+      '<div class="row"><span class="l">Client</span><span>'+esc(b.client.Name)+'</span></div>'+
+      '<div class="row"><span class="l">Company</span><span>'+esc(b.client.Company)+'</span></div>'+
+      '<div class="row"><span class="l">Contact</span><span>'+esc(b.client.Contact)+'</span></div></div>';
+    if(!confirmed&&!b.picked&&quoted.length){
+      html+='<div class="notice" style="margin-top:0.8rem;">'+quoted.length+' of '+invitedNames.length+' quote'+(invitedNames.length===1?'':'s')+' in.</div>';
+      var latestReceived=null;
+      quoted.forEach(function(sid){var d=(b.quotes[sid]&&b.quotes[sid].quotedAt)||b.sentDate;if(d&&(!latestReceived||d>latestReceived))latestReceived=d;});
+      if(latestReceived)html+='<div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-top:0.4rem;">received '+esc(latestReceived)+'</div>';
+    }
+    html+='<div style="margin-top:0.6rem;"><div class="qline2 head"><span style="padding-left:calc(28px + 0.6rem);">Shop</span><span>Cost</span><span>Prod. time</span><span></span></div>';
     SHOPS.forEach(function(s){
       allOptionsFor(b,s.id).forEach(function(opt){
         var q=opt.data;
@@ -3898,18 +4006,18 @@ function SRC_carveAdmin(){
         var vi=isVariant?opt.variantIndex:null;
         var low=!isVariant&&q.price===best&&quoted.length>1&&!b.awarded;
         var isAward=isAwardedOption(b,s.id,opt.variantIndex);
-        var isPicked=!confirmed&&b.picked===s.id&&(b.pickedVariantIndex==null?null:b.pickedVariantIndex)===vi;
         var awardArg=isVariant?opt.variantIndex:'null';
         var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===s.id;})[0];
         var actionHtml;
+        var genBtn='<button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_generateQuotationPDF(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Generate quotation</button>';
         if(isAward){
-          actionHtml='<span class="chip done">Awarded to production</span>';
+          actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;"><span class="chip done">Awarded to production</span>'+genBtn+'</div>';
         }else if(confirmed){
-          actionHtml='<button class="btn btn--ghost btn--sm" onclick="SRC_award(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Award to production</button>';
+          actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;"><button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_award(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Award to production</button>'+genBtn+'</div>';
         }else{
-          actionHtml='<div style="display:flex;gap:0.4rem;justify-content:flex-end;flex-wrap:wrap;">'+
-            (isPicked?'<span class="chip await" style="align-self:center;">Selected for client quote</span>':'<button class="btn '+(b.picked?'btn--ghost':'btn--primary')+' btn--sm" onclick="SRC_pick(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Use for client quote</button>')+
-            '<button class="btn btn--ghost btn--sm" onclick="SRC_award(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Award to production</button>'+
+          actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;">'+
+            '<button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_award(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Award to production</button>'+
+            genBtn+
           '</div>';
         }
         html+='<div class="qline2"><div class="qf-name"><span class="av">'+s.av+'</span><div><div class="nm">'+(admin?admin.name:s.name)+(isVariant&&q.label?(' <span style="color:var(--cm-text-subtle);font-weight:var(--w-regular);">— '+esc(q.label)+'</span>'):'')+(low?'<span class="lowtag">Lowest</span>':'')+'</div><div class="lc">'+(admin?admin.company:s.loc)+(isVariant?' · Variation':'')+'</div></div></div>'+
@@ -3919,12 +4027,7 @@ function SRC_carveAdmin(){
       });
     });
     html+='</div>';
-    html+='<div class="src-withheld" style="border-style:solid;"><div class="wh-h">⚿ Client &amp; contact · studio only, never sent to shops</div>'+
-      '<div class="row"><span class="l">Client</span><span>'+esc(b.client.Name)+'</span></div>'+
-      '<div class="row"><span class="l">Company</span><span>'+esc(b.client.Company)+'</span></div>'+
-      '<div class="row"><span class="l">Contact</span><span>'+esc(b.client.Contact)+'</span></div></div>';
     if(confirmed||b.picked!=null)html+=clientQuoteSection(b);
-    html+=historySection(b,null);
     html+='</div></div>';
   });
   setSrcBody(html);
@@ -3950,12 +4053,12 @@ function clientQuoteSection(b){
   html+='<div class="qform2">';
   html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" placeholder="e.g. 3200" value="'+(cq&&cq.price!=null?cq.price:'')+'"></div>';
   html+='<div><label>Production time (days)</label><input id="cq-days-'+b.id+'" type="number" placeholder="18" value="'+esc(base.days!=null?base.days:'')+'"></div>';
-  html+='<div><label>Model category</label><input id="cq-cat-'+b.id+'" type="text" value="'+esc(base.category||'')+'"></div>';
+  html+='<div><label>Work scope</label><input id="cq-cat-'+b.id+'" type="text" value="'+esc(base.category||'')+'"></div>';
   var scaleParsed=parseScaleString(base.scale);
   html+='<div class="full"><label>Scale</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">'+
-    '<div style="display:flex;align-items:center;gap:0.3rem;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;">1:</span><input id="cq-scale-intl-'+b.id+'" type="number" value="'+esc(scaleParsed.intl)+'" oninput="SRC_syncScaleFromIntl(\'cq\',\''+b.id+'\')"></div>'+
-    '<div style="display:flex;align-items:center;gap:0.3rem;"><input id="cq-scale-imp-'+b.id+'" type="text" value="'+esc(scaleParsed.imp)+'" oninput="SRC_syncScaleFromImp(\'cq\',\''+b.id+'\')"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.8rem;white-space:nowrap;">= 1\'-0"</span></div>'+
-  '</div><div style="font-size:0.68rem;color:var(--cm-text-subtle);margin-top:0.35rem;">Defaults to what the factory quoted — international or imperial, the other converts automatically.</div></div>';
+    '<div style="display:flex;align-items:center;gap:0.3rem;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;">1:</span><input id="cq-scale-intl-'+b.id+'" type="number" value="'+esc(scaleParsed.intl)+'"></div>'+
+    '<div style="display:flex;align-items:center;gap:0.3rem;"><input id="cq-scale-imp-'+b.id+'" type="text" value="'+esc(scaleParsed.imp)+'"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.8rem;white-space:nowrap;">= 1\'-0"</span></div>'+
+  '</div><div style="font-size:0.68rem;color:var(--cm-text-subtle);margin-top:0.35rem;">Defaults to what the factory quoted — enter international or imperial, whichever applies.</div></div>';
   html+='<div><label>Model material</label>'+selectWithCurrent('cq-mat-'+b.id,MODEL_MATERIALS,base.material||'')+'</div>';
   html+='<div><label>Base material</label>'+selectWithCurrent('cq-base-'+b.id,BASE_MATERIALS,base.base||'')+'</div>';
   var mdimParsed=parseModelDimsString(base.modelDims);
@@ -4024,6 +4127,10 @@ window.SRC_saveClientQuote=function(id){
   if(!price){alert('Enter the final price to send to the client.');return;}
   var prevComments=(b.clientQuote&&b.clientQuote.clientComments)||[];
   var wasSent=b.clientQuote&&b.clientQuote.sent===false; // resend after Edit & resend, vs. first send
+  // CM-#### is an invoice-style number — only assign one once an actual fee
+  // proposal exists for the client, not back when the brief first went out to
+  // production shops for quoting.
+  if(!b.code)b.code='CM-'+Math.floor(1000+Math.random()*9000);
   b.clientQuote={price:price,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true,clientComments:prevComments};
   saveSRC();SRC_render();
   showEmailToast((wasSent?'Updated quote resent to ':'Quote sent to ')+'the client — they\'ll see it in their portal.');
@@ -4096,21 +4203,25 @@ window.SRC_award=function(id,shopId,variantIndex){
 function renderProdAdminCard(b){
   var q=b.quotes[OUR_SHOP], won=b.awarded===OUR_SHOP, lost=b.status==='awarded'&&!won;
   var inProd=won&&b.stage==='production';
-  if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=!q||!!(q&&q.carveNote); // open (no quote yet) or newly-commented starts expanded; otherwise submitted starts collapsed
+  if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=false; // all quotes start collapsed by default
   var expanded=SRC_EXPANDED[b.id];
-  var chip=inProd?'<span class="chip active">In production</span>':won?'<span class="chip done">Awarded to you</span>':lost?'<span class="chip await">Not selected</span>':(q&&q.carveNote)?'<span class="chip await">Revision requested</span>':q?'<span class="chip active">Quote sent</span>':'<span class="chip await">Action needed</span>';
-  var html='<div class="panel src-card"><div class="panel__head" style="cursor:pointer;" onclick="SRC_toggleExpand(\''+b.id+'\')"><div><span class="src-card__code">'+b.code+(b.sentDate?' · sent '+esc(b.sentDate):'')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+chip+'<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);">'+(expanded?'▾ Collapse':'▸ Expand')+'</span></div></div>';
+  var chip=inProd?'<span class="chip active">In production</span>':won?'<span class="chip active">Awarded to you</span>':lost?'<span class="chip await">Not selected</span>':(q&&q.carveNote)?'<span class="chip await">Revision requested</span>':q?'<span class="chip done">Quote Submitted</span>':'<span class="chip active">Action needed</span>';
+  var codeBits2=[]; if(b.code)codeBits2.push(esc(b.code)); if(b.sentDate)codeBits2.push('received '+esc(b.sentDate));
+  var html='<div class="panel src-card"><div class="panel__head" style="cursor:pointer;" onclick="SRC_toggleExpand(\''+b.id+'\')"><div><span class="src-card__code">'+codeBits2.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+chip+'<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);">'+(expanded?'▾ Collapse':'▸ Expand')+'</span></div></div>';
   if(!expanded){
     html+='<div class="panel__body"><div style="font-size:0.85rem;color:var(--cm-text-muted);">'+collapsedSummaryLine(b,q,won,lost,inProd)+'</div></div></div>';
     return html;
   }
   html+='<div class="panel__body">';
+  html+='<div class="src-section-label">Project brief</div>';
   html+=productionBriefBody(b);
+  html+='<div class="src-section" style="border-top:1px solid var(--cm-line-faint);margin-top:1.1rem;padding-top:1rem;">';
+  html+='<div class="src-section-label">Your quotation</div>';
   if(won){
     var wq=winningQuote(b);
     if(wq){
-      html+='<div style="margin-top:0.6rem;"><div class="qline2 head"><span>Your submitted quote</span><span></span><span></span><span></span></div>'+
-        '<div class="qline2"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm">'+moneyRMB(wq.priceRMB)+'</div><div class="lc">'+wq.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--cm-text-subtle);">≈ '+money(wq.price)+'</div><div></div><div></div>'+quoteSpecLine(wq,b)+extrasLine(wq)+boundaryFileLine(wq)+(wq.note?'<div class="qf-note">'+esc(wq.note)+'</div>':'')+carveNoteReadonly(wq)+'</div></div>';
+      html+='<div style="margin-top:0.2rem;">'+
+        '<div class="qline2"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm" style="font-size:0.95rem;">'+moneyRMB(wq.priceRMB)+'</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-text-strong);">'+wq.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">≈ '+money(wq.price)+'</div><div></div><div></div>'+quoteSpecLine(wq,b)+extrasLine(wq)+boundaryFileLine(wq)+(wq.note?'<div class="qf-note">'+esc(wq.note)+'</div>':'')+carveNoteReadonly(wq)+'</div></div>';
     }
     if(inProd){
       var techName=TECHS.filter(function(t){return t.id===b.assignedTech;})[0].name;
@@ -4129,14 +4240,14 @@ function renderProdAdminCard(b){
   }else if(lost){
     html+='<div style="font-size:0.84rem;color:var(--cm-text-muted);margin-top:0.6rem;">Awarded to another shop. Thanks for quoting — we’ll keep you in the loop.</div>';
   }else if(q){
-    html+='<div style="margin-top:0.6rem;"><div class="qline2 head"><span>Your quote</span><span></span><span></span><span></span></div>'+
-      '<div class="qline2"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm">'+moneyRMB(q.priceRMB)+'</div><div class="lc">'+q.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--cm-text-subtle);">≈ '+money(q.price)+'</div><div></div><div style="text-align:right;display:flex;gap:0.5rem;justify-content:flex-end;"><button class="btn btn--ghost btn--sm" onclick="SRC_unquote(\''+b.id+'\')">Revise</button><button class="btn btn--ghost btn--sm" onclick="SRC_removeQuote(\''+b.id+'\')">Remove</button></div>'+quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+carveNoteReadonly(q)+'</div></div>';
+    html+='<div style="margin-top:0.2rem;">'+
+      '<div class="qline2"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm" style="font-size:0.95rem;">'+moneyRMB(q.priceRMB)+'</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-text-strong);">'+q.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">≈ '+money(q.price)+'</div><div></div><div style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_unquote(\''+b.id+'\')">Revise</button></div>'+quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+carveNoteReadonly(q)+'</div></div>';
   }else{
     html+='<div class="qform2">'+quoteFormFields('src',b.id,b)+
-      '<div class="full" style="text-align:right;"><button class="btn btn--primary btn--sm" onclick="SRC_quote(\''+b.id+'\')">Send quote to Carve</button></div></div>';
+      '<div class="full" style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_quote(\''+b.id+'\')">Send quote to Carve</button></div></div>';
   }
+  html+='</div>';
   if(q&&!lost&&!won)html+=variationsSection(b);
-  html+=historySection(b,OUR_SHOP);
   html+='</div></div>';
   return html;
 }
@@ -4144,7 +4255,7 @@ function sectionLabel(text){
   return '<div style="font-family:var(--font-mono);font-size:0.74rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-strong);font-weight:var(--w-medium);margin:1.1rem 0 0.6rem;">'+text+'</div>';
 }
 function SRC_prodAdmin(){
-  document.getElementById('srcNotice').innerHTML='<b>Production Admin · '+shop(OUR_SHOP).name+'.</b> Quote the briefs Carve sends you — add variation quotes if a different scale or spec makes sense — and assign technicians to jobs you win. Everything the client submitted is shared with production.';
+  document.getElementById('srcNotice').hidden=true;
   window.SRC_updateBadges();
   var ours=SDB.briefs.filter(function(b){return (b.invited&&b.invited.indexOf(OUR_SHOP)>=0)||b.quotes[OUR_SHOP]||b.awarded===OUR_SHOP;});
   var byDate=function(a,c){return (a.sentDate||'').localeCompare(c.sentDate||'');};
@@ -4159,9 +4270,40 @@ function SRC_prodAdmin(){
   // anything already awarded/in production, even if an old comment is still
   // sitting on the record.
   var needsRevision=function(b){var q=b.quotes[OUR_SHOP];return !!(q&&q.carveNote)&&b.status!=='awarded';};
+  // Most recently submitted quote first — falls back to the brief's sentDate
+  // for older quotes recorded before quotedAt was tracked.
+  var byQuotedDesc=function(a,c){
+    var aq=(a.quotes[OUR_SHOP]&&(a.quotes[OUR_SHOP].quotedAt||a.sentDate))||'';
+    var cq=(c.quotes[OUR_SHOP]&&(c.quotes[OUR_SHOP].quotedAt||c.sentDate))||'';
+    return cq.localeCompare(aq);
+  };
   var activeList=ours.filter(function(b){return !b.quotes[OUR_SHOP]||needsRevision(b);}).sort(byCommentThenDate);
-  var submittedList=ours.filter(function(b){return !!b.quotes[OUR_SHOP]&&!needsRevision(b);}).sort(byDate);
-  var html='<div class="src-head"><div><h2>Your shop’s projects with Carve</h2><div class="sub" style="max-width:none;white-space:nowrap;">Active quotations need your bid first; submitted quotes sit below, earliest first, collapsed until you open them.</div></div></div>';
+  var submittedList=ours.filter(function(b){return !!b.quotes[OUR_SHOP]&&!needsRevision(b);}).sort(byQuotedDesc);
+  // Dashboard: briefs received in the selected period, current backlog needing a
+  // bid, quotes submitted in the period, and how long it took to respond (sent →
+  // quoted). Quoted/response both fall back to sentDate when an older quote has
+  // no quotedAt on record yet.
+  var dashTotal=ours.filter(function(b){return inSrcRange(b.sentDate);}).length;
+  var dashPending=activeList.length;
+  var dashQuoted=ours.filter(function(b){var q=b.quotes[OUR_SHOP];return !!q&&inSrcRange(q.quotedAt||b.sentDate);}).length;
+  var dashAwarded=ours.filter(function(b){return b.awarded===OUR_SHOP&&inSrcRange(b.sentDate);}).length;
+  var html='<div class="daterange"><span class="daterange__label">Period</span><div class="daterange__seg">'+
+    '<button type="button" class="'+(srcRange.mode==='all'?'on':'')+'" data-range="all" onclick="setSrcRange(\'all\',this)">All time</button>'+
+    '<button type="button" class="'+(srcRange.mode==='30'?'on':'')+'" data-range="30" onclick="setSrcRange(\'30\',this)">Last 30 days</button>'+
+    '<button type="button" class="'+(srcRange.mode==='90'?'on':'')+'" data-range="90" onclick="setSrcRange(\'90\',this)">Last 90 days</button>'+
+    '<button type="button" class="'+(srcRange.mode==='ytd'?'on':'')+'" data-range="ytd" onclick="setSrcRange(\'ytd\',this)">Year to date</button>'+
+    '<button type="button" class="'+(srcRange.mode==='custom'?'on':'')+'" data-range="custom" onclick="setSrcRange(\'custom\',this)">Custom</button>'+
+    '</div><div class="daterange__custom" id="srcCustom" '+(srcRange.mode==='custom'?'':'hidden')+'>'+
+    '<input type="date" id="srcFrom" aria-label="From date" value="'+(srcRange.from||'')+'" onchange="applySrcRange()">'+
+    '<span class="daterange__to">→</span>'+
+    '<input type="date" id="srcTo" aria-label="To date" value="'+(srcRange.to||'')+'" onchange="applySrcRange()">'+
+    '</div></div>'+
+    '<div class="leads-dash">'+
+    '<div class="kpi"><span class="mock__k">Briefs received</span><div class="big">'+dashTotal+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Pending to quote</span><div class="big">'+dashPending+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Quoted</span><div class="big">'+dashQuoted+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Awarded</span><div class="big">'+dashAwarded+'</div></div>'+
+    '</div>';
   var unread=(SDB.notifications&&SDB.notifications[OUR_SHOP]||[]).filter(function(n){return !n.read;});
   if(unread.length){
     html+='<div style="border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);background:rgba(182,182,182,0.05);border-radius:var(--r-sm);padding:0.9rem 1.1rem;margin-bottom:1.2rem;">'+
@@ -4169,12 +4311,11 @@ function SRC_prodAdmin(){
       unread.map(function(n){return '<div style="font-size:0.84rem;color:var(--cm-text);padding:0.3rem 0;">'+esc(n.text)+' <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">· '+esc(n.time)+'</span></div>';}).join('')+
     '</div>';
   }
-  if(!ours.length){html+='<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No briefs yet. Carve will invite your shop when a model suits you.</div></div>';}
-  if(activeList.length){
+  if(!ours.length){
+    html+='<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No briefs yet. Carve will invite your shop when a model suits you.</div></div>';
+  }else{
     html+=sectionLabel('Active quotations · '+activeList.length);
     activeList.forEach(function(b){html+=renderProdAdminCard(b);});
-  }
-  if(submittedList.length){
     html+=sectionLabel('Submitted quotes · '+submittedList.length);
     submittedList.forEach(function(b){html+=renderProdAdminCard(b);});
   }
@@ -4191,7 +4332,7 @@ function variationsSection(b){
   vars.forEach(function(v,i){
     html+='<div class="qline2"><div class="qf-name"><div><div class="nm">'+esc(v.label)+'</div><div class="lc" style="font-family:var(--font-mono);">'+moneyRMB(v.priceRMB)+'</div></div></div>'+
       '<div class="qf-price">'+money(v.price)+'</div><div class="qf-days">'+v.days+' days</div>'+
-      '<div style="text-align:right;display:flex;gap:0.5rem;justify-content:flex-end;"><button class="btn btn--ghost btn--sm" onclick="SRC_reviseVariation(\''+b.id+'\','+i+')">Revise</button><button class="btn btn--ghost btn--sm" onclick="SRC_removeVariation(\''+b.id+'\','+i+')">Remove</button></div>'+
+      '<div style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_reviseVariation(\''+b.id+'\','+i+')">Revise</button></div>'+
       quoteSpecLine(v,b)+extrasLine(v)+boundaryFileLine(v)+(v.note?'<div class="qf-note">'+esc(v.note)+'</div>':'')+carveNoteReadonly(v)+
     '</div>';
   });
@@ -4202,7 +4343,7 @@ function variationsSection(b){
       '<div class="full" style="text-align:right;display:flex;justify-content:flex-end;gap:0.5rem;"><button class="btn btn--ghost btn--sm" onclick="SRC_cancelVariationForm(\''+b.id+'\')">Cancel</button><button class="btn btn--primary btn--sm" onclick="SRC_addVariation(\''+b.id+'\')">Save variation</button></div>'+
     '</div>';
   }else{
-    html+='<button class="btn btn--ghost btn--sm" style="margin-top:0.6rem;" onclick="SRC_openVariationForm(\''+b.id+'\')">+ Add variation quote</button>';
+    html+='<button class="btn btn--ghost btn--fill-hover btn--sm" style="margin-top:0.6rem;" onclick="SRC_openVariationForm(\''+b.id+'\')">+ Add variation quote</button>';
   }
   html+='</div>';
   return html;
@@ -4226,14 +4367,6 @@ window.SRC_addVariation=function(bid){
   delete SRC_OPEN_VARIATION[bid];
   saveSRC();SRC_render();
 };
-window.SRC_removeVariation=function(bid,idx){
-  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
-  if(b.variations&&b.variations[OUR_SHOP]&&b.variations[OUR_SHOP][idx]){
-    logHistory(b,OUR_SHOP,b.variations[OUR_SHOP][idx],'Removed variation');
-    b.variations[OUR_SHOP].splice(idx,1);
-  }
-  saveSRC();SRC_render();
-};
 window.SRC_reviseVariation=function(bid,idx){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
   if(b.variations&&b.variations[OUR_SHOP]&&b.variations[OUR_SHOP][idx]){
@@ -4248,19 +4381,13 @@ window.SRC_quote=function(id){
   if(SRC_BFILE_UPLOADING['src-'+id]){alert('The dimension/boundary file is still uploading — please wait a moment and try again.');return;}
   var data=collectQuoteFormData('src',id,b);
   if(!data){alert('Add a cost and a production time.');return;}
+  data.quotedAt=new Date().toISOString().slice(0,10);
   b.quotes[OUR_SHOP]=data;
   logHistory(b,OUR_SHOP,data,'Submitted');
   delete SRC_PENDING_BFILE['src-'+id];
   saveSRC();SRC_render();
 };
 window.SRC_unquote=function(id){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];if(b.quotes[OUR_SHOP])logHistory(b,OUR_SHOP,b.quotes[OUR_SHOP],'Revised (previous version)');delete b.quotes[OUR_SHOP];delete b.lastCommentAt;saveSRC();SRC_render();};
-window.SRC_removeQuote=function(id){
-  var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
-  if(!confirm('Remove your quote for "'+b.title+'"? Carve will no longer see it as an option.'))return;
-  if(b.quotes[OUR_SHOP])logHistory(b,OUR_SHOP,b.quotes[OUR_SHOP],'Removed');
-  delete b.quotes[OUR_SHOP];
-  saveSRC();SRC_render();
-};
 window.SRC_assign=function(id,tech){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];b.assignedTech=(b.assignedTech===tech?null:tech);saveSRC();SRC_render();};
 window.SRC_proceedToFactory=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -4273,13 +4400,14 @@ window.SRC_proceedToFactory=function(id){
 /* ---- Production Technician: only jobs assigned to me, everything but price ---- */
 function SRC_prodTech(){
   var me=TECHS.filter(function(t){return t.id===ME_TECH;})[0];
+  document.getElementById('srcNotice').hidden=false;
   document.getElementById('srcNotice').innerHTML='<b>Production Technician · '+me.name+'.</b> You see everything needed to build the model — spec, files, category, scale, materials, dimensions, packaging — except cost. Pricing stays with your production admin.';
   var mine=SDB.briefs.filter(function(b){return b.awarded===OUR_SHOP&&b.assignedTech===ME_TECH&&b.stage==='production';});
   var html='<div class="src-head"><div><h2>Assigned to you</h2><div class="sub">Build specs and photo rounds for the jobs you’re working on.</div></div></div>';
   if(!mine.length){html+='<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No jobs assigned to you yet. Your production admin assigns work here once a job is kicked off to the factory.</div></div>';}
   mine.forEach(function(b){
     var q=winningQuote(b);
-    html+='<div class="panel src-card"><div class="panel__head"><div><span class="src-card__code">'+b.code+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><span class="chip done">In production</span></div><div class="panel__body">';
+    html+='<div class="panel src-card"><div class="panel__head"><div><span class="src-card__code">'+esc(b.code||'')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><span class="chip done">In production</span></div><div class="panel__body">';
     html+=productionBriefBody(b);
     if(q){
       html+='<div style="margin-top:1rem;padding-top:0.9rem;border-top:1px solid var(--cm-line-faint);">'+
@@ -4323,7 +4451,43 @@ window.SRC_addClientComment=function(bid,text){
   saveSRC();
   return true;
 };
+function daysBetween(fromStr,toStr){
+  if(!fromStr||!toStr)return null;
+  var a=new Date(fromStr+'T00:00:00'),b=new Date(toStr+'T00:00:00');
+  return Math.max(0,Math.round((b-a)/864e5));
+}
+window.renderLeadsDash=function(){
+  var allLeads=SDB.leads||[];
+  var active=allLeads.filter(function(l){return !l.archived;});
+  var totalCount=active.filter(function(l){return inLeadsRange(l.receivedAt);}).length;
+  var pendingCount=active.filter(function(l){return l.pendingInfo;}).length;
+  var briefs=SDB.briefs||[];
+  var sentCount=briefs.filter(function(b){return b.stage==='sourcing';}).length;
+  // Response time: how long between a lead landing in the inbox and the first
+  // action taken on it — either replying to ask for more info, or sending it
+  // out for a vendor quotation. Only leads/briefs with a measurable action are
+  // counted; leads with nothing done yet don't have a response time.
+  var responseDays=[];
+  active.forEach(function(l){
+    if(l.firstActionAt&&inLeadsRange(l.receivedAt)){
+      var d=daysBetween(l.receivedAt,l.firstActionAt);
+      if(d!==null)responseDays.push(d);
+    }
+  });
+  briefs.forEach(function(b){
+    if(b.leadReceivedAt&&b.sentDate&&inLeadsRange(b.leadReceivedAt)){
+      var d=daysBetween(b.leadReceivedAt,b.sentDate);
+      if(d!==null)responseDays.push(d);
+    }
+  });
+  var avgResponse=responseDays.length?(responseDays.reduce(function(s,d){return s+d;},0)/responseDays.length):null;
+  var elTotal=document.getElementById('leadsDashTotal');if(elTotal)elTotal.textContent=totalCount;
+  var elSent=document.getElementById('leadsDashSent');if(elSent)elSent.textContent=sentCount;
+  var elPending=document.getElementById('leadsDashPending');if(elPending)elPending.textContent=pendingCount;
+  var elResponse=document.getElementById('leadsDashResponse');if(elResponse)elResponse.textContent=(avgResponse===null)?'—':(avgResponse.toFixed(1)+' day'+(avgResponse===1?'':'s'));
+};
 window.SRC_renderLeads=function(){
+  window.renderLeadsDash();
   var list=document.getElementById('leadList'), empty=document.getElementById('leadsEmpty'), badge=document.getElementById('leadsBadge');
   if(!list)return;
   var allLeads=SDB.leads||[];
@@ -4345,7 +4509,7 @@ window.SRC_renderLeads=function(){
     }
     return '<article class="leadcard" data-lead="'+esc(l.id)+'"><div class="leadcard__main">'+
       '<div class="leadcard__top"><div><div class="leadcard__name">'+esc(l.title)+'</div><div class="leadcard__sub">'+esc(l.type)+'</div></div>'+
-      '<div class="leadcard__tags"><span class="srctag srctag--web">\u25cf '+esc(l.source||'Website form')+'</span><span class="chip await">New</span></div></div>'+
+      '<div class="leadcard__tags"><span class="srctag srctag--web">\u25cf '+esc((!l.source||l.source==='Website form')?'Inquiry form':('Email \u00b7 '+l.source))+'</span><span class="chip await">'+(l.pendingInfo?'Pending info':'New')+'</span></div></div>'+
       '<div class="leadcard__grid">'+
         '<div><span class="mock__k">Contact</span><div class="lc-v">'+esc(l.client.Name)+(l.client.Title?(', '+esc(l.client.Title)):'')+(l.client.Company&&l.client.Company!=='\u2014'?(' \u00b7 '+esc(l.client.Company)):'')+'</div><div class="lc-m">'+esc(l.client.Email)+(l.client.Phone?(' \u00b7 '+esc(l.client.Phone)):'')+'</div>'+(l.assignedCompanyName?('<div class="lc-m" style="color:var(--cm-silver);margin-top:2px;">\u2713 Assigned to '+esc(l.assignedCompanyName)+'</div>'):'')+'</div>'+
         '<div><span class="mock__k">Scale</span><div class="lc-v">'+esc(l.scale)+'</div></div>'+
@@ -4355,19 +4519,17 @@ window.SRC_renderLeads=function(){
         '<div><span class="mock__k">Files</span><div class="lc-v">'+((l.files&&l.files.length)?(l.files.length+' uploaded'):(lLinks.length?(lLinks.length>1?(lLinks.length+' links shared'):'Link shared'):'None'))+'</div></div>'+
         '<div><span class="mock__k">Delivery to</span><div class="lc-v">'+esc(l.deliveryTo)+'</div></div>'+
         (l.intendedUse?('<div><span class="mock__k">Intended use</span><div class="lc-v">'+esc(l.intendedUse)+'</div></div>'):'')+
-        (l.prefMaterial?('<div><span class="mock__k">Preferred material</span><div class="lc-v">'+esc(l.prefMaterial)+'</div></div>'):'')+
-        (l.prefBase?('<div><span class="mock__k">Preferred base</span><div class="lc-v">'+esc(l.prefBase)+'</div></div>'):'')+
       '</div>'+
       (l.extras&&l.extras.length?('<div class="leadcard__note"><span class="mock__k">Special requirements</span><p>'+esc(l.extras.join(' \u00b7 '))+'</p></div>'):'')+
       '<div class="leadcard__note"><span class="mock__k">Project details</span><p>'+esc(l.notes)+'</p></div>'+
       (l.boundaryMap?('<div class="leadcard__note"><span class="mock__k">Scope boundary \u2014 marked by client</span><div style="margin-top:0.6rem;"><a href="'+l.boundaryMap+'" target="_blank" rel="noopener"><img src="'+l.boundaryMap+'" style="max-width:280px;border:1px solid var(--cm-border);border-radius:var(--r-sm);display:block;"></a></div></div>'):'')+
       filesHtml+
-      '</div><div class="leadcard__act"><span class="mock__k">Received '+esc(l.receivedAt)+' \u00b7 '+esc(l.source||'Website form')+'</span>'+
-      '<button class="btn btn--primary btn--sm" onclick="convertLead(\''+esc(l.id)+'\')">Send to production \u2192</button>'+
-      '<button class="btn btn--ghost btn--sm" onclick="replyLead(\''+esc(l.client.Email)+'\',\''+esc(l.title)+'\')">Reply by email</button>'+
+      '</div><div class="leadcard__act"><span class="mock__k">Received '+esc(l.receivedAt)+' \u00b7 '+esc((!l.source||l.source==='Website form')?'Inquiry form':('Email \u00b7 '+l.source))+'</span>'+
+      '<button class="btn btn--primary btn--sm" onclick="convertLead(\''+esc(l.id)+'\')">Obtain Quotation \u2192</button>'+
+      '<button class="btn btn--ghost btn--sm" onclick="replyLead(\''+esc(l.client.Email)+'\',\''+esc(l.title)+'\',\''+esc(l.id)+'\')">Reply by email</button>'+
       '<button class="btn btn--ghost btn--sm studio-only" onclick="openLeadVariation(\''+esc(l.id)+'\')">+ Create variation</button>'+
-      '<button class="btn btn--ghost btn--sm studio-only" onclick="openAssignLeadCompany(\''+esc(l.id)+'\')">'+(l.assignedCompanyName?'Change company':'Assign to company')+'</button>'+
-      '<button class="btn btn--ghost btn--sm studio-only" onclick="archiveLead(\''+esc(l.id)+'\')">Archive</button></div></article>';
+      '<button class="btn btn--ghost btn--sm studio-only" onclick="archiveLead(\''+esc(l.id)+'\')">Archive</button>'+
+      '<button class="btn btn--ghost btn--sm btn--danger studio-only" onclick="deleteLead(\''+esc(l.id)+'\')">Delete</button></div></article>';
   }).join('');
 };
 window.openArchivedLeads=function(){
@@ -4396,7 +4558,10 @@ window.SRC_renderArchivedLeads=function(){
       '<div class="archlead-row__title">'+esc(l.title)+'</div>'+
       '<div class="archlead-row__sub">'+esc(l.client.Name)+(l.client.Company&&l.client.Company!=='\u2014'?(' \u00b7 '+esc(l.client.Company)):'')+' \u00b7 '+esc(l.client.Email)+'</div></div>'+
       '<div class="archlead-row__date">'+esc(l.receivedAt)+'</div>'+
-      '<button class="btn btn--ghost btn--sm" onclick="unarchiveLead(\''+esc(l.id)+'\')">Unarchive</button></div>';
+      '<div style="display:flex;gap:0.5rem;flex:none;">'+
+        '<button class="btn btn--ghost btn--sm" onclick="unarchiveLead(\''+esc(l.id)+'\')">Unarchive</button>'+
+        '<button class="btn btn--ghost btn--sm btn--danger" onclick="deleteLead(\''+esc(l.id)+'\')">Delete</button>'+
+      '</div></div>';
   }).join('');
 };
 window.openAssignLeadCompany=function(id){
@@ -4457,6 +4622,16 @@ window.archiveLead=function(id){
   saveSRC();
   window.SRC_renderLeads();
 }
+window.deleteLead=function(id){
+  var lead=(SDB.leads||[]).filter(function(l){return l.id===id;})[0];
+  if(!lead)return;
+  if(!confirm('Delete "'+lead.title+'"? This permanently removes the lead — it cannot be recovered. If you just want it out of the way, use Archive instead.'))return;
+  if(!confirm('Are you sure? This is the last step — the lead will be permanently deleted.'))return;
+  SDB.leads=(SDB.leads||[]).filter(function(l){return l.id!==id;});
+  saveSRC();
+  window.SRC_renderArchivedLeads&&window.SRC_renderArchivedLeads();
+  window.SRC_renderLeads();
+}
 window.unarchiveLead=function(id){
   var lead=(SDB.leads||[]).filter(function(l){return l.id===id;})[0];
   if(!lead)return;
@@ -4496,21 +4671,20 @@ window.SRC_confirmSendLead=function(){
   var shopIds=[]; document.querySelectorAll('.sendlead-chk:checked').forEach(function(cb){shopIds.push(cb.value);});
   if(!shopIds.length){alert('Select at least one production shop to send this to.');return;}
   var today=new Date().toISOString().slice(0,10);
-  var code='CM-'+Math.floor(1000+Math.random()*9000);
+  // A CM-#### invoice-style number isn't assigned yet — that only happens once
+  // an actual fee proposal is finalized for the client (see SRC_saveClientQuote).
   var proj=alSplitLoc(lead.title||'');
   var projLoc=proj.b?(proj.b+(proj.c?', '+proj.c:'')):'Not specified';
   var brief={
-    id:'b'+Date.now(),code:code,title:lead.title,invited:shopIds,sentDate:today,
+    id:'b'+Date.now(),title:lead.title,invited:shopIds,sentDate:today,leadReceivedAt:lead.receivedAt||null,
     brief:{
       'Model type':lead.type,
       'Project location':projLoc,
       'Scale':lead.scale,
       'Approx. size':lead.modelsize,
       'Quantity':lead.quantity||'1',
-      'Materials':lead.prefMaterial||'To be proposed by production',
-      'Base':lead.prefBase||'To be proposed by production',
       'Special requirements':(lead.extras&&lead.extras.length)?lead.extras.join(' \u00b7 '):'None specified',
-      'Timeline':lead.timeline,'Deadline':lead.timeline,'Delivery location':lead.deliveryTo,
+      'Timeline':lead.timeline,'Delivery location':lead.deliveryTo,
       'Intended use':lead.intendedUse||'Not specified'
     },
     notes:lead.notes+(lead.boundaryMap?'\n\n(Client marked a scope boundary on a site plan \u2014 see attached image.)':''),
@@ -4552,6 +4726,7 @@ function pullSourcing(){
     if(data&&(data.briefs||data.leads)){
       SDB.briefs=data.briefs||[];
       SDB.leads=data.leads||[];
+      migrateBriefFields(SDB.briefs);
       try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
       // Skip the re-render while a field is actively focused OR was typed into in
       // the last few seconds (e.g. mid-typing a quote, or just tabbed to the next
