@@ -2470,10 +2470,17 @@ function ensureClientContact(l){
   var activityAt=l.receivedAtISO||l.receivedAt||null;
   var existing=co.contacts.filter(function(c){return c.email&&c.email.toLowerCase()===email.toLowerCase();})[0];
   if(existing){
-    existing.quoteRequests=(existing.quoteRequests||0)+1;
+    // This runs on every live-sync poll (every 5s), so guard against re-counting
+    // the same lead each time it re-syncs — only increment the first time we see
+    // a given lead id for this contact.
+    existing.processedLeadIds=existing.processedLeadIds||[];
+    if(!l.id||existing.processedLeadIds.indexOf(l.id)===-1){
+      if(l.id)existing.processedLeadIds.push(l.id);
+      existing.quoteRequests=(existing.quoteRequests||0)+1;
+    }
     if(activityAt&&(!existing.lastActivityAt||activityAt>existing.lastActivityAt))existing.lastActivityAt=activityAt;
   }else{
-    co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:activityAt});
+    co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:activityAt,processedLeadIds:l.id?[l.id]:[]});
   }
 }
 function syncClientsFromLeads(){
@@ -2751,31 +2758,8 @@ function inRange(dateStr){
 function rangeLabel(){
   return {all:'all time','30':'the last 30 days','90':'the last 90 days',ytd:'year to date',custom:'the selected dates'}[clientRange.mode]||'all time';
 }
-var PARENTS=[
-  {id:'arclight',name:'Arclight Design Partners'}
-];
-var COMPANIES=[
-  {id:'reyes',name:'Reyes Development Group',parentId:null,rep:'jordan',contacts:[
-    {id:'daniel',name:'Daniel Reyes',title:'Director of Development',email:'daniel@reyesdev.com',phone:'(202) 555-0118',quoteRequests:1,
-     projects:[{name:'Aria Tower — Los Angeles, CA',statusClass:'await',statusLabel:'In fabrication',value:2270,paid:1135,date:'2026-06-02'}]}
-  ]},
-  {id:'halcyon',name:'Halcyon Capital',parentId:null,rep:'jordan',contacts:[
-    {id:'priya',name:'Priya Nair',title:'VP Acquisitions',email:'priya@halcyoncap.com',phone:'(206) 555-0173',quoteRequests:2,
-     projects:[{name:'Pier 7 Masterplan — Seattle, WA',statusClass:'await',statusLabel:'In review',value:18400,paid:9200,date:'2026-04-18'}]}
-  ]},
-  {id:'meridian',name:'Meridian Studios',parentId:null,rep:'sam',contacts:[
-    {id:'leah',name:'Leah Cohen',title:'Production Coordinator',email:'leah@meridianstudios.com',phone:'(404) 555-0142',quoteRequests:1,
-     projects:[{name:'Backlot Miniature — Atlanta, GA',statusClass:'done',statusLabel:'Delivered',value:7600,paid:3800,date:'2025-11-09'}]}
-  ]},
-  {id:'arclight-la',name:'Arclight Design Partners — Los Angeles',parentId:'arclight',rep:'jordan',contacts:[
-    {id:'mira',name:'Mira Chen',title:'Principal',email:'mira.chen@arclightdp.com',phone:'(213) 555-0166',quoteRequests:1,
-     projects:[{name:'Westline Tower — Los Angeles, CA',statusClass:'await',statusLabel:'In fabrication',value:9400,paid:4700,date:'2026-05-11'}]}
-  ]},
-  {id:'arclight-ny',name:'Arclight Design Partners — New York',parentId:'arclight',rep:'sam',contacts:[
-    {id:'owen',name:'Owen Park',title:'Associate Principal',email:'owen.park@arclightdp.com',phone:'(212) 555-0189',quoteRequests:1,hasAccount:false,
-     projects:[{name:'Hudson Yards Pavilion — New York, NY',statusClass:'done',statusLabel:'Delivered',value:12600,paid:12600,date:'2026-01-22'}]}
-  ]}
-];
+var PARENTS=[];
+var COMPANIES=[];
 var expandedCompanies={},expandedParents={};
 var selectedCompanyId=null; // when set, the Clients dashboard KPIs show just this company instead of the studio-wide totals
 function companyLatestDate(co){
