@@ -235,7 +235,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <label><input type="checkbox" name="extras" value="Interior Finishes"><span class="ck"></span><span>Interior Finishes</span></label>
             <label><input type="checkbox" name="extras" value="Removable Roof / Levels"><span class="ck"></span><span>Removable Roof / Levels</span></label>
           </div>
-          <input id="extrasOther" name="extrasOther" type="text" placeholder="Other requirements — type anything specific…" style="margin-top:0.6rem;">
         </div>
       </fieldset>
 
@@ -325,7 +324,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <div class="field"><label for="deliverycountry">Delivery country <span class="optional">(optional)</span></label><input id="deliverycountry" name="deliverycountry" type="text" placeholder="e.g. United States"></div>
         </div>
         <div class="field"><label for="deadline">Deadline / event date <span class="optional">(optional)</span></label><input id="deadline" name="deadline" type="text" placeholder="e.g. 09/15/2026 (MM/DD/YYYY)" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
-        <div class="field"><label for="message">Anything else <span class="optional">(optional)</span></label><textarea id="message" name="message" placeholder="Notes on detail, finishes, lighting, or your deadline."></textarea></div>
+        <div class="field"><label for="message">Anything else <span class="optional">(optional)</span></label><textarea id="message" name="message" placeholder="Any requirement not listed above, plus notes on detail, finishes, lighting, or your deadline."></textarea></div>
       </fieldset>
 
       <!-- Nav -->
@@ -341,7 +340,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <h3>Thanks — we've got it.</h3>
       <p>We'll review your project and reply within one business day. Once we've looked over your scope, we'll set up your private workspace and place a <strong style="color:var(--cm-text);">preliminary quote</strong> inside for you to review — no payment due until you approve.</p>
       <p class="form-note" style="margin-top:1.2rem;">Already been invited? You can open your client portal anytime.</p>
-      <a class="btn btn--ghost mt-3" href="/app" style="margin-top:1rem;">Open the Studio Portal →</a>
+      <a class="btn btn--ghost mt-3" href="/login" style="margin-top:1rem;">Open the Studio Portal →</a>
     </div>
   </div>
 </div>
@@ -572,8 +571,6 @@ function submitQuote(e){
   var typeEl=document.querySelector('input[name="type"]:checked');
   var type=typeEl?typeEl.value:'Detailed Architectural Model — Building Alone';
   var extras=[]; document.querySelectorAll('input[name="extras"]:checked').forEach(function(cb){extras.push(cb.value);});
-  var extrasOther=(document.getElementById('extrasOther').value||'').trim();
-  if(extrasOther)extras.push(extrasOther);
   var projname=(document.getElementById('projname').value||'').trim()||'Untitled project';
   var projloc=(document.getElementById('projloc').value||'').trim();
   var projcountry=(document.getElementById('projcountry').value||'').trim();

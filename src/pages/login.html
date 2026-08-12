@@ -39,6 +39,7 @@ body{background:var(--cm-ink-950);min-height:100vh;}
 .auth__confirm{text-align:center;}
 .auth__confirm p{color:var(--cm-text-muted);font-size:0.95rem;margin-top:0.7rem;}
 .auth__confirm b{color:var(--cm-text);}
+.auth__notice{background:var(--cm-ink-850);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.85rem 1rem;margin-bottom:1.6rem;font-size:0.82rem;line-height:1.5;color:var(--cm-text-muted);text-align:center;}
 .auth__demo{position:relative;margin-top:1.5rem;font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.03em;color:var(--cm-text-subtle);text-align:center;max-width:420px;}
 .pw-wrap{position:relative;}
 .pw-wrap .toggle{position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;padding:0.3rem;}
@@ -55,6 +56,8 @@ body{background:var(--cm-ink-950);min-height:100vh;}
 <main class="auth">
   <div class="auth__card">
     <a class="auth__brand" href="/" aria-label="Carve Model home"><img src="/assets/logo-lockup.png" alt="Carve Model"></a>
+
+    <p class="auth__notice">We're currently conducting internal testing of the Carve Studio Portal with select partners. Public launch: January 2027.</p>
 
     <!-- SIGN IN -->
     <div class="auth-panel" id="panel-login">
@@ -126,14 +129,6 @@ body{background:var(--cm-ink-950);min-height:100vh;}
         <button class="btn btn--primary btn--lg full" type="submit">Set password &amp; continue</button>
       </form>
     </div>
-  </div>
-  <p class="auth__demo">Demo · sign-in isn't enforced in this preview. Any details continue to the portal. Connect a backend (Supabase, Firebase, Auth0) to make authentication real.</p>
-  <div class="auth__demo-nav">
-    <span>Preview screens:</span>
-    <button onclick="showPanel('login')">Sign in</button>
-    <button onclick="showPanel('invite')">Set password</button>
-    <button onclick="showPanel('magic')">Magic link</button>
-    <button onclick="showPanel('forgot')">Reset password</button>
   </div>
 </main>
 

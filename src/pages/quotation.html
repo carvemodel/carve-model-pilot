@@ -1478,26 +1478,28 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="efield-row">
           <div class="efield"><label for="al-type">Model type</label>
             <select id="al-type">
-              <option>Architectural massing</option>
-              <option>Architectural with context</option>
-              <option>Sales gallery / presentation</option>
-              <option>Masterplan / site</option>
-              <option>Product / industrial prototype</option>
-              <option>Art installation / sculpture</option>
-              <option>Film / commercial miniature</option>
-              <option>Not sure yet</option>
+              <option>Architectural or Real Estate Model</option>
+              <option>Masterplan, Site or Topographic Model</option>
+              <option>Interior or Section Model</option>
+              <option>Product Prototype or Mockup</option>
+              <option>Film or Commercial Miniature</option>
+              <option>Art Maquette or Prototype</option>
+              <option>Not Sure Yet</option>
             </select>
           </div>
-          <div class="efield"><label for="al-use">Intended use <span class="optional">(optional)</span></label>
-            <select id="al-use">
-              <option value="">Select one…</option>
-              <option>Planning / approvals</option><option>Investor / board meeting</option>
-              <option>Sales gallery / marketing</option><option>Internal design review</option>
-              <option>Film / production</option><option>Exhibition / public display</option><option>Other</option>
-            </select>
+          <div class="efield"><label for="al-quantity">Number of exact models</label>
+            <input id="al-quantity" type="number" min="1" step="1" value="1" required>
           </div>
         </div>
         <div class="efield-row">
+          <div class="efield"><label for="al-use">What does the model need to support?</label>
+            <select id="al-use" required>
+              <option value="">Select one…</option>
+              <option>Government Review / Planning Approval</option><option>Investor / board meeting</option>
+              <option>Sales gallery / marketing</option><option>Internal design review</option>
+              <option>Film / production</option><option>Exhibition / public display</option><option>Gift / Award</option><option>Other</option>
+            </select>
+          </div>
           <div class="efield"><label for="al-source">Source</label>
             <select id="al-source">
               <option value="Referral">Referral</option>
@@ -1507,16 +1509,16 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
               <option value="Other">Other</option>
             </select>
           </div>
-          <div class="efield"><label for="al-timeline">Timeline</label>
-            <select id="al-timeline"><option>As soon as possible</option><option>Within 1 month</option><option>1–3 months</option><option>Just exploring</option></select>
-          </div>
+        </div>
+        <div class="efield"><label for="al-timeline">Timeline</label>
+          <select id="al-timeline"><option>As soon as possible</option><option>Within 1 month</option><option>1–3 months</option><option>Just exploring</option></select>
         </div>
         <div class="efield"><label>Scale <span class="optional">(or leave blank)</span></label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-            <div style="display:flex;align-items:center;gap:0.3rem;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;">1:</span><input id="al-scale-intl-new" type="number" placeholder="e.g. 100" oninput="SRC_syncScaleFromIntl('al','new')"></div>
-            <div style="display:flex;align-items:center;gap:0.3rem;"><input id="al-scale-imp-new" type="text" placeholder="1/8&quot;" oninput="SRC_syncScaleFromImp('al','new')"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.8rem;white-space:nowrap;">= 1'-0"</span></div>
+            <div style="display:flex;align-items:center;gap:0.3rem;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;">1:</span><input id="al-scale-intl-new" type="number" placeholder="e.g. 100"></div>
+            <div style="display:flex;align-items:center;gap:0.3rem;"><input id="al-scale-imp-new" type="text" placeholder="1/8&quot;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.8rem;white-space:nowrap;">= 1'-0"</span></div>
           </div>
-          <div class="hint">Enter either one — the other fills in automatically.</div>
+          <div class="hint">Enter either the scale or the desired model size below.</div>
         </div>
         <div class="efield"><label for="al-size">Approx. model size <span class="optional">(if no scale — L × W × H)</span></label>
           <input id="al-size" type="text" placeholder='e.g. 36" × 24" × 18"  or  90 × 60 × 45 cm'>
@@ -1525,21 +1527,13 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="checks" id="al-extras-wrap"></div>
           <input id="al-extras-other" type="text" placeholder="Other requirements — type anything specific…" style="margin-top:0.6rem;">
         </div>
-        <div class="efield-row">
-          <div class="efield"><label for="al-prefMaterial">Preferred model material <span class="optional">(optional)</span></label>
-            <select id="al-prefMaterial"><option value="">No preference — let production recommend</option></select>
-          </div>
-          <div class="efield"><label for="al-prefBase">Preferred base material <span class="optional">(optional)</span></label>
-            <select id="al-prefBase"><option value="">No preference — let production recommend</option></select>
-          </div>
-        </div>
         <div class="efield"><label for="al-notes">Details</label>
           <textarea id="al-notes" class="changes__note" placeholder="What did they ask for? Scale, deadline, files they'll send, anything useful for the quote…"></textarea>
         </div>
         <div class="efield"><label>Files <span class="optional">(optional)</span></label>
           <div class="reqfiles" onclick="document.getElementById('al-file-input').click()">
             <input id="al-file-input" type="file" multiple style="display:none;" onchange="alFilesPicked(this)">
-            <span id="al-files-label">Drop files or click to upload — CAD, PDF, Rhino, images.</span>
+            <span id="al-files-label">Drop files or click to upload — CAD, PDF, Rhino, renderings, reference photos, 3D digital models.</span>
           </div>
         </div>
         <div class="efield"><label for="al-dropbox">Or share a file link <span class="optional">(Dropbox, Drive, WeTransfer)</span></label>
@@ -2067,25 +2061,21 @@ function downloadLeadFile(name,type){
 var leadSeq=2059;
 function openAddLead(){
   ['al-contact','al-company','al-email','al-phone','al-project','al-location','al-notes','al-dropbox','al-size','al-scale-intl-new','al-scale-imp-new','al-extras-other'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
+  var qtyEl=document.getElementById('al-quantity');if(qtyEl)qtyEl.value='1';
   var fi=document.getElementById('al-file-input');if(fi)fi.value='';
-  document.getElementById('al-files-label').textContent='Drop files or click to upload — CAD, PDF, Rhino, images.';
+  document.getElementById('al-files-label').textContent='Drop files or click to upload — CAD, PDF, Rhino, renderings, reference photos, 3D digital models.';
   var extraWrap=document.getElementById('al-extras-wrap');
   if(extraWrap&&!extraWrap.childElementCount){
     (window.SPECIAL_REQS||[]).forEach(function(r){var lab=document.createElement('label');lab.innerHTML='<input type="checkbox" name="al-extras" value="'+esc(r)+'"><span class="ck"></span><span>'+esc(r)+'</span>';extraWrap.appendChild(lab);});
   }
   document.querySelectorAll('input[name="al-extras"]').forEach(function(cb){cb.checked=false;});
-  var matSel=document.getElementById('al-prefMaterial');
-  if(matSel&&matSel.options.length<2){(window.MODEL_MATERIALS||[]).forEach(function(m){var o=document.createElement('option');o.textContent=m;matSel.appendChild(o);});}
-  var baseSel=document.getElementById('al-prefBase');
-  if(baseSel&&baseSel.options.length<2){(window.BASE_MATERIALS||[]).forEach(function(m){var o=document.createElement('option');o.textContent=m;baseSel.appendChild(o);});}
-  if(matSel)matSel.value=''; if(baseSel)baseSel.value='';
   var useSel=document.getElementById('al-use');if(useSel)useSel.value='';
   document.getElementById('addLeadModal').hidden=false;
 }
 function closeAddLead(){ document.getElementById('addLeadModal').hidden=true; }
 function alFilesPicked(input){
   var n=input.files?input.files.length:0;
-  document.getElementById('al-files-label').textContent=n?(n+' file'+(n>1?'s':'')+' attached — '+[].map.call(input.files,function(f){return f.name;}).slice(0,3).join(', ')+(n>3?'…':'')):'Drop files or click to upload — CAD, PDF, Rhino, images.';
+  document.getElementById('al-files-label').textContent=n?(n+' file'+(n>1?'s':'')+' attached — '+[].map.call(input.files,function(f){return f.name;}).slice(0,3).join(', ')+(n>3?'…':'')):'Drop files or click to upload — CAD, PDF, Rhino, renderings, reference photos, 3D digital models.';
 }
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function createLead(e){
@@ -2106,8 +2096,7 @@ function createLead(e){
   var scale=scaleIntl?('1:'+scaleIntl+(scaleImp?(' ('+scaleImp+' = 1\'-0")'):'')):(scaleImp?(scaleImp+' = 1\'-0"'):'Not specified');
   var size=document.getElementById('al-size').value.trim();
   var timeline=document.getElementById('al-timeline').value;
-  var prefMaterial=document.getElementById('al-prefMaterial').value;
-  var prefBase=document.getElementById('al-prefBase').value;
+  var quantity=document.getElementById('al-quantity').value.trim()||'1';
   var extras=[]; document.querySelectorAll('input[name="al-extras"]:checked').forEach(function(cb){extras.push(cb.value);});
   var extrasOther=document.getElementById('al-extras-other').value.trim();
   if(extrasOther)extras.push(extrasOther);
@@ -2133,8 +2122,7 @@ function createLead(e){
       title:title,
       type:type,
       intendedUse:useVal||null,
-      prefMaterial:prefMaterial||null,
-      prefBase:prefBase||null,
+      quantity:quantity,
       client:{Name:contact,Company:company||'—',Email:email,Phone:phone||''},
       scale:scale,
       modelsize:size||'Not specified',
@@ -2740,7 +2728,7 @@ var SHOPS=[{id:'meridian',name:'Meridian Scale Works',loc:'Portland, OR',av:'MS'
            {id:'atlas',name:'Atlas Model Fabrication',loc:'Toronto, ON',av:'AM'},
            {id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',av:'BM'}];
 var TECHS=[{id:'sam',name:'Sam Cole',av:'SC'},{id:'rosa',name:'Rosa Lim',av:'RL'}];
-var SPECIAL_REQS=['Integrated lighting','Display stand / base','Split into sections','Interior finishes','Furniture & fit-out','Custom travel case'];
+var SPECIAL_REQS=['Surrounding Landscape / Site Context','No Base','Engraved Base','Interior Lighting','External Lighting','Split into Sections (transport / access)','Display Stand / Plinth','Customized Protective Travel Case','Furniture','Interior Finishes','Removable Roof / Levels'];
 var MODEL_MATERIALS=['ABS','White acrylic','Frosted acrylic','Clear acrylic','Painted MDF','Resin (SLA/SLS print)','PLA (FDM print)','Basswood','Mixed / composite'];
 var BASE_MATERIALS=['Plywood','Black acrylic','White acrylic','Painted MDF','Walnut veneer','Aluminum','No base included'];
 window.SPECIAL_REQS=SPECIAL_REQS; window.MODEL_MATERIALS=MODEL_MATERIALS; window.BASE_MATERIALS=BASE_MATERIALS;
@@ -3431,7 +3419,7 @@ function sectionLabel(text){
   return '<div style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-subtle);margin:1.1rem 0 0.6rem;">'+text+'</div>';
 }
 function SRC_prodAdmin(){
-  document.getElementById('srcNotice').innerHTML='<b>Production Admin · '+shop(OUR_SHOP).name+'.</b> Quote the briefs Carve sends you — add variation quotes if a different scale or spec makes sense — and assign technicians to jobs you win. Client identity is never shown.';
+  document.getElementById('srcNotice').innerHTML='<b>Production Admin · '+shop(OUR_SHOP).name+'.</b> Quote the briefs Carve sends you — add variation quotes if a different scale or spec makes sense — and assign technicians to jobs you win. Everything the client submitted is shared with production. Carve Model handles client communication and delivery — client name, company, and contact aren\'t shown here.';
   window.SRC_updateBadges();
   var ours=SDB.briefs.filter(function(b){return (b.invited&&b.invited.indexOf(OUR_SHOP)>=0)||b.quotes[OUR_SHOP]||b.awarded===OUR_SHOP;});
   var byDate=function(a,c){return (a.sentDate||'').localeCompare(c.sentDate||'');};
@@ -3619,12 +3607,11 @@ window.SRC_renderLeads=function(){
         '<div><span class="mock__k">Contact</span><div class="lc-v">'+esc(l.client.Name)+(l.client.Company&&l.client.Company!=='\u2014'?(' \u00b7 '+esc(l.client.Company)):'')+'</div><div class="lc-m">'+esc(l.client.Email)+(l.client.Phone?(' \u00b7 '+esc(l.client.Phone)):'')+'</div></div>'+
         '<div><span class="mock__k">Scale</span><div class="lc-v">'+esc(l.scale)+'</div></div>'+
         '<div><span class="mock__k">Approx. size</span><div class="lc-v">'+esc(l.modelsize)+'</div></div>'+
+        '<div><span class="mock__k">Quantity</span><div class="lc-v">'+esc(l.quantity||'1')+'</div></div>'+
         '<div><span class="mock__k">Timeline</span><div class="lc-v">'+esc(l.timeline)+'</div></div>'+
         '<div><span class="mock__k">Files</span><div class="lc-v">'+((l.files&&l.files.length)?(l.files.length+' uploaded'):(l.filelink?'Link shared':'None'))+'</div></div>'+
         '<div><span class="mock__k">Delivery to</span><div class="lc-v">'+esc(l.deliveryTo)+'</div></div>'+
         (l.intendedUse?('<div><span class="mock__k">Intended use</span><div class="lc-v">'+esc(l.intendedUse)+'</div></div>'):'')+
-        (l.prefMaterial?('<div><span class="mock__k">Preferred material</span><div class="lc-v">'+esc(l.prefMaterial)+'</div></div>'):'')+
-        (l.prefBase?('<div><span class="mock__k">Preferred base</span><div class="lc-v">'+esc(l.prefBase)+'</div></div>'):'')+
       '</div>'+
       (l.extras&&l.extras.length?('<div class="leadcard__note"><span class="mock__k">Special requirements</span><p>'+esc(l.extras.join(' \u00b7 '))+'</p></div>'):'')+
       '<div class="leadcard__note"><span class="mock__k">Project details</span><p>'+esc(l.notes)+'</p></div>'+
@@ -3673,8 +3660,9 @@ window.SRC_confirmSendLead=function(){
       'Model type':lead.type,
       'Scale':lead.scale,
       'Approx. size':lead.modelsize,
-      'Materials':lead.prefMaterial||'To be proposed by production',
-      'Base':lead.prefBase||'To be proposed by production',
+      'Quantity':lead.quantity||'1',
+      'Materials':'To be proposed by production',
+      'Base':'To be proposed by production',
       'Special requirements':(lead.extras&&lead.extras.length)?lead.extras.join(' \u00b7 '):'None specified',
       'Timeline':lead.timeline,'Deadline':lead.timeline,'Region':lead.deliveryTo,
       'Intended use':lead.intendedUse||'Not specified'
