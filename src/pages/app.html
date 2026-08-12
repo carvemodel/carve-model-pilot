@@ -4,7 +4,7 @@
 <template id="__bundler_thumbnail"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#0D0E11"/><text x="50" y="58" font-family="monospace" font-size="34" fill="#B6B6B6" text-anchor="middle">P1</text></svg></template>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Carve Studio Portal — Phase 1 Quotation Pilot | Carve Model</title>
+<title>Carve Studio Portal | Carve Model</title>
 <meta name="description" content="The Carve Studio Portal — track your architectural model from quote to delivery. Milestones, files, messages, and invoices in one shared workspace for studio and client.">
 <meta name="robots" content="noindex,follow">
 <link rel="icon" type="image/png" href="/assets/logo-mark.png">
@@ -320,7 +320,7 @@ body{background:var(--cm-ink-950);}
 .clientcard__top{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-bottom:0.9rem;margin-bottom:0.9rem;border-bottom:1px solid var(--cm-line-faint);}
 .clientcard__name{font-family:var(--font-display);font-size:1.1rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
 .clientcard__sub{font-size:0.82rem;color:var(--cm-text-subtle);margin-top:2px;}
-.clientcard__grid{display:grid;grid-template-columns:1.6fr 0.9fr 1fr 1fr 1fr;gap:1rem;}
+.clientcard__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;}
 .cc-v{color:var(--cm-text-strong);font-weight:var(--w-semibold);font-size:0.95rem;margin-top:3px;}
 .cc-m{font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);margin-top:2px;}
 @media(max-width:760px){.clientcard__grid{grid-template-columns:1fr 1fr;}}
@@ -330,7 +330,7 @@ body{background:var(--cm-ink-950);}
 .cc-contacts{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--cm-border-strong);display:flex;flex-direction:column;gap:1rem;}
 .cc-contact{background:var(--cm-ink-850);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:1rem 1.1rem;}
 .cc-contact__top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
-.cc-contact__grid{margin-top:0.8rem;}
+.cc-contact__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-top:0.8rem;max-width:680px;}
 .cc-offices{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--cm-border-strong);display:flex;flex-direction:column;gap:1rem;}
 .clientcard--parent{border-left:2px solid var(--cm-silver);}
 .clientcard--office{background:var(--cm-ink-850);}
@@ -555,12 +555,12 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 <div class="login-gate" id="loginGate">
   <form class="login-card" onsubmit="attemptLogin();return false;">
     <h2>Sign in to your workspace</h2>
-    <p class="login-sub">Phase 1 pilot — quotation &amp; invoicing. Use the account issued to your team.</p>
+    <p class="login-sub">Use the account issued to your team.</p>
     <label>Email</label>
     <input id="loginEmail" type="email" placeholder="you@company.com" autocomplete="username" required>
     <label>Password</label>
     <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" required>
-    <div class="login-err" id="loginErr" hidden>That email isn't recognized for this pilot. Check with your Carve Model contact.</div>
+    <div class="login-err" id="loginErr" hidden>That email isn't recognized. Check with your Carve Model contact.</div>
     <button type="submit" class="btn btn--primary" style="width:100%;margin-top:0.9rem;">Sign in</button>
   </form>
 </div>
@@ -574,15 +574,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="id-name" id="whoName">Daniel Reyes</div>
         <div class="id-role" id="whoRole">Reyes Development Group</div>
       </div>
-      <button class="id-caret" onclick="if(confirm('Log out of your Carve Model account?'))logOutSession();" aria-label="Account menu">▾</button>
     </div>
     <div class="side__demo">
-      <span class="demo-tag" style="color:var(--cm-silver);">◆ Phase 1 pilot · quotation &amp; invoicing only</span>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.6rem;margin-top:0.6rem;">
-        <span class="demo-note" style="margin-top:0;" id="sessionLabel">Signed in</span>
-        <button class="btn btn--ghost btn--sm" onclick="if(confirm('Log out of your Carve Model account?'))logOutSession();">Log out</button>
-      </div>
-      <button class="btn btn--ghost btn--sm studio-only" style="width:100%;margin-top:0.6rem;" onclick="resetTestData();">Reset test data</button>
+      <span class="demo-note" style="margin-top:0;" id="sessionLabel">Signed in</span>
     </div>
     <div class="side__project">
       <span class="mock__k">Project</span>
@@ -1361,7 +1355,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <input type="date" id="clientTo" aria-label="To date" onchange="applyClientRange()">
         </div>
       </div>
-      <div class="kpis" id="clientsKpis" style="grid-template-columns:repeat(4,1fr);"></div>
+      <div class="kpis" id="clientsKpis" style="grid-template-columns:repeat(6,1fr);"></div>
       <div class="panel" style="margin-top:1.25rem;">
         <div class="panel__head"><h3 id="clientsHeading">Clients</h3><div style="display:flex;align-items:center;gap:0.9rem;"><span class="mock__k" id="clientsCount"></span><button class="btn btn--ghost btn--sm" onclick="exportClientsCSV()">↓ Export to Excel (CSV)</button></div></div>
         <div class="panel__body" id="companyList"></div>
@@ -1728,6 +1722,31 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
+<!-- Add client account modal (set up portal + invoice access for a client) -->
+<div class="modal-overlay" id="addClientModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Add a client account">
+    <div class="modal__head"><h3>Add a client account</h3><button class="modal__x" onclick="closeAddClient()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <form onsubmit="return createClientAccount(event)">
+        <div class="efield-row">
+          <div class="efield"><label for="ac-contact">Client name</label><input id="ac-contact" type="text" required placeholder="Jane Doe"></div>
+          <div class="efield"><label for="ac-title">Title / position <span class="optional">(optional)</span></label><input id="ac-title" type="text" placeholder="e.g. Director of Development"></div>
+        </div>
+        <div class="efield-row">
+          <div class="efield"><label for="ac-company">Company</label><input id="ac-company" type="text" placeholder="Firm / studio"></div>
+          <div class="efield"><label for="ac-email">Email</label><input id="ac-email" type="email" required placeholder="jane@firm.com"></div>
+        </div>
+        <div class="efield-row">
+          <div class="efield"><label for="ac-phone">Phone <span class="optional">(optional)</span></label><input id="ac-phone" type="tel" placeholder="(555) 000-0000"></div>
+        </div>
+        <div class="changes__act" style="margin-top:0.4rem;">
+          <button class="btn btn--primary" type="submit">Create account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <!-- Payment method modal -->
 <div class="modal-overlay" id="payModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Pay invoice">
@@ -1889,7 +1908,9 @@ var currentProjTitle='Aria Tower — Los Angeles, CA';
 var PROJECT_VIEWS=['overview','quote','editquote','changes','milestones','files','messages','invoices'];
 function go(v){
   // Project-scoped views require a selected project. If none, show the picker.
-  if(PROJECT_VIEWS.indexOf(v)>=0 && !document.getElementById('projSelect').value){
+  // Exception: Carve Admin's Invoices tab is a studio-wide billing/client-account view, not tied to one project.
+  var skipProjectGate=(v==='invoices'&&document.body.dataset.role==='owner');
+  if(!skipProjectGate&&PROJECT_VIEWS.indexOf(v)>=0 && !document.getElementById('projSelect').value){
     document.querySelectorAll('.view').forEach(function(s){s.hidden=true;});
     document.getElementById('view-pickproject').hidden=false;
     document.querySelectorAll('.navbtn').forEach(function(b){b.classList.toggle('on',b.dataset.view===v);});
@@ -1903,7 +1924,7 @@ function go(v){
   document.querySelectorAll('.navbtn').forEach(function(b){b.classList.toggle('on',b.dataset.view===v);});
   document.getElementById('viewTitle').textContent=titles[v];
   // Oversight / portfolio views aren't tied to one project; project views are.
-  var projScoped=(v!=='clients'&&v!=='team'&&v!=='leads'&&v!=='myprojects'&&v!=='projects'&&v!=='sourcing');
+  var projScoped=(v!=='clients'&&v!=='team'&&v!=='leads'&&v!=='myprojects'&&v!=='projects'&&v!=='sourcing')&&!skipProjectGate;
   var oversightPrefix=(document.body.dataset.role==='client')?'':'Studio · ';
   document.getElementById('crumb').textContent=(projScoped?currentProjTitle+' · ':oversightPrefix)+titles[v];
   document.body.classList.toggle('at-portfolio',v==='myprojects'||v==='projects');
@@ -2387,6 +2408,77 @@ function alChangePlan(){
   var input=document.getElementById('al-planInput');if(input)input.value='';
 }
 function closeAddLead(){ document.getElementById('addLeadModal').hidden=true; }
+var assignAccountTarget=null; // {companyId,contactId} when assigning an existing contact; null when adding fresh
+function openAddClient(companyId,contactId){
+  ['ac-contact','ac-title','ac-company','ac-email','ac-phone'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
+  assignAccountTarget=null;
+  if(companyId&&contactId){
+    var co=COMPANIES.filter(function(c){return c.id===companyId;})[0];
+    var contact=co&&co.contacts.filter(function(c){return c.id===contactId;})[0];
+    if(co&&contact){
+      assignAccountTarget={companyId:companyId,contactId:contactId};
+      document.getElementById('ac-contact').value=contact.name||'';
+      document.getElementById('ac-title').value=contact.title||'';
+      document.getElementById('ac-company').value=co.name||'';
+      document.getElementById('ac-email').value=contact.email||'';
+      document.getElementById('ac-phone').value=contact.phone||'';
+    }
+  }
+  document.getElementById('addClientModal').hidden=false;
+}
+function closeAddClient(){ document.getElementById('addClientModal').hidden=true; }
+function createClientAccount(e){
+  e.preventDefault();
+  var name=document.getElementById('ac-contact').value.trim();
+  var title=document.getElementById('ac-title').value.trim();
+  var companyName=document.getElementById('ac-company').value.trim()||'—';
+  var email=document.getElementById('ac-email').value.trim();
+  var phone=document.getElementById('ac-phone').value.trim();
+  if(!name||!email)return false;
+  var role=document.body.dataset.role;
+  var rep=(role==='sales')?'jordan':null;
+  if(assignAccountTarget){
+    var targetCo=COMPANIES.filter(function(c){return c.id===assignAccountTarget.companyId;})[0];
+    var targetContact=targetCo&&targetCo.contacts.filter(function(c){return c.id===assignAccountTarget.contactId;})[0];
+    if(targetContact){
+      targetContact.name=name;targetContact.title=title;targetContact.email=email;targetContact.phone=phone;
+      targetContact.hasAccount=true;
+    }
+  }else{
+    var contact={id:'c'+Date.now(),name:name,title:title,email:email,phone:phone,quoteRequests:0,projects:[],hasAccount:true};
+    var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
+    if(co){co.contacts.push(contact);}
+    else{COMPANIES.push({id:'co'+Date.now(),name:companyName,parentId:null,rep:rep,contacts:[contact]});}
+  }
+  assignAccountTarget=null;
+  closeAddClient();
+  showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+') — sign-in and invoice access sent.');
+  if(document.getElementById('view-clients')&&!document.getElementById('view-clients').hidden&&window.scopeClients)window.scopeClients(role);
+  return false;
+}
+/* Auto-list a submitted brief's contact under Clients — no portal account yet,
+   just a record so Carve Admin can find them and click "+ Assign account". */
+function ensureClientContact(l){
+  if(!l||!l.client||!l.client.Email)return;
+  var name=l.client.Name||'(name not given)';
+  var title=l.client.Title||'';
+  var companyName=(l.client.Company&&l.client.Company!=='—')?l.client.Company:'Independent / Unlisted';
+  var email=l.client.Email;
+  var phone=l.client.Phone||'';
+  var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
+  if(!co){co={id:'co'+Date.now()+Math.random().toString(36).slice(2,6),name:companyName,parentId:null,rep:null,contacts:[]};COMPANIES.push(co);}
+  var activityAt=l.receivedAtISO||l.receivedAt||null;
+  var existing=co.contacts.filter(function(c){return c.email&&c.email.toLowerCase()===email.toLowerCase();})[0];
+  if(existing){
+    existing.quoteRequests=(existing.quoteRequests||0)+1;
+    if(activityAt&&(!existing.lastActivityAt||activityAt>existing.lastActivityAt))existing.lastActivityAt=activityAt;
+  }else{
+    co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:activityAt});
+  }
+}
+function syncClientsFromLeads(){
+  (window.SDB.leads||[]).forEach(ensureClientContact);
+}
 /* ---- Link list (for files too large to upload directly — supports more than one) ---- */
 var alPickedLinks=[];
 function alRenderLinks(){
@@ -2497,10 +2589,12 @@ function createLead(e){
       filelink:dropboxLinks.length?dropboxLinks:null,
       boundaryMap:boundaryMap,
       receivedAt:today,
+      receivedAtISO:new Date().toISOString(),
       source:source||'Manual entry'
     };
     window.SDB.leads=window.SDB.leads||[];
     window.SDB.leads.unshift(lead);
+    ensureClientContact(lead);
     window.saveSRC();
     window.SRC_renderLeads();
     if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Add to inbox';}
@@ -2678,11 +2772,12 @@ var COMPANIES=[
      projects:[{name:'Westline Tower — Los Angeles, CA',statusClass:'await',statusLabel:'In fabrication',value:9400,paid:4700,date:'2026-05-11'}]}
   ]},
   {id:'arclight-ny',name:'Arclight Design Partners — New York',parentId:'arclight',rep:'sam',contacts:[
-    {id:'owen',name:'Owen Park',title:'Associate Principal',email:'owen.park@arclightdp.com',phone:'(212) 555-0189',quoteRequests:1,
+    {id:'owen',name:'Owen Park',title:'Associate Principal',email:'owen.park@arclightdp.com',phone:'(212) 555-0189',quoteRequests:1,hasAccount:false,
      projects:[{name:'Hudson Yards Pavilion — New York, NY',statusClass:'done',statusLabel:'Delivered',value:12600,paid:12600,date:'2026-01-22'}]}
   ]}
 ];
 var expandedCompanies={},expandedParents={};
+var selectedCompanyId=null; // when set, the Clients dashboard KPIs show just this company instead of the studio-wide totals
 function companyLatestDate(co){
   var dates=[];
   co.contacts.forEach(function(c){c.projects.forEach(function(p){dates.push(p.date);});});
@@ -2691,6 +2786,11 @@ function companyLatestDate(co){
 }
 function toggleCompany(id){
   expandedCompanies[id]=!expandedCompanies[id];
+  selectedCompanyId=expandedCompanies[id]?id:null;
+  renderClients(document.body.dataset.role);
+}
+function clearCompanySelection(){
+  selectedCompanyId=null;
   renderClients(document.body.dataset.role);
 }
 function toggleParent(id){
@@ -2765,12 +2865,14 @@ function ungroupCompany(companyId){
   scopeClients(document.body.dataset.role);
 }
 function contactSubtotals(co){
-  var value=0,paid=0,quotes=0;
+  var value=0,paid=0,quotes=0,projectCount=0,lastActivityAt=null;
   co.contacts.forEach(function(c){
     quotes+=c.quoteRequests||0;
+    projectCount+=c.projects.length;
     c.projects.forEach(function(p){value+=p.value;paid+=p.paid;});
+    if(c.lastActivityAt&&(!lastActivityAt||c.lastActivityAt>lastActivityAt))lastActivityAt=c.lastActivityAt;
   });
-  return {value:value,paid:paid,quotes:quotes};
+  return {value:value,paid:paid,quotes:quotes,projectCount:projectCount,lastActivityAt:lastActivityAt};
 }
 function renderCompanyCard(co,repName){
   var sub=contactSubtotals(co);
@@ -2779,10 +2881,20 @@ function renderCompanyCard(co,repName){
     var projHtml=c.projects.map(function(p){
       return '<div class="cc-projrow"><span>'+esc(p.name)+'</span><span class="chip '+esc(p.statusClass)+'">'+esc(p.statusLabel)+'</span></div>';
     }).join('');
+    var delivered=c.projects.filter(function(p){return p.statusLabel==='Delivered';}).length;
+    var inProgress=c.projects.length-delivered;
     return '<div class="cc-contact">'+
       '<div class="cc-contact__top"><div><div class="cc-v">'+esc(c.name)+(c.title?(', '+esc(c.title)):'')+'</div><div class="cc-m">'+esc(c.email)+(c.phone?(' · '+esc(c.phone)):'')+'</div></div>'+
-      '<button class="btn btn--ghost btn--sm" onclick="openLinkContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Link to another company</button></div>'+
-      '<div class="cc-contact__grid"><div><span class="mock__k">Quote requests</span><div class="cc-v">'+(c.quoteRequests||0)+'</div></div></div>'+
+      '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'+
+      (c.hasAccount===false?'<button class="btn btn--primary btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">+ Assign account</button>':'')+
+      '<button class="btn btn--ghost btn--sm" onclick="openLinkContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Link to another company</button></div></div>'+
+      '<div class="cc-contact__grid">'+
+        '<div><span class="mock__k">Quote requests</span><div class="cc-v">'+(c.quoteRequests||0)+'</div></div>'+
+        '<div><span class="mock__k">Projects delivered</span><div class="cc-v">'+delivered+'</div></div>'+
+        '<div><span class="mock__k">Projects in progress</span><div class="cc-v">'+inProgress+'</div></div>'+
+        '<div><span class="mock__k">Conversion rate</span><div class="cc-v">'+conversionRate(c.quoteRequests,c.projects.length)+'</div></div>'+
+        '<div><span class="mock__k">Last activity</span><div class="cc-v">'+formatDateTime(c.lastActivityAt)+'</div></div>'+
+      '</div>'+
       '<div class="clientcard__projects"><span class="mock__k">Projects</span><div class="cc-projlist">'+projHtml+'</div></div>'+
     '</div>';
   }).join('');
@@ -2798,6 +2910,8 @@ function renderCompanyCard(co,repName){
       '<div><span class="mock__k">Project value</span><div class="cc-v">$'+sub.value.toLocaleString()+'</div></div>'+
       '<div><span class="mock__k">Paid</span><div class="cc-v">$'+sub.paid.toLocaleString()+'</div></div>'+
       '<div><span class="mock__k">Balance</span><div class="cc-v">$'+(sub.value-sub.paid).toLocaleString()+'</div></div>'+
+      '<div><span class="mock__k">Conversion rate</span><div class="cc-v">'+conversionRate(sub.quotes,sub.projectCount)+'</div></div>'+
+      '<div><span class="mock__k">Last activity</span><div class="cc-v">'+formatDateTime(sub.lastActivityAt)+'</div></div>'+
     '</div>'+
     (expanded?('<div class="cc-contacts">'+contactsHtml+'</div>'):'')+
   '</div>';
@@ -2844,7 +2958,7 @@ function renderClients(role){
   var rep=REP_OF_ROLE[role];           // undefined for owner → sees all
   var list=document.getElementById('companyList');
   if(!list)return;
-  var shown=0,total=0,paid=0,quoteReqTotal=0;
+  var shown=0,total=0,paid=0,quoteReqTotal=0,projectTotal=0,lastActivityGlobal=null;
   var visibleCos=COMPANIES.filter(function(co){
     return (!rep||co.rep===rep)&&inRange(companyLatestDate(co));
   });
@@ -2855,9 +2969,10 @@ function renderClients(role){
   var html='';
   parentGroups.forEach(function(g){
     var repNames=[].concat.apply([],g.offices.map(function(o){return [o.rep];})).filter(function(v,i,a){return a.indexOf(v)===i;}).map(function(r){return r==='jordan'?'Jordan Lee':(r==='sam'?'Sam Ortiz':r);}).join(', ');
-    var globalValue=0,globalPaid=0,globalQuotes=0;
-    g.offices.forEach(function(o){var s=contactSubtotals(o);globalValue+=s.value;globalPaid+=s.paid;globalQuotes+=s.quotes;});
+    var globalValue=0,globalPaid=0,globalQuotes=0,globalProjects=0,globalActivity=null;
+    g.offices.forEach(function(o){var s=contactSubtotals(o);globalValue+=s.value;globalPaid+=s.paid;globalQuotes+=s.quotes;globalProjects+=s.projectCount;if(s.lastActivityAt&&(!globalActivity||s.lastActivityAt>globalActivity))globalActivity=s.lastActivityAt;});
     total+=globalValue;paid+=globalPaid;quoteReqTotal+=globalQuotes;shown+=g.offices.length;
+    projectTotal+=globalProjects;if(globalActivity&&(!lastActivityGlobal||globalActivity>lastActivityGlobal))lastActivityGlobal=globalActivity;
     var pExpanded=!!expandedParents[g.parent.id];
     html+='<div class="clientcard clientcard--parent">'+
       '<div class="clientcard__top" style="cursor:pointer;" onclick="toggleParent(\''+esc(g.parent.id)+'\')">'+
@@ -2869,6 +2984,8 @@ function renderClients(role){
         '<div><span class="mock__k">Project value</span><div class="cc-v">$'+globalValue.toLocaleString()+'</div></div>'+
         '<div><span class="mock__k">Paid</span><div class="cc-v">$'+globalPaid.toLocaleString()+'</div></div>'+
         '<div><span class="mock__k">Balance</span><div class="cc-v">$'+(globalValue-globalPaid).toLocaleString()+'</div></div>'+
+        '<div><span class="mock__k">Conversion rate</span><div class="cc-v">'+conversionRate(globalQuotes,globalProjects)+'</div></div>'+
+        '<div><span class="mock__k">Last activity</span><div class="cc-v">'+formatDateTime(globalActivity)+'</div></div>'+
       '</div>'+
       (pExpanded?('<div class="cc-offices">'+g.offices.map(function(o){return renderCompanyCard(o,o.rep==='jordan'?'Jordan Lee':(o.rep==='sam'?'Sam Ortiz':o.rep));}).join('')+'</div>'):'')+
     '</div>';
@@ -2877,6 +2994,7 @@ function renderClients(role){
     shown++;
     var sub=contactSubtotals(co);
     total+=sub.value;paid+=sub.paid;quoteReqTotal+=sub.quotes;
+    projectTotal+=sub.projectCount;if(sub.lastActivityAt&&(!lastActivityGlobal||sub.lastActivityAt>lastActivityGlobal))lastActivityGlobal=sub.lastActivityAt;
     var repName=co.rep==='jordan'?'Jordan Lee':(co.rep==='sam'?'Sam Ortiz':co.rep);
     html+=renderCompanyCard(co,repName);
   });
@@ -2886,21 +3004,43 @@ function renderClients(role){
   var count=document.getElementById('clientsCount');
   var heading=document.getElementById('clientsHeading');
   if(!notice)return;
-  if(role==='owner'){
-    notice.innerHTML='<b>Owner access.</b> Contact and finance for <b>all clients</b> across the studio · showing <b>'+rangeLabel()+'</b>.';
-    heading.textContent='All clients';
-  }else if(role==='sales'){
-    notice.innerHTML='<b>Sales access.</b> Your <b>own clients only</b> (Jordan Lee) · showing <b>'+rangeLabel()+'</b>.';
-    heading.textContent='Your clients';
+  // Selecting a single company (click its card) switches the dashboard KPIs above
+  // from studio-wide totals to just that company's numbers.
+  var selCo=selectedCompanyId?visibleCos.filter(function(co){return co.id===selectedCompanyId;})[0]:null;
+  var dashShown=shown,dashQuotes=quoteReqTotal,dashTotal=total,dashPaid=paid,dashProjects=projectTotal,dashActivity=lastActivityGlobal;
+  if(selCo){
+    var selSub=contactSubtotals(selCo);
+    dashShown=1;dashQuotes=selSub.quotes;dashTotal=selSub.value;dashPaid=selSub.paid;dashProjects=selSub.projectCount;dashActivity=selSub.lastActivityAt;
   }
-  count.textContent=shown+(shown===1?' company':' companies');
+  notice.innerHTML='';
+  if(role==='owner'){
+    heading.innerHTML=selCo?(esc(selCo.name)+' <button class="btn btn--ghost btn--sm" style="margin-left:0.6rem;" onclick="clearCompanySelection()">← All clients</button>'):'All clients';
+  }else if(role==='sales'){
+    heading.innerHTML=selCo?(esc(selCo.name)+' <button class="btn btn--ghost btn--sm" style="margin-left:0.6rem;" onclick="clearCompanySelection()">← Your clients</button>'):'Your clients';
+  }
+  count.textContent=selCo?esc(selCo.name):(shown+(shown===1?' company':' companies'));
   kpis.innerHTML=
-    '<div class="kpi"><span class="mock__k">Companies</span><div class="big">'+shown+'</div></div>'+
-    '<div class="kpi"><span class="mock__k">Quote requests submitted</span><div class="big">'+quoteReqTotal+'</div></div>'+
-    '<div class="kpi"><span class="mock__k">Total project value</span><div class="big">$'+total.toLocaleString()+'</div></div>'+
-    '<div class="kpi"><span class="mock__k">Collected</span><div class="big">$'+paid.toLocaleString()+'</div><div class="sub">$'+(total-paid).toLocaleString()+' outstanding</div></div>';
+    '<div class="kpi"><span class="mock__k">'+(selCo?'Contacts':'Companies')+'</span><div class="big">'+(selCo?selCo.contacts.length:dashShown)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Quote requests submitted</span><div class="big">'+dashQuotes+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Total project value</span><div class="big">$'+dashTotal.toLocaleString()+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Collected</span><div class="big">$'+dashPaid.toLocaleString()+'</div><div class="sub">$'+(dashTotal-dashPaid).toLocaleString()+' outstanding</div></div>'+
+    '<div class="kpi"><span class="mock__k">Conversion rate</span><div class="big">'+conversionRate(dashQuotes,dashProjects)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Last activity</span><div class="big" style="font-size:1.2rem;">'+formatDateTime(dashActivity)+'</div></div>';
 }
 function money(s){if(!s)return 0;return parseInt(s.replace(/[^0-9]/g,''),10)||0;}
+function formatDateTime(iso){
+  if(!iso)return '—';
+  var d=/^\d{4}-\d{2}-\d{2}$/.test(iso)?new Date(iso+'T00:00:00'):new Date(iso);
+  if(isNaN(d.getTime()))return '—';
+  var hasTime=!/^\d{4}-\d{2}-\d{2}$/.test(iso);
+  var datePart=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  if(!hasTime)return datePart;
+  return datePart+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+function conversionRate(quoteRequests,projectCount){
+  if(!quoteRequests)return '—';
+  return Math.round((Math.min(projectCount,quoteRequests)/quoteRequests)*100)+'%';
+}
 function setRole(r){
   document.body.dataset.role=r;
   ['Client','Owner','Sales','Factory','Prodtech'].forEach(function(R){
@@ -3382,13 +3522,6 @@ function logOutSession(){
   localStorage.removeItem(SESSION_KEY);
   location.reload();
 }
-function resetTestData(){
-  if(!confirm('This clears every test lead and brief from Sourcing & Quotes \u2014 for everyone on the pilot, since it\u2019s a shared live doc. Sample client-side projects (Aria Tower, etc.) are unaffected. Continue?'))return;
-  try{localStorage.removeItem('cm_portal_sourcing_v22');}catch(e){}
-  var done=function(){location.reload();};
-  fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:[],leads:[]})})
-    .then(done).catch(function(e){console.error('Shared reset failed:',e);alert('Could not clear the shared store (see console). Local test data was still cleared.');done();});
-}
 (function(){
   var raw=localStorage.getItem(SESSION_KEY);
   if(!raw){document.getElementById('loginGate').style.display='flex';return;}
@@ -3598,6 +3731,7 @@ function migrateBriefFields(briefs){
   return changed;
 }
 if(migrateBriefFields(SDB.briefs))saveSRC();
+syncClientsFromLeads();
 function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];return d;}}}catch(e){}return seedSRC();}
 function saveSRC(){
   try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
@@ -3979,10 +4113,11 @@ function SRC_carveAdmin(){
       :('Open · '+totalOptions+' option'+(totalOptions==1?'':'s'));
     var vendorCompany=function(sid){var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===sid;})[0];var s=shop(sid);return admin?admin.company:(s?s.name:sid);};
     var invitedNames=(b.invited||[]).map(vendorCompany);
-    var codeBits=[]; if(b.code)codeBits.push(esc(b.code)); if(b.sentDate)codeBits.push('sent '+esc(b.sentDate)+(invitedNames.length?' to '+esc(invitedNames.join(', ')):''));
+    var codeBits=[]; if(b.sentDate)codeBits.push('sent '+esc(b.sentDate)+(invitedNames.length?' to '+esc(invitedNames.join(', ')):''));
+    var codeDisplay=b.code?('<span style="cursor:pointer;" onclick="SRC_editInvoiceNumber(\''+b.id+'\')" title="Click to edit the invoice number">'+esc(b.code)+' ✎</span>'+(codeBits.length?' · ':'')):'';
     if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=false; // all briefs start collapsed by default
     var expanded=SRC_EXPANDED[b.id];
-    html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+'"><div class="panel__head"><div><span class="src-card__code">'+codeBits.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+(confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'')+'<span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleExpand(\''+b.id+'\')">'+(expanded?'▾ Collapse':'▸ Expand')+'</span>'+'</div></div><div class="panel__body">';
+    html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+'"><div class="panel__head"><div><span class="src-card__code">'+codeDisplay+codeBits.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+(confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'')+'<span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleExpand(\''+b.id+'\')">'+(expanded?'▾ Collapse':'▸ Expand')+'</span>'+'</div></div><div class="panel__body">';
     if(!expanded){
       html+='<div style="font-size:0.85rem;color:var(--cm-text-muted);">'+esc(statusText)+'</div></div></div>';
       return;
@@ -4127,10 +4262,9 @@ window.SRC_saveClientQuote=function(id){
   if(!price){alert('Enter the final price to send to the client.');return;}
   var prevComments=(b.clientQuote&&b.clientQuote.clientComments)||[];
   var wasSent=b.clientQuote&&b.clientQuote.sent===false; // resend after Edit & resend, vs. first send
-  // CM-#### is an invoice-style number — only assign one once an actual fee
-  // proposal exists for the client, not back when the brief first went out to
-  // production shops for quoting.
-  if(!b.code)b.code='CM-'+Math.floor(1000+Math.random()*9000);
+  // CM-#### is the official invoice number — only assigned once production is
+  // awarded (see SRC_award), since a fee proposal alone doesn't guarantee the
+  // project moves forward.
   b.clientQuote={price:price,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true,clientComments:prevComments};
   saveSRC();SRC_render();
   showEmailToast((wasSent?'Updated quote resent to ':'Quote sent to ')+'the client — they\'ll see it in their portal.');
@@ -4186,6 +4320,10 @@ window.SRC_award=function(id,shopId,variantIndex){
   if(!confirm((already?'Switch confirmed production to ':'Confirm ')+b.title+' with '+label+'? '+(already?'The previous shop will be told they are no longer awarded. ':'')+'They\u2019ll be notified the job is theirs; other quoted shops are told they weren\u2019t selected. Client identity stays private.'))return;
   b.status='awarded';b.awarded=shopId;b.awardedVariantIndex=vi;b.picked=shopId;b.pickedVariantIndex=vi;
   if(!sameBasis)b.clientQuote=null; // basis changed — the finalized client price no longer matches, needs re-review
+  // The invoice number is issued the moment production is confirmed — not before,
+  // since a quote alone doesn't guarantee the project moves forward. Stays fixed
+  // once assigned, even if production is later switched to a different shop.
+  if(!b.code)b.code='CM-'+Math.floor(1000+Math.random()*9000);
   notifyShop(shopId,'You were awarded "'+b.title+'".');
   showEmailToast('Sent to '+shop(shopId).name+' — awarded "'+b.title+'".');
   if(prevShop&&prevShop!==shopId){
@@ -4196,6 +4334,16 @@ window.SRC_award=function(id,shopId,variantIndex){
       notifyShop(s.id,'"'+b.title+'" was awarded to another shop.');
     }
   });
+  saveSRC();SRC_render();
+};
+window.SRC_editInvoiceNumber=function(bid){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b||!b.code)return;
+  var next=prompt('Invoice number for "'+b.title+'":',b.code);
+  if(next==null)return;
+  next=next.trim();
+  if(!next)return;
+  b.code=next;
   saveSRC();SRC_render();
 };
 
@@ -4435,6 +4583,10 @@ window.SRC_acceptClientQuote=function(bid){
   var total=b.clientQuote.price;
   var dep=Math.round(total/2), bal=total-dep;
   var today=new Date().toISOString().slice(0,10);
+  // Normally the invoice number is already assigned by the time a client can
+  // accept (production gets awarded first) — this is just a safety net for the
+  // edge case where a price was sent to the client before production was awarded.
+  if(!b.code)b.code='CM-'+Math.floor(1000+Math.random()*9000);
   b.clientQuote.accepted=true;
   b.clientQuote.invoice={
     depositId:b.code.replace('CM-','CM-D'),
@@ -4727,6 +4879,7 @@ function pullSourcing(){
       SDB.briefs=data.briefs||[];
       SDB.leads=data.leads||[];
       migrateBriefFields(SDB.briefs);
+      if(window.syncClientsFromLeads)window.syncClientsFromLeads();
       try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
       // Skip the re-render while a field is actively focused OR was typed into in
       // the last few seconds (e.g. mid-typing a quote, or just tabbed to the next
