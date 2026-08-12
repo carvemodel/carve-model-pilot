@@ -1,5 +1,39 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { createClient } from 'redis';
+
+// Shown on the homepage's "Selected work" tiles until real projects exist —
+// same data shape as works.astro (id, name, scale, material, imageUrl,
+// imageWidth, imageHeight) so the two pages can share the same Redis source.
+const FALLBACK_HOME_WORKS = [
+  { id: 'hw1', name: 'Mixed-use Tower', scale: '1:144', material: 'ABS', imageUrl: '', imageWidth: 1, imageHeight: 1 },
+  { id: 'hw2', name: 'Masterplan', scale: '1:500', material: 'ABS', imageUrl: '', imageWidth: 1, imageHeight: 1 },
+  { id: 'hw3', name: 'Sales Gallery', scale: '1:50', material: 'ABS', imageUrl: '', imageWidth: 1, imageHeight: 1 },
+  { id: 'hw4', name: 'Product Mockup', scale: '1:1', material: 'Resin', imageUrl: '', imageWidth: 1, imageHeight: 1 },
+  { id: 'hw5', name: 'Film Miniature', scale: 'Film-grade', material: 'Foam & wood', imageUrl: '', imageWidth: 1, imageHeight: 1 },
+];
+
+// Pulls the same Redis-backed project list used on /works, at build time.
+// Shows the 5 most recently added projects (admin-works.html appends new
+// entries to the end of the array), newest first. Falls back to sample
+// tiles if REDIS_URL is missing or the fetch fails, so the build never breaks.
+let latestWorks = FALLBACK_HOME_WORKS;
+if (process.env.REDIS_URL) {
+  try {
+    const client = createClient({ url: process.env.REDIS_URL });
+    await client.connect();
+    const raw = await client.get('carve:works');
+    await client.disconnect();
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.projects) && data.projects.length) {
+        latestWorks = data.projects.slice(-5).reverse();
+      }
+    }
+  } catch (err) {
+    console.warn('index.astro: could not load projects from Redis, using fallback data.', err);
+  }
+}
 ---
 <BaseLayout
   title="Carve Model — Architectural Scale Model Maker for Developers & Architects"
@@ -8,7 +42,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   ogTitle="Carve Model — Architectural Scale Model Maker"
   ogDescription="Physical models built for clarity, scale, and realism. Architectural scale models, sales-gallery models, film miniatures, and product prototypes."
   ogImage="https://www.physical-model.com/assets/og-home.jpg"
-  imageSlot={false}
+  imageSlot={true}
 >
 <Fragment slot="head">
 <meta name="robots" content="index,follow">
@@ -145,13 +179,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 /* works */
 .works-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:3rem;}
 .work{position:relative;}
-.work image-slot{width:100%;aspect-ratio:1/1;}
+.work > a{display:block;}
+.work:nth-child(1) > a{height:100%;}
+.work image-slot,.work img{display:block;width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;}
 .work:nth-child(1){grid-row:span 2;}
-.work:nth-child(1) image-slot{aspect-ratio:auto;height:100%;}
+.work:nth-child(1) image-slot,.work:nth-child(1) img{aspect-ratio:auto;height:100%;}
 .work__cap{display:flex;justify-content:space-between;align-items:baseline;margin-top:0.8rem;gap:1rem;}
 .work__cap h4{font-family:var(--font-display);font-weight:var(--w-semibold);font-size:1rem;color:var(--cm-text-strong);}
 .work__cap .tick{white-space:nowrap;}
-@media(max-width:820px){.works-grid{grid-template-columns:1fr 1fr;}.work:nth-child(1){grid-row:span 1;}.work:nth-child(1) image-slot{aspect-ratio:1/1;}}
+@media(max-width:820px){.works-grid{grid-template-columns:1fr 1fr;}.work:nth-child(1){grid-row:span 1;}.work:nth-child(1) image-slot,.work:nth-child(1) img{aspect-ratio:1/1;height:auto;}}
 
 /* platform feature */
 .platform{background:var(--cm-ink-850);border:1px solid var(--cm-border);border-radius:var(--r-sm);overflow:hidden;display:grid;grid-template-columns:1fr 1.1fr;gap:0;margin-top:3rem;}
@@ -396,26 +432,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <a class="btn btn--ghost reveal svc-all-btn" href="/works">View portfolio <span class="arrow">→</span></a>
     </div>
     <div class="works-grid">
-      <figure class="work reveal" style="margin:0;">
-        <image-slot id="work-1" placeholder="Drop project photo"></image-slot>
-        <figcaption class="work__cap"><h4>Mixed-use Tower</h4><span class="tick">1:144 · DTLA</span></figcaption>
-      </figure>
-      <figure class="work reveal" data-delay="80" style="margin:0;">
-        <image-slot id="work-2" placeholder="Drop project photo"></image-slot>
-        <figcaption class="work__cap"><h4>Masterplan</h4><span class="tick">1:500</span></figcaption>
-      </figure>
-      <figure class="work reveal" data-delay="120" style="margin:0;">
-        <image-slot id="work-3" placeholder="Drop project photo"></image-slot>
-        <figcaption class="work__cap"><h4>Sales Gallery</h4><span class="tick">1:50</span></figcaption>
-      </figure>
-      <figure class="work reveal" data-delay="160" style="margin:0;">
-        <image-slot id="work-4" placeholder="Drop project photo"></image-slot>
-        <figcaption class="work__cap"><h4>Product Mockup</h4><span class="tick">1:1</span></figcaption>
-      </figure>
-      <figure class="work reveal" data-delay="200" style="margin:0;">
-        <image-slot id="work-5" placeholder="Drop project photo"></image-slot>
-        <figcaption class="work__cap"><h4>Film Miniature</h4><span class="tick">Film-grade</span></figcaption>
-      </figure>
+      {latestWorks.map((w, i) => {
+        // The first tile spans 2 grid rows (CSS nth-child(1) rule) and fills
+        // that taller cell via aspect-ratio:auto;height:100% — skip the
+        // inline aspect-ratio there so it doesn't override that CSS.
+        const ratio = w.imageWidth && w.imageHeight ? `${w.imageWidth}/${w.imageHeight}` : '1/1';
+        const ratioStyle = i === 0 ? '' : `aspect-ratio:${ratio};`;
+        const tick = [w.scale, w.material].filter(Boolean).join(' · ');
+        return (
+          <figure class="work reveal" data-delay={i === 0 ? undefined : i * 40} style="margin:0;">
+            {w.imageUrl
+              ? <a href="/works" aria-label={`View ${w.name} on the works page`}><img src={w.imageUrl} alt={w.name} style={ratioStyle} loading="lazy" /></a>
+              : <image-slot id={w.id} placeholder="Drop project photo" style={ratioStyle}></image-slot>}
+            <figcaption class="work__cap"><h4>{w.name}</h4><span class="tick">{tick}</span></figcaption>
+          </figure>
+        );
+      })}
     </div>
   </div>
 </section>
@@ -513,21 +545,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <span class="eyebrow reveal">Common questions</span>
     <h2 class="display-md reveal mt-3">Good to know.</h2>
     <div class="faq-list reveal">
-      <details class="faq-item" open>
-        <summary>How much does an architectural model cost? <span class="pm"></span></summary>
-        <p>Architectural scale model projects typically begin around $2,000, with final pricing based on scale, level of detail, and presentation requirements. Because each model is custom-built, pricing is confirmed after reviewing project scope and intended use.</p>
+      <details class="faq-item">
+        <summary>How much does a physical model cost? <span class="pm"></span></summary>
+        <p>Carve Model projects start at US$4,000. Final pricing depends on the model's size, scale, level of detail, source information, materials, features, schedule, packaging, and delivery requirements.</p>
       </details>
       <details class="faq-item">
-        <summary>What files do you need to start? <span class="pm"></span></summary>
-        <p>Dimension drawings, 3D files, or reference images are typically sufficient to begin a review. We accept CAD, PDF, Revit, Rhino, and SketchUp. If some information isn't finalized, we can still guide you to the right scope.</p>
+        <summary>How long does it take to build a model? <span class="pm"></span></summary>
+        <p>Most architectural models require approximately two to four weeks of production after the scope, design information, and key specifications are confirmed. Larger, highly detailed, illuminated, or technically complex models may require more time. The complete schedule also includes approvals, packaging, transportation, and installation when required.</p>
       </details>
       <details class="faq-item">
-        <summary>Do you ship nationwide? <span class="pm"></span></summary>
-        <p>Yes. Models are professionally packed and shipped across the United States and Canada for delivery to offices, sales galleries, and presentation venues. Shipping is reviewed as part of project planning.</p>
+        <summary>Where are Carve models built? <span class="pm"></span></summary>
+        <p>Client communication and project coordination are handled by our Los Angeles team, with production completed by our established team in China. Scope, approvals, fabrication, quality control, packaging, and delivery remain connected through one coordinated Carve process.</p>
       </details>
       <details class="faq-item">
-        <summary>What scale should my model be? <span class="pm"></span></summary>
-        <p>Common scales include 1:50, 1:100, 1:200, and 1:500 — each suited to different needs. Scale selection is guided by model size, viewing distance, and required detail, and we provide recommendations during review.</p>
+        <summary>How do you ship the finished model? <span class="pm"></span></summary>
+        <p>Packaging is designed around the model's size, fragility, destination, and handling requirements. Depending on the project, this may include protective crating, a fitted transport case, or sectional construction. We coordinate delivery throughout the United States and Canada, with on-site assembly and installation available when required.</p>
+      </details>
+      <details class="faq-item">
+        <summary>How does the quotation process work? <span class="pm"></span></summary>
+        <p>Send us your project details, intended use, approximate dimensions, schedule, delivery location, and any available files or references. We review the information and provide a preliminary estimate or identify what is needed to clarify the scope. A formal quotation and proposed timeline are issued once the project requirements are sufficiently defined.</p>
       </details>
     </div>
     <div class="mt-4"><a class="btn btn--ghost svc-all-btn" href="/faq">All FAQs <span class="arrow">→</span></a></div>
