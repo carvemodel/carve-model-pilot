@@ -6,6 +6,8 @@ interface Props {
   description: string;
   slug: string; // e.g. "how-to-choose-architectural-model-scale"
   metaLabel: string; // e.g. "Guide · Scale"
+  publishDate: string; // human-readable, e.g. "August 11, 2026"
+  publishDateISO: string; // machine-readable, e.g. "2026-08-11", used for <time> and schema.org
   readTime?: string; // e.g. "6 min read"
   heading: string;
   headingHtml?: string; // optional HTML version of heading, e.g. with <em> highlights
@@ -14,12 +16,13 @@ interface Props {
   coverId: string;
   coverImage?: string; // optional real image src to replace the placeholder cover
   coverCaption?: string; // optional caption overlay shown on a real cover image
+  coverMockup?: boolean; // optional: show the Studio Portal browser-window UI mockup (from the process page) instead of a photo/placeholder
   footerHeading?: string; // optional override for the bottom CTA heading
   footerText?: string; // optional override for the bottom CTA body text
   footerButtons?: { label: string; href: string }[]; // optional override for the bottom CTA button(s)
 }
 const {
-  title, description, slug, metaLabel, readTime, heading, headingHtml, lead, leadExtra, coverId, coverImage, coverCaption,
+  title, description, slug, metaLabel, publishDate, publishDateISO, readTime, heading, headingHtml, lead, leadExtra, coverId, coverImage, coverCaption, coverMockup,
   footerHeading = 'Planning an architectural model?',
   footerText = "Send us the approximate project dimensions, intended use, available files, and preferred display size. Even if the design is still developing, we can recommend an appropriate starting scale, scope, and level of detail.",
   footerButtons = [{ label: 'Get a Preliminary Estimate →', href: '/contact' }],
@@ -34,6 +37,21 @@ const {
 .article__cover .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .article__cover .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .article__cover .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
+.article__cover .mock{width:100%;background:var(--cm-ink-850);border:1px solid var(--cm-border-strong);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-lg);font-size:0.78rem;}
+.article__cover .mock__bar{display:flex;align-items:center;gap:0.5rem;padding:0.7rem 0.9rem;border-bottom:1px solid var(--cm-border);background:var(--cm-ink-800);}
+.article__cover .mock__bar i{width:9px;height:9px;border-radius:50%;background:var(--cm-ink-500);display:block;}
+.article__cover .mock__bar span{margin-left:auto;font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);}
+.article__cover .mock__body{padding:1rem;display:grid;grid-template-columns:0.8fr 1.2fr;gap:0.8rem;}
+.article__cover .mock__side{display:flex;flex-direction:column;gap:0.5rem;}
+.article__cover .mock__row{display:flex;align-items:center;gap:0.55rem;padding:0.5rem 0.6rem;border-radius:var(--r-sm);color:var(--cm-gray-300);font-size:0.74rem;}
+.article__cover .mock__row.active{background:var(--cm-surface-2);color:var(--cm-text-strong);}
+.article__cover .mock__row b{width:6px;height:6px;border-radius:50%;background:var(--cm-silver);display:block;}
+.article__cover .mock__main{display:flex;flex-direction:column;gap:0.6rem;}
+.article__cover .mock__card{background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.75rem;}
+.article__cover .mock__progress{height:5px;background:var(--cm-ink-600);border-radius:99px;margin-top:0.5rem;overflow:hidden;}
+.article__cover .mock__progress i{display:block;height:100%;background:var(--cm-silver);}
+.article__cover .mock__k{font-family:var(--font-mono);font-size:0.64rem;color:var(--cm-text-subtle);text-transform:uppercase;letter-spacing:0.06em;}
+.article__cover .mock__v{color:var(--cm-text-strong);font-weight:var(--w-semibold);margin-top:2px;}
 </style>
 <BaseLayout
   title={title}
@@ -53,6 +71,8 @@ const {
   "description": description,
   "author": { "@type": "Organization", "name": "Carve Model" },
   "publisher": { "@type": "Organization", "name": "Carve Model" },
+  "datePublished": publishDateISO,
+  "dateModified": publishDateISO,
   "mainEntityOfPage": `https://www.physical-model.com/blog/${slug}`,
 })} />
 </Fragment>
@@ -60,11 +80,41 @@ const {
 <main>
 <section class="section" style="padding-top:clamp(2rem,4vw,3rem);padding-bottom:0;"><div class="container narrow article">
   <a class="article__back" href="/blog">← All guides</a>
-  <div class="article__meta"><span>{metaLabel}</span>{readTime && <span>{readTime}</span>}</div>
+  <div class="article__meta"><span>{metaLabel}</span><span><time datetime={publishDateISO}>{publishDate}</time></span>{readTime && <span>{readTime}</span>}</div>
   {headingHtml ? <h1 class="display-lg" set:html={headingHtml} /> : <h1 class="display-lg">{heading}</h1>}
   <p class="article__lead lead">{lead}</p>
   {leadExtra && <p class="article__lead-extra lead">{leadExtra}</p>}
-  <div class="article__cover">{coverImage ? <><span class="corner tl"></span><span class="corner br"></span><img src={coverImage} alt={heading} />{coverCaption && <span class="slot-label">{coverCaption}</span>}</> : <image-slot id={coverId} placeholder="Drop article image"></image-slot>}</div>
+  <div class="article__cover">{coverMockup ? (
+    <div class="mock" aria-hidden="true">
+      <div class="mock__bar"><i></i><i></i><i></i><span>studio.physical-model.com</span></div>
+      <div class="mock__body">
+        <div class="mock__side">
+          <div class="mock__row active"><b></b> Overview</div>
+          <div class="mock__row">Milestones</div>
+          <div class="mock__row">Files</div>
+          <div class="mock__row">Messages</div>
+          <div class="mock__row">Invoices</div>
+        </div>
+        <div class="mock__main">
+          <div class="mock__card">
+            <span class="mock__k">Active project</span>
+            <div class="mock__v">Aria Tower · 1:144</div>
+            <div class="mock__progress"><i style="width:68%"></i></div>
+            <span class="mock__k" style="display:block;margin-top:6px;">68% · Fabrication</span>
+          </div>
+          <div class="mock__card">
+            <span class="mock__k">Next milestone</span>
+            <div class="mock__v">Finishing &amp; paint</div>
+            <span class="mock__k" style="display:block;margin-top:4px;">Due in 6 days</span>
+          </div>
+          <div class="mock__card" style="display:flex;gap:0.6rem;align-items:center;">
+            <div style="width:26px;height:26px;border-radius:50%;background:var(--cm-surface-2);flex:none;"></div>
+            <div><div class="mock__v" style="font-size:0.72rem;">Studio · Maya</div><span class="mock__k">QC photos uploaded →</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : coverImage ? <><span class="corner tl"></span><span class="corner br"></span><img src={coverImage} alt={heading} />{coverCaption && <span class="slot-label">{coverCaption}</span>}</> : <image-slot id={coverId} placeholder="Drop article image"></image-slot>}</div>
 </div></section>
 <section class="section" style="padding-top:clamp(2.5rem,4vw,3.5rem);"><div class="container narrow">
   <div class="prose">
