@@ -86,6 +86,11 @@ body{background:var(--cm-ink-950);}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
 .kpi{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:1.2rem;}
 .kpi .mock__k{display:block;}
+/* Some KPI rows (e.g. the Clients tab, which has 6 tiles) have labels long enough to
+   wrap onto a second line in a narrow column while shorter labels next to them stay
+   on one line — reserving two lines' worth of height keeps the value/number below
+   lined up across every tile regardless of how its own label wraps. */
+#clientsKpis .kpi .mock__k{min-height:2.3em;line-height:1.15;}
 .kpi .big{font-family:var(--font-display);font-weight:var(--w-bold);font-size:1.7rem;color:var(--cm-text-strong);letter-spacing:-0.02em;margin-top:0.5rem;}
 .kpi .sub{font-size:0.78rem;color:var(--cm-text-muted);margin-top:0.2rem;}
 @media(max-width:760px){.kpis{grid-template-columns:1fr 1fr;}}
@@ -2486,6 +2491,22 @@ function ensureClientContact(l){
 function syncClientsFromLeads(){
   (window.SDB.leads||[]).forEach(ensureClientContact);
 }
+/* "Last activity" should reflect the client actually using the portal (signing in),
+   not just the moment their brief was received — call this whenever a client
+   account logs in (see enterSession). */
+function recordClientActivity(email){
+  if(!email)return;
+  var lower=email.toLowerCase();
+  var now=new Date().toISOString();
+  COMPANIES.forEach(function(co){
+    co.contacts.forEach(function(c){
+      if(c.email&&c.email.toLowerCase()===lower){
+        if(!c.lastActivityAt||now>c.lastActivityAt)c.lastActivityAt=now;
+      }
+    });
+  });
+}
+window.recordClientActivity=recordClientActivity;
 /* ---- Link list (for files too large to upload directly — supports more than one) ---- */
 var alPickedLinks=[];
 function alRenderLinks(){
@@ -3492,6 +3513,7 @@ function enterSession(role,email){
   var lbl=document.getElementById('sessionLabel');
   if(lbl)lbl.textContent='Signed in \u00b7 '+email;
   setRole(role);
+  if(role==='client'&&window.recordClientActivity)window.recordClientActivity(email);
   if(role==='factory'){
     var admin=PRODUCTION_ADMINS.filter(function(p){return p.email.toLowerCase()===email.toLowerCase();})[0];
     if(admin){
@@ -4117,6 +4139,7 @@ function SRC_carveAdmin(){
       quoted.forEach(function(sid){var d=(b.quotes[sid]&&b.quotes[sid].quotedAt)||b.sentDate;if(d&&(!latestReceived||d>latestReceived))latestReceived=d;});
       if(latestReceived)html+='<div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-top:0.4rem;">received '+esc(latestReceived)+'</div>';
     }
+    if(totalOptions>0){
     html+='<div style="margin-top:0.6rem;"><div class="qline2 head"><span style="padding-left:calc(28px + 0.6rem);">Shop</span><span>Cost</span><span>Prod. time</span><span></span></div>';
     SHOPS.forEach(function(s){
       allOptionsFor(b,s.id).forEach(function(opt){
@@ -4146,6 +4169,9 @@ function SRC_carveAdmin(){
       });
     });
     html+='</div>';
+    }else if(!confirmed&&!b.picked){
+      html+='<div class="hint" style="margin-top:0.6rem;">'+(invitedNames.length?('Awaiting quotes from '+esc(invitedNames.join(', '))+'.'):'Not yet sent to any vendors for quoting.')+'</div>';
+    }
     if(confirmed||b.picked!=null)html+=clientQuoteSection(b);
     html+='</div></div>';
   });
