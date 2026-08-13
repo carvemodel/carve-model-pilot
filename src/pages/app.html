@@ -3741,10 +3741,18 @@ function migrateBriefFields(briefs){
 if(migrateBriefFields(SDB.briefs))saveSRC();
 syncClientsFromLeads();
 function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];return d;}}}catch(e){}return seedSRC();}
-function saveSRC(){
+function saveSRC(opts){
   try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
   if(apiReady){
-    fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:SDB.briefs,leads:SDB.leads||[]})})
+    // The server now merges this save into whatever's already stored rather than
+    // overwriting it outright (so a tab with a stale in-memory copy can't wipe out
+    // a lead/brief another tab or a client submission added in the meantime). An
+    // id only actually gets removed server-side if it's explicitly listed below —
+    // see deleteLead(), the one place that really deletes rather than just editing.
+    var payload={briefs:SDB.briefs,leads:SDB.leads||[]};
+    if(opts&&opts.deletedLeadIds&&opts.deletedLeadIds.length)payload.deletedLeadIds=opts.deletedLeadIds;
+    if(opts&&opts.deletedBriefIds&&opts.deletedBriefIds.length)payload.deletedBriefIds=opts.deletedBriefIds;
+    fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .catch(function(e){console.error('Sourcing API sync failed:',e);});
   }
 }
@@ -4792,7 +4800,7 @@ window.deleteLead=function(id){
   if(!confirm('Delete "'+lead.title+'"? This permanently removes the lead — it cannot be recovered. If you just want it out of the way, use Archive instead.'))return;
   if(!confirm('Are you sure? This is the last step — the lead will be permanently deleted.'))return;
   SDB.leads=(SDB.leads||[]).filter(function(l){return l.id!==id;});
-  saveSRC();
+  saveSRC({deletedLeadIds:[id]});
   window.SRC_renderArchivedLeads&&window.SRC_renderArchivedLeads();
   window.SRC_renderLeads();
 }
