@@ -47,9 +47,38 @@ module.exports = async (req, res) => {
         try { body = JSON.parse(body); } catch (e) { body = {}; }
       }
       body = body || {};
-      const data = { briefs: body.briefs || [], leads: body.leads || [] };
+
+      // Every save used to be a blind overwrite of the whole store with whatever
+      // this one browser tab currently had in memory. With more than one tab/
+      // session open (an admin plus a client submitting a new lead, two admin
+      // tabs, a tab left open a while, etc.), whichever tab saved LAST would
+      // silently wipe out anything the other tab knew about that it didn't —
+      // e.g. a lead someone else had just submitted. Merge by id instead: keep
+      // anything already stored that this save doesn't know about, let incoming
+      // items overwrite their own matching id (normal edit), and only actually
+      // remove an item if its id is explicitly listed in deletedLeadIds /
+      // deletedBriefIds (see deleteLead() in app.html) — absence from the
+      // incoming payload alone is never treated as "delete this".
+      const raw = await redis.get(KEY);
+      const current = raw ? JSON.parse(raw) : { briefs: [], leads: [] };
+      if (!current.leads) current.leads = [];
+      if (!current.briefs) current.briefs = [];
+
+      function mergeById(currentList, incomingList, deletedIds) {
+        const deleted = new Set(deletedIds || []);
+        const byId = new Map();
+        (currentList || []).forEach((item) => { if (item && item.id) byId.set(item.id, item); });
+        (incomingList || []).forEach((item) => { if (item && item.id) byId.set(item.id, item); });
+        deleted.forEach((id) => byId.delete(id));
+        return Array.from(byId.values());
+      }
+
+      const data = {
+        briefs: mergeById(current.briefs, body.briefs, body.deletedBriefIds),
+        leads: mergeById(current.leads, body.leads, body.deletedLeadIds),
+      };
       await redis.set(KEY, JSON.stringify(data));
-      res.status(200).json({ ok: true });
+      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads });
       return;
     }
 
