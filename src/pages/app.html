@@ -1344,7 +1344,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 
     <!-- CLIENTS (owner = all · sales = own only) -->
     <section class="view cm-only" id="view-clients" hidden>
-      <div class="notice studio-only" id="clientsNotice"></div>
+      <div class="notice studio-only" id="clientsNotice" hidden></div>
       <div class="daterange">
         <span class="daterange__label">Period</span>
         <div class="daterange__seg">
@@ -2472,7 +2472,10 @@ function ensureClientContact(l){
   var phone=l.client.Phone||'';
   var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
   if(!co){co={id:'co'+Date.now()+Math.random().toString(36).slice(2,6),name:companyName,parentId:null,rep:null,contacts:[]};COMPANIES.push(co);}
-  var activityAt=l.receivedAtISO||l.receivedAt||null;
+  // Note: lastActivityAt is intentionally NOT touched here. It means "last time this
+  // client signed into the studio portal" (see recordClientActivity, called from
+  // enterSession), not "last time they submitted a brief" — a client who hasn't been
+  // granted an account yet has never logged in, so it should stay unset (shows "—").
   var existing=co.contacts.filter(function(c){return c.email&&c.email.toLowerCase()===email.toLowerCase();})[0];
   if(existing){
     // This runs on every live-sync poll (every 5s), so guard against re-counting
@@ -2483,9 +2486,8 @@ function ensureClientContact(l){
       if(l.id)existing.processedLeadIds.push(l.id);
       existing.quoteRequests=(existing.quoteRequests||0)+1;
     }
-    if(activityAt&&(!existing.lastActivityAt||activityAt>existing.lastActivityAt))existing.lastActivityAt=activityAt;
   }else{
-    co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:activityAt,processedLeadIds:l.id?[l.id]:[]});
+    co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:null,processedLeadIds:l.id?[l.id]:[]});
   }
 }
 function syncClientsFromLeads(){
