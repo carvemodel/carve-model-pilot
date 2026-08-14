@@ -1821,7 +1821,8 @@ function openInvite(){
 }
 function closeInvite(){ document.getElementById('inviteModal').hidden=true; }
 /* ---- Payment ---- */
-function openPay(id,amt){
+function openPay(bid,which,id,amt){
+  window.__payBid=bid;window.__payWhich=which;
   document.getElementById('payInvId').textContent=id;
   document.getElementById('payAmt').textContent=amt;
   document.getElementById('payZelleAmt').textContent=amt;
@@ -1858,30 +1859,24 @@ function payMark(){
   document.getElementById('payDone').hidden=false;
   // Client reported payment — invoice goes to "reported, awaiting bank confirmation",
   // NOT paid. The production clock only starts once the studio confirms receipt.
-  var chip=document.getElementById('dep-chip');
-  if(chip){
-    chip.className='chip await';
-    chip.textContent='Payment reported';
+  if(window.__payBid&&window.__payWhich&&typeof window.SRC_reportInvoicePayment==='function'){
+    window.SRC_reportInvoicePayment(window.__payBid,window.__payWhich,window.__payMethod||'');
   }
-  var pay=document.getElementById('dep-pay');if(pay)pay.style.display='none';
-  var confirm=document.getElementById('dep-confirm');if(confirm)confirm.style.display='';
-  var banner=document.getElementById('dep-banner');if(banner)banner.style.display='';
-  var bm=document.getElementById('dep-banner-method');if(bm&&window.__payMethod)bm.textContent=' via '+window.__payMethod;
 }
-function confirmPayment(){
-  // Studio verified the money landed in the bank → mark Paid and START THE CLOCK.
-  var chip=document.getElementById('dep-chip');
-  chip.className='chip done';chip.textContent='Paid';
-  document.getElementById('dep-desc').textContent='Deposit · 50% · payment confirmed received '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  document.getElementById('dep-confirm').style.display='none';
-  document.getElementById('dep-banner').style.display='none';
-  document.body.classList.remove('pre-deposit'); // deposit confirmed → unlock dashboard for client
-  window.quoteMode='active'; // project started → change orders now apply
-  var co=document.getElementById('coSection');if(co)co.hidden=false;
-  // Production clock starts now
-  document.getElementById('quoteChip')&&0;
-  if(typeof startProductionClock==='function')startProductionClock();
-  alert('\u2713 Deposit confirmed received.\n\nThe production clock has started — the project moves into Design Review & Planning and the timeline is now active.');
+function confirmPayment(bid,which){
+  // Studio verified the money landed in the bank → mark Paid and (for the deposit) START THE CLOCK.
+  if(bid&&which&&typeof window.SRC_markInvoicePaid==='function'){
+    window.SRC_markInvoicePaid(bid,which);
+  }
+  if(which==='deposit'){
+    document.body.classList.remove('pre-deposit'); // deposit confirmed → unlock dashboard for client
+    window.quoteMode='active'; // project started → change orders now apply
+    var co=document.getElementById('coSection');if(co)co.hidden=false;
+    if(typeof startProductionClock==='function')startProductionClock();
+    alert('✓ Deposit confirmed received.\n\nThe production clock has started — the project moves into Design Review & Planning and the timeline is now active.');
+  }else{
+    alert('✓ Balance payment confirmed received.');
+  }
 }
 function startProductionClock(){
   // Advance the journey: Quote Approved + deposit confirmed → enter Design Review.
@@ -2071,26 +2066,37 @@ function renderPhase1Invoice(){
   var b=window.SRC_getLatestClientBrief&&window.SRC_getLatestClientBrief();
   var empty=document.getElementById('invEmpty'), issued=document.getElementById('invIssued');
   if(!empty||!issued)return;
-  if(!b||!b.clientQuote||!b.clientQuote.accepted){empty.hidden=false;issued.hidden=true;return;}
+  if(!b||!b.clientQuote||!b.clientQuote.invoice){empty.hidden=false;issued.hidden=true;return;}
   var cq=b.clientQuote, inv=cq.invoice;
   empty.hidden=true;issued.hidden=false;
   var total=cq.price, dep=inv.depositAmt, bal=inv.balanceAmt;
+  var issuedFmt=inv.issuedDate?new Date(inv.issuedDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
   var wrap=issued.querySelector('.kpis');
-  if(wrap)wrap.innerHTML='<div class="kpi"><span class="mock__k">Estimate total</span><div class="big">$'+total.toLocaleString('en-US')+'</div><div class="sub">Accepted '+inv.acceptedDate+'</div></div>'+
+  if(wrap)wrap.innerHTML='<div class="kpi"><span class="mock__k">Estimate total</span><div class="big">$'+total.toLocaleString('en-US')+'</div><div class="sub">Issued '+issuedFmt+'</div></div>'+
     '<div class="kpi"><span class="mock__k">Due now</span><div class="big">$'+dep.toLocaleString('en-US')+'</div><div class="sub">50% deposit</div></div>'+
     '<div class="kpi"><span class="mock__k">Balance</span><div class="big">$'+bal.toLocaleString('en-US')+'</div><div class="sub">Due on delivery</div></div>';
+  var depStatus=inv.depositStatus||'due', balStatus=inv.balanceStatus||'due';
+  var depChipClass=depStatus==='paid'?'chip done':'chip await';
+  var depChipText=depStatus==='paid'?'Paid':(depStatus==='reported'?'Payment reported':'Due');
+  var balChipText=balStatus==='paid'?'Paid':'Scheduled';
+  var balChipStyle=balStatus==='paid'?'':'background:rgba(255,255,255,0.04);color:var(--cm-text-subtle);border:1px solid var(--cm-border-strong);';
+  var depPayBtn=depStatus==='due'?('<a class="btn btn--primary btn--sm client-only" id="dep-pay" style="margin-left:0.5rem;" href="#" onclick="openPay(\''+b.id+'\',\'deposit\',\''+inv.depositId+'\',\'$'+dep.toLocaleString('en-US')+'\');return false;">Pay now</a>'):'';
+  var depConfirmBtn=depStatus==='reported'?('<button class="btn btn--primary btn--sm finance-edit" id="dep-confirm" style="margin-left:0.5rem;" onclick="confirmPayment(\''+b.id+'\',\'deposit\')">Confirm payment received</button>'):'';
+  var depBanner=depStatus==='reported'?('<div class="paybanner finance-edit" id="dep-banner"><span class="paybanner__dot"></span><div><b>Client reported a deposit payment</b>'+(inv.depositReportedMethod?(' via '+esc(inv.depositReportedMethod)):'')+'. Verify it has landed in the bank, then confirm — that starts the production clock.</div></div>'):'';
+  var depDesc='Deposit · 50% to begin fabrication · issued '+issuedFmt+(depStatus==='paid'&&inv.depositPaidAt?(' · paid '+inv.depositPaidAt):'');
+  var balDesc='Final balance · due on delivery'+(balStatus==='paid'&&inv.balancePaidAt?(' · paid '+inv.balancePaidAt):'');
   var invPanel=issued.querySelector('.panel .panel__body');
   if(invPanel)invPanel.innerHTML='<div class="inv">'+
-      '<div><div class="id">'+inv.depositId+' <span class="inv-badge">Official</span></div><div class="desc" id="dep-desc">Deposit · 50% to begin fabrication · issued '+inv.acceptedDate+'</div></div>'+
+      '<div><div class="id">'+inv.depositId+' <span class="inv-badge">Official</span></div><div class="desc" id="dep-desc">'+depDesc+'</div></div>'+
       '<div class="amt">$'+dep.toLocaleString('en-US')+'</div>'+
-      '<span class="chip await" id="dep-chip" style="margin-left:1rem;">Due</span>'+
-      '<button class="btn btn--ghost btn--sm" style="margin-left:1rem;" onclick="downloadInvoice(\''+inv.depositId+'\')">↓ PDF</button>'+
-      '<a class="btn btn--primary btn--sm client-only" id="dep-pay" style="margin-left:0.5rem;" href="#" onclick="openPay(\''+inv.depositId+'\',\'$'+dep.toLocaleString('en-US')+'\');return false;">Pay now</a>'+
-      '<button class="btn btn--primary btn--sm finance-edit" id="dep-confirm" style="margin-left:0.5rem;display:none;" onclick="confirmPayment()">Confirm payment received</button>'+
+      '<span class="'+depChipClass+'" id="dep-chip" style="margin-left:1rem;">'+depChipText+'</span>'+
+      '<button class="btn btn--ghost btn--sm" style="margin-left:1rem;" onclick="downloadInvoice(\''+b.id+'\',\'deposit\')">↓ PDF</button>'+
+      depPayBtn+depConfirmBtn+
     '</div>'+
-    '<div class="paybanner finance-edit" id="dep-banner" style="display:none;"><span class="paybanner__dot"></span><div><b>Client reported a deposit payment</b><span id="dep-banner-method"></span>. Verify it has landed in the bank, then confirm — that starts the production clock.</div></div>'+
-    '<div class="inv"><div><div class="id">'+inv.balanceId+'</div><div class="desc">Final balance · due on delivery</div></div><div class="amt">$'+bal.toLocaleString('en-US')+'</div><span class="chip" style="margin-left:1rem;background:rgba(255,255,255,0.04);color:var(--cm-text-subtle);border:1px solid var(--cm-border-strong);">Scheduled</span></div>'+
-    '<p class="form-note">Invoice '+inv.depositId+' was generated automatically on estimate acceptance. Download a PDF copy any time with the <b>↓ PDF</b> button above — a copy was also emailed to you.</p>';
+    depBanner+
+    '<div class="inv"><div><div class="id">'+inv.balanceId+'</div><div class="desc">'+balDesc+'</div></div><div class="amt">$'+bal.toLocaleString('en-US')+'</div><span class="chip" style="margin-left:1rem;'+balChipStyle+'">'+balChipText+'</span>'+
+      '<button class="btn btn--ghost btn--sm" style="margin-left:1rem;" onclick="downloadInvoice(\''+b.id+'\',\'balance\')">↓ PDF</button></div>'+
+    '<p class="form-note">Invoice '+inv.depositId+' was generated automatically once your project was confirmed. Download a PDF copy any time with the <b>↓ PDF</b> button above.</p>';
 }
 function markQuoteApproved(canRequestChanges){
   var chip=document.getElementById('quoteChip');
@@ -3314,7 +3320,27 @@ function requestCO(id){
   card.querySelector('[data-cochip]').textContent='Changes requested';
   card.querySelector('[data-coact]').innerHTML='<span style="font-size:0.86rem;color:var(--cm-text-muted);">Sent back to the studio \u2014 they\u2019ll revise and reissue. <button class="btn btn--ghost btn--sm" onclick="go(\'messages\')" style="margin-left:0.4rem;">Open messages \u2192</button></span>';
 }
-function downloadInvoice(id){
+function downloadInvoice(bid,which){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b||!b.clientQuote||!b.clientQuote.invoice){alert('This invoice is not available yet.');return;}
+  var cq=b.clientQuote, inv=cq.invoice;
+  var isDeposit=which!=='balance';
+  var id=isDeposit?inv.depositId:inv.balanceId;
+  var amt=isDeposit?inv.depositAmt:inv.balanceAmt;
+  var status=(isDeposit?inv.depositStatus:inv.balanceStatus)||'due';
+  var statusLabel=status==='paid'?'Paid':(status==='reported'?'Payment reported — awaiting confirmation':'Due');
+  var client=b.client||{};
+  var issuedFmt=inv.issuedDate?new Date(inv.issuedDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+  var pd=cq.packageDimsList&&cq.packageDimsList.length?cq.packageDimsList:(cq.packageDims?[cq.packageDims]:[]);
+  var specRows=[];
+  if(cq.category)specRows.push(['Work scope',cq.category]);
+  if(cq.material)specRows.push(['Model material',cq.material]);
+  if(cq.base)specRows.push(['Base material',cq.base]);
+  if(cq.scale)specRows.push(['Scale',cq.scale]);
+  if(cq.modelDims)specRows.push(['Model dimensions',cq.modelDims]);
+  if(cq.packages)specRows.push(['Packages',cq.packages]);
+  pd.forEach(function(d,i){specRows.push(['Package #'+(i+1)+' dimensions',d]);});
+  if(cq.extras&&cq.extras.length)specRows.push(['Special requirements',cq.extras.join(', ')]);
   var css='*{box-sizing:border-box;margin:0;padding:0;}'+
 'body{font-family:Arial,Helvetica,sans-serif;color:#17191D;padding:44px 52px;font-size:12px;line-height:1.55;}'+
 '.hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #17191D;padding-bottom:18px;}'+
@@ -3333,43 +3359,45 @@ function downloadInvoice(id){
 '.totrow td{border:0;padding:4px 0;}.totrow.g td{border-top:2px solid #17191D;padding-top:10px;font-weight:bold;font-size:14px;}'+
 '.pay b{color:#17191D;}.bank{font-size:11px;color:#3A3E45;}.bank div{margin-bottom:2px;}'+
 '.tc{font-size:10px;color:#54595F;line-height:1.5;}.tc p{margin-bottom:7px;}.tc b{color:#17191D;}'+
+'.statusbadge{display:inline-block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:3px;margin-top:6px;}'+
+'.statusbadge.paid{background:#E4F3E8;color:#1E7B3C;}.statusbadge.due{background:#F1F2F4;color:#54595F;}.statusbadge.reported{background:#FCEFDD;color:#A15C00;}'+
 '@media print{body{padding:22px;}.sec{break-inside:avoid;}}';
 
-  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carve Model — Invoice '+id+'</title><style>'+css+'</style></head><body>'+
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carve Model — Invoice '+esc(id)+'</title><style>'+css+'</style></head><body>'+
 '<div class="hd"><div><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model" style="height:42px;width:auto;display:block;"></div>'+
-'<div class="tag"><b>INVOICE</b></div></div>'+
+'<div class="tag"><b>'+(isDeposit?'DEPOSIT INVOICE':'BALANCE INVOICE')+'</b></div></div>'+
 '<div class="co">Carve Model<br>1370 Valley Vista Dr. #200<br>Diamond Bar, CA 91765<br>www.physical-model.com<br>support@physical-model.com<br>877-856-6665</div></div>'+
 
-'<div class="row"><div><div class="b">Bill to</div><b>Reyes Development Group</b><br>Daniel Reyes<br>1140 Connecticut Avenue NW, Washington, DC 20036<br><br><span class="b">Project</span><br><b>Aria Tower — Los Angeles, CA</b><br>Scale: 1/8" = 1\'-0" (1:96)</div>'+
-'<div><div class="b">Delivery address</div>Tallahassee, FL<br>(Exact address to be provided by client)</div>'+
-'<div style="text-align:right"><div class="b">Invoice</div>No. '+id+'<br>Mar 6, 2026</div></div>'+
+'<div class="row"><div><div class="b">Bill to</div><b>'+esc(client.Company||'')+'</b><br>'+esc(client.Name||'')+(client.Title?(' — '+esc(client.Title)):'')+'<br>'+esc(client.Address||'')+(client.Email?('<br>'+esc(client.Email)):'')+'<br><br><span class="b">Project</span><br><b>'+esc(b.title)+'</b>'+(cq.scale?('<br>Scale: '+esc(cq.scale)):'')+'</div>'+
+'<div style="text-align:right"><div class="b">Invoice</div>No. '+esc(id)+'<br>Issued '+esc(issuedFmt)+'<br><span class="statusbadge '+status+'">'+esc(statusLabel)+'</span></div></div>'+
 
-'<div class="sec"><h3>Scope of Work</h3>Carve Model will provide fabrication service of one (1) architectural display model.<ul>'+
-'<li>Solid white ABS / resin materials</li>'+
-'<li>Architectural / interior building massing (no detailed façade articulation)</li>'+
-'<li>Plywood base</li>'+
-'<li>Recessed inset area at the subject project site to allow future design options to be inserted / replaced</li>'+
-'<li>Shipping / logistics arrangement to the delivery address stated above</li></ul></div>'+
-
-'<div class="sec"><h3>Scope Excludes</h3><ul><li>Lighting</li><li>Model stand</li><li>Dust cover</li></ul></div>'+
+'<div class="sec"><h3>Specifications</h3><table>'+
+specRows.map(function(r){return '<tr><td style="border-bottom:0;">'+esc(r[0])+'</td><td class="r" style="border-bottom:0;">'+esc(r[1])+'</td></tr>';}).join('')+
+'</table></div>'+
 
 '<div class="sec"><h3>Cost</h3><table>'+
-'<tr><th>Item</th><th>Dimensions (H × W × L)</th><th>Qty</th><th class="r">Unit (USD)</th><th class="r">Total (USD)</th></tr>'+
-'<tr><td>Scaled architectural model</td><td>2" H × 9.25" W × 8" L</td><td>1</td><td class="r">2,270</td><td class="r">2,270</td></tr>'+
+'<tr><th>Item</th><th>Dimensions</th><th>Qty</th><th class="r">Unit (USD)</th><th class="r">Total (USD)</th></tr>'+
+'<tr><td>'+esc(b.title)+(cq.category?(' — '+esc(cq.category)):'')+'</td><td>'+esc(cq.modelDims||'—')+'</td><td>1</td><td class="r">'+cq.price.toLocaleString('en-US')+'</td><td class="r">'+cq.price.toLocaleString('en-US')+'</td></tr>'+
 '</table><div style="display:flex;justify-content:flex-end;margin-top:14px;"><table style="width:240px;">'+
-'<tr class="totrow"><td>Subtotal</td><td class="r">$2,270</td></tr>'+
-'<tr class="totrow g"><td>Total</td><td class="r">$2,270</td></tr></table></div></div>'+
+'<tr class="totrow"><td>Subtotal</td><td class="r">$'+cq.price.toLocaleString('en-US')+'</td></tr>'+
+'<tr class="totrow g"><td>Total</td><td class="r">$'+cq.price.toLocaleString('en-US')+'</td></tr></table></div></div>'+
 
-'<div class="sec"><h3>Production Time</h3><ul><li>14 business days (excludes client review, comments, revisions, and approvals)</li></ul></div>'+
+(cq.days?('<div class="sec"><h3>Production Time</h3><ul><li>'+esc(cq.days)+' business days (excludes client review, comments, revisions, and approvals)</li></ul></div>'):'')+
 
-'<div class="sec"><h3>Payment Term</h3><p class="pay"><b>50% balance due with this invoice: $1,135</b></p>'+
-'<p class="pay">Remaining $1,135 due upon model approval by client and before model is released for shipping.</p></div>'+
+'<div class="sec"><h3>Payment Term</h3>'+
+(isDeposit?
+  ('<p class="pay"><b>50% deposit due with this invoice: $'+inv.depositAmt.toLocaleString('en-US')+'</b></p>'+
+   '<p class="pay">Remaining $'+inv.balanceAmt.toLocaleString('en-US')+' ('+inv.balanceId+') due upon model approval by client and before the model is released for shipping.</p>')
+  :
+  ('<p class="pay"><b>Balance due: $'+inv.balanceAmt.toLocaleString('en-US')+'</b></p>'+
+   '<p class="pay">Deposit '+inv.depositId+' ($'+inv.depositAmt.toLocaleString('en-US')+') '+((inv.depositStatus||'due')==='paid'?('was received'+(inv.depositPaidAt?(' on '+esc(inv.depositPaidAt)):'')+'.'):'is still outstanding.')+'</p>'))+
+'</div>'+
 
 '<div class="sec"><h3>Payment Methods</h3><div class="bank">'+
 '<div style="margin-bottom:8px;"><b style="color:#17191D;">1. Credit / Debit Card</b><br>Pay online by card via the secure Stripe link in your Carve Studio Portal (Invoices → Pay now). A processing fee may apply.</div>'+
 '<div style="margin-bottom:8px;"><b style="color:#17191D;">2. Zelle</b><br>Zelle Tag: carvemodel · Recipient: Carve Model</div>'+
 '<div><b style="color:#17191D;">3. ACH / Wire Transfer</b><br>Account Name: Carve Model · Payee Bank: Bank of America<br>Account Number: 325206329930<br>ACH &amp; Electronic Transfers Routing: 122000661<br>Wire Transfers (US Domestic) Routing: 026009593</div>'+
-'<div style="margin-top:8px;color:#6E737B;">Please include invoice no. '+id+' as the payment reference.</div></div></div>'+
+'<div style="margin-top:8px;color:#6E737B;">Please include invoice no. '+esc(id)+' as the payment reference.</div></div></div>'+
 
 '<div class="sec"><h3>Acceptance</h3>Payment of this invoice signifies full acceptance of:<ul>'+
 '<li>Scope of work</li><li>Exclusions</li><li>Model boundary</li><li>Terms &amp; conditions</li></ul></div>'+
@@ -3381,7 +3409,7 @@ function downloadInvoice(id){
 '<p><b>Shipping &amp; Delivery.</b> Shipping timelines are estimates provided by third-party carriers and are not guaranteed. Carve Model is not responsible for delays, damages, or losses caused by carriers, customs clearance, weather, or force majeure events once the shipment leaves our facility.</p>'+
 '<p><b>Installation &amp; Handling.</b> Unless explicitly stated, installation, on-site assembly, electrical work, and final placement are not included. Damage resulting from improper handling or installation by third parties is not covered.</p>'+
 '<p><b>Payment &amp; Ownership.</b> All prices are subject to the agreed payment terms. Deposits are non-refundable once production has commenced. Ownership of the physical model transfers to the client upon full payment.</p>'+
-'<p><b>Limitation of Liability.</b> Carve Model\u2019s liability is limited to the value of services provided under this invoice. Under no circumstances shall Carve Model be liable for indirect, incidental, or consequential damages.</p>'+
+'<p><b>Limitation of Liability.</b> Carve Model’s liability is limited to the value of services provided under this invoice. Under no circumstances shall Carve Model be liable for indirect, incidental, or consequential damages.</p>'+
 '<p><b>Governing Law.</b> This invoice and related services shall be governed by the laws of the State of California.</p>'+
 '</div></div>'+
 '</body></html>';
@@ -4261,6 +4289,13 @@ function SRC_carveAdmin(){
       html+='<div class="hint" style="margin-top:0.6rem;">'+(invitedNames.length?('Awaiting quotes from '+esc(invitedNames.join(', '))+'.'):'Not yet sent to any vendors for quoting.')+'</div>';
     }
     if(confirmed||b.picked!=null)html+=clientQuoteSection(b);
+    // Auto-heal: a project that's already awarded with a client price sent, but has no
+    // invoice yet (e.g. it reached this state before invoicing existed), gets one issued
+    // now rather than staying stuck.
+    if(confirmed&&b.clientQuote&&b.clientQuote.price&&!b.clientQuote.invoice){
+      if(ensureClientInvoice(b))saveSRC();
+    }
+    html+=invoiceSection(b);
     html+='</div></div>';
   });
   setSrcBody(html);
@@ -4269,6 +4304,90 @@ function SRC_carveAdmin(){
   });
 }
 
+/* ---- Client invoice: generated once a project has both a client price AND is awarded to
+   production (whichever happens second — see ensureClientInvoice() calls in SRC_award and
+   SRC_saveClientQuote). Deposit/balance amounts and IDs are fixed at generation; only their
+   payment status changes after that. ---- */
+function ensureClientInvoice(b){
+  if(!b||!b.clientQuote||!b.clientQuote.price)return false;
+  if(b.clientQuote.invoice)return false; // already issued — never reassign invoice numbers/amounts
+  var total=b.clientQuote.price;
+  var dep=Math.round(total/2), bal=total-dep;
+  var today=new Date().toISOString().slice(0,10);
+  if(!b.code)b.code='CM-'+Math.floor(1000+Math.random()*9000);
+  b.clientQuote.invoice={
+    depositId:b.code.replace('CM-','CM-D'),
+    balanceId:b.code.replace('CM-','CM-B'),
+    depositAmt:dep,balanceAmt:bal,
+    issuedDate:today,
+    depositStatus:'due',balanceStatus:'due'
+  };
+  return true;
+}
+window.SRC_markInvoicePaid=function(bid,which){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b||!b.clientQuote||!b.clientQuote.invoice)return;
+  var inv=b.clientQuote.invoice;
+  var today=new Date().toISOString().slice(0,10);
+  if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=today;}
+  else{inv.balanceStatus='paid';inv.balancePaidAt=today;}
+  saveSRC();
+  if(window.SRC_render)SRC_render();
+  if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
+};
+window.SRC_reportInvoicePayment=function(bid,which,method){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b||!b.clientQuote||!b.clientQuote.invoice)return;
+  var inv=b.clientQuote.invoice;
+  var today=new Date().toISOString().slice(0,10);
+  if(which==='deposit'){inv.depositStatus='reported';inv.depositReportedAt=today;inv.depositReportedMethod=method||'';}
+  else{inv.balanceStatus='reported';inv.balanceReportedAt=today;inv.balanceReportedMethod=method||'';}
+  saveSRC();
+  if(window.SRC_render)SRC_render();
+  if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
+};
+window.SRC_reopenInvoicePayment=function(bid,which){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b||!b.clientQuote||!b.clientQuote.invoice)return;
+  var inv=b.clientQuote.invoice;
+  if(which==='deposit'){inv.depositStatus='due';delete inv.depositPaidAt;delete inv.depositReportedAt;delete inv.depositReportedMethod;}
+  else{inv.balanceStatus='due';delete inv.balancePaidAt;delete inv.balanceReportedAt;delete inv.balanceReportedMethod;}
+  saveSRC();
+  if(window.SRC_render)SRC_render();
+  if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
+};
+function invoiceStatusChip(status){
+  if(status==='paid')return '<span class="chip done">Paid</span>';
+  if(status==='reported')return '<span class="chip await">Payment reported</span>';
+  return '<span class="chip" style="background:rgba(255,255,255,0.04);color:var(--cm-text-subtle);border:1px solid var(--cm-border-strong);">Due</span>';
+}
+function invoiceLineAdmin(b,which,id,amt,status,paidAt,reportedAt,reportedMethod,desc){
+  var actions='';
+  if(status==='paid'){
+    actions='<button class="btn btn--ghost btn--sm" onclick="SRC_reopenInvoicePayment(\''+b.id+'\',\''+which+'\')">Reopen</button>';
+  }else if(status==='reported'){
+    actions='<button class="btn btn--primary btn--sm" onclick="SRC_markInvoicePaid(\''+b.id+'\',\''+which+'\')">Confirm payment received</button>'+
+      '<button class="btn btn--ghost btn--sm" style="margin-left:0.4rem;" onclick="SRC_reopenInvoicePayment(\''+b.id+'\',\''+which+'\')">Revert to due</button>';
+  }else{
+    actions='<button class="btn btn--primary btn--sm" onclick="SRC_markInvoicePaid(\''+b.id+'\',\''+which+'\')">Mark paid</button>';
+  }
+  var subline=status==='paid'&&paidAt?(' · paid '+esc(paidAt)):(status==='reported'&&reportedAt?(' · reported '+esc(reportedAt)+(reportedMethod?' via '+esc(reportedMethod):'')):'');
+  return '<div class="qline2" style="grid-template-columns:1fr auto auto;border-bottom:1px solid var(--cm-line-faint);align-items:center;">'+
+    '<div><div class="id">'+esc(id)+'</div><div class="lc" style="font-family:var(--font-mono);">'+esc(desc)+subline+'</div></div>'+
+    '<div class="qf-price">'+money(amt)+'</div>'+
+    '<div style="text-align:right;">'+invoiceStatusChip(status)+' <button class="btn btn--ghost btn--sm" style="margin-left:0.5rem;" onclick="downloadInvoice(\''+b.id+'\',\''+which+'\')">Download PDF</button> '+actions+'</div>'+
+  '</div>';
+}
+function invoiceSection(b){
+  if(!b.clientQuote||!b.clientQuote.invoice)return '';
+  var inv=b.clientQuote.invoice;
+  var html='<div class="panel src-card" style="margin-top:1rem;"><div class="panel__head"><h3>Invoices</h3><span class="k">'+esc(b.code||'')+'</span></div><div class="panel__body">';
+  html+=invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate);
+  html+=invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery');
+  html+='<p class="form-note" style="margin-top:0.8rem;">Visible to the client in their Studio Portal → Invoices.</p>';
+  html+='</div></div>';
+  return html;
+}
 /* ---- Finalize client quote: Carve Admin picks the basis (via Award/Switch above), sets the final price, and can edit every detail before it goes to the client ---- */
 function clientQuoteSection(b){
   var srcQ=winningQuote(b)||{};
@@ -4363,9 +4482,12 @@ window.SRC_saveClientQuote=function(id){
   // CM-#### is the official invoice number — only assigned once production is
   // awarded (see SRC_award), since a fee proposal alone doesn't guarantee the
   // project moves forward.
+  var prevInvoice=(b.clientQuote&&b.clientQuote.invoice)||null;
   b.clientQuote={price:price,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true,clientComments:prevComments};
+  if(prevInvoice)b.clientQuote.invoice=prevInvoice; // price edited after invoicing — keep the already-issued invoice as-is
+  var invoiceCreated=(b.status==='awarded')&&ensureClientInvoice(b);
   saveSRC();SRC_render();
-  showEmailToast((wasSent?'Updated quote resent to ':'Quote sent to ')+'the client — they\'ll see it in their portal.');
+  showEmailToast((wasSent?'Updated quote resent to ':'Quote sent to ')+'the client — they\'ll see it in their portal.'+(invoiceCreated?' Invoice '+b.clientQuote.invoice.depositId+' generated and sent to their Studio Portal.':''));
 };
 window.SRC_sendStudioReply=function(ev,id){
   if(ev&&ev.preventDefault)ev.preventDefault();
@@ -4446,8 +4568,11 @@ window.SRC_award=function(id,shopId,variantIndex){
   // since a quote alone doesn't guarantee the project moves forward. Stays fixed
   // once assigned, even if production is later switched to a different shop.
   if(!b.code)b.code='CM-'+Math.floor(1000+Math.random()*9000);
+  // If a client price was already sent (and the basis didn't change), the invoice
+  // can be issued right now instead of waiting on a separate client-acceptance step.
+  var invoiceCreated=ensureClientInvoice(b);
   notifyShop(shopId,'You were awarded "'+b.title+'".');
-  showEmailToast('Sent to '+shop(shopId).name+' — awarded "'+b.title+'".');
+  showEmailToast('Sent to '+shop(shopId).name+' — awarded "'+b.title+'".'+(invoiceCreated?' Invoice '+b.clientQuote.invoice.depositId+' generated and sent to the client\'s Studio Portal.':''));
   if(prevShop&&prevShop!==shopId){
     notifyShop(prevShop,'"'+b.title+'" was awarded to another shop.');
   }
@@ -4726,19 +4851,11 @@ window.SRC_getLatestClientBrief=function(){return SDB.briefs.length?SDB.briefs[S
 window.SRC_acceptClientQuote=function(bid){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
   if(!b||!b.clientQuote||b.clientQuote.accepted)return;
-  var total=b.clientQuote.price;
-  var dep=Math.round(total/2), bal=total-dep;
-  var today=new Date().toISOString().slice(0,10);
-  // Normally the invoice number is already assigned by the time a client can
-  // accept (production gets awarded first) — this is just a safety net for the
-  // edge case where a price was sent to the client before production was awarded.
-  if(!b.code)b.code='CM-'+Math.floor(1000+Math.random()*9000);
+  // Normally the invoice already exists by the time a client can accept (it's issued
+  // the moment both a price is sent AND production is awarded — see ensureClientInvoice).
+  // This just covers it if somehow neither happened yet.
+  ensureClientInvoice(b);
   b.clientQuote.accepted=true;
-  b.clientQuote.invoice={
-    depositId:b.code.replace('CM-','CM-D'),
-    balanceId:b.code.replace('CM-','CM-B'),
-    depositAmt:dep,balanceAmt:bal,acceptedDate:today
-  };
   saveSRC();
 };
 window.SRC_addClientComment=function(bid,text){
