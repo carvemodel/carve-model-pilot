@@ -3334,9 +3334,18 @@ function downloadInvoice(bid,which){
   var id=isDeposit?inv.depositId:inv.balanceId;
   var amt=isDeposit?inv.depositAmt:inv.balanceAmt;
   var status=(isDeposit?inv.depositStatus:inv.balanceStatus)||'due';
-  var statusLabel=status==='paid'?'Paid':(status==='reported'?'Payment reported — awaiting confirmation':'Due');
+  var statusLabel=status==='paid'?'Paid':(status==='reported'?'Payment reported':'Due');
   var client=b.client||{};
   var issuedFmt=inv.issuedDate?new Date(inv.issuedDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+  var fmtDate=function(s){return s?new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';};
+  var paymentNote;
+  if(isDeposit){
+    paymentNote='Deposit ('+money(inv.depositAmt)+') due now, balance ('+money(inv.balanceAmt)+') due on delivery.';
+  }else{
+    var depositPaid=(inv.depositStatus||'due')==='paid';
+    var depositLine=depositPaid?('was received'+(inv.depositPaidAt?(' on '+esc(fmtDate(inv.depositPaidAt))):'')+'.'):'is still outstanding.';
+    paymentNote='Balance ('+money(inv.balanceAmt)+') due on delivery. Deposit '+inv.depositId+' ('+money(inv.depositAmt)+') '+depositLine;
+  }
   var pd=cq.packageDimsList&&cq.packageDimsList.length?cq.packageDimsList:(cq.packageDims?[cq.packageDims]:[]);
   var specRows=[];
   if(cq.category)specRows.push(['Work scope',cq.category]);
@@ -3351,20 +3360,15 @@ function downloadInvoice(bid,which){
 'body{font-family:Arial,Helvetica,sans-serif;color:#17191D;padding:44px 52px;font-size:12px;line-height:1.55;}'+
 '.hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #17191D;padding-bottom:18px;}'+
 '.brand{font-family:Georgia,serif;font-weight:bold;font-size:22px;letter-spacing:1px;}'+
-'.brand small{display:block;font-family:Arial;font-weight:normal;font-size:9px;letter-spacing:3px;color:#6E737B;margin-top:3px;text-transform:uppercase;}'+
 '.co{text-align:right;font-size:11px;color:#3A3E45;line-height:1.5;}'+
 '.tag{font-size:11px;color:#6E737B;margin-top:6px;}.tag b{font-size:18px;color:#17191D;letter-spacing:2px;}'+
 '.row{display:flex;justify-content:space-between;gap:24px;margin-top:24px;}'+
 '.b{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888D95;margin-bottom:5px;}'+
 '.sec{margin-top:26px;}'+
 '.sec h3{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#17191D;border-bottom:1px solid #C9CCD0;padding-bottom:6px;margin-bottom:10px;}'+
-'ul{margin:0 0 0 16px;}li{margin-bottom:4px;}'+
 'table{width:100%;border-collapse:collapse;margin-top:4px;}'+
 'th{text-align:left;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:#888D95;border-bottom:1px solid #17191D;padding:0 8px 8px 0;}'+
 'th.r,td.r{text-align:right;padding-right:0;}td{padding:10px 8px 10px 0;border-bottom:1px solid #E4E6E9;vertical-align:top;}'+
-'.totrow td{border:0;padding:4px 0;}.totrow.g td{border-top:2px solid #17191D;padding-top:10px;font-weight:bold;font-size:14px;}'+
-'.pay b{color:#17191D;}.bank{font-size:11px;color:#3A3E45;}.bank div{margin-bottom:2px;}'+
-'.tc{font-size:10px;color:#54595F;line-height:1.5;}.tc p{margin-bottom:7px;}.tc b{color:#17191D;}'+
 '.statusbadge{display:inline-block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:3px;margin-top:6px;}'+
 '.statusbadge.paid{background:#E4F3E8;color:#1E7B3C;}.statusbadge.due{background:#F1F2F4;color:#54595F;}.statusbadge.reported{background:#FCEFDD;color:#A15C00;}'+
 '@media print{body{padding:22px;}.sec{break-inside:avoid;}}';
@@ -3374,50 +3378,18 @@ function downloadInvoice(bid,which){
 '<div class="tag"><b>'+(isDeposit?'DEPOSIT INVOICE':'BALANCE INVOICE')+'</b></div></div>'+
 '<div class="co">Carve Model<br>1370 Valley Vista Dr. #200<br>Diamond Bar, CA 91765<br>www.physical-model.com<br>support@physical-model.com<br>877-856-6665</div></div>'+
 
-'<div class="row"><div><div class="b">Bill to</div><b>'+esc(client.Company||'')+'</b><br>'+esc(client.Name||'')+(client.Title?(' — '+esc(client.Title)):'')+'<br>'+esc(client.Address||'')+(client.Email?('<br>'+esc(client.Email)):'')+'<br><br><span class="b">Project</span><br><b>'+esc(b.title)+'</b>'+(cq.scale?('<br>Scale: '+esc(cq.scale)):'')+'</div>'+
-'<div style="text-align:right"><div class="b">Invoice</div>No. '+esc(id)+'<br>Issued '+esc(issuedFmt)+'<br><span class="statusbadge '+status+'">'+esc(statusLabel)+'</span></div></div>'+
+'<div class="row"><div><div class="b">Project</div><b>'+esc(b.title)+'</b>'+(b.brief&&b.brief['Model type']?('<br>'+esc(b.brief['Model type'])):'')+(cq.scale?('<br>Scale: '+esc(cq.scale)):'')+'</div>'+
+'<div><div class="b">Bill to</div><b>'+esc(client.Company||'')+'</b>'+(client.Name?('<br>'+esc(client.Name)):'')+(client.Email?('<br>'+esc(client.Email)):'')+'</div>'+
+'<div style="text-align:right"><div class="b">Invoice</div>No. '+esc(id)+'<br>'+esc(issuedFmt)+'<br><span class="statusbadge '+status+'">'+esc(statusLabel)+'</span></div></div>'+
 
-'<div class="sec"><h3>Specifications</h3><table>'+
-specRows.map(function(r){return '<tr><td style="border-bottom:0;">'+esc(r[0])+'</td><td class="r" style="border-bottom:0;">'+esc(r[1])+'</td></tr>';}).join('')+
+'<div class="sec"><h3>Invoice</h3><table><tr><th>Item</th><th class="r">Amount</th><th class="r">Status</th></tr>'+
+'<tr><td>'+esc(b.title)+' — '+(isDeposit?'Deposit (50%)':'Final balance')+'</td><td class="r">'+money(amt)+'</td><td class="r">'+esc(statusLabel)+'</td></tr>'+
 '</table></div>'+
 
-'<div class="sec"><h3>Cost</h3><table>'+
-'<tr><th>Item</th><th>Dimensions</th><th>Qty</th><th class="r">Unit (USD)</th><th class="r">Total (USD)</th></tr>'+
-'<tr><td>'+esc(b.title)+(cq.category?(' — '+esc(cq.category)):'')+'</td><td>'+esc(cq.modelDims||'—')+'</td><td>1</td><td class="r">'+cq.price.toLocaleString('en-US')+'</td><td class="r">'+cq.price.toLocaleString('en-US')+'</td></tr>'+
-'</table><div style="display:flex;justify-content:flex-end;margin-top:14px;"><table style="width:240px;">'+
-'<tr class="totrow"><td>Subtotal</td><td class="r">$'+cq.price.toLocaleString('en-US')+'</td></tr>'+
-'<tr class="totrow g"><td>Total</td><td class="r">$'+cq.price.toLocaleString('en-US')+'</td></tr></table></div></div>'+
+(specRows.length?('<div class="sec"><h3>Specification</h3><table>'+specRows.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td class="r">'+esc(r[1])+'</td></tr>';}).join('')+'</table></div>'):'')+
 
-(cq.days?('<div class="sec"><h3>Production Time</h3><ul><li>'+esc(cq.days)+' business days (excludes client review, comments, revisions, and approvals)</li></ul></div>'):'')+
-
-'<div class="sec"><h3>Payment Term</h3>'+
-(isDeposit?
-  ('<p class="pay"><b>50% deposit due with this invoice: $'+inv.depositAmt.toLocaleString('en-US')+'</b></p>'+
-   '<p class="pay">Remaining $'+inv.balanceAmt.toLocaleString('en-US')+' ('+inv.balanceId+') due upon model approval by client and before the model is released for shipping.</p>')
-  :
-  ('<p class="pay"><b>Balance due: $'+inv.balanceAmt.toLocaleString('en-US')+'</b></p>'+
-   '<p class="pay">Deposit '+inv.depositId+' ($'+inv.depositAmt.toLocaleString('en-US')+') '+((inv.depositStatus||'due')==='paid'?('was received'+(inv.depositPaidAt?(' on '+esc(inv.depositPaidAt)):'')+'.'):'is still outstanding.')+'</p>'))+
-'</div>'+
-
-'<div class="sec"><h3>Payment Methods</h3><div class="bank">'+
-'<div style="margin-bottom:8px;"><b style="color:#17191D;">1. Credit / Debit Card</b><br>Pay online by card via the secure Stripe link in your Carve Studio Portal (Invoices → Pay now). A processing fee may apply.</div>'+
-'<div style="margin-bottom:8px;"><b style="color:#17191D;">2. Zelle</b><br>Zelle Tag: carvemodel · Recipient: Carve Model</div>'+
-'<div><b style="color:#17191D;">3. ACH / Wire Transfer</b><br>Account Name: Carve Model · Payee Bank: Bank of America<br>Account Number: 325206329930<br>ACH &amp; Electronic Transfers Routing: 122000661<br>Wire Transfers (US Domestic) Routing: 026009593</div>'+
-'<div style="margin-top:8px;color:#6E737B;">Please include invoice no. '+esc(id)+' as the payment reference.</div></div></div>'+
-
-'<div class="sec"><h3>Acceptance</h3>Payment of this invoice signifies full acceptance of:<ul>'+
-'<li>Scope of work</li><li>Exclusions</li><li>Model boundary</li><li>Terms &amp; conditions</li></ul></div>'+
-
-'<div class="sec"><h3>Terms &amp; Conditions</h3><div class="tc">'+
-'<p><b>Production Timeline.</b> Stated production time reflects internal fabrication only and excludes client review, comments, revisions, approvals, or delays caused by incomplete information. Production begins only upon receipt and confirmation of all required files, specifications, materials, colors, and written approvals.</p>'+
-'<p><b>Client-Provided Information.</b> The client is responsible for the accuracy, completeness, and coordination of all drawings, dimensions, and digital files provided. Carve Model is not responsible for errors or delays resulting from incorrect, incomplete, or revised client-supplied information.</p>'+
-'<p><b>Revisions &amp; Change Orders.</b> Any change to scope, scale, dimensions, materials, finishes, lighting, base, or accessories after production has commenced will be treated as a change order and may result in additional costs and schedule adjustments.</p>'+
-'<p><b>Shipping &amp; Delivery.</b> Shipping timelines are estimates provided by third-party carriers and are not guaranteed. Carve Model is not responsible for delays, damages, or losses caused by carriers, customs clearance, weather, or force majeure events once the shipment leaves our facility.</p>'+
-'<p><b>Installation &amp; Handling.</b> Unless explicitly stated, installation, on-site assembly, electrical work, and final placement are not included. Damage resulting from improper handling or installation by third parties is not covered.</p>'+
-'<p><b>Payment &amp; Ownership.</b> All prices are subject to the agreed payment terms. Deposits are non-refundable once production has commenced. Ownership of the physical model transfers to the client upon full payment.</p>'+
-'<p><b>Limitation of Liability.</b> Carve Model’s liability is limited to the value of services provided under this invoice. Under no circumstances shall Carve Model be liable for indirect, incidental, or consequential damages.</p>'+
-'<p><b>Governing Law.</b> This invoice and related services shall be governed by the laws of the State of California.</p>'+
-'</div></div>'+
+'<div class="sec"><h3>Payment</h3><p>Total project cost: '+money(cq.price)+' · '+paymentNote+'</p>'+
+'<p style="margin-top:6px;color:#6E737B;">Pay via the secure link in your Carve Studio Portal, or by Zelle / ACH — reference invoice no. '+esc(id)+'.</p></div>'+
 '</body></html>';
   var old=document.getElementById('invoiceFrame');if(old)old.remove();
   var f=document.createElement('iframe');
@@ -3604,6 +3576,10 @@ var SRC_SHOW_UNSUCCESSFUL_QUOTES={};  // briefId -> true/false; per-brief toggle
 window.SRC_toggleShowUnsuccessfulQuotes=function(bid){SRC_SHOW_UNSUCCESSFUL_QUOTES[bid]=!SRC_SHOW_UNSUCCESSFUL_QUOTES[bid];SRC_render();};
 var SRC_SHOW_ARCHIVED_BRIEFS=false;   // page-level toggle: hide archived (tidied-away) briefs by default
 window.SRC_toggleShowArchivedBriefs=function(){SRC_SHOW_ARCHIVED_BRIEFS=!SRC_SHOW_ARCHIVED_BRIEFS;SRC_render();};
+var SRC_SHOW_LEAD_SUBMITTED=false;    // page-level toggle: briefs freshly sent for quotation (no vendor quotes yet)
+                                       // sit collapsed under their own category by default so they don't clutter
+                                       // the main list; newest submission first once expanded.
+window.SRC_toggleShowLeadSubmitted=function(){SRC_SHOW_LEAD_SUBMITTED=!SRC_SHOW_LEAD_SUBMITTED;SRC_render();};
 var SRC_OPEN_COMMENT={};              // "briefId|shopId|optKey" -> true while Carve's revision-request textarea is open
 /* Simulated email notifications: an in-app inbox per shop + a toast confirming the "email" was sent. */
 function notifyShop(shopId,text){
@@ -4210,8 +4186,32 @@ function SRC_carveAdmin(){
   if(archivedBriefsCount>0){
     html+='<div style="text-align:right;margin-bottom:0.8rem;"><span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleShowArchivedBriefs()">'+(SRC_SHOW_ARCHIVED_BRIEFS?'Hide archived ('+archivedBriefsCount+')':'Show archived ('+archivedBriefsCount+')')+'</span></div>';
   }
+  // Split into "Lead submitted" — freshly sent for quotation, no vendor has quoted back
+  // yet — vs everything else (has at least one quote, or already awarded). The former
+  // sits collapsed under its own category by default so a growing backlog of unanswered
+  // leads doesn't bury projects that actually need a decision; newest submission first.
+  var visibleBriefs=SDB.briefs.filter(function(b){return !b.archived||SRC_SHOW_ARCHIVED_BRIEFS;});
+  var leadSubmittedList=[], restList=[];
+  visibleBriefs.forEach(function(b){
+    var opts=0; SHOPS.forEach(function(s){opts+=allOptionsFor(b,s.id).length;});
+    if(opts===0&&b.status!=='awarded'&&!b.archived){leadSubmittedList.push(b);}
+    else{restList.push(b);}
+  });
+  leadSubmittedList.sort(function(a,c){return (c.sentDate||'').localeCompare(a.sentDate||'');});
+  if(leadSubmittedList.length){
+    html+='<div style="margin-bottom:0.8rem;"><span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleShowLeadSubmitted()">'+(SRC_SHOW_LEAD_SUBMITTED?'▾ Lead submitted ('+leadSubmittedList.length+')':'▸ Lead submitted ('+leadSubmittedList.length+') — awaiting vendor response')+'</span></div>';
+    if(SRC_SHOW_LEAD_SUBMITTED){
+      leadSubmittedList.forEach(function(b){html+=renderCarveAdminBriefCard(b);});
+    }
+  }
+  restList.forEach(function(b){html+=renderCarveAdminBriefCard(b);});
+  setSrcBody(html);
   SDB.briefs.forEach(function(b){
-    if(b.archived&&!SRC_SHOW_ARCHIVED_BRIEFS)return;
+    if((b.status==='awarded'||b.picked!=null)&&(!b.clientQuote||!b.clientQuote.sent)&&document.getElementById('cq-pkgn-'+b.id))SRC_renderPkgDims('cq',b.id);
+  });
+}
+function renderCarveAdminBriefCard(b){
+    var html='';
     var quoted=Object.keys(b.quotes);
     var best=null;quoted.forEach(function(s){if(b.quotes[s].unsuccessful)return;if(best===null||b.quotes[s].price<best)best=b.quotes[s].price;});
     var totalOptions=0,unsuccessfulCount=0; SHOPS.forEach(function(s){allOptionsFor(b,s.id).forEach(function(opt){if(opt.data.unsuccessful)unsuccessfulCount++;else totalOptions++;});});
@@ -4220,25 +4220,25 @@ function SRC_carveAdmin(){
     var pickedNotConfirmed=!confirmed&&b.picked!=null;
     var noResponseYet=!confirmed&&!pickedNotConfirmed&&totalOptions===0;
     var daysSinceSent=b.sentDate?Math.max(0,Math.floor((Date.now()-new Date(b.sentDate+'T00:00:00').getTime())/86400000)):null;
-    var statusText=confirmed?('Confirmed with production \u00b7 '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' \u00b7 In production':''))
-      :pickedNotConfirmed?('Selected \u00b7 '+shop(b.picked).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+' \u00b7 not yet confirmed with production')
-      :noResponseYet?('Awaiting response'+(daysSinceSent!=null?(' \u00b7 sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):''))
-      :('Open \u00b7 '+totalOptions+' option'+(totalOptions==1?'':'s'));
+    var statusText=confirmed?('Confirmed with production · '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' · In production':''))
+      :pickedNotConfirmed?('Selected · '+shop(b.picked).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+' · not yet confirmed with production')
+      :noResponseYet?('Awaiting response'+(daysSinceSent!=null?(' · sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):''))
+      :('Open · '+totalOptions+' option'+(totalOptions==1?'':'s'));
     var vendorCompany=function(sid){var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===sid;})[0];var s=shop(sid);return admin?admin.company:(s?s.name:sid);};
     var invitedNames=(b.invited||[]).map(vendorCompany);
     var codeBits=[]; if(b.sentDate)codeBits.push('sent '+esc(b.sentDate)+(invitedNames.length?' to '+esc(invitedNames.join(', ')):''));
-    var codeDisplay=b.code?('<span style="cursor:pointer;" onclick="SRC_editInvoiceNumber(\''+b.id+'\')" title="Click to edit the invoice number">'+esc(b.code)+' \u270e</span>'+(codeBits.length?' \u00b7 ':'')):'';
+    var codeDisplay=b.code?('<span style="cursor:pointer;" onclick="SRC_editInvoiceNumber(\''+b.id+'\')" title="Click to edit the invoice number">'+esc(b.code)+' ✎</span>'+(codeBits.length?' · ':'')):'';
     if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=false; // all briefs start collapsed by default
     var expanded=SRC_EXPANDED[b.id];
-    var statusAction=confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'';
+    var statusAction=confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">↺ Reopen for quotes</button>':'';
     var archiveAction=b.archived?'<button class="btn btn--ghost btn--sm" onclick="SRC_unarchiveBrief(\''+b.id+'\')">Unarchive</button>'
       :'<button class="btn btn--ghost btn--sm" onclick="SRC_archiveBrief(\''+b.id+'\')">Archive</button>';
     var deleteAction=confirmed?'':'<button class="btn btn--ghost btn--sm btn--danger" onclick="SRC_deleteBrief(\''+b.id+'\')">Delete</button>';
     var headActions=statusAction+archiveAction+deleteAction;
-    html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+(b.archived?' src-card--archived':'')+'"><div class="panel__head"><div><span class="src-card__code">'+codeDisplay+codeBits.join(' \u00b7 ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+headActions+'<span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleExpand(\''+b.id+'\')">'+(expanded?'\u25be Collapse':'\u25b8 Expand')+'</span>'+'</div></div><div class="panel__body">';
+    html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+(b.archived?' src-card--archived':'')+'"><div class="panel__head"><div><span class="src-card__code">'+codeDisplay+codeBits.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+headActions+'<span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleExpand(\''+b.id+'\')">'+(expanded?'▾ Collapse':'▸ Expand')+'</span>'+'</div></div><div class="panel__body">';
     if(!expanded){
       html+='<div style="font-size:0.85rem;color:var(--cm-text-muted);">'+esc(statusText)+'</div></div></div>';
-      return;
+      return html;
     }
     html+=productionBriefBody(b);
     html+='<div class="src-withheld" style="border-style:solid;"><div class="wh-h">Client Contact</div>'+
@@ -4253,7 +4253,7 @@ function SRC_carveAdmin(){
     }
     if(unsuccessfulCount>0){
       if(SRC_SHOW_UNSUCCESSFUL_QUOTES[b.id]===undefined)SRC_SHOW_UNSUCCESSFUL_QUOTES[b.id]=false;
-      html+='<div style="text-align:right;margin-top:0.6rem;"><span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleShowUnsuccessfulQuotes(\''+b.id+'\')">'+(SRC_SHOW_UNSUCCESSFUL_QUOTES[b.id]?'\u25be Hide unsuccessful quotes ('+unsuccessfulCount+')':'\u25b8 Show unsuccessful quotes ('+unsuccessfulCount+')')+'</span></div>';
+      html+='<div style="text-align:right;margin-top:0.6rem;"><span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleShowUnsuccessfulQuotes(\''+b.id+'\')">'+(SRC_SHOW_UNSUCCESSFUL_QUOTES[b.id]?'▾ Hide unsuccessful quotes ('+unsuccessfulCount+')':'▸ Show unsuccessful quotes ('+unsuccessfulCount+')')+'</span></div>';
     }
     if(totalOptions>0||(unsuccessfulCount>0&&SRC_SHOW_UNSUCCESSFUL_QUOTES[b.id])){
     html+='<div style="margin-top:0.6rem;"><div class="qline2 head"><span style="padding-left:calc(28px + 0.6rem);">Shop</span><span>Cost</span><span>Prod. time</span><span></span></div>';
@@ -4270,7 +4270,7 @@ function SRC_carveAdmin(){
         var actionHtml;
         var genBtn='<button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_generateQuotationPDF(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Generate quotation</button>';
         if(q.unsuccessful){
-          actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;"><span class="chip" style="opacity:0.75;">Unsuccessful</span><button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_reopenQuoteUnsuccessful(\''+b.id+'\',\''+s.id+'\','+awardArg+')">\u21ba Reopen</button></div>';
+          actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;"><span class="chip" style="opacity:0.75;">Unsuccessful</span><button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_reopenQuoteUnsuccessful(\''+b.id+'\',\''+s.id+'\','+awardArg+')">↺ Reopen</button></div>';
         }else if(isAward){
           actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;"><span class="chip done">Awarded to production</span>'+genBtn+'</div>';
         }else if(confirmed){
@@ -4284,7 +4284,7 @@ function SRC_carveAdmin(){
             '<button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_markQuoteUnsuccessful(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Mark unsuccessful</button>'+
           '</div>';
         }
-        html+='<div class="qline2'+(q.unsuccessful?' qline2--unsuccessful':'')+'"><div class="qf-name"><span class="av">'+s.av+'</span><div><div class="nm">'+(admin?admin.name:s.name)+(isVariant&&q.label?(' <span style="color:var(--cm-text-subtle);font-weight:var(--w-regular);">\u2014 '+esc(q.label)+'</span>'):'')+(low?'<span class="lowtag">Lowest</span>':'')+'</div><div class="lc">'+(admin?admin.company:s.loc)+(isVariant?' \u00b7 Variation':'')+'</div></div></div>'+
+        html+='<div class="qline2'+(q.unsuccessful?' qline2--unsuccessful':'')+'"><div class="qf-name"><span class="av">'+s.av+'</span><div><div class="nm">'+(admin?admin.name:s.name)+(isVariant&&q.label?(' <span style="color:var(--cm-text-subtle);font-weight:var(--w-regular);">— '+esc(q.label)+'</span>'):'')+(low?'<span class="lowtag">Lowest</span>':'')+'</div><div class="lc">'+(admin?admin.company:s.loc)+(isVariant?' · Variation':'')+'</div></div></div>'+
           '<div class="qf-price">'+money(q.price)+(q.priceRMB?'<div style="font-family:var(--font-mono);font-weight:var(--w-regular);font-size:0.62rem;color:var(--cm-text-subtle);margin-top:2px;">converted from '+moneyRMB(q.priceRMB)+' RMB</div>':'')+'</div><div class="qf-days">'+q.days+' days</div>'+
           '<div style="text-align:right;">'+actionHtml+'</div>'+
           quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+carveCommentBlock(b,s.id,opt.variantIndex,q)+'</div>';
@@ -4302,11 +4302,7 @@ function SRC_carveAdmin(){
       if(ensureClientInvoice(b))saveSRC();
     }
     html+='</div></div>';
-  });
-  setSrcBody(html);
-  SDB.briefs.forEach(function(b){
-    if((b.status==='awarded'||b.picked!=null)&&(!b.clientQuote||!b.clientQuote.sent)&&document.getElementById('cq-pkgn-'+b.id))SRC_renderPkgDims('cq',b.id);
-  });
+    return html;
 }
 
 /* ---- Client invoice: generated once a project has both a client price AND is awarded to
