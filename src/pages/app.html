@@ -4305,17 +4305,37 @@ function renderCarveAdminBriefCard(b){
     return html;
 }
 
+/* ---- Invoice numbering: date-based, not random — CM-20260814-01, CM-20260814-02, ...
+   The date is today's, the sequence resets to 01 each new day and is derived from the
+   highest existing sequence number already used for that same date across all briefs
+   (rather than a separately-tracked counter), so two admins awarding around the same
+   time can't collide, and a manually-renumbered invoice doesn't throw off anyone else's
+   sequence. Always overridable by hand afterward. ---- */
+function nextInvoiceNumber(){
+  var today=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  var maxSeq=0;
+  var re=new RegExp('^CM-'+today+'-(\\d+)$');
+  (SDB.briefs||[]).forEach(function(b){
+    if(!b.code)return;
+    var m=re.exec(b.code);
+    if(m){var n=parseInt(m[1],10); if(n>maxSeq)maxSeq=n;}
+  });
+  var seq=maxSeq+1;
+  return 'CM-'+today+'-'+(seq<10?('0'+seq):seq);
+}
 /* ---- Client invoice: generated once a project has both a client price AND is awarded to
    production (whichever happens second — see ensureClientInvoice() calls in SRC_award and
    SRC_saveClientQuote). Deposit/balance amounts and IDs are fixed at generation; only their
-   payment status changes after that. ---- */
+   payment status changes after that. The invoice number itself (b.code) is likewise only
+   ever assigned once production is awarded — never before. ---- */
 function ensureClientInvoice(b){
   if(!b||!b.clientQuote||!b.clientQuote.price)return false;
+  if(b.status!=='awarded')return false; // no invoice number, and no invoice, until production is awarded
   if(b.clientQuote.invoice)return false; // already issued — never reassign invoice numbers/amounts
   var total=b.clientQuote.price;
   var dep=Math.round(total/2), bal=total-dep;
   var today=new Date().toISOString().slice(0,10);
-  if(!b.code)b.code='CM-'+Math.floor(1000+Math.random()*9000);
+  if(!b.code)b.code=nextInvoiceNumber();
   b.clientQuote.invoice={
     depositId:b.code.replace('CM-','CM-D'),
     balanceId:b.code.replace('CM-','CM-B'),
@@ -4357,6 +4377,20 @@ window.SRC_reopenInvoicePayment=function(bid,which){
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
 };
+window.SRC_editInvoiceId=function(bid,which){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b||!b.clientQuote||!b.clientQuote.invoice)return;
+  var inv=b.clientQuote.invoice;
+  var current=which==='deposit'?inv.depositId:inv.balanceId;
+  var next=prompt('Invoice number for the '+(which==='deposit'?'deposit':'balance')+' invoice on "'+b.title+'":',current);
+  if(next==null)return;
+  next=next.trim();
+  if(!next)return;
+  if(which==='deposit')inv.depositId=next; else inv.balanceId=next;
+  saveSRC();
+  if(window.SRC_render)SRC_render();
+  if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
+};
 function invoiceStatusChip(status){
   if(status==='paid')return '<span class="chip done">Paid</span>';
   if(status==='reported')return '<span class="chip await">Payment reported</span>';
@@ -4374,7 +4408,7 @@ function invoiceLineAdmin(b,which,id,amt,status,paidAt,reportedAt,reportedMethod
   }
   var subline=status==='paid'&&paidAt?(' · paid '+esc(paidAt)):(status==='reported'&&reportedAt?(' · reported '+esc(reportedAt)+(reportedMethod?' via '+esc(reportedMethod):'')):'');
   return '<div class="qline2" style="grid-template-columns:1fr auto auto;border-bottom:1px solid var(--cm-line-faint);align-items:center;">'+
-    '<div><div class="id">'+esc(id)+'</div><div class="lc" style="font-family:var(--font-mono);">'+esc(desc)+subline+'</div></div>'+
+    '<div><div class="id" style="cursor:pointer;" onclick="SRC_editInvoiceId(\''+b.id+'\',\''+which+'\')" title="Click to edit the invoice number">'+esc(id)+' ✎</div><div class="lc" style="font-family:var(--font-mono);">'+esc(desc)+subline+'</div></div>'+
     '<div class="qf-price">'+money(amt)+'</div>'+
     '<div style="text-align:right;">'+invoiceStatusChip(status)+' <button class="btn btn--ghost btn--sm" style="margin-left:0.5rem;" onclick="downloadInvoice(\''+b.id+'\',\''+which+'\')">Download PDF</button> '+actions+'</div>'+
   '</div>';
@@ -4594,7 +4628,7 @@ window.SRC_award=function(id,shopId,variantIndex){
   // The invoice number is issued the moment production is confirmed — not before,
   // since a quote alone doesn't guarantee the project moves forward. Stays fixed
   // once assigned, even if production is later switched to a different shop.
-  if(!b.code)b.code='CM-'+Math.floor(1000+Math.random()*9000);
+  if(!b.code)b.code=nextInvoiceNumber();
   // If a client price was already sent (and the basis didn't change), the invoice
   // can be issued right now instead of waiting on a separate client-acceptance step.
   var invoiceCreated=ensureClientInvoice(b);
