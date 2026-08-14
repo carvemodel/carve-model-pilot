@@ -3377,6 +3377,10 @@ function downloadHtmlAsPdf(iframeId,html,filename){
     });
   });
 }
+// This script's own top-level `money(s)` (below, ~line 3051) is a $-string
+// PARSER used by form inputs elsewhere in this file, not a formatter — so PDF
+// generation needs its own uniquely-named currency formatter to avoid colliding.
+function fmtUsd(n){return n==null?'—':'$'+n.toLocaleString('en-US');}
 function downloadInvoice(bid,which){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
   if(!b||!b.clientQuote||!b.clientQuote.invoice){alert('This invoice is not available yet.');return;}
@@ -3419,15 +3423,15 @@ function downloadInvoice(bid,which){
   var remarks=remarksBits.length?remarksBits.join(' '):'—';
 
   var paymentTerms=[
-    money(inv.depositAmt)+' — 50% due with this invoice.',
-    money(inv.balanceAmt)+' — remaining balance due upon model approval, before release for shipping.'
+    fmtUsd(inv.depositAmt)+' — 50% due with this invoice.',
+    fmtUsd(inv.balanceAmt)+' — remaining balance due upon model approval, before release for shipping.'
   ];
   var duenote;
   if(isDeposit){
-    duenote='Remaining '+money(inv.balanceAmt)+' due upon approval, before shipping.';
+    duenote='Remaining '+fmtUsd(inv.balanceAmt)+' due upon approval, before shipping.';
   }else{
     var depositPaid=(inv.depositStatus||'due')==='paid';
-    duenote=depositPaid?('Deposit '+esc(inv.depositId)+' ('+money(inv.depositAmt)+') was received'+(inv.depositPaidAt?(' on '+esc(fmtDate(inv.depositPaidAt))):'')+'.'):('Deposit '+esc(inv.depositId)+' ('+money(inv.depositAmt)+') is still outstanding.');
+    duenote=depositPaid?('Deposit '+esc(inv.depositId)+' ('+fmtUsd(inv.depositAmt)+') was received'+(inv.depositPaidAt?(' on '+esc(fmtDate(inv.depositPaidAt))):'')+'.'):('Deposit '+esc(inv.depositId)+' ('+fmtUsd(inv.depositAmt)+') is still outstanding.');
   }
 
   var TC=[
@@ -3529,11 +3533,11 @@ function downloadInvoice(bid,which){
 
 '<div class="sec"><h3>Itemized Cost</h3><table><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit · USD</th><th class="r">Total · USD</th><th>Remarks</th></tr>'+
 '<tr><td><b>'+esc(itemTitle)+(cq.scale?(' — '+esc(cq.scale)):'')+'</b>'+(itemSub?('<div class="muted" style="font-size:10px;margin-top:2px;">'+esc(itemSub)+'</div>'):'')+'</td>'+
-'<td class="r">1</td><td class="r">'+money(cq.price)+'</td><td class="r">'+money(cq.price)+'</td><td>'+remarks+'</td></tr>'+
-'<tr class="totrow"><td colspan="3"></td><td class="r">Subtotal</td><td class="r">'+money(cq.price)+'</td></tr>'+
-'<tr class="totrow grand"><td colspan="3"></td><td class="r">Total</td><td class="r">'+money(cq.price)+'</td></tr>'+
+'<td class="r">1</td><td class="r">'+fmtUsd(cq.price)+'</td><td class="r">'+fmtUsd(cq.price)+'</td><td>'+remarks+'</td></tr>'+
+'<tr class="totrow"><td colspan="3"></td><td class="r">Subtotal</td><td class="r">'+fmtUsd(cq.price)+'</td></tr>'+
+'<tr class="totrow grand"><td colspan="3"></td><td class="r">Total</td><td class="r">'+fmtUsd(cq.price)+'</td></tr>'+
 '</table>'+
-'<div class="duebox"><span>Due with this invoice</span><b>'+money(amt)+'</b></div>'+
+'<div class="duebox"><span>Due with this invoice</span><b>'+fmtUsd(amt)+'</b></div>'+
 '<div class="duenote">'+duenote+'</div>'+
 '</div>'+
 
@@ -3606,7 +3610,7 @@ window.SRC_generateQuotationPDF=function(bid,shopId,variantIndex){
 '<div><div class="b">Production shop</div>'+esc(shopName)+(shopLoc?('<br>'+esc(shopLoc)):'')+'</div>'+
 '<div style="text-align:right"><div class="b">Quotation</div>No. '+esc(refNo)+'<br>'+today+'</div></div>'+
 '<div class="sec"><h3>Quote</h3><table><tr><th>Item</th><th class="r">Cost</th><th class="r">Production time</th></tr>'+
-'<tr><td>'+esc(b.title)+'</td><td class="r">'+moneyRMB(q.priceRMB)+' (≈ '+money(q.price)+')</td><td class="r">'+esc(q.days)+' days</td></tr></table></div>'+
+'<tr><td>'+esc(b.title)+'</td><td class="r">'+moneyRMB(q.priceRMB)+' (≈ '+fmtUsd(q.price)+')</td><td class="r">'+esc(q.days)+' days</td></tr></table></div>'+
 (specRows.length?('<div class="sec"><h3>Specification</h3><table>'+specRows.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td class="r">'+esc(r[1])+'</td></tr>';}).join('')+'</table></div>'):'')+
 (q.note?('<div class="sec"><h3>Notes</h3><p>'+esc(q.note)+'</p></div>'):'')+
 '</body></html>';
@@ -3822,6 +3826,12 @@ function moneyRMB(n){return n==null?'—':'¥'+Math.round(n).toLocaleString('en-
 function money(n){return n==null?'—':'$'+n.toLocaleString('en-US');}
 function shop(id){return SHOPS.filter(function(s){return s.id===id;})[0];}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// downloadInvoice() / SRC_generateQuotationPDF() live in an earlier <script> tag,
+// outside this IIFE, and that script has its own unrelated `money` (a $ string
+// parser, not a formatter) — so `money`/`moneyRMB` can't just be exposed under
+// their own names without colliding. moneyRMB and shop have no such collision.
+window.moneyRMB=moneyRMB;
+window.shop=shop;
 function parseTriplet(s){return (s||'').split(/[×xX]/).map(function(v){return parseFloat(v.trim());}).filter(function(n){return !isNaN(n);});}
 window.SRC_syncDim=function(prefix,bid,dim,fromUnit){
   var mmEl=document.getElementById(prefix+'-'+dim+'-mm-'+bid), inEl=document.getElementById(prefix+'-'+dim+'-in-'+bid);
@@ -3937,6 +3947,9 @@ function winningQuote(b){
   }
   return b.quotes[shopId];
 }
+// downloadInvoice() lives in an earlier <script> tag, outside this IIFE — expose
+// winningQuote globally so it can look up the awarded vendor's boundary file.
+window.winningQuote=winningQuote;
 /* Basis for the client quote: the confirmed award if production has been confirmed, else Carve's soft pick. */
 function basisShop(b){return b.awarded!=null?b.awarded:(b.picked!=null?b.picked:null);}
 function basisVariantIndex(b){return b.awarded!=null?b.awardedVariantIndex:(b.picked!=null?b.pickedVariantIndex:null);}
@@ -3947,6 +3960,7 @@ function allOptionsFor(b,shopId){
   vars.forEach(function(v,i){out.push({variantIndex:i,data:v});});
   return out;
 }
+window.allOptionsFor=allOptionsFor;
 function isAwardedOption(b,shopId,variantIndex){
   var vi=variantIndex==null?null:variantIndex;
   var awardedVi=(b.awardedVariantIndex==null)?null:b.awardedVariantIndex;
