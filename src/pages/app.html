@@ -141,6 +141,7 @@ body{background:var(--cm-ink-950);}
 .src-head .sub{font-size:0.86rem;color:var(--cm-text-muted);margin-top:0.4rem;max-width:62ch;line-height:1.5;}
 .src-card{margin-bottom:1.2rem;}
 .src-card--stale{border-color:#C2703D;}
+.src-card--archived{opacity:0.6;}
 .src-card .panel__head{align-items:flex-start;}
 .src-card__t{font-family:var(--font-display);font-size:1.05rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
 .src-card__code{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.05em;color:var(--cm-text-subtle);text-transform:uppercase;margin-bottom:0.25rem;display:block;}
@@ -150,6 +151,7 @@ body{background:var(--cm-ink-950);}
 .src-spec b{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);font-weight:var(--w-regular);display:block;margin-bottom:1px;}
 .qline2{display:grid;grid-template-columns:1.5fr 0.8fr 0.7fr 240px;gap:1rem;align-items:start;padding:0.85rem 0;border-bottom:1px solid var(--cm-line-faint);}
 .qline2:last-child{border-bottom:0;}
+.qline2--unsuccessful{opacity:0.55;}
 .qline2.head span{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);}
 .qline2.head{padding:0.6rem 0 0;border-bottom:0;border-top:1px solid var(--cm-line-faint);}
 .qline2.head+.qline2{padding-top:0;}
@@ -3564,6 +3566,10 @@ var SRC_BFILE_UPLOADING={};           // true while a boundary file's upload is 
 var SRC_OPEN_VARIATION={};            // briefId -> true while a shop's "add variation" form is open
 var SRC_EXPANDED={};                  // briefId -> true/false; production admin's per-brief expand state
 window.SRC_toggleExpand=function(bid){SRC_EXPANDED[bid]=!SRC_EXPANDED[bid];SRC_render();};
+var SRC_SHOW_UNSUCCESSFUL_QUOTES={};  // briefId -> true/false; per-brief toggle to reveal quotes marked unsuccessful
+window.SRC_toggleShowUnsuccessfulQuotes=function(bid){SRC_SHOW_UNSUCCESSFUL_QUOTES[bid]=!SRC_SHOW_UNSUCCESSFUL_QUOTES[bid];SRC_render();};
+var SRC_SHOW_ARCHIVED_BRIEFS=false;   // page-level toggle: hide archived (tidied-away) briefs by default
+window.SRC_toggleShowArchivedBriefs=function(){SRC_SHOW_ARCHIVED_BRIEFS=!SRC_SHOW_ARCHIVED_BRIEFS;SRC_render();};
 var SRC_OPEN_COMMENT={};              // "briefId|shopId|optKey" -> true while Carve's revision-request textarea is open
 /* Simulated email notifications: an in-app inbox per shop + a toast confirming the "email" was sent. */
 function notifyShop(shopId,text){
@@ -4114,26 +4120,88 @@ function SRC_carveAdmin(){
   window.SRC_updateBadges();
   var html='';
   if(!SDB.briefs.length){html+='<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects submitted yet. New requests from the website\'s contact form will appear here automatically.</div></div>';}
+  if(SDB.briefs.length){
+    // Studio-wide metrics for the selected period: volume in, current backlog needing a
+    // vendor response, quotes actually received, how many converted to production, how
+    // fast vendors typically respond (sent -> quoted), and how many quotes closed out
+    // without converting.
+    var dashTotal=SDB.briefs.filter(function(b){return inSrcRange(b.sentDate);}).length;
+    var dashPending=SDB.briefs.filter(function(b){
+      if(b.archived||b.status==='awarded')return false;
+      var opts=0; SHOPS.forEach(function(s){opts+=allOptionsFor(b,s.id).length;});
+      return opts===0;
+    }).length;
+    var dashQuotedCount=0, dashUnsuccessfulCount=0, responseDaysSum=0, responseDaysN=0;
+    SDB.briefs.forEach(function(b){
+      SHOPS.forEach(function(s){
+        allOptionsFor(b,s.id).forEach(function(opt){
+          var q=opt.data;
+          if(q.unsuccessful){
+            if(inSrcRange(q.unsuccessfulAt||q.quotedAt||b.sentDate))dashUnsuccessfulCount++;
+            return;
+          }
+          var qDate=q.quotedAt||b.sentDate;
+          if(!inSrcRange(qDate))return;
+          dashQuotedCount++;
+          if(q.quotedAt&&b.sentDate){
+            var diffDays=Math.round((new Date(q.quotedAt+'T00:00:00')-new Date(b.sentDate+'T00:00:00'))/86400000);
+            if(diffDays>=0){responseDaysSum+=diffDays;responseDaysN++;}
+          }
+        });
+      });
+    });
+    var dashAwarded=SDB.briefs.filter(function(b){return b.status==='awarded'&&inSrcRange(b.sentDate);}).length;
+    var avgResponseDays=responseDaysN?Math.round(responseDaysSum/responseDaysN*10)/10:null;
+    html+='<div class="daterange"><span class="daterange__label">Period</span><div class="daterange__seg">'+
+      '<button type="button" class="'+(srcRange.mode==='all'?'on':'')+'" data-range="all" onclick="setSrcRange(\'all\',this)">All time</button>'+
+      '<button type="button" class="'+(srcRange.mode==='30'?'on':'')+'" data-range="30" onclick="setSrcRange(\'30\',this)">Last 30 days</button>'+
+      '<button type="button" class="'+(srcRange.mode==='90'?'on':'')+'" data-range="90" onclick="setSrcRange(\'90\',this)">Last 90 days</button>'+
+      '<button type="button" class="'+(srcRange.mode==='ytd'?'on':'')+'" data-range="ytd" onclick="setSrcRange(\'ytd\',this)">Year to date</button>'+
+      '<button type="button" class="'+(srcRange.mode==='custom'?'on':'')+'" data-range="custom" onclick="setSrcRange(\'custom\',this)">Custom</button>'+
+      '</div><div class="daterange__custom" id="srcCustom" '+(srcRange.mode==='custom'?'':'hidden')+'>'+
+      '<input type="date" id="srcFrom" aria-label="From date" value="'+(srcRange.from||'')+'" onchange="applySrcRange()">'+
+      '<span class="daterange__to">→</span>'+
+      '<input type="date" id="srcTo" aria-label="To date" value="'+(srcRange.to||'')+'" onchange="applySrcRange()">'+
+      '</div></div>'+
+      '<div class="leads-dash">'+
+      '<div class="kpi"><span class="mock__k">Briefs received</span><div class="big">'+dashTotal+'</div></div>'+
+      '<div class="kpi"><span class="mock__k">Awaiting response</span><div class="big">'+dashPending+'</div></div>'+
+      '<div class="kpi"><span class="mock__k">Quotes received</span><div class="big">'+dashQuotedCount+'</div></div>'+
+      '<div class="kpi"><span class="mock__k">Confirmed w/ production</span><div class="big">'+dashAwarded+'</div></div>'+
+      '<div class="kpi"><span class="mock__k">Avg. vendor response</span><div class="big">'+(avgResponseDays==null?'—':avgResponseDays+'d')+'</div></div>'+
+      '<div class="kpi"><span class="mock__k">Unsuccessful quotes</span><div class="big">'+dashUnsuccessfulCount+'</div></div>'+
+      '</div>';
+  }
+  var archivedBriefsCount=SDB.briefs.filter(function(b){return b.archived;}).length;
+  if(archivedBriefsCount>0){
+    html+='<div style="text-align:right;margin-bottom:0.8rem;"><span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleShowArchivedBriefs()">'+(SRC_SHOW_ARCHIVED_BRIEFS?'Hide archived ('+archivedBriefsCount+')':'Show archived ('+archivedBriefsCount+')')+'</span></div>';
+  }
   SDB.briefs.forEach(function(b){
+    if(b.archived&&!SRC_SHOW_ARCHIVED_BRIEFS)return;
     var quoted=Object.keys(b.quotes);
-    var best=null;quoted.forEach(function(s){if(best===null||b.quotes[s].price<best)best=b.quotes[s].price;});
-    var totalOptions=0; SHOPS.forEach(function(s){totalOptions+=allOptionsFor(b,s.id).length;});
+    var best=null;quoted.forEach(function(s){if(b.quotes[s].unsuccessful)return;if(best===null||b.quotes[s].price<best)best=b.quotes[s].price;});
+    var totalOptions=0,unsuccessfulCount=0; SHOPS.forEach(function(s){allOptionsFor(b,s.id).forEach(function(opt){if(opt.data.unsuccessful)unsuccessfulCount++;else totalOptions++;});});
     var wq=winningQuote(b);
     var confirmed=b.status==='awarded';
     var pickedNotConfirmed=!confirmed&&b.picked!=null;
     var noResponseYet=!confirmed&&!pickedNotConfirmed&&totalOptions===0;
     var daysSinceSent=b.sentDate?Math.max(0,Math.floor((Date.now()-new Date(b.sentDate+'T00:00:00').getTime())/86400000)):null;
-    var statusText=confirmed?('Confirmed with production · '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' · In production':''))
-      :pickedNotConfirmed?('Selected · '+shop(b.picked).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+' · not yet confirmed with production')
-      :noResponseYet?('Awaiting response'+(daysSinceSent!=null?(' · sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):''))
-      :('Open · '+totalOptions+' option'+(totalOptions==1?'':'s'));
+    var statusText=confirmed?('Confirmed with production \u00b7 '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' \u00b7 In production':''))
+      :pickedNotConfirmed?('Selected \u00b7 '+shop(b.picked).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+' \u00b7 not yet confirmed with production')
+      :noResponseYet?('Awaiting response'+(daysSinceSent!=null?(' \u00b7 sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):''))
+      :('Open \u00b7 '+totalOptions+' option'+(totalOptions==1?'':'s'));
     var vendorCompany=function(sid){var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===sid;})[0];var s=shop(sid);return admin?admin.company:(s?s.name:sid);};
     var invitedNames=(b.invited||[]).map(vendorCompany);
     var codeBits=[]; if(b.sentDate)codeBits.push('sent '+esc(b.sentDate)+(invitedNames.length?' to '+esc(invitedNames.join(', ')):''));
-    var codeDisplay=b.code?('<span style="cursor:pointer;" onclick="SRC_editInvoiceNumber(\''+b.id+'\')" title="Click to edit the invoice number">'+esc(b.code)+' ✎</span>'+(codeBits.length?' · ':'')):'';
+    var codeDisplay=b.code?('<span style="cursor:pointer;" onclick="SRC_editInvoiceNumber(\''+b.id+'\')" title="Click to edit the invoice number">'+esc(b.code)+' \u270e</span>'+(codeBits.length?' \u00b7 ':'')):'';
     if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=false; // all briefs start collapsed by default
     var expanded=SRC_EXPANDED[b.id];
-    html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+'"><div class="panel__head"><div><span class="src-card__code">'+codeDisplay+codeBits.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+(confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'')+'<span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleExpand(\''+b.id+'\')">'+(expanded?'▾ Collapse':'▸ Expand')+'</span>'+'</div></div><div class="panel__body">';
+    var statusAction=confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">\u21ba Reopen for quotes</button>':'';
+    var archiveAction=b.archived?'<button class="btn btn--ghost btn--sm" onclick="SRC_unarchiveBrief(\''+b.id+'\')">Unarchive</button>'
+      :'<button class="btn btn--ghost btn--sm" onclick="SRC_archiveBrief(\''+b.id+'\')">Archive</button>';
+    var deleteAction=confirmed?'':'<button class="btn btn--ghost btn--sm btn--danger" onclick="SRC_deleteBrief(\''+b.id+'\')">Delete</button>';
+    var headActions=statusAction+archiveAction+deleteAction;
+    html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+(b.archived?' src-card--archived':'')+'"><div class="panel__head"><div><span class="src-card__code">'+codeDisplay+codeBits.join(' \u00b7 ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+headActions+'<span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleExpand(\''+b.id+'\')">'+(expanded?'\u25be Collapse':'\u25b8 Expand')+'</span>'+'</div></div><div class="panel__body">';
     if(!expanded){
       html+='<div style="font-size:0.85rem;color:var(--cm-text-muted);">'+esc(statusText)+'</div></div></div>';
       return;
@@ -4149,30 +4217,40 @@ function SRC_carveAdmin(){
       quoted.forEach(function(sid){var d=(b.quotes[sid]&&b.quotes[sid].quotedAt)||b.sentDate;if(d&&(!latestReceived||d>latestReceived))latestReceived=d;});
       if(latestReceived)html+='<div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-top:0.4rem;">received '+esc(latestReceived)+'</div>';
     }
-    if(totalOptions>0){
+    if(unsuccessfulCount>0){
+      if(SRC_SHOW_UNSUCCESSFUL_QUOTES[b.id]===undefined)SRC_SHOW_UNSUCCESSFUL_QUOTES[b.id]=false;
+      html+='<div style="text-align:right;margin-top:0.6rem;"><span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleShowUnsuccessfulQuotes(\''+b.id+'\')">'+(SRC_SHOW_UNSUCCESSFUL_QUOTES[b.id]?'\u25be Hide unsuccessful quotes ('+unsuccessfulCount+')':'\u25b8 Show unsuccessful quotes ('+unsuccessfulCount+')')+'</span></div>';
+    }
+    if(totalOptions>0||(unsuccessfulCount>0&&SRC_SHOW_UNSUCCESSFUL_QUOTES[b.id])){
     html+='<div style="margin-top:0.6rem;"><div class="qline2 head"><span style="padding-left:calc(28px + 0.6rem);">Shop</span><span>Cost</span><span>Prod. time</span><span></span></div>';
     SHOPS.forEach(function(s){
       allOptionsFor(b,s.id).forEach(function(opt){
         var q=opt.data;
+        if(q.unsuccessful&&!SRC_SHOW_UNSUCCESSFUL_QUOTES[b.id])return;
         var isVariant=opt.variantIndex!=null;
         var vi=isVariant?opt.variantIndex:null;
-        var low=!isVariant&&q.price===best&&quoted.length>1&&!b.awarded;
+        var low=!isVariant&&q.price===best&&quoted.length>1&&!b.awarded&&!q.unsuccessful;
         var isAward=isAwardedOption(b,s.id,opt.variantIndex);
         var awardArg=isVariant?opt.variantIndex:'null';
         var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===s.id;})[0];
         var actionHtml;
         var genBtn='<button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_generateQuotationPDF(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Generate quotation</button>';
-        if(isAward){
+        if(q.unsuccessful){
+          actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;"><span class="chip" style="opacity:0.75;">Unsuccessful</span><button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_reopenQuoteUnsuccessful(\''+b.id+'\',\''+s.id+'\','+awardArg+')">\u21ba Reopen</button></div>';
+        }else if(isAward){
           actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;"><span class="chip done">Awarded to production</span>'+genBtn+'</div>';
         }else if(confirmed){
-          actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;"><button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_award(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Award to production</button>'+genBtn+'</div>';
+          actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;"><button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_award(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Award to production</button>'+genBtn+
+            '<button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_markQuoteUnsuccessful(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Mark unsuccessful</button>'+
+          '</div>';
         }else{
           actionHtml='<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;">'+
             '<button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_award(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Award to production</button>'+
             genBtn+
+            '<button class="btn btn--ghost btn--fill-hover btn--sm" style="width:170px;text-align:center;" onclick="SRC_markQuoteUnsuccessful(\''+b.id+'\',\''+s.id+'\','+awardArg+')">Mark unsuccessful</button>'+
           '</div>';
         }
-        html+='<div class="qline2"><div class="qf-name"><span class="av">'+s.av+'</span><div><div class="nm">'+(admin?admin.name:s.name)+(isVariant&&q.label?(' <span style="color:var(--cm-text-subtle);font-weight:var(--w-regular);">— '+esc(q.label)+'</span>'):'')+(low?'<span class="lowtag">Lowest</span>':'')+'</div><div class="lc">'+(admin?admin.company:s.loc)+(isVariant?' · Variation':'')+'</div></div></div>'+
+        html+='<div class="qline2'+(q.unsuccessful?' qline2--unsuccessful':'')+'"><div class="qf-name"><span class="av">'+s.av+'</span><div><div class="nm">'+(admin?admin.name:s.name)+(isVariant&&q.label?(' <span style="color:var(--cm-text-subtle);font-weight:var(--w-regular);">\u2014 '+esc(q.label)+'</span>'):'')+(low?'<span class="lowtag">Lowest</span>':'')+'</div><div class="lc">'+(admin?admin.company:s.loc)+(isVariant?' \u00b7 Variation':'')+'</div></div></div>'+
           '<div class="qf-price">'+money(q.price)+(q.priceRMB?'<div style="font-family:var(--font-mono);font-weight:var(--w-regular);font-size:0.62rem;color:var(--cm-text-subtle);margin-top:2px;">converted from '+moneyRMB(q.priceRMB)+' RMB</div>':'')+'</div><div class="qf-days">'+q.days+' days</div>'+
           '<div style="text-align:right;">'+actionHtml+'</div>'+
           quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+carveCommentBlock(b,s.id,opt.variantIndex,q)+'</div>';
@@ -4316,6 +4394,30 @@ window.SRC_reopenForQuotes=function(id){
   if(prevShop)notifyShop(prevShop,'"'+b.title+'" was reopened for quotes by Carve Model.');
   saveSRC();SRC_render();
 };
+/* ---- Close out a single vendor's quotation that didn't convert — they didn't get picked, or the client
+   said no. Tracked per quote (not per brief), since a brief can have other quotes still in play. ---- */
+window.SRC_markQuoteUnsuccessful=function(id,shopId,variantIndex){
+  var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
+  if(!b)return;
+  var vi=(variantIndex===undefined||variantIndex===null||variantIndex==='')?null:parseInt(variantIndex,10);
+  if(isNaN(vi))vi=null;
+  var q=vi==null?b.quotes[shopId]:(b.variations&&b.variations[shopId]&&b.variations[shopId][vi]);
+  if(!q)return;
+  if(!confirm('Mark this quote from '+shop(shopId).name+' as unsuccessful? It moves out of the main list — you can reopen it later from "Show unsuccessful quotes".'))return;
+  q.unsuccessful=true;q.unsuccessfulAt=new Date().toISOString().slice(0,10);
+  if(b.picked===shopId&&(b.pickedVariantIndex==null?null:b.pickedVariantIndex)===vi){b.picked=null;b.pickedVariantIndex=null;b.clientQuote=null;}
+  saveSRC();SRC_render();
+};
+window.SRC_reopenQuoteUnsuccessful=function(id,shopId,variantIndex){
+  var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
+  if(!b)return;
+  var vi=(variantIndex===undefined||variantIndex===null||variantIndex==='')?null:parseInt(variantIndex,10);
+  if(isNaN(vi))vi=null;
+  var q=vi==null?b.quotes[shopId]:(b.variations&&b.variations[shopId]&&b.variations[shopId][vi]);
+  if(!q)return;
+  delete q.unsuccessful;delete q.unsuccessfulAt;
+  saveSRC();SRC_render();
+};
 /* ---- Soft pick: choose the basis for the client quote WITHOUT notifying any shop. Freely switchable until confirmed with production. ---- */
 window.SRC_pick=function(id,shopId,variantIndex){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -4355,6 +4457,30 @@ window.SRC_award=function(id,shopId,variantIndex){
     }
   });
   saveSRC();SRC_render();
+};
+/* ---- Archive/delete a whole brief (Carve Admin only) — for tidying up projects that are done with,
+   regardless of outcome. Archive is reversible; Delete is permanent, same pattern as deleteLead(). ---- */
+window.SRC_archiveBrief=function(id){
+  var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
+  if(!b)return;
+  b.archived=true;
+  saveSRC();SRC_render();
+};
+window.SRC_unarchiveBrief=function(id){
+  var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
+  if(!b)return;
+  delete b.archived;
+  saveSRC();SRC_render();
+};
+window.SRC_deleteBrief=function(id){
+  var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
+  if(!b)return;
+  if(b.status==='awarded'){alert('This project is confirmed with production and can’t be deleted. Reopen it for quotes first if you need to remove it.');return;}
+  if(!confirm('Delete "'+b.title+'"? This permanently removes the project and all its quotes — it cannot be recovered. If you just want it out of the way, use Archive instead.'))return;
+  if(!confirm('Are you sure? This is the last step — the project will be permanently deleted.'))return;
+  SDB.briefs=(SDB.briefs||[]).filter(function(x){return x.id!==id;});
+  saveSRC({deletedBriefIds:[id]});
+  SRC_render();
 };
 window.SRC_editInvoiceNumber=function(bid){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
