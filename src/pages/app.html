@@ -3326,79 +3326,239 @@ function requestCO(id){
   card.querySelector('[data-cochip]').textContent='Changes requested';
   card.querySelector('[data-coact]').innerHTML='<span style="font-size:0.86rem;color:var(--cm-text-muted);">Sent back to the studio \u2014 they\u2019ll revise and reissue. <button class="btn btn--ghost btn--sm" onclick="go(\'messages\')" style="margin-left:0.4rem;">Open messages \u2192</button></span>';
 }
-function downloadInvoice(bid,which){
-  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
-  if(!b||!b.clientQuote||!b.clientQuote.invoice){alert('This invoice is not available yet.');return;}
-  var cq=b.clientQuote, inv=cq.invoice;
-  var isDeposit=which!=='balance';
-  var id=isDeposit?inv.depositId:inv.balanceId;
-  var amt=isDeposit?inv.depositAmt:inv.balanceAmt;
-  var status=(isDeposit?inv.depositStatus:inv.balanceStatus)||'due';
-  var statusLabel=status==='paid'?'Paid':(status==='reported'?'Payment reported':'Due');
-  var client=b.client||{};
-  var issuedFmt=inv.issuedDate?new Date(inv.issuedDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
-  var fmtDate=function(s){return s?new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';};
-  var paymentNote;
-  if(isDeposit){
-    paymentNote='Deposit ('+money(inv.depositAmt)+') due now, balance ('+money(inv.balanceAmt)+') due on delivery.';
-  }else{
-    var depositPaid=(inv.depositStatus||'due')==='paid';
-    var depositLine=depositPaid?('was received'+(inv.depositPaidAt?(' on '+esc(fmtDate(inv.depositPaidAt))):'')+'.'):'is still outstanding.';
-    paymentNote='Balance ('+money(inv.balanceAmt)+') due on delivery. Deposit '+inv.depositId+' ('+money(inv.depositAmt)+') '+depositLine;
-  }
-  var pd=cq.packageDimsList&&cq.packageDimsList.length?cq.packageDimsList:(cq.packageDims?[cq.packageDims]:[]);
-  var specRows=[];
-  if(cq.category)specRows.push(['Work scope',cq.category]);
-  if(cq.material)specRows.push(['Model material',cq.material]);
-  if(cq.base)specRows.push(['Base material',cq.base]);
-  if(cq.scale)specRows.push(['Scale',cq.scale]);
-  if(cq.modelDims)specRows.push(['Model dimensions',cq.modelDims]);
-  if(cq.packages)specRows.push(['Packages',cq.packages]);
-  pd.forEach(function(d,i){specRows.push(['Package #'+(i+1)+' dimensions',d]);});
-  if(cq.extras&&cq.extras.length)specRows.push(['Special requirements',cq.extras.join(', ')]);
-  var css='*{box-sizing:border-box;margin:0;padding:0;}'+
-'body{font-family:Arial,Helvetica,sans-serif;color:#17191D;padding:44px 52px;font-size:12px;line-height:1.55;}'+
-'.hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #17191D;padding-bottom:18px;}'+
-'.brand{font-family:Georgia,serif;font-weight:bold;font-size:22px;letter-spacing:1px;}'+
-'.co{text-align:right;font-size:11px;color:#3A3E45;line-height:1.5;}'+
-'.tag{font-size:11px;color:#6E737B;margin-top:6px;}.tag b{font-size:18px;color:#17191D;letter-spacing:2px;}'+
-'.row{display:flex;justify-content:space-between;gap:24px;margin-top:24px;}'+
-'.b{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888D95;margin-bottom:5px;}'+
-'.sec{margin-top:26px;}'+
-'.sec h3{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#17191D;border-bottom:1px solid #C9CCD0;padding-bottom:6px;margin-bottom:10px;}'+
-'table{width:100%;border-collapse:collapse;margin-top:4px;}'+
-'th{text-align:left;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:#888D95;border-bottom:1px solid #17191D;padding:0 8px 8px 0;}'+
-'th.r,td.r{text-align:right;padding-right:0;}td{padding:10px 8px 10px 0;border-bottom:1px solid #E4E6E9;vertical-align:top;}'+
-'.statusbadge{display:inline-block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:3px;margin-top:6px;}'+
-'.statusbadge.paid{background:#E4F3E8;color:#1E7B3C;}.statusbadge.due{background:#F1F2F4;color:#54595F;}.statusbadge.reported{background:#FCEFDD;color:#A15C00;}'+
-'@media print{body{padding:22px;}.sec{break-inside:avoid;}}';
-
-  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carve Model — Invoice '+esc(id)+'</title><style>'+css+'</style></head><body>'+
-'<div class="hd"><div><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model" style="height:42px;width:auto;display:block;"></div>'+
-'<div class="tag"><b>'+(isDeposit?'DEPOSIT INVOICE':'BALANCE INVOICE')+'</b></div></div>'+
-'<div class="co">Carve Model<br>1370 Valley Vista Dr. #200<br>Diamond Bar, CA 91765<br>www.physical-model.com<br>support@physical-model.com<br>877-856-6665</div></div>'+
-
-'<div class="row"><div><div class="b">Project</div><b>'+esc(b.title)+'</b>'+(b.brief&&b.brief['Model type']?('<br>'+esc(b.brief['Model type'])):'')+(cq.scale?('<br>Scale: '+esc(cq.scale)):'')+'</div>'+
-'<div><div class="b">Bill to</div><b>'+esc(client.Company||'')+'</b>'+(client.Name?('<br>'+esc(client.Name)):'')+(client.Email?('<br>'+esc(client.Email)):'')+'</div>'+
-'<div style="text-align:right"><div class="b">Invoice</div>No. '+esc(id)+'<br>'+esc(issuedFmt)+'<br><span class="statusbadge '+status+'">'+esc(statusLabel)+'</span></div></div>'+
-
-'<div class="sec"><h3>Invoice</h3><table><tr><th>Item</th><th class="r">Amount</th><th class="r">Status</th></tr>'+
-'<tr><td>'+esc(b.title)+' — '+(isDeposit?'Deposit (50%)':'Final balance')+'</td><td class="r">'+money(amt)+'</td><td class="r">'+esc(statusLabel)+'</td></tr>'+
-'</table></div>'+
-
-(specRows.length?('<div class="sec"><h3>Specification</h3><table>'+specRows.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td class="r">'+esc(r[1])+'</td></tr>';}).join('')+'</table></div>'):'')+
-
-'<div class="sec"><h3>Payment</h3><p>Total project cost: '+money(cq.price)+' · '+paymentNote+'</p>'+
-'<p style="margin-top:6px;color:#6E737B;">Pay via the secure link in your Carve Studio Portal, or by Zelle / ACH — reference invoice no. '+esc(id)+'.</p></div>'+
-'</body></html>';
-  var old=document.getElementById('invoiceFrame');if(old)old.remove();
+/* ---- Shared: render an HTML document (in a hidden iframe, for style isolation)
+   into a real, downloaded .pdf file via html2pdf.js (loaded from CDN on first use).
+   Falls back to the browser print dialog if the library can't be loaded. ---- */
+function loadPdfLib(cb){
+  if(window.html2pdf){cb();return;}
+  if(window.__html2pdfLoading){window.__html2pdfLoading.push(cb);return;}
+  window.__html2pdfLoading=[cb];
+  var s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+  s.onload=function(){var cbs=window.__html2pdfLoading||[];window.__html2pdfLoading=null;cbs.forEach(function(f){f();});};
+  s.onerror=function(){var cbs=window.__html2pdfLoading||[];window.__html2pdfLoading=null;cbs.forEach(function(f){f(new Error('html2pdf failed to load'));});};
+  document.head.appendChild(s);
+}
+function waitForImagesThenRun(doc,cb){
+  var imgs=doc.images?Array.prototype.slice.call(doc.images):[];
+  var pending=imgs.filter(function(im){return !im.complete;});
+  if(!pending.length){cb();return;}
+  var remaining=pending.length, done=false;
+  function finish(){if(done)return;done=true;cb();}
+  pending.forEach(function(im){
+    im.addEventListener('load',function(){remaining--;if(remaining<=0)finish();});
+    im.addEventListener('error',function(){remaining--;if(remaining<=0)finish();});
+  });
+  setTimeout(finish,4000); // safety net in case an image never fires load/error
+}
+function downloadHtmlAsPdf(iframeId,html,filename){
+  var old=document.getElementById(iframeId);if(old)old.remove();
   var f=document.createElement('iframe');
-  f.id='invoiceFrame';
+  f.id=iframeId;
   f.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:0;';
   document.body.appendChild(f);
   var d=f.contentWindow.document;
   d.open();d.write(html);d.close();
-  setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print();}catch(e){alert('Unable to open the print dialog here. In a normal browser tab this downloads the PDF.');}},400);
+  function fallbackToPrint(){
+    try{f.contentWindow.focus();f.contentWindow.print();}
+    catch(e){alert('Unable to generate the PDF here. In a normal browser tab this downloads the PDF.');}
+  }
+  waitForImagesThenRun(d,function(){
+    loadPdfLib(function(err){
+      if(err||!window.html2pdf){fallbackToPrint();return;}
+      window.html2pdf().from(d.body).set({
+        margin:0,
+        filename:filename,
+        image:{type:'jpeg',quality:0.98},
+        html2canvas:{scale:2,useCORS:true,windowWidth:794},
+        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+        pagebreak:{mode:['css','avoid-all']}
+      }).save().then(function(){f.remove();}).catch(function(){fallbackToPrint();});
+    });
+  });
+}
+function downloadInvoice(bid,which){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b||!b.clientQuote||!b.clientQuote.invoice){alert('This invoice is not available yet.');return;}
+  var cq=b.clientQuote, inv=cq.invoice;
+  var q=winningQuote(b)||{};
+  var isDeposit=which!=='balance';
+  var id=isDeposit?inv.depositId:inv.balanceId;
+  var amt=isDeposit?inv.depositAmt:inv.balanceAmt;
+  var client=b.client||{};
+  var issuedFmt=inv.issuedDate?new Date(inv.issuedDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+  var fmtDate=function(s){return s?new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';};
+
+  var itemTitle=(b.brief&&b.brief['Model type'])||cq.category||'Architectural Scale Model';
+  var itemSub=[cq.material||null,cq.base?(cq.base+' base'):null].filter(function(x){return x;}).join(' · ');
+  var boundaryUrl=q.boundaryFile&&q.boundaryFile.url?q.boundaryFile.url:null;
+  var deliverTo=client.Address||(b.brief&&b.brief['Delivery location'])||'';
+
+  var scopeBullets=[];
+  if(cq.material)scopeBullets.push(esc(cq.material)+(cq.scale?(' · Scale '+esc(cq.scale)):''));
+  else if(cq.scale)scopeBullets.push('Scale '+esc(cq.scale));
+  if(cq.base)scopeBullets.push(esc(cq.base)+' base'+(cq.modelDims?(' · Approx. '+esc(cq.modelDims)):''));
+  else if(cq.modelDims)scopeBullets.push('Approx. dims '+esc(cq.modelDims));
+  if(deliverTo)scopeBullets.push('Delivery to '+esc(deliverTo));
+  if(cq.packages)scopeBullets.push(cq.packages+' shipping package'+(cq.packages==1?'':'s'));
+  if(!scopeBullets.length)scopeBullets.push('Per specification agreed with Carve Model');
+
+  var exclusionCandidates=[
+    {label:'Interior furniture, fixtures &amp; equipment',keys:['Furniture','Interior Finishes']},
+    {label:'Lighting',keys:['Interior Lighting','External Lighting']},
+    {label:'Display stand / plinth',keys:['Display Stand / Plinth']},
+    {label:'Protective travel case',keys:['Customized Protective Travel Case']}
+  ];
+  var extrasSet={};(cq.extras||[]).forEach(function(x){extrasSet[x]=true;});
+  var exclusions=exclusionCandidates.filter(function(e){return !e.keys.some(function(k){return extrasSet[k];});}).map(function(e){return e.label;});
+  exclusions.push('Dust cover');
+
+  var remarksBits=[];
+  if(cq.modelDims)remarksBits.push(esc(cq.modelDims));
+  if(boundaryUrl)remarksBits.push('per boundary diagram');
+  var remarks=remarksBits.length?remarksBits.join(' '):'—';
+
+  var paymentTerms=[
+    money(inv.depositAmt)+' — 50% due with this invoice.',
+    money(inv.balanceAmt)+' — remaining balance due upon model approval, before release for shipping.'
+  ];
+  var duenote;
+  if(isDeposit){
+    duenote='Remaining '+money(inv.balanceAmt)+' due upon approval, before shipping.';
+  }else{
+    var depositPaid=(inv.depositStatus||'due')==='paid';
+    duenote=depositPaid?('Deposit '+esc(inv.depositId)+' ('+money(inv.depositAmt)+') was received'+(inv.depositPaidAt?(' on '+esc(fmtDate(inv.depositPaidAt))):'')+'.'):('Deposit '+esc(inv.depositId)+' ('+money(inv.depositAmt)+') is still outstanding.');
+  }
+
+  var TC=[
+    ['Production Timeline','Production begins upon receipt of this invoice’s payment and confirmation of specifications. The production time stated above runs from deposit receipt and excludes client review and revision periods.'],
+    ['Client-Provided Information','Client is responsible for the accuracy of all drawings, dimensions, site plans, and reference materials provided. Carve Model is not liable for errors resulting from inaccurate or incomplete client-provided information.'],
+    ['Client Response &amp; Approval','Client agrees to respond to requests for approval, clarification, or revision within ten (10) business days. Delayed responses may extend the production timeline accordingly.'],
+    ['Revisions &amp; Change Orders','Revisions beyond the scope defined in this invoice will be quoted separately and may affect cost and production timeline.'],
+    ['Material, Color &amp; Tolerance Variation','Due to the nature of hand fabrication, minor variation in material, color, and dimensional tolerance (±2%) from renderings or samples should be expected.'],
+    ['Shipping &amp; Delivery','Shipping costs, unless otherwise stated above, are billed separately upon completion. Delivery dates are estimates and are not guaranteed.'],
+    ['Risk of Loss &amp; Insurance','Risk of loss or damage transfers to Client upon delivery to the carrier. Client is responsible for arranging shipping insurance unless otherwise agreed in writing.'],
+    ['Installation &amp; Handling','On-site installation, uncrating, and handling are not included unless separately quoted.'],
+    ['Limited Warranty','Carve Model warrants the model against defects in workmanship for thirty (30) days from delivery. This warranty excludes damage from mishandling, shipping, or normal wear.'],
+    ['Force Majeure','Carve Model is not liable for delays caused by events beyond its reasonable control, including natural disasters, supply chain disruption, or carrier delays.'],
+    ['Payment &amp; Ownership','Title to the model transfers to Client only upon receipt of payment in full. Overdue balances may accrue interest at 1.5% per month.'],
+    ['Storage &amp; Abandonment','Completed models not accepted for delivery within thirty (30) days of completion may incur storage fees, and may be treated as abandoned after ninety (90) days.'],
+    ['Intellectual Property &amp; Indemnification','Client represents that all materials it provides do not infringe any third party’s rights and agrees to indemnify Carve Model against claims arising from their use.'],
+    ['Limitation of Liability','Carve Model’s total liability under this invoice is limited to the amount paid for the model. Carve Model is not liable for indirect, incidental, or consequential damages.'],
+    ['Taxes','Applicable sales tax, if any, is not included above and will be added where required by law.'],
+    ['Dispute Resolution &amp; Fees','Disputes arising from this invoice will first be addressed through good-faith negotiation. The prevailing party in any resulting action is entitled to reasonable attorney’s fees.'],
+    ['Governing Law','This invoice is governed by the laws of the State of California.'],
+    ['Entire Agreement','This invoice, together with the accepted quotation, constitutes the entire agreement between the parties regarding this project.']
+  ];
+
+  var css='*{box-sizing:border-box;margin:0;padding:0;}'+
+'body{font-family:Arial,Helvetica,sans-serif;color:#17191D;font-size:11.5px;line-height:1.6;}'+
+'.hdbar{background:#17191D;color:#fff;padding:26px 52px;display:flex;justify-content:space-between;align-items:center;}'+
+'.hdbar img{height:34px;width:auto;display:block;filter:brightness(0) invert(1);}'+
+'.hdbar .inv-tag{text-align:right;}'+
+'.hdbar .inv-tag b{font-size:22px;letter-spacing:4px;display:block;}'+
+'.hdbar .inv-tag span{font-size:11px;letter-spacing:1px;color:#C9CCD0;}'+
+'.addrbar{background:#3A3E45;color:#D8DADD;padding:9px 52px;display:flex;justify-content:space-between;font-size:10px;letter-spacing:.3px;}'+
+'.body-pad{padding:26px 52px 0 52px;}'+
+'.b{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888D95;margin-bottom:5px;}'+
+'.row3{display:flex;justify-content:space-between;gap:20px;margin-top:6px;}'+
+'.row3>div{flex:1;}'+
+'.row3 .invbox{border:1px solid #C9CCD0;border-radius:4px;padding:12px 16px;text-align:right;flex:0 0 200px;}'+
+'.name{font-size:13px;font-weight:bold;}'+
+'.muted{color:#6E737B;}'+
+'.hr{border-top:2px solid #17191D;margin:20px 0 0 0;}'+
+'.sec{margin-top:22px;break-inside:avoid;page-break-inside:avoid;}'+
+'.sec h3{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#17191D;margin-bottom:10px;}'+
+'.sec p{margin-bottom:8px;}'+
+'.bullets{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;list-style:none;}'+
+'.bullets li{padding-left:14px;position:relative;font-size:11px;}'+
+'.bullets li:before{content:"▪";position:absolute;left:0;color:#888D95;}'+
+'.excludebox{background:#F1F2F4;border-radius:4px;padding:12px 16px;font-size:10.5px;color:#54595F;margin-top:8px;}'+
+'.boundary-wrap{text-align:center;margin-top:10px;}'+
+'.boundary-wrap img{max-width:100%;max-height:420px;border:1px solid #E4E6E9;}'+
+'.boundary-cap{font-size:10px;color:#6E737B;margin-top:8px;text-align:center;}'+
+'table{width:100%;border-collapse:collapse;margin-top:6px;}'+
+'th{text-align:left;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:#888D95;border-bottom:1px solid #17191D;padding:0 8px 8px 0;}'+
+'th.r,td.r{text-align:right;}'+
+'td{padding:10px 8px 10px 0;border-bottom:1px solid #E4E6E9;vertical-align:top;}'+
+'.totrow td{border-bottom:none;padding-top:6px;}'+
+'.totrow.grand td{font-weight:bold;font-size:12.5px;border-top:1px solid #17191D;padding-top:10px;}'+
+'.duebox{background:#17191D;color:#fff;border-radius:4px;padding:16px 20px;margin-top:14px;display:flex;justify-content:space-between;align-items:center;}'+
+'.duebox b{font-size:20px;letter-spacing:.5px;}'+
+'.duebox span{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#C9CCD0;}'+
+'.duenote{text-align:right;font-size:10px;color:#6E737B;margin-top:6px;}'+
+'.foot2{display:flex;gap:32px;margin-top:24px;}'+
+'.foot2>div{flex:1;}'+
+'.remit{background:#17191D;color:#fff;border-radius:4px;padding:18px 22px;margin-top:10px;}'+
+'.remit .row3{margin-top:0;}'+
+'.remit .b{color:#9AA0A8;}'+
+'.remit .pv{font-family:Consolas,Menlo,monospace;font-size:11px;margin-bottom:10px;}'+
+'.tcsec{margin-top:14px;break-inside:avoid;page-break-inside:avoid;}'+
+'.tcsec h4{font-size:10.5px;margin-bottom:3px;}'+
+'.tcsec p{font-size:10px;color:#3A3E45;margin-bottom:0;}'+
+'.ftbar{background:#17191D;color:#C9CCD0;padding:14px 52px;display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.5px;margin-top:40px;}'+
+'.sigline{border-top:1px solid #17191D;width:220px;margin-top:36px;padding-top:6px;font-size:9px;color:#888D95;}'+
+'@media print{.sec{break-inside:avoid;}}';
+
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carve Model — Invoice '+esc(id)+'</title><style>'+css+'</style></head><body>'+
+
+'<div class="hdbar"><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model" crossorigin="anonymous"><div class="inv-tag"><b>INVOICE</b><span>'+(isDeposit?'DEPOSIT':'BALANCE')+' · No. '+esc(id)+'</span></div></div>'+
+'<div class="addrbar"><span>1370 Valley Vista Dr. #200, Diamond Bar, CA 91765 · www.physical-model.com</span><span>877-856-6665 · support@physical-model.com</span></div>'+
+
+'<div class="body-pad">'+
+
+'<div class="row3">'+
+  '<div><div class="b">Bill To</div><div class="name">'+esc(client.Name||client.Company||'Client')+'</div>'+(client.Company&&client.Name?('<div>'+esc(client.Company)+'</div>'):'')+(client.Email?('<div class="muted">'+esc(client.Email)+'</div>'):'')+'</div>'+
+  '<div><div class="b">Ship To</div>'+(client.Company?('<div>'+esc(client.Company)+'</div>'):'')+(deliverTo?('<div>'+esc(deliverTo)+'</div>'):'<div class="muted">To be confirmed</div>')+'</div>'+
+  '<div class="invbox"><div class="b">Invoice No.</div><div class="name">'+esc(id)+'</div><div class="b" style="margin-top:8px;">Invoice Date</div><div>'+esc(issuedFmt)+'</div></div>'+
+'</div>'+
+'<div class="hr"></div>'+
+
+'<div class="sec"><h3>Scope of Work</h3>'+
+'<p>Carve Model will provide fabrication service of one (1) '+esc(String(itemTitle).toLowerCase())+(cq.scale?(' at '+esc(cq.scale)):'')+'.</p>'+
+'<ul class="bullets">'+scopeBullets.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'+
+'</div>'+
+
+'<div class="sec"><h3>Scope Excludes</h3><div class="excludebox">'+exclusions.join(' · ')+'</div></div>'+
+
+(boundaryUrl?(
+'<div class="sec"><h3>Model Boundary</h3><div class="boundary-wrap"><img src="'+esc(boundaryUrl)+'" alt="Model boundary diagram" crossorigin="anonymous"></div>'+
+'<div class="boundary-cap">'+(cq.modelDims?('Model size '+esc(cq.modelDims)+'. '):'')+'Model fabricated to the limits shown above.</div>'+
+'</div>'
+):'')+
+
+'<div class="sec"><h3>Itemized Cost</h3><table><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit · USD</th><th class="r">Total · USD</th><th>Remarks</th></tr>'+
+'<tr><td><b>'+esc(itemTitle)+(cq.scale?(' — '+esc(cq.scale)):'')+'</b>'+(itemSub?('<div class="muted" style="font-size:10px;margin-top:2px;">'+esc(itemSub)+'</div>'):'')+'</td>'+
+'<td class="r">1</td><td class="r">'+money(cq.price)+'</td><td class="r">'+money(cq.price)+'</td><td>'+remarks+'</td></tr>'+
+'<tr class="totrow"><td colspan="3"></td><td class="r">Subtotal</td><td class="r">'+money(cq.price)+'</td></tr>'+
+'<tr class="totrow grand"><td colspan="3"></td><td class="r">Total</td><td class="r">'+money(cq.price)+'</td></tr>'+
+'</table>'+
+'<div class="duebox"><span>Due with this invoice</span><b>'+money(amt)+'</b></div>'+
+'<div class="duenote">'+duenote+'</div>'+
+'</div>'+
+
+'<div class="foot2"><div><div class="b">Production Time</div><p>'+(cq.days?(esc(cq.days)+' calendar days, excluding client review &amp; revision periods.'):'To be confirmed upon deposit receipt.')+'</p></div>'+
+'<div><div class="b">Payment Terms</div>'+paymentTerms.map(function(x){return '<p>'+x+'</p>';}).join('')+'</div></div>'+
+
+'<div class="sec"><h3>Remittance — Bank Details</h3><div class="remit"><div class="row3">'+
+  '<div><div class="b">Account Name</div><div class="pv">Carve Model</div><div class="b">Payee Bank</div><div class="pv">Bank of America</div></div>'+
+  '<div><div class="b">Account No.</div><div class="pv">325206329930</div><div class="b">Zelle Tag</div><div class="pv">carvemodel</div></div>'+
+  '<div><div class="b">ACH Routing</div><div class="pv">122000661</div><div class="b">Wire Routing</div><div class="pv">026009593</div></div>'+
+'</div></div></div>'+
+
+'<div class="sec"><h3>Acceptance</h3><p>By remitting payment of this invoice, Client accepts the scope, pricing, and terms described herein.</p>'+
+'<div class="sigline">Client Signature &amp; Date</div></div>'+
+
+'<div class="sec"><h3>Terms &amp; Conditions</h3>'+
+TC.map(function(t){return '<div class="tcsec"><h4>'+t[0]+'</h4><p>'+t[1]+'</p></div>';}).join('')+
+'</div>'+
+
+'</div>'+
+
+'<div class="ftbar"><span>CARVE MODEL · SUPPORT@PHYSICAL-MODEL.COM</span><span>Physical models for confident decisions.</span></div>'+
+
+'</body></html>';
+  downloadHtmlAsPdf('invoiceFrame',html,'Carve Model - Invoice '+id+'.pdf');
 }
 /* ---- Print-to-PDF a single shop's quote option (Carve Admin compare table) ---- */
 window.SRC_generateQuotationPDF=function(bid,shopId,variantIndex){
@@ -3432,14 +3592,14 @@ window.SRC_generateQuotationPDF=function(bid,shopId,variantIndex){
 '.tag{font-size:11px;color:#6E737B;margin-top:6px;}.tag b{font-size:18px;color:#17191D;letter-spacing:2px;}'+
 '.row{display:flex;justify-content:space-between;gap:24px;margin-top:24px;}'+
 '.b{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888D95;margin-bottom:5px;}'+
-'.sec{margin-top:26px;}'+
+'.sec{margin-top:26px;break-inside:avoid;page-break-inside:avoid;}'+
 '.sec h3{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#17191D;border-bottom:1px solid #C9CCD0;padding-bottom:6px;margin-bottom:10px;}'+
 'table{width:100%;border-collapse:collapse;margin-top:4px;}'+
 'th{text-align:left;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:#888D95;border-bottom:1px solid #17191D;padding:0 8px 8px 0;}'+
 'th.r,td.r{text-align:right;padding-right:0;}td{padding:10px 8px 10px 0;border-bottom:1px solid #E4E6E9;vertical-align:top;}'+
 '@media print{body{padding:22px;}.sec{break-inside:avoid;}}';
   var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carve Model — Quotation '+esc(refNo)+'</title><style>'+css+'</style></head><body>'+
-'<div class="hd"><div><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model" style="height:42px;width:auto;display:block;"></div>'+
+'<div class="hd"><div><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model" style="height:42px;width:auto;display:block;" crossorigin="anonymous"></div>'+
 '<div class="tag"><b>QUOTATION</b></div></div>'+
 '<div class="co">Carve Model<br>1370 Valley Vista Dr. #200<br>Diamond Bar, CA 91765<br>www.physical-model.com<br>support@physical-model.com<br>877-856-6665</div></div>'+
 '<div class="row"><div><div class="b">Project</div><b>'+esc(b.title)+'</b>'+(b.brief&&b.brief['Model type']?('<br>'+esc(b.brief['Model type'])):'')+(q.label?('<br>'+esc(q.label)):'')+'</div>'+
@@ -3450,14 +3610,7 @@ window.SRC_generateQuotationPDF=function(bid,shopId,variantIndex){
 (specRows.length?('<div class="sec"><h3>Specification</h3><table>'+specRows.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td class="r">'+esc(r[1])+'</td></tr>';}).join('')+'</table></div>'):'')+
 (q.note?('<div class="sec"><h3>Notes</h3><p>'+esc(q.note)+'</p></div>'):'')+
 '</body></html>';
-  var old=document.getElementById('quotationFrame');if(old)old.remove();
-  var f=document.createElement('iframe');
-  f.id='quotationFrame';
-  f.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:0;';
-  document.body.appendChild(f);
-  var d=f.contentWindow.document;
-  d.open();d.write(html);d.close();
-  setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print();}catch(e){alert('Unable to open the print dialog here. In a normal browser tab this downloads the PDF.');}},400);
+  downloadHtmlAsPdf('quotationFrame',html,'Carve Model - Quotation '+refNo+'.pdf');
 };
 function approveFinish(){
   var ms=document.getElementById('ms-finish');
@@ -3656,10 +3809,11 @@ function carveNoteReadonly(q){
 }
 function collapsedSummaryLine(b,q,won,lost,inProd){
   var flag=(q&&q.carveNote)?'⚑ Carve requested changes — ':'';
-  if(inProd)return flag+'In production'+(b.assignedTech?(' · assigned to '+TECHS.filter(function(t){return t.id===b.assignedTech;})[0].name):'');
-  if(won)return flag+'Awarded to you — assign a technician to proceed to production.';
+  var qLine=q?('<span style="color:var(--cm-text-strong);font-size:1.05em;">'+moneyRMB(q.priceRMB)+' (≈ '+money(q.price)+') · '+q.days+' days</span>'):'';
+  if(inProd)return flag+'In production'+(b.assignedTech?(' · assigned to '+TECHS.filter(function(t){return t.id===b.assignedTech;})[0].name):'')+(qLine?(' · '+qLine):'');
+  if(won)return flag+'Awarded to you'+(qLine?(' — '+qLine):'')+' — assign a technician to proceed to production.';
   if(lost)return 'Awarded to another shop.';
-  if(q)return flag+'Quote submitted: <span style="color:var(--cm-text-strong);font-size:1.05em;">'+moneyRMB(q.priceRMB)+' (≈ '+money(q.price)+') · '+q.days+' days</span>';
+  if(q)return flag+'Quote submitted: '+qLine;
   return 'Action needed — no quote submitted yet.';
 }
 
@@ -4689,7 +4843,10 @@ function renderProdAdminCard(b){
   var codeBits2=[]; if(b.code)codeBits2.push(esc(b.code)); if(b.sentDate)codeBits2.push('received '+esc(b.sentDate));
   var html='<div class="panel src-card"><div class="panel__head" style="cursor:pointer;" onclick="SRC_toggleExpand(\''+b.id+'\')"><div><span class="src-card__code">'+codeBits2.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+chip+'<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);">'+(expanded?'▾ Collapse':'▸ Expand')+'</span></div></div>';
   if(!expanded){
-    html+='<div class="panel__body"><div style="font-size:0.85rem;color:var(--cm-text-muted);">'+collapsedSummaryLine(b,q,won,lost,inProd)+'</div></div></div>';
+    // The awarded option can be a variation, not the shop's base quote — use the
+    // actual winning option so the collapsed summary shows the right price/days.
+    var summaryQ=won?(winningQuote(b)||q):q;
+    html+='<div class="panel__body"><div style="font-size:0.85rem;color:var(--cm-text-muted);">'+collapsedSummaryLine(b,summaryQ,won,lost,inProd)+'</div></div></div>';
     return html;
   }
   html+='<div class="panel__body">';
@@ -4757,8 +4914,9 @@ function SRC_prodAdmin(){
     var cq=(c.quotes[OUR_SHOP]&&(c.quotes[OUR_SHOP].quotedAt||c.sentDate))||'';
     return cq.localeCompare(aq);
   };
-  var activeList=ours.filter(function(b){return !b.quotes[OUR_SHOP]||needsRevision(b);}).sort(byCommentThenDate);
-  var submittedList=ours.filter(function(b){return !!b.quotes[OUR_SHOP]&&!needsRevision(b);}).sort(byQuotedDesc);
+  var activeList=ours.filter(function(b){return b.awarded!==OUR_SHOP&&(!b.quotes[OUR_SHOP]||needsRevision(b));}).sort(byCommentThenDate);
+  var awardedList=ours.filter(function(b){return b.awarded===OUR_SHOP;}).sort(byQuotedDesc);
+  var submittedList=ours.filter(function(b){return b.awarded!==OUR_SHOP&&!!b.quotes[OUR_SHOP]&&!needsRevision(b);}).sort(byQuotedDesc);
   // Dashboard: briefs received in the selected period, current backlog needing a
   // bid, quotes submitted in the period, and how long it took to respond (sent →
   // quoted). Quoted/response both fall back to sentDate when an older quote has
@@ -4796,6 +4954,8 @@ function SRC_prodAdmin(){
   }else{
     html+=sectionLabel('Active quotations · '+activeList.length);
     activeList.forEach(function(b){html+=renderProdAdminCard(b);});
+    html+=sectionLabel('Awarded · '+awardedList.length);
+    awardedList.forEach(function(b){html+=renderProdAdminCard(b);});
     html+=sectionLabel('Submitted quotes · '+submittedList.length);
     submittedList.forEach(function(b){html+=renderProdAdminCard(b);});
   }
