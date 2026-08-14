@@ -3362,6 +3362,10 @@ function downloadHtmlAsPdf(iframeId,html,filename){
 // PARSER used by form inputs elsewhere in this file, not a formatter — so PDF
 // generation needs its own uniquely-named currency formatter to avoid colliding.
 function fmtUsd(n){return n==null?'—':'$'+n.toLocaleString('en-US');}
+// Itemized-cost figures (table totals, the due-now callout, and the remaining-
+// balance note) are shown with cents, matching the reference invoice; narrative
+// Payment Terms bullets use whole dollars, so both formatters are kept.
+function fmtUsd2(n){return n==null?'—':'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function downloadInvoice(bid,which){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
   if(!b||!b.clientQuote||!b.clientQuote.invoice){alert('This invoice is not available yet.');return;}
@@ -3391,8 +3395,7 @@ function downloadInvoice(bid,which){
   var exclusionCandidates=[
     {label:'Interior furniture, fixtures &amp; equipment',keys:['Furniture','Interior Finishes']},
     {label:'Lighting',keys:['Interior Lighting','External Lighting']},
-    {label:'Display stand / plinth',keys:['Display Stand / Plinth']},
-    {label:'Protective travel case',keys:['Customized Protective Travel Case']}
+    {label:'Model stand',keys:['Display Stand / Plinth']}
   ];
   var extrasSet={};(cq.extras||[]).forEach(function(x){extrasSet[x]=true;});
   var exclusions=exclusionCandidates.filter(function(e){return !e.keys.some(function(k){return extrasSet[k];});}).map(function(e){return e.label;});
@@ -3409,31 +3412,31 @@ function downloadInvoice(bid,which){
   ];
   var duenote;
   if(isDeposit){
-    duenote='Remaining '+fmtUsd(inv.balanceAmt)+' due upon approval, before shipping.';
+    duenote='Remaining '+fmtUsd2(inv.balanceAmt)+' due upon approval, before shipping.';
   }else{
     var depositPaid=(inv.depositStatus||'due')==='paid';
-    duenote=depositPaid?('Deposit '+esc(inv.depositId)+' ('+fmtUsd(inv.depositAmt)+') was received'+(inv.depositPaidAt?(' on '+esc(fmtDate(inv.depositPaidAt))):'')+'.'):('Deposit '+esc(inv.depositId)+' ('+fmtUsd(inv.depositAmt)+') is still outstanding.');
+    duenote=depositPaid?('Deposit '+esc(inv.depositId)+' ('+fmtUsd2(inv.depositAmt)+') was received'+(inv.depositPaidAt?(' on '+esc(fmtDate(inv.depositPaidAt))):'')+'.'):('Deposit '+esc(inv.depositId)+' ('+fmtUsd2(inv.depositAmt)+') is still outstanding.');
   }
 
   var TC=[
-    ['Production Timeline','Production begins upon receipt of this invoice’s payment and confirmation of specifications. The production time stated above runs from deposit receipt and excludes client review and revision periods.'],
-    ['Client-Provided Information','Client is responsible for the accuracy of all drawings, dimensions, site plans, and reference materials provided. Carve Model is not liable for errors resulting from inaccurate or incomplete client-provided information.'],
-    ['Client Response &amp; Approval','Client agrees to respond to requests for approval, clarification, or revision within ten (10) business days. Delayed responses may extend the production timeline accordingly.'],
-    ['Revisions &amp; Change Orders','Revisions beyond the scope defined in this invoice will be quoted separately and may affect cost and production timeline.'],
-    ['Material, Color &amp; Tolerance Variation','Due to the nature of hand fabrication, minor variation in material, color, and dimensional tolerance (±2%) from renderings or samples should be expected.'],
-    ['Shipping &amp; Delivery','Shipping costs, unless otherwise stated above, are billed separately upon completion. Delivery dates are estimates and are not guaranteed.'],
-    ['Risk of Loss &amp; Insurance','Risk of loss or damage transfers to Client upon delivery to the carrier. Client is responsible for arranging shipping insurance unless otherwise agreed in writing.'],
-    ['Installation &amp; Handling','On-site installation, uncrating, and handling are not included unless separately quoted.'],
-    ['Limited Warranty','Carve Model warrants the model against defects in workmanship for thirty (30) days from delivery. This warranty excludes damage from mishandling, shipping, or normal wear.'],
-    ['Force Majeure','Carve Model is not liable for delays caused by events beyond its reasonable control, including natural disasters, supply chain disruption, or carrier delays.'],
-    ['Payment &amp; Ownership','Title to the model transfers to Client only upon receipt of payment in full. Overdue balances may accrue interest at 1.5% per month.'],
-    ['Storage &amp; Abandonment','Completed models not accepted for delivery within thirty (30) days of completion may incur storage fees, and may be treated as abandoned after ninety (90) days.'],
-    ['Intellectual Property &amp; Indemnification','Client represents that all materials it provides do not infringe any third party’s rights and agrees to indemnify Carve Model against claims arising from their use.'],
-    ['Limitation of Liability','Carve Model’s total liability under this invoice is limited to the amount paid for the model. Carve Model is not liable for indirect, incidental, or consequential damages.'],
-    ['Taxes','Applicable sales tax, if any, is not included above and will be added where required by law.'],
-    ['Dispute Resolution &amp; Fees','Disputes arising from this invoice will first be addressed through good-faith negotiation. The prevailing party in any resulting action is entitled to reasonable attorney’s fees.'],
-    ['Governing Law','This invoice is governed by the laws of the State of California.'],
-    ['Entire Agreement','This invoice, together with the accepted quotation, constitutes the entire agreement between the parties regarding this project.']
+    ['Production Timeline','Stated production time reflects internal fabrication only and excludes client review, comments, revisions, approvals, or delays caused by incomplete information. Production begins only upon receipt and confirmation of all required files, specifications, materials, colors, and written approvals.'],
+    ['Client-Provided Information','The client is responsible for the accuracy, completeness, and coordination of all drawings, dimensions, and digital files provided. Carve Model is not responsible for errors or delays resulting from incorrect, incomplete, or revised client-supplied information.'],
+    ['Client Response &amp; Approval','Carve Model will request written approval and information at defined milestones. If the client does not respond to an approval or information request within ten (10) calendar days, the project will be treated as cancelled by the client. No refund will be issued, all deposits and payments made are forfeited, and Carve Model may additionally invoice for work completed and materials procured up to that point.'],
+    ['Revisions &amp; Change Orders','Any change to scope, scale, dimensions, materials, finishes, lighting, base, or accessories after production has commenced will be treated as a change order and may result in additional costs and schedule adjustments.'],
+    ['Material, Color &amp; Tolerance Variation','Physical models are fabricated by hand and by machine to presentation standards, not engineering tolerances. Minor variation in color, finish, texture, and dimension relative to renderings, samples, or digital files is inherent to the process and is not considered a defect.'],
+    ['Shipping &amp; Delivery','Shipping timelines are estimates provided by third-party carriers and are not guaranteed. Carve Model is not responsible for delays, damages, or losses caused by carriers, customs clearance, weather, or force majeure events once the shipment leaves our facility.'],
+    ['Risk of Loss &amp; Insurance','Risk of loss or damage transfers to the client upon hand-off to the carrier or upon delivery, whichever occurs first. The client is responsible for insuring the model during transit and after delivery. Carve Model does not insure the model on the client’s behalf unless agreed in writing.'],
+    ['Installation &amp; Handling','Unless explicitly stated, installation, on-site assembly, electrical work, and final placement are not included. Damage resulting from improper handling or installation by third parties is not covered.'],
+    ['Limited Warranty','Carve Model warrants the model against fabrication defects in workmanship for thirty (30) days from delivery. This warranty covers repair of qualifying defects only and excludes damage from handling, transport, installation, environmental conditions, or normal wear. The model is a presentation item and carries no structural or fitness-for-particular-purpose warranty. All other warranties, express or implied, are disclaimed.'],
+    ['Force Majeure','Carve Model is not liable for any delay or failure to perform caused by events beyond its reasonable control, including but not limited to acts of God, fire, flood, pandemic or epidemic, war, civil unrest, government action, labor disputes, utility or power failure, equipment failure, or shortage or delay of materials, components, or transportation. Performance obligations are suspended for the duration of such events.'],
+    ['Payment &amp; Ownership','All prices are subject to the agreed payment terms. Deposits are non-refundable once production has commenced. Ownership of the physical model transfers to the client upon full payment.'],
+    ['Storage &amp; Abandonment','If delivery, pickup, or final payment is delayed by the client beyond fourteen (14) days after notice that the model is ready, Carve Model may charge reasonable storage fees. A model not collected or paid for within thirty (30) days of such notice may be deemed abandoned, and Carve Model may dispose of it without further liability and retain all sums paid.'],
+    ['Intellectual Property &amp; Indemnification','The client represents and warrants that it owns or has the rights to all drawings, designs, dimensions, and digital files provided, and that Carve Model’s use of them does not infringe any third party’s rights. The client shall indemnify and hold Carve Model harmless from any third-party claim arising from client-supplied content or design. Carve Model retains the right to photograph the completed model and use those images for portfolio and promotional purposes unless the client requests confidentiality in writing.'],
+    ['Limitation of Liability','Carve Model’s liability is limited to the value of services provided under this invoice. Under no circumstances shall Carve Model be liable for indirect, incidental, or consequential damages.'],
+    ['Taxes','Stated prices exclude any applicable sales, use, or similar taxes, which are the responsibility of the client unless a valid exemption certificate is provided.'],
+    ['Dispute Resolution &amp; Fees','The parties will first attempt to resolve any dispute in good faith. Any unresolved dispute shall be brought exclusively in the state or federal courts located in California, and the prevailing party shall be entitled to recover its reasonable attorney’s fees and costs.'],
+    ['Governing Law','This invoice and related services shall be governed by the laws of the State of California.'],
+    ['Entire Agreement','This invoice and its Terms &amp; Conditions constitute the entire agreement between the parties and supersede all prior discussions. If any provision is found unenforceable, the remaining provisions remain in effect. Carve Model’s failure to enforce any provision is not a waiver of it. Any change must be made in writing.']
   ];
 
   var css='*{box-sizing:border-box;margin:0;padding:0;}'+
@@ -3514,11 +3517,11 @@ function downloadInvoice(bid,which){
 
 '<div class="sec"><h3>Itemized Cost</h3><table><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit · USD</th><th class="r">Total · USD</th><th>Remarks</th></tr>'+
 '<tr><td><b>'+esc(itemTitle)+(cq.scale?(' — '+esc(cq.scale)):'')+'</b>'+(itemSub?('<div class="muted" style="font-size:10px;margin-top:2px;">'+esc(itemSub)+'</div>'):'')+'</td>'+
-'<td class="r">1</td><td class="r">'+fmtUsd(cq.price)+'</td><td class="r">'+fmtUsd(cq.price)+'</td><td>'+remarks+'</td></tr>'+
-'<tr class="totrow"><td colspan="3"></td><td class="r">Subtotal</td><td class="r">'+fmtUsd(cq.price)+'</td></tr>'+
-'<tr class="totrow grand"><td colspan="3"></td><td class="r">Total</td><td class="r">'+fmtUsd(cq.price)+'</td></tr>'+
+'<td class="r">1</td><td class="r">'+fmtUsd2(cq.price)+'</td><td class="r">'+fmtUsd2(cq.price)+'</td><td>'+remarks+'</td></tr>'+
+'<tr class="totrow"><td colspan="3"></td><td class="r">Subtotal</td><td class="r">'+fmtUsd2(cq.price)+'</td></tr>'+
+'<tr class="totrow grand"><td colspan="3"></td><td class="r">Total</td><td class="r">'+fmtUsd2(cq.price)+'</td></tr>'+
 '</table>'+
-'<div class="duebox"><span>Due with this invoice</span><b>'+fmtUsd(amt)+'</b></div>'+
+'<div class="duebox"><span>Due with this invoice</span><b>'+fmtUsd2(amt)+'</b></div>'+
 '<div class="duenote">'+duenote+'</div>'+
 '</div>'+
 
@@ -3531,8 +3534,7 @@ function downloadInvoice(bid,which){
   '<div><div class="b">ACH Routing</div><div class="pv">122000661</div><div class="b">Wire Routing</div><div class="pv">026009593</div></div>'+
 '</div></div></div>'+
 
-'<div class="sec"><h3>Acceptance</h3><p>By remitting payment of this invoice, Client accepts the scope, pricing, and terms described herein.</p>'+
-'<div class="sigline">Client Signature &amp; Date</div></div>'+
+'<div class="sec"><h3>Acceptance</h3><p>Payment of this invoice signifies full acceptance of the Scope of Work, Exclusions, Model Boundary, and the Terms &amp; Conditions below.</p></div>'+
 
 '<div class="sec"><h3>Terms &amp; Conditions</h3>'+
 TC.map(function(t){return '<div class="tcsec"><h4>'+t[0]+'</h4><p>'+t[1]+'</p></div>';}).join('')+
