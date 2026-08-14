@@ -3327,18 +3327,12 @@ function requestCO(id){
   card.querySelector('[data-coact]').innerHTML='<span style="font-size:0.86rem;color:var(--cm-text-muted);">Sent back to the studio \u2014 they\u2019ll revise and reissue. <button class="btn btn--ghost btn--sm" onclick="go(\'messages\')" style="margin-left:0.4rem;">Open messages \u2192</button></span>';
 }
 /* ---- Shared: render an HTML document (in a hidden iframe, for style isolation)
-   into a real, downloaded .pdf file via html2pdf.js (loaded from CDN on first use).
-   Falls back to the browser print dialog if the library can't be loaded. ---- */
-function loadPdfLib(cb){
-  if(window.html2pdf){cb();return;}
-  if(window.__html2pdfLoading){window.__html2pdfLoading.push(cb);return;}
-  window.__html2pdfLoading=[cb];
-  var s=document.createElement('script');
-  s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-  s.onload=function(){var cbs=window.__html2pdfLoading||[];window.__html2pdfLoading=null;cbs.forEach(function(f){f();});};
-  s.onerror=function(){var cbs=window.__html2pdfLoading||[];window.__html2pdfLoading=null;cbs.forEach(function(f){f(new Error('html2pdf failed to load'));});};
-  document.head.appendChild(s);
-}
+   and open the browser's print dialog so it can be saved as a PDF.
+   (We tried an auto-download path via html2canvas/jsPDF, but that rasterization
+   pipeline produced badly mis-scaled output — only ~40% of page width filled,
+   content cut off — and isn't reliably fixable without a real browser to test
+   against. The print dialog uses the browser's own print engine, which renders
+   the exact CSS layout correctly; it just needs one extra "Save as PDF" click.) ---- */
 function waitForImagesThenRun(doc,cb){
   var imgs=doc.images?Array.prototype.slice.call(doc.images):[];
   var pending=imgs.filter(function(im){return !im.complete;});
@@ -3359,22 +3353,9 @@ function downloadHtmlAsPdf(iframeId,html,filename){
   document.body.appendChild(f);
   var d=f.contentWindow.document;
   d.open();d.write(html);d.close();
-  function fallbackToPrint(){
-    try{f.contentWindow.focus();f.contentWindow.print();}
-    catch(e){alert('Unable to generate the PDF here. In a normal browser tab this downloads the PDF.');}
-  }
   waitForImagesThenRun(d,function(){
-    loadPdfLib(function(err){
-      if(err||!window.html2pdf){fallbackToPrint();return;}
-      window.html2pdf().from(d.body).set({
-        margin:0,
-        filename:filename,
-        image:{type:'jpeg',quality:0.98},
-        html2canvas:{scale:2,useCORS:true,windowWidth:794},
-        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-        pagebreak:{mode:['css','avoid-all']}
-      }).save().then(function(){f.remove();}).catch(function(){fallbackToPrint();});
-    });
+    try{f.contentWindow.focus();f.contentWindow.print();}
+    catch(e){alert('Unable to open the print dialog here. In a normal browser tab this downloads the PDF.');}
   });
 }
 // This script's own top-level `money(s)` (below, ~line 3051) is a $-string
