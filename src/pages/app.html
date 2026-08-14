@@ -1310,6 +1310,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           </div>
         </div>
       </div>
+
+      <!-- Carve Admin: studio-wide list of every project that has an invoice, not just the latest one -->
+      <div id="invAdminList" hidden></div>
     </section>
 
     <!-- LEADS / INBOX (owner + sales) -->
@@ -1932,7 +1935,10 @@ function go(v){
   document.body.classList.toggle('at-portfolio',v==='myprojects'||v==='projects');
   if(v==='myprojects'||v==='projects')document.body.classList.remove('quote-stage');
   if(v==='quote')applyQuoteState();
-  if(v==='invoices')renderPhase1Invoice();
+  if(v==='invoices'){
+    if(document.body.dataset.role==='owner'&&typeof window.SRC_carveInvoices==='function')window.SRC_carveInvoices();
+    else renderPhase1Invoice();
+  }
   if(v==='leads'&&window.SRC_renderLeads)window.SRC_renderLeads();
   if(v==='clients'&&window.scopeClients)window.scopeClients(document.body.dataset.role);
   if(v==='sourcing'&&window.SRC_render)SRC_render();
@@ -4388,6 +4394,41 @@ function invoiceSection(b){
   html+='</div></div>';
   return html;
 }
+/* ---- Carve Admin's Invoices nav: every project across the whole studio that has an
+   issued invoice, not just the single most-recently-created one (see invoiceSection()
+   for the same content shown inline on each project's Quotes tab card). ---- */
+window.SRC_carveInvoices=function(){
+  var empty=document.getElementById('invEmpty'), issued=document.getElementById('invIssued'), list=document.getElementById('invAdminList');
+  if(!list)return;
+  if(empty)empty.hidden=true;
+  if(issued)issued.hidden=true;
+  list.hidden=false;
+  var invoiced=(SDB.briefs||[]).filter(function(b){return b.clientQuote&&b.clientQuote.invoice;});
+  if(!invoiced.length){
+    list.innerHTML='<div class="panel"><div class="panel__head"><h3>Invoices</h3><span class="mock__k">None yet</span></div><div class="panel__body"><div class="invoice-empty"><div class="invoice-empty__ic">⌗</div><h4>No invoices yet</h4><p>An invoice is generated automatically once a project has both a client price and is awarded to production.</p></div></div></div>';
+    return;
+  }
+  var outstanding=0, collected=0;
+  invoiced.forEach(function(b){
+    var inv=b.clientQuote.invoice;
+    if((inv.depositStatus||'due')==='paid')collected+=inv.depositAmt; else outstanding+=inv.depositAmt;
+    if((inv.balanceStatus||'due')==='paid')collected+=inv.balanceAmt; else outstanding+=inv.balanceAmt;
+  });
+  var html='<div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
+    '<div class="kpi"><span class="mock__k">Invoiced projects</span><div class="big">'+invoiced.length+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Collected</span><div class="big">'+money(collected)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Outstanding</span><div class="big">'+money(outstanding)+'</div></div>'+
+    '</div>';
+  invoiced.sort(function(a,c){return (c.clientQuote.invoice.issuedDate||'').localeCompare(a.clientQuote.invoice.issuedDate||'');});
+  invoiced.forEach(function(b){
+    var inv=b.clientQuote.invoice;
+    html+='<div class="panel" style="margin-top:1.25rem;"><div class="panel__head"><div><span class="src-card__code">'+esc(b.code||'')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><span class="mock__k">'+esc((b.client&&b.client.Company)||'')+'</span></div><div class="panel__body">'+
+      invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
+      invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
+      '</div></div>';
+  });
+  list.innerHTML=html;
+};
 /* ---- Finalize client quote: Carve Admin picks the basis (via Award/Switch above), sets the final price, and can edit every detail before it goes to the client ---- */
 function clientQuoteSection(b){
   var srcQ=winningQuote(b)||{};
