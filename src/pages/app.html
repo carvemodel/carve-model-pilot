@@ -4301,7 +4301,6 @@ function SRC_carveAdmin(){
     if(confirmed&&b.clientQuote&&b.clientQuote.price&&!b.clientQuote.invoice){
       if(ensureClientInvoice(b))saveSRC();
     }
-    html+=invoiceSection(b);
     html+='</div></div>';
   });
   setSrcBody(html);
@@ -4384,19 +4383,10 @@ function invoiceLineAdmin(b,which,id,amt,status,paidAt,reportedAt,reportedMethod
     '<div style="text-align:right;">'+invoiceStatusChip(status)+' <button class="btn btn--ghost btn--sm" style="margin-left:0.5rem;" onclick="downloadInvoice(\''+b.id+'\',\''+which+'\')">Download PDF</button> '+actions+'</div>'+
   '</div>';
 }
-function invoiceSection(b){
-  if(!b.clientQuote||!b.clientQuote.invoice)return '';
-  var inv=b.clientQuote.invoice;
-  var html='<div class="panel src-card" style="margin-top:1rem;"><div class="panel__head"><h3>Invoices</h3><span class="k">'+esc(b.code||'')+'</span></div><div class="panel__body">';
-  html+=invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate);
-  html+=invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery');
-  html+='<p class="form-note" style="margin-top:0.8rem;">Visible to the client in their Studio Portal → Invoices.</p>';
-  html+='</div></div>';
-  return html;
-}
 /* ---- Carve Admin's Invoices nav: every project across the whole studio that has an
-   issued invoice, not just the single most-recently-created one (see invoiceSection()
-   for the same content shown inline on each project's Quotes tab card). ---- */
+   issued invoice, not just the single most-recently-created one. This is the only
+   place invoices/payment status are shown — the Quotes tab stays focused on vendor
+   sourcing and doesn't duplicate this. ---- */
 window.SRC_carveInvoices=function(){
   var empty=document.getElementById('invEmpty'), issued=document.getElementById('invIssued'), list=document.getElementById('invAdminList');
   if(!list)return;
