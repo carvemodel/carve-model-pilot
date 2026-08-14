@@ -1310,6 +1310,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           </div>
         </div>
       </div>
+
+      <!-- Carve Admin: studio-wide list of every project that has an invoice, not just the latest one -->
+      <div id="invAdminList" hidden></div>
     </section>
 
     <!-- LEADS / INBOX (owner + sales) -->
@@ -1932,7 +1935,10 @@ function go(v){
   document.body.classList.toggle('at-portfolio',v==='myprojects'||v==='projects');
   if(v==='myprojects'||v==='projects')document.body.classList.remove('quote-stage');
   if(v==='quote')applyQuoteState();
-  if(v==='invoices')renderPhase1Invoice();
+  if(v==='invoices'){
+    if(document.body.dataset.role==='owner'&&typeof window.SRC_carveInvoices==='function')window.SRC_carveInvoices();
+    else renderPhase1Invoice();
+  }
   if(v==='leads'&&window.SRC_renderLeads)window.SRC_renderLeads();
   if(v==='clients'&&window.scopeClients)window.scopeClients(document.body.dataset.role);
   if(v==='sourcing'&&window.SRC_render)SRC_render();
@@ -4295,7 +4301,6 @@ function SRC_carveAdmin(){
     if(confirmed&&b.clientQuote&&b.clientQuote.price&&!b.clientQuote.invoice){
       if(ensureClientInvoice(b))saveSRC();
     }
-    html+=invoiceSection(b);
     html+='</div></div>';
   });
   setSrcBody(html);
@@ -4378,16 +4383,42 @@ function invoiceLineAdmin(b,which,id,amt,status,paidAt,reportedAt,reportedMethod
     '<div style="text-align:right;">'+invoiceStatusChip(status)+' <button class="btn btn--ghost btn--sm" style="margin-left:0.5rem;" onclick="downloadInvoice(\''+b.id+'\',\''+which+'\')">Download PDF</button> '+actions+'</div>'+
   '</div>';
 }
-function invoiceSection(b){
-  if(!b.clientQuote||!b.clientQuote.invoice)return '';
-  var inv=b.clientQuote.invoice;
-  var html='<div class="panel src-card" style="margin-top:1rem;"><div class="panel__head"><h3>Invoices</h3><span class="k">'+esc(b.code||'')+'</span></div><div class="panel__body">';
-  html+=invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate);
-  html+=invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery');
-  html+='<p class="form-note" style="margin-top:0.8rem;">Visible to the client in their Studio Portal → Invoices.</p>';
-  html+='</div></div>';
-  return html;
-}
+/* ---- Carve Admin's Invoices nav: every project across the whole studio that has an
+   issued invoice, not just the single most-recently-created one. This is the only
+   place invoices/payment status are shown — the Quotes tab stays focused on vendor
+   sourcing and doesn't duplicate this. ---- */
+window.SRC_carveInvoices=function(){
+  var empty=document.getElementById('invEmpty'), issued=document.getElementById('invIssued'), list=document.getElementById('invAdminList');
+  if(!list)return;
+  if(empty)empty.hidden=true;
+  if(issued)issued.hidden=true;
+  list.hidden=false;
+  var invoiced=(SDB.briefs||[]).filter(function(b){return b.clientQuote&&b.clientQuote.invoice;});
+  if(!invoiced.length){
+    list.innerHTML='<div class="panel"><div class="panel__head"><h3>Invoices</h3><span class="mock__k">None yet</span></div><div class="panel__body"><div class="invoice-empty"><div class="invoice-empty__ic">⌗</div><h4>No invoices yet</h4><p>An invoice is generated automatically once a project has both a client price and is awarded to production.</p></div></div></div>';
+    return;
+  }
+  var outstanding=0, collected=0;
+  invoiced.forEach(function(b){
+    var inv=b.clientQuote.invoice;
+    if((inv.depositStatus||'due')==='paid')collected+=inv.depositAmt; else outstanding+=inv.depositAmt;
+    if((inv.balanceStatus||'due')==='paid')collected+=inv.balanceAmt; else outstanding+=inv.balanceAmt;
+  });
+  var html='<div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
+    '<div class="kpi"><span class="mock__k">Invoiced projects</span><div class="big">'+invoiced.length+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Collected</span><div class="big">'+money(collected)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Outstanding</span><div class="big">'+money(outstanding)+'</div></div>'+
+    '</div>';
+  invoiced.sort(function(a,c){return (c.clientQuote.invoice.issuedDate||'').localeCompare(a.clientQuote.invoice.issuedDate||'');});
+  invoiced.forEach(function(b){
+    var inv=b.clientQuote.invoice;
+    html+='<div class="panel" style="margin-top:1.25rem;"><div class="panel__head"><div><span class="src-card__code">'+esc(b.code||'')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><span class="mock__k">'+esc((b.client&&b.client.Company)||'')+'</span></div><div class="panel__body">'+
+      invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
+      invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
+      '</div></div>';
+  });
+  list.innerHTML=html;
+};
 /* ---- Finalize client quote: Carve Admin picks the basis (via Award/Switch above), sets the final price, and can edit every detail before it goes to the client ---- */
 function clientQuoteSection(b){
   var srcQ=winningQuote(b)||{};
@@ -4403,7 +4434,7 @@ function clientQuoteSection(b){
   html+='<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);margin-bottom:0.9rem;">Based on — '+esc(srcLabel)+': '+moneyRMB(srcQ.priceRMB)+' <span style="opacity:0.7;">(≈ '+money(srcQ.price)+')</span> · '+ (srcQ.days||'—') +' days. Pick a different option above to change the basis.</div>';
   if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Not yet awarded to production — '+esc(shop(basisShop(b)).name)+' has not been notified. You can still finalize and send this price to the client now.</div>';
   html+='<div class="qform2">';
-  html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" placeholder="e.g. 3200" value="'+(cq&&cq.price!=null?cq.price:'')+'"></div>';
+  html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" placeholder="e.g. 3200" value="'+(base.price!=null?base.price:'')+'"></div>';
   html+='<div><label>Production time (days)</label><input id="cq-days-'+b.id+'" type="number" placeholder="18" value="'+esc(base.days!=null?base.days:'')+'"></div>';
   html+='<div><label>Work scope</label><input id="cq-cat-'+b.id+'" type="text" value="'+esc(base.category||'')+'"></div>';
   var scaleParsed=parseScaleString(base.scale);
