@@ -3345,15 +3345,47 @@ function waitForImagesThenRun(doc,cb){
   });
   setTimeout(finish,4000); // safety net in case an image never fires load/error
 }
+// Templates that use the repeating thead/tfoot layout (table.pdfwrap) get the
+// footer pinned at the bottom of every full page for free, EXCEPT the final
+// page: since tbody doesn't stretch to fill remaining page space, the tfoot
+// lands right after the last line of content instead of the true page edge.
+// This measures how much space is left on the last page (against the fixed
+// Letter page height set via @page{size:letter;}) and pads it out so the
+// footer sits flush with the bottom, matching every other page. No-ops
+// harmlessly on templates (like the quotation PDF) that don't use this layout.
+function addLastPageFooterSpacer(doc){
+  try{
+    var headEl=doc.querySelector('table.pdfwrap thead');
+    var footEl=doc.querySelector('table.pdfwrap tfoot');
+    var bodyTd=doc.querySelector('table.pdfwrap tbody td');
+    if(!headEl||!footEl||!bodyTd)return;
+    var PAGE_H=1056; // Letter (8.5in x 11in) @ 96 CSS px/in, matches @page{size:letter;margin:0;}
+    var headH=headEl.getBoundingClientRect().height;
+    var footH=footEl.getBoundingClientRect().height;
+    var perPage=PAGE_H-headH-footH;
+    if(perPage<=0)return;
+    var contentH=bodyTd.scrollHeight;
+    var numPages=Math.ceil(contentH/perPage);
+    var remaining=(numPages*perPage)-contentH;
+    if(remaining>2){
+      var spacer=doc.createElement('div');
+      spacer.style.cssText='height:'+Math.floor(remaining)+'px;';
+      bodyTd.appendChild(spacer);
+    }
+  }catch(e){/* cosmetic-only: never block printing over a measurement error */}
+}
 function downloadHtmlAsPdf(iframeId,html,filename){
   var old=document.getElementById(iframeId);if(old)old.remove();
   var f=document.createElement('iframe');
   f.id=iframeId;
-  f.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:0;';
+  // Width matches the Letter page's content-box width (8.5in @ 96px/in) so
+  // on-screen measurement used by addLastPageFooterSpacer matches print reflow.
+  f.style.cssText='position:fixed;left:-9999px;top:0;width:816px;height:1056px;border:0;';
   document.body.appendChild(f);
   var d=f.contentWindow.document;
   d.open();d.write(html);d.close();
   waitForImagesThenRun(d,function(){
+    addLastPageFooterSpacer(d);
     try{f.contentWindow.focus();f.contentWindow.print();}
     catch(e){alert('Unable to open the print dialog here. In a normal browser tab this downloads the PDF.');}
   });
@@ -3447,7 +3479,7 @@ function downloadInvoice(bid,which){
 // multi-page flowed content in Chrome's print engine. <thead>/<tfoot> are
 // spec'd to repeat on every printed page a <table> spans, which is the
 // standard, reliable way to do this in print CSS.
-'@page{margin:0;}'+
+'@page{size:letter;margin:0;}'+
 'body{font-family:Arial,Helvetica,sans-serif;color:#17191D;font-size:11.5px;line-height:1.6;}'+
 'table.pdfwrap{width:100%;border-collapse:collapse;}'+
 'table.pdfwrap>tbody>tr>td,table.pdfwrap>thead>tr>td,table.pdfwrap>tfoot>tr>td{padding:0;}'+
