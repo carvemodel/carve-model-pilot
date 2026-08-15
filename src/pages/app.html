@@ -3440,14 +3440,17 @@ function downloadInvoice(bid,which){
   ];
 
   var css='*{box-sizing:border-box;margin:0;padding:0;}'+
-// Single, in-flow header and footer (not position:fixed). Chrome's print
-// engine does not reliably reflow body content around fixed-position bars
-// across multiple pages — both a padding-based and an @page-margin-based
-// attempt to fake repetition cut off content on page 2+. This renders the
-// header once at the top and the footer once at the end of the document,
-// which is the version that has actually printed correctly end-to-end.
+// Repeating header/footer via a table's thead/tfoot, NOT position:fixed.
+// Two prior position:fixed attempts (padding-reserved space, then @page
+// margin-reserved space) both cut off content on page 2+ in real Chrome
+// print testing — fixed-position elements don't reliably coexist with
+// multi-page flowed content in Chrome's print engine. <thead>/<tfoot> are
+// spec'd to repeat on every printed page a <table> spans, which is the
+// standard, reliable way to do this in print CSS.
 '@page{margin:0;}'+
 'body{font-family:Arial,Helvetica,sans-serif;color:#17191D;font-size:11.5px;line-height:1.6;}'+
+'table.pdfwrap{width:100%;border-collapse:collapse;}'+
+'table.pdfwrap>tbody>tr>td,table.pdfwrap>thead>tr>td,table.pdfwrap>tfoot>tr>td{padding:0;}'+
 '.hdbar{background:#17191D;color:#fff;padding:26px 52px;display:flex;justify-content:space-between;align-items:center;}'+
 '.hdbar img{height:34px;width:auto;display:block;}'+
 '.hdbar .inv-tag{text-align:right;}'+
@@ -3497,8 +3500,16 @@ function downloadInvoice(bid,which){
 
   var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carve Model — Invoice '+esc(id)+'</title><style>'+css+'</style></head><body>'+
 
+'<table class="pdfwrap"><thead><tr><td>'+
 '<div class="hdbar"><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model"><div class="inv-tag"><b>INVOICE</b><span>'+(isDeposit?'DEPOSIT':'BALANCE')+' · No. '+esc(id)+'</span></div></div>'+
 '<div class="addrbar"><span>1370 Valley Vista Dr. #200, Diamond Bar, CA 91765 · www.physical-model.com</span><span>877-856-6665 · support@physical-model.com</span></div>'+
+'</td></tr></thead>'+
+
+'<tfoot><tr><td>'+
+'<div class="ftbar"><span>CARVE MODEL · SUPPORT@PHYSICAL-MODEL.COM</span><span>Physical models for confident decisions.</span></div>'+
+'</td></tr></tfoot>'+
+
+'<tbody><tr><td>'+
 
 '<div class="body-pad">'+
 
@@ -3549,7 +3560,7 @@ TC.map(function(t){return '<div class="tcsec"><h4>'+t[0]+'</h4><p>'+t[1]+'</p></
 
 '</div>'+
 
-'<div class="ftbar"><span>CARVE MODEL · SUPPORT@PHYSICAL-MODEL.COM</span><span>Physical models for confident decisions.</span></div>'+
+'</td></tr></tbody></table>'+
 
 '</body></html>';
   downloadHtmlAsPdf('invoiceFrame',html,'Carve Model - Invoice '+id+'.pdf');
