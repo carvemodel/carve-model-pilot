@@ -3345,41 +3345,18 @@ function waitForImagesThenRun(doc,cb){
   });
   setTimeout(finish,4000); // safety net in case an image never fires load/error
 }
-// Templates that use the repeating thead/tfoot layout (table.pdfwrap) get the
-// footer pinned at the bottom of every full page for free, EXCEPT the final
-// page: since tbody doesn't stretch to fill remaining page space, the tfoot
-// lands right after the last line of content instead of the true page edge.
-// This measures how much space is left on the last page (against the fixed
-// Letter page height set via @page{size:letter;}) and pads it out so the
-// footer sits flush with the bottom, matching every other page. No-ops
-// harmlessly on templates (like the quotation PDF) that don't use this layout.
-function addLastPageFooterSpacer(doc){
-  try{
-    var headEl=doc.querySelector('table.pdfwrap thead');
-    var footEl=doc.querySelector('table.pdfwrap tfoot');
-    var bodyTd=doc.querySelector('table.pdfwrap tbody td');
-    if(!headEl||!footEl||!bodyTd)return;
-    var PAGE_H=1056; // Letter (8.5in x 11in) @ 96 CSS px/in, matches @page{size:letter;margin:0;}
-    var headH=headEl.getBoundingClientRect().height;
-    var footH=footEl.getBoundingClientRect().height;
-    var perPage=PAGE_H-headH-footH;
-    if(perPage<=0)return;
-    var contentH=bodyTd.scrollHeight;
-    var numPages=Math.ceil(contentH/perPage);
-    var remaining=(numPages*perPage)-contentH;
-    if(remaining>2){
-      var spacer=doc.createElement('div');
-      spacer.style.cssText='height:'+Math.floor(remaining)+'px;';
-      bodyTd.appendChild(spacer);
-    }
-  }catch(e){/* cosmetic-only: never block printing over a measurement error */}
-}
+// A prior attempt at this (measuring remaining space on the last page and
+// padding it out so the footer sits flush with the bottom) assumed Chrome
+// prints fully edge-to-edge with @page{margin:0}. In real testing Chrome
+// reserved a small non-removable margin anyway, so the estimate ran long
+// and pushed a sliver of content onto an extra, mostly-blank page — worse
+// than the cosmetic gap it was meant to fix. Removed; the footer now simply
+// follows the last line of content on the final page, same as every
+// thead/tfoot table does by default.
 function downloadHtmlAsPdf(iframeId,html,filename){
   var old=document.getElementById(iframeId);if(old)old.remove();
   var f=document.createElement('iframe');
   f.id=iframeId;
-  // Width matches the Letter page's content-box width (8.5in @ 96px/in) so
-  // on-screen measurement used by addLastPageFooterSpacer matches print reflow.
   f.style.cssText='position:fixed;left:-9999px;top:0;width:816px;height:1056px;border:0;';
   document.body.appendChild(f);
   var d=f.contentWindow.document;
