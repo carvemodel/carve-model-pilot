@@ -3440,14 +3440,19 @@ function downloadInvoice(bid,which){
   ];
 
   var css='*{box-sizing:border-box;margin:0;padding:0;}'+
+'@page{margin:0;}'+
 'body{font-family:Arial,Helvetica,sans-serif;color:#17191D;font-size:11.5px;line-height:1.6;}'+
+// Header/footer are position:fixed so Chrome\'s print engine repeats them on
+// every page (they\'re removed from normal flow, so .body-pad reserves the
+// matching top/bottom space below).
+'.pdf-hd{position:fixed;top:0;left:0;right:0;}'+
 '.hdbar{background:#17191D;color:#fff;padding:26px 52px;display:flex;justify-content:space-between;align-items:center;}'+
-'.hdbar img{height:34px;width:auto;display:block;filter:brightness(0) invert(1);}'+
+'.hdbar img{height:34px;width:auto;display:block;}'+
 '.hdbar .inv-tag{text-align:right;}'+
 '.hdbar .inv-tag b{font-size:22px;letter-spacing:4px;display:block;}'+
 '.hdbar .inv-tag span{font-size:11px;letter-spacing:1px;color:#C9CCD0;}'+
 '.addrbar{background:#3A3E45;color:#D8DADD;padding:9px 52px;display:flex;justify-content:space-between;font-size:10px;letter-spacing:.3px;}'+
-'.body-pad{padding:26px 52px 0 52px;}'+
+'.body-pad{padding:150px 52px 90px 52px;}'+
 '.b{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888D95;margin-bottom:5px;}'+
 '.row3{display:flex;justify-content:space-between;gap:20px;margin-top:6px;}'+
 '.row3>div{flex:1;}'+
@@ -3484,14 +3489,18 @@ function downloadInvoice(bid,which){
 '.tcsec{margin-top:14px;break-inside:avoid;page-break-inside:avoid;}'+
 '.tcsec h4{font-size:10.5px;margin-bottom:3px;}'+
 '.tcsec p{font-size:10px;color:#3A3E45;margin-bottom:0;}'+
-'.ftbar{background:#17191D;color:#C9CCD0;padding:14px 52px;display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.5px;margin-top:40px;}'+
+'.ftbar{position:fixed;bottom:0;left:0;right:0;background:#17191D;color:#C9CCD0;padding:14px 52px;display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.5px;}'+
 '.sigline{border-top:1px solid #17191D;width:220px;margin-top:36px;padding-top:6px;font-size:9px;color:#888D95;}'+
 '@media print{.sec{break-inside:avoid;}}';
 
   var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carve Model — Invoice '+esc(id)+'</title><style>'+css+'</style></head><body>'+
 
-'<div class="hdbar"><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model" crossorigin="anonymous"><div class="inv-tag"><b>INVOICE</b><span>'+(isDeposit?'DEPOSIT':'BALANCE')+' · No. '+esc(id)+'</span></div></div>'+
-'<div class="addrbar"><span>1370 Valley Vista Dr. #200, Diamond Bar, CA 91765 · www.physical-model.com</span><span>877-856-6665 · support@physical-model.com</span></div>'+
+// Fixed-position header and footer: Chrome\'s print engine repeats
+// position:fixed elements on every printed page, so this reproduces the
+// repeating black bars from the reference invoice without a paged-media library.
+'<div class="pdf-hd"><div class="hdbar"><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model"><div class="inv-tag"><b>INVOICE</b><span>'+(isDeposit?'DEPOSIT':'BALANCE')+' · No. '+esc(id)+'</span></div></div>'+
+'<div class="addrbar"><span>1370 Valley Vista Dr. #200, Diamond Bar, CA 91765 · www.physical-model.com</span><span>877-856-6665 · support@physical-model.com</span></div></div>'+
+'<div class="ftbar"><span>CARVE MODEL · SUPPORT@PHYSICAL-MODEL.COM</span><span>Physical models for confident decisions.</span></div>'+
 
 '<div class="body-pad">'+
 
@@ -3510,7 +3519,7 @@ function downloadInvoice(bid,which){
 '<div class="sec"><h3>Scope Excludes</h3><div class="excludebox">'+exclusions.join(' · ')+'</div></div>'+
 
 (boundaryUrl?(
-'<div class="sec"><h3>Model Boundary</h3><div class="boundary-wrap"><img src="'+esc(boundaryUrl)+'" alt="Model boundary diagram" crossorigin="anonymous"></div>'+
+'<div class="sec"><h3>Model Boundary</h3><div class="boundary-wrap"><img src="'+esc(boundaryUrl)+'" alt="Model boundary diagram"></div>'+
 '<div class="boundary-cap">'+(cq.modelDims?('Model size '+esc(cq.modelDims)+'. '):'')+'Model fabricated to the limits shown above.</div>'+
 '</div>'
 ):'')+
@@ -3541,8 +3550,6 @@ TC.map(function(t){return '<div class="tcsec"><h4>'+t[0]+'</h4><p>'+t[1]+'</p></
 '</div>'+
 
 '</div>'+
-
-'<div class="ftbar"><span>CARVE MODEL · SUPPORT@PHYSICAL-MODEL.COM</span><span>Physical models for confident decisions.</span></div>'+
 
 '</body></html>';
   downloadHtmlAsPdf('invoiceFrame',html,'Carve Model - Invoice '+id+'.pdf');
@@ -3586,7 +3593,7 @@ window.SRC_generateQuotationPDF=function(bid,shopId,variantIndex){
 'th.r,td.r{text-align:right;padding-right:0;}td{padding:10px 8px 10px 0;border-bottom:1px solid #E4E6E9;vertical-align:top;}'+
 '@media print{body{padding:22px;}.sec{break-inside:avoid;}}';
   var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carve Model — Quotation '+esc(refNo)+'</title><style>'+css+'</style></head><body>'+
-'<div class="hd"><div><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model" style="height:42px;width:auto;display:block;" crossorigin="anonymous"></div>'+
+'<div class="hd"><div><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model" style="height:42px;width:auto;display:block;"></div>'+
 '<div class="tag"><b>QUOTATION</b></div></div>'+
 '<div class="co">Carve Model<br>1370 Valley Vista Dr. #200<br>Diamond Bar, CA 91765<br>www.physical-model.com<br>support@physical-model.com<br>877-856-6665</div></div>'+
 '<div class="row"><div><div class="b">Project</div><b>'+esc(b.title)+'</b>'+(b.brief&&b.brief['Model type']?('<br>'+esc(b.brief['Model type'])):'')+(q.label?('<br>'+esc(q.label)):'')+'</div>'+
