@@ -3362,6 +3362,7 @@ function downloadHtmlAsPdf(iframeId,html,filename){
   var d=f.contentWindow.document;
   d.open();d.write(html);d.close();
   waitForImagesThenRun(d,function(){
+    addLastPageFooterSpacer(d);
     try{f.contentWindow.focus();f.contentWindow.print();}
     catch(e){alert('Unable to open the print dialog here. In a normal browser tab this downloads the PDF.');}
   });
