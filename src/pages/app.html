@@ -3506,7 +3506,7 @@ function downloadInvoice(bid,which){
 '.sigline{border-top:1px solid #17191D;width:220px;margin-top:36px;padding-top:6px;font-size:9px;color:#888D95;}'+
 '@media print{.sec{break-inside:avoid;}}';
 
-  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Carve Model — Invoice '+esc(id)+'</title><style>'+css+'</style></head><body>'+
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+esc(id)+'</title><style>'+css+'</style></head><body>'+
 
 '<table class="pdfwrap"><thead><tr><td>'+
 '<div class="hdbar"><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model"><div class="inv-tag"><b>INVOICE</b><span>'+(isDeposit?'DEPOSIT':'BALANCE')+' · No. '+esc(id)+'</span></div></div>'+
