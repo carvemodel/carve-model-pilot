@@ -15,7 +15,8 @@ export default defineConfig({
         !page.includes('/app') &&
         !page.includes('/quotation') &&
         !page.includes('/factory-sourcing') &&
-        !page.includes('/photo-markup-review'),
+        !page.includes('/photo-markup-review') &&
+        !page.includes('/thank-you'),
     }),
   ],
 });

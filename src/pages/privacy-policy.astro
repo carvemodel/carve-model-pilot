@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Privacy Policy | Carve Model"
+  description="How Carve Model collects, uses, and protects information submitted through this website, including our contact form and analytics."
+  canonicalPath="/privacy-policy"
+  ogTitle="Privacy Policy | Carve Model"
+  ogDescription="How Carve Model collects, uses, and protects information submitted through this website."
+  imageSlot={false}
+>
+<Fragment slot="head">
+<style>
+.page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2rem,4vw,3rem);border-bottom:1px solid var(--cm-line-faint);}
+.page-hero h1{margin-top:1.4rem;}
+.page-hero p{margin-top:1.4rem;}
+.legal-updated{font-family:var(--font-mono);font-size:0.75rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-subtle);margin-top:1rem;}
+.legal-body{padding-block:clamp(2.5rem,5vw,4rem);}
+</style>
+</Fragment>
+
+<main>
+<section class="section page-hero"><div class="container">
+  <span class="eyebrow">Legal</span>
+  <h1 class="display-lg">Privacy Policy</h1>
+  <p class="lead measure-md">This describes what information Carve Model collects through this website, how it is used, and the choices available to you.</p>
+  <div class="legal-updated">Last updated: August 2026</div>
+</div></section>
+
+<section class="section legal-body"><div class="container">
+  <div class="prose">
+    <h2>Information we collect</h2>
+    <p>When you submit a project inquiry through our contact form, we collect the information you provide directly, which may include your name, title, company, email address, phone number, project location, project details (model type, scale, dimensions, special requirements, deadline), and any files or links you attach.</p>
+    <p>We also automatically collect standard technical and analytics information when you browse this site, including pages viewed, referring website, general device and browser information, and — where applicable — advertising click identifiers (such as a Google Ads click ID) and campaign parameters associated with how you arrived at the site.</p>
+
+    <h2>How we use this information</h2>
+    <ul>
+      <li>To respond to your inquiry and prepare a preliminary estimate</li>
+      <li>To communicate with you about an active or prospective project</li>
+      <li>To operate and improve this website</li>
+      <li>To understand which marketing channels and campaigns are effective, using aggregated and campaign-level analytics</li>
+    </ul>
+
+    <h2>Analytics and advertising</h2>
+    <p>We use Google Analytics (GA4) to understand how visitors use this site, and Google Ads conversion tracking to measure the effectiveness of our advertising. These services may use cookies, similar technologies, and identifiers such as a Google Click ID (GCLID) to associate a form submission with the advertising campaign, if any, that led to it. This data is used in aggregate to evaluate and improve our marketing — it is not sold to third parties.</p>
+    <p>You can control cookies and analytics through your browser settings, or by using Google's <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Analytics opt-out browser add-on</a>.</p>
+
+    <h2>How we share information</h2>
+    <p>We do not sell your personal information. We share information only with service providers who help us operate this website and deliver our services (for example, cloud storage for uploaded project files, and our project management platform, the Carve Studio Portal), and only to the extent necessary for them to perform that function on our behalf.</p>
+
+    <h2>Data retention</h2>
+    <p>We retain project inquiry information for as long as reasonably necessary to respond to your inquiry, deliver a project, and maintain business records. You may request deletion of your information at any time by contacting us using the details below.</p>
+
+    <h2>Your choices</h2>
+    <p>You may contact us at any time to ask what information we hold about you, to correct it, or to request that it be deleted, subject to legitimate business and legal record-keeping needs.</p>
+
+    <h2>Contact</h2>
+    <p>Questions about this policy or your information can be sent to <a href="mailto:support@physical-model.com">support@physical-model.com</a> or 877-856-6665.</p>
+  </div>
+</div></section>
+</main>
+</BaseLayout>
