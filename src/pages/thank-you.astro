@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Thanks — Carve Model"
+  description="Your project details were received."
+  canonicalPath="/thank-you"
+  ogTitle="Thanks — Carve Model"
+  ogDescription="Your project details were received."
+  imageSlot={false}
+  robotsNoIndex={true}
+>
+<Fragment slot="head">
+<style>
+.ty-wrap{padding-top:clamp(4rem,8vw,6rem);padding-bottom:clamp(4rem,8vw,6rem);text-align:center;}
+.ty-card{max-width:560px;margin:0 auto;}
+.ty-ic{width:64px;height:64px;border-radius:50%;background:var(--cm-silver);color:var(--cm-ink-900);display:flex;align-items:center;justify-content:center;margin:0 auto 1.4rem;font-size:1.8rem;}
+.ty-card h1{margin-top:0;}
+.ty-card p{color:var(--cm-text-muted);margin-top:0.9rem;}
+.ty-actions{display:flex;gap:1rem;justify-content:center;margin-top:2.2rem;flex-wrap:wrap;}
+</style>
+</Fragment>
+
+<main>
+<section class="section ty-wrap"><div class="container">
+  <div class="ty-card">
+    <div class="ty-ic">✓</div>
+    <h1 class="display-lg">Thanks — we've got it.</h1>
+    <p>We'll review your project and reply within one business day. Once we've looked over your scope, we'll set up your private workspace and place a <strong style="color:var(--cm-text);">preliminary quote</strong> inside for you to review — no payment due until you approve.</p>
+    <p class="form-note" style="margin-top:1.2rem;">Already been invited? You can open your client portal anytime.</p>
+    <div class="ty-actions">
+      <a class="btn btn--primary" href="/works">See our work →</a>
+      <a class="btn btn--ghost" href="/login">Open the Studio Portal →</a>
+    </div>
+  </div>
+</div></section>
+</main>
+
+<Fragment slot="scripts">
+<script is:inline>
+// This page only exists to give the conversion a real, load-triggered
+// moment to fire — Google Ads' own guidance for lead forms is that a
+// dedicated thank-you-page load is the most reliable trigger, more so than
+// firing purely from an inline JS callback on the contact page itself.
+//
+// The submission itself already happened on /contact (POST to
+// /api/sourcing, success confirmed there) before the redirect to this page,
+// so arriving here IS the confirmation of a real, successful submission —
+// this page has no form of its own and can't be reached by simply typing
+// the URL and getting a false positive... except by literally typing it,
+// which is why the actual firing is still gated on the one-time flag below
+// (set by contact.astro right before the redirect, and cleared here) so a
+// bookmark, refresh, or back-button visit never re-fires or fires falsely.
+(function(){
+  try{
+    var KEY='cm_pending_conversion';
+    var raw=sessionStorage.getItem(KEY);
+    if(!raw)return;
+    sessionStorage.removeItem(KEY);
+    var data=JSON.parse(raw);
+    if(typeof gtag!=='function')return;
+    gtag('event','contact_form',{form_id:'quoteForm',form_name:'Contact — Preliminary Estimate',transaction_id:data.leadId});
+    if(data.sendTo){
+      gtag('event','conversion',{send_to:data.sendTo,transaction_id:data.leadId});
+    }
+  }catch(e){}
+})();
+</script>
+</Fragment>
+</BaseLayout>

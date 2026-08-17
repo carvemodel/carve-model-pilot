@@ -52,6 +52,42 @@ const canonical = SITE + (canonicalPath === '/' ? '/' : canonicalPath);
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
+
+<!-- GA4 + Google Ads account-level tag. The contact_form conversion fire
+     itself (AW-16810390124/4mVjCKWR6ucaEOzk6M8-) lives in contact.astro. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GWS8BLWWST"></script>
+<script is:inline>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-GWS8BLWWST');
+  gtag('config', 'AW-16810390124');
+</script>
+
+<!-- First-touch attribution capture (site-wide, runs on every page). Only
+     writes once per browser session, so whichever page a visitor actually
+     lands on first — via a paid ad, an organic search result, a bookmark,
+     etc. — is what gets recorded, not whatever page they happen to be on
+     when they eventually reach the contact form. contact.astro reads this
+     back out of sessionStorage and attaches it to the lead it submits. -->
+<script is:inline>
+(function(){
+  try{
+    var KEY='cm_attribution';
+    if(sessionStorage.getItem(KEY))return;
+    var p=new URLSearchParams(location.search);
+    sessionStorage.setItem(KEY, JSON.stringify({
+      gclid: p.get('gclid') || '',
+      utmSource: p.get('utm_source') || '',
+      utmMedium: p.get('utm_medium') || '',
+      utmCampaign: p.get('utm_campaign') || '',
+      landingPage: location.href,
+      referrer: document.referrer || ''
+    }));
+  }catch(e){}
+})();
+</script>
+
 <slot name="head" />
 </head>
 <body>
