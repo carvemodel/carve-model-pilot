@@ -1,0 +1,40 @@
+{
+  "redirects": [
+    { "source": "/home", "destination": "/", "permanent": true },
+    { "source": "/portfolio-scale-models", "destination": "/works", "permanent": true },
+    { "source": "/scale-model-faq", "destination": "/faq", "permanent": true },
+    { "source": "/about", "destination": "/about-carve-model", "permanent": true },
+    { "source": "/product-prototype", "destination": "/scale-model-services/product", "permanent": true },
+    { "source": "/film-previsualization", "destination": "/scale-model-services/film", "permanent": true },
+    { "source": "/architectural-scale-model-services-carve-model", "destination": "/scale-model-services", "permanent": true },
+    { "source": "/blog/architectural-scale-model-production-timeline", "destination": "/blog/how-long-to-build-architectural-model", "permanent": true },
+
+    { "source": "/blog/tag/masterplan%20models", "destination": "/architectural-scale-models", "permanent": true },
+    { "source": "/blog/tag/architectural%20scale%20models", "destination": "/architectural-scale-models", "permanent": true },
+    { "source": "/blog/tag/architectural%20presentation", "destination": "/architectural-scale-models", "permanent": true },
+    { "source": "/blog/tag/scale%20model%20guide", "destination": "/blog/how-to-choose-architectural-model-scale", "permanent": true },
+    { "source": "/blog/tag/architectural%20model%20scale", "destination": "/blog/how-to-choose-architectural-model-scale", "permanent": true },
+    { "source": "/blog/tag/scale%20conversion", "destination": "/blog/how-to-choose-architectural-model-scale", "permanent": true },
+    { "source": "/blog/tag/scale%20model%20pricing", "destination": "/blog/architectural-scale-model-cost-us", "permanent": true },
+    { "source": "/blog/tag/model%20types", "destination": "/blog/types-of-architectural-scale-models", "permanent": true },
+    { "source": "/blog/tag/model%20making%20process", "destination": "/model-making-process", "permanent": true },
+    { "source": "/blog/tag/physical%20model%20fabrication", "destination": "/model-making-process", "permanent": true },
+
+    { "source": "/blog/category/Architectural%20Scale%20Models", "destination": "/architectural-scale-models", "permanent": true },
+
+    {
+      "source": "/blog",
+      "has": [{ "type": "query", "key": "format", "value": "rss" }],
+      "destination": "/rss.xml",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/rss.xml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/rss+xml; charset=utf-8" }
+      ]
+    }
+  ]
+}
