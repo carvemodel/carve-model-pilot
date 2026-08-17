@@ -10,9 +10,10 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
+    "@vercel/blob": "^2.7.0",
     "astro": "^5.15.8",
-    "redis": "^4.7.0",
-    "@vercel/blob": "^2.7.0"
+    "redis": "^4.7.0"
   }
 }
