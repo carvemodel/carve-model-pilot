@@ -1324,9 +1324,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <button type="button" data-range="30" onclick="setLeadsRange('30',this)">Last 30 days</button>
           <button type="button" data-range="90" onclick="setLeadsRange('90',this)">Last 90 days</button>
           <button type="button" data-range="ytd" onclick="setLeadsRange('ytd',this)">Year to date</button>
-          <button type="button" data-range="custom" onclick="setLeadsRange('custom',this)">Custom</button>
         </div>
-        <div class="daterange__custom" id="leadsCustom" hidden>
+        <div class="daterange__custom" id="leadsCustom">
           <input type="date" id="leadsFrom" aria-label="From date" onchange="applyLeadsRange()">
           <span class="daterange__to">→</span>
           <input type="date" id="leadsTo" aria-label="To date" onchange="applyLeadsRange()">
@@ -1357,9 +1356,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <button type="button" data-range="30" onclick="setClientRange('30',this)">Last 30 days</button>
           <button type="button" data-range="90" onclick="setClientRange('90',this)">Last 90 days</button>
           <button type="button" data-range="ytd" onclick="setClientRange('ytd',this)">Year to date</button>
-          <button type="button" data-range="custom" onclick="setClientRange('custom',this)">Custom</button>
         </div>
-        <div class="daterange__custom" id="clientCustom" hidden>
+        <div class="daterange__custom" id="clientCustom">
           <input type="date" id="clientFrom" aria-label="From date" onchange="applyClientRange()">
           <span class="daterange__to">→</span>
           <input type="date" id="clientTo" aria-label="To date" onchange="applyClientRange()">
@@ -2722,11 +2720,14 @@ var clientRange={mode:'all',from:null,to:null};
 var srcRange={mode:'all',from:null,to:null};
 function setSrcRange(mode,btn){
   srcRange.mode=mode;
+  srcRange.from=null;srcRange.to=null; // clear any custom dates so the always-visible inputs reset when a preset is picked
   document.querySelectorAll('#view-sourcing .daterange__seg button').forEach(function(b){b.classList.toggle('on',b===btn);});
-  document.getElementById('srcCustom').hidden=(mode!=='custom');
-  if(mode!=='custom')SRC_render();
+  SRC_render();
 }
 function applySrcRange(){
+  // Picking a date directly (no separate "Custom" button anymore) is itself what
+  // activates custom mode.
+  srcRange.mode='custom';
   srcRange.from=document.getElementById('srcFrom').value||null;
   srcRange.to=document.getElementById('srcTo').value||null;
   SRC_render();
@@ -2747,11 +2748,14 @@ function inSrcRange(dateStr){
 var leadsRange={mode:'all',from:null,to:null};
 function setLeadsRange(mode,btn){
   leadsRange.mode=mode;
+  leadsRange.from=null;leadsRange.to=null; // clear any custom dates so the always-visible inputs reset when a preset is picked
   document.querySelectorAll('#view-leads .daterange__seg button').forEach(function(b){b.classList.toggle('on',b===btn);});
-  document.getElementById('leadsCustom').hidden=(mode!=='custom');
-  if(mode!=='custom')window.renderLeadsDash();
+  window.renderLeadsDash();
 }
 function applyLeadsRange(){
+  // Picking a date directly (no separate "Custom" button anymore) is itself what
+  // activates custom mode.
+  leadsRange.mode='custom';
   leadsRange.from=document.getElementById('leadsFrom').value||null;
   leadsRange.to=document.getElementById('leadsTo').value||null;
   window.renderLeadsDash();
@@ -2771,11 +2775,14 @@ function inLeadsRange(dateStr){
 }
 function setClientRange(mode,btn){
   clientRange.mode=mode;
+  clientRange.from=null;clientRange.to=null; // clear any custom dates so the always-visible inputs reset when a preset is picked
   document.querySelectorAll('#view-clients .daterange__seg button').forEach(function(b){b.classList.toggle('on',b===btn);});
-  document.getElementById('clientCustom').hidden=(mode!=='custom');
-  if(mode!=='custom')scopeClients(document.body.dataset.role);
+  scopeClients(document.body.dataset.role);
 }
 function applyClientRange(){
+  // Picking a date directly (no separate "Custom" button anymore) is itself what
+  // activates custom mode.
+  clientRange.mode='custom';
   clientRange.from=document.getElementById('clientFrom').value||null;
   clientRange.to=document.getElementById('clientTo').value||null;
   scopeClients(document.body.dataset.role);
@@ -4377,8 +4384,7 @@ function SRC_carveAdmin(){
       '<button type="button" class="'+(srcRange.mode==='30'?'on':'')+'" data-range="30" onclick="setSrcRange(\'30\',this)">Last 30 days</button>'+
       '<button type="button" class="'+(srcRange.mode==='90'?'on':'')+'" data-range="90" onclick="setSrcRange(\'90\',this)">Last 90 days</button>'+
       '<button type="button" class="'+(srcRange.mode==='ytd'?'on':'')+'" data-range="ytd" onclick="setSrcRange(\'ytd\',this)">Year to date</button>'+
-      '<button type="button" class="'+(srcRange.mode==='custom'?'on':'')+'" data-range="custom" onclick="setSrcRange(\'custom\',this)">Custom</button>'+
-      '</div><div class="daterange__custom" id="srcCustom" '+(srcRange.mode==='custom'?'':'hidden')+'>'+
+      '</div><div class="daterange__custom" id="srcCustom">'+
       '<input type="date" id="srcFrom" aria-label="From date" value="'+(srcRange.from||'')+'" onchange="applySrcRange()">'+
       '<span class="daterange__to">→</span>'+
       '<input type="date" id="srcTo" aria-label="To date" value="'+(srcRange.to||'')+'" onchange="applySrcRange()">'+
@@ -5075,8 +5081,7 @@ function SRC_prodAdmin(){
     '<button type="button" class="'+(srcRange.mode==='30'?'on':'')+'" data-range="30" onclick="setSrcRange(\'30\',this)">Last 30 days</button>'+
     '<button type="button" class="'+(srcRange.mode==='90'?'on':'')+'" data-range="90" onclick="setSrcRange(\'90\',this)">Last 90 days</button>'+
     '<button type="button" class="'+(srcRange.mode==='ytd'?'on':'')+'" data-range="ytd" onclick="setSrcRange(\'ytd\',this)">Year to date</button>'+
-    '<button type="button" class="'+(srcRange.mode==='custom'?'on':'')+'" data-range="custom" onclick="setSrcRange(\'custom\',this)">Custom</button>'+
-    '</div><div class="daterange__custom" id="srcCustom" '+(srcRange.mode==='custom'?'':'hidden')+'>'+
+    '</div><div class="daterange__custom" id="srcCustom">'+
     '<input type="date" id="srcFrom" aria-label="From date" value="'+(srcRange.from||'')+'" onchange="applySrcRange()">'+
     '<span class="daterange__to">→</span>'+
     '<input type="date" id="srcTo" aria-label="To date" value="'+(srcRange.to||'')+'" onchange="applySrcRange()">'+
