@@ -1577,16 +1577,19 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 </div>
 
 
-<!-- Send lead to production admin(s) -->
+<!-- Send lead to production admin(s) — also reused for inviting additional
+     vendors to a project that's already been sent out (see
+     SRC_inviteMoreVendors), so the head/body copy and button label are
+     swapped in by JS depending on which flow opened it. -->
 <div class="modal-overlay" id="sendLeadModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Obtain Quotation from Vendor(s)">
-    <div class="modal__head"><h3>Obtain Quotation from Vendor(s)</h3><button class="modal__x" onclick="closeSendLeadModal()" aria-label="Close">×</button></div>
+    <div class="modal__head"><h3 id="sendLeadTitle">Obtain Quotation from Vendor(s)</h3><button class="modal__x" onclick="closeSendLeadModal()" aria-label="Close">×</button></div>
     <div class="modal__body">
-      <p class="form-note" style="margin-bottom:0.9rem;">Choose which production shop(s) to invite to quote this project.</p>
+      <p class="form-note" id="sendLeadNote" style="margin-bottom:0.9rem;">Choose which production shop(s) to invite to quote this project.</p>
       <div id="sendLeadList" style="display:flex;flex-direction:column;gap:0.6rem;"></div>
       <div style="display:flex;gap:0.7rem;justify-content:flex-end;margin-top:1.3rem;">
         <button class="btn btn--ghost btn--sm" onclick="closeSendLeadModal()">Cancel</button>
-        <button class="btn btn--primary btn--sm" onclick="SRC_confirmSendLead()">Send &amp; submit quote request</button>
+        <button class="btn btn--primary btn--sm" id="sendLeadConfirmBtn" onclick="SRC_confirmSendLead()">Send &amp; submit quote request</button>
       </div>
     </div>
   </div>
@@ -2645,23 +2648,10 @@ function createLead(e){
     closeAddLead();
   });
 }
-function convertLead(id){
-  var card=document.querySelector('.leadcard[data-lead="'+id+'"]');
-  if(card)card.remove();
-  var remaining=document.querySelectorAll('#leadList .leadcard').length;
-  var badge=document.getElementById('leadsBadge');
-  if(badge){ if(remaining>0){badge.textContent=remaining;} else {badge.remove();} }
-  if(remaining===0)document.getElementById('leadsEmpty').hidden=false;
-  // LIVE: the backend creates the project + workspace and seeds the estimate fields
-  // (scale, dimensions, material, delivery) from the lead. Here we open the demo project
-  // and drop you straight into the pre-filled estimate editor — the natural next step.
-  var sel=document.getElementById('projSelect');
-  sel.value='aria';
-  onProjChange();
-  document.getElementById('quoteChip').className='chip await';
-  document.getElementById('quoteChip').textContent='Draft from lead';
-  openEstimateEditor();
-}
+// Note: convertLead is the real implementation, defined further down as
+// window.convertLead (opens the send-to-vendor-shop modal). An earlier demo
+// version used to live here but never touched SDB.leads or created a real
+// brief — removed so there's only one implementation to reason about.
 function onProjChange(){
   var sel=document.getElementById('projSelect');
   currentProjTitle=sel.options[sel.selectedIndex].textContent;
@@ -4408,10 +4398,15 @@ function renderCarveAdminBriefCard(b){
     if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=false; // all briefs start collapsed by default
     var expanded=SRC_EXPANDED[b.id];
     var statusAction=confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">↺ Reopen for quotes</button>':'';
+    // Available any time the project isn't already confirmed with a production
+    // shop — same "Obtain Quotation" action as leads, just reused on an
+    // already-sent brief instead of needing to keep the original lead around
+    // to send to a second vendor later (see SRC_inviteMoreVendors).
+    var inviteMoreAction=confirmed?'':'<button class="btn btn--ghost btn--sm" onclick="SRC_inviteMoreVendors(\''+b.id+'\')">Obtain Quotation →</button>';
     var archiveAction=b.archived?'<button class="btn btn--ghost btn--sm" onclick="SRC_unarchiveBrief(\''+b.id+'\')">Unarchive</button>'
       :'<button class="btn btn--ghost btn--sm" onclick="SRC_archiveBrief(\''+b.id+'\')">Archive</button>';
     var deleteAction=confirmed?'':'<button class="btn btn--ghost btn--sm btn--danger" onclick="SRC_deleteBrief(\''+b.id+'\')">Delete</button>';
-    var headActions=statusAction+archiveAction+deleteAction;
+    var headActions=statusAction+inviteMoreAction+archiveAction+deleteAction;
     html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+(b.archived?' src-card--archived':'')+'"><div class="panel__head"><div><span class="src-card__code">'+codeDisplay+codeBits.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+headActions+'<span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleExpand(\''+b.id+'\')">'+(expanded?'▾ Collapse':'▸ Expand')+'</span>'+'</div></div><div class="panel__body">';
     if(!expanded){
       html+='<div style="font-size:0.85rem;color:var(--cm-text-muted);">'+esc(statusText)+'</div></div></div>';
@@ -5118,7 +5113,15 @@ function daysBetween(fromStr,toStr){
 window.renderLeadsDash=function(){
   var allLeads=SDB.leads||[];
   var active=allLeads.filter(function(l){return !l.archived;});
-  var totalCount=active.filter(function(l){return inLeadsRange(l.receivedAt);}).length;
+  // Total leads counts every lead ever received: leads still sitting in
+  // SDB.leads (active or archived) PLUS leads that have since been sent for
+  // quotation and converted into a brief — those are intentionally removed
+  // from SDB.leads (so a project isn't tracked as both a lead and a quote at
+  // once), but brief.leadReceivedAt keeps the original received date so they
+  // still count here. Deleting a lead (for invalid/junk submissions) is the
+  // only action that actually drops something out of this count.
+  var totalCount=allLeads.filter(function(l){return inLeadsRange(l.receivedAt);}).length
+    +(SDB.briefs||[]).filter(function(b){return b.leadReceivedAt&&inLeadsRange(b.leadReceivedAt);}).length;
   var pendingCount=active.filter(function(l){return l.pendingInfo;}).length;
   var briefs=SDB.briefs||[];
   var sentCount=briefs.filter(function(b){return b.stage==='sourcing';}).length;
@@ -5300,10 +5303,15 @@ window.unarchiveLead=function(id){
   window.SRC_renderLeads();
 }
 var SRC_PENDING_LEAD_ID=null;
+var SRC_PENDING_BRIEF_ID=null; // set instead of SRC_PENDING_LEAD_ID when inviting more vendors to an already-sent project (see SRC_inviteMoreVendors)
 window.convertLead=function(id){
   var lead=(SDB.leads||[]).filter(function(l){return l.id===id;})[0];
   if(!lead)return;
   SRC_PENDING_LEAD_ID=id;
+  SRC_PENDING_BRIEF_ID=null;
+  document.getElementById('sendLeadTitle').textContent='Obtain Quotation from Vendor(s)';
+  document.getElementById('sendLeadNote').textContent='Choose which production shop(s) to invite to quote this project.';
+  document.getElementById('sendLeadConfirmBtn').textContent='Send & submit quote request';
   var admins=window.PRODUCTION_ADMINS||[];
   var list=document.getElementById('sendLeadList');
   if(!admins.length){
@@ -5318,12 +5326,55 @@ window.convertLead=function(id){
   }
   document.getElementById('sendLeadModal').hidden=false;
 };
+// Lets Carve Admin add more vendors to a project that's already been sent
+// out for quoting — the original "Obtain Quotation" step no longer offers a
+// way back in once the lead is converted to a brief (deliberately: keeping
+// a lead and its quote as two separate records was the actual bug, see the
+// deletedLeadIds fix in SRC_confirmSendLead below). This reuses the same
+// modal instead of reviving the lead.
+window.SRC_inviteMoreVendors=function(briefId){
+  var brief=(SDB.briefs||[]).filter(function(b){return b.id===briefId;})[0];
+  if(!brief)return;
+  SRC_PENDING_BRIEF_ID=briefId;
+  SRC_PENDING_LEAD_ID=null;
+  document.getElementById('sendLeadTitle').textContent='Obtain Quotation from Vendor(s)';
+  document.getElementById('sendLeadNote').textContent='This project has already been sent to '+((brief.invited||[]).length?((brief.invited||[]).length+' vendor'+((brief.invited||[]).length===1?'':'s')):'no one yet')+'. Choose which additional production shop(s) to invite.';
+  document.getElementById('sendLeadConfirmBtn').textContent='Send & submit quote request';
+  var admins=(window.PRODUCTION_ADMINS||[]).filter(function(a){return (brief.invited||[]).indexOf(a.shopId)<0;});
+  var list=document.getElementById('sendLeadList');
+  if(!admins.length){
+    list.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.86rem;">Every registered production shop has already been invited to this project.</div>';
+  }else{
+    list.innerHTML=admins.map(function(a,idx){
+      return '<label style="display:flex;align-items:center;gap:0.7rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.7rem 0.9rem;cursor:pointer;">'+
+        '<input type="checkbox" class="sendlead-chk" value="'+esc(a.shopId)+'"'+(idx===0?' checked':'')+' style="accent-color:var(--cm-silver);">'+
+        '<span><b style="color:var(--cm-text-strong);">'+esc(a.name)+'</b><br><span style="font-size:0.82rem;color:var(--cm-text-subtle);">'+esc(a.company)+'</span></span>'+
+      '</label>';
+    }).join('');
+  }
+  document.getElementById('sendLeadModal').hidden=false;
+};
 function closeSendLeadModal(){
   document.getElementById('sendLeadModal').hidden=true;
   SRC_PENDING_LEAD_ID=null;
+  SRC_PENDING_BRIEF_ID=null;
 }
 window.closeSendLeadModal=closeSendLeadModal;
 window.SRC_confirmSendLead=function(){
+  if(SRC_PENDING_BRIEF_ID){
+    var briefId=SRC_PENDING_BRIEF_ID;
+    var brief=(SDB.briefs||[]).filter(function(b){return b.id===briefId;})[0];
+    if(!brief)return;
+    var newShopIds=[]; document.querySelectorAll('.sendlead-chk:checked').forEach(function(cb){newShopIds.push(cb.value);});
+    if(!newShopIds.length){alert('Select at least one production shop to invite.');return;}
+    brief.invited=(brief.invited||[]).concat(newShopIds.filter(function(sid){return (brief.invited||[]).indexOf(sid)<0;}));
+    saveSRC();
+    closeSendLeadModal();
+    SRC_render();
+    var names2=newShopIds.map(function(sid){var a=(window.PRODUCTION_ADMINS||[]).filter(function(x){return x.shopId===sid;})[0];return a?a.name:sid;}).join(', ');
+    alert('Invited '+names2+' — now visible to them in Sourcing & Quotes.');
+    return;
+  }
   var id=SRC_PENDING_LEAD_ID;
   var lead=(SDB.leads||[]).filter(function(l){return l.id===id;})[0];
   if(!lead)return;
@@ -5355,7 +5406,12 @@ window.SRC_confirmSendLead=function(){
   };
   SDB.briefs.push(brief);
   SDB.leads=(SDB.leads||[]).filter(function(l){return l.id!==id;});
-  saveSRC();
+  // Must pass deletedLeadIds here — saveSRC()'s server sync merges by id and
+  // only actually removes a lead from the shared Redis store if its id is
+  // explicitly listed. Without this, the lead disappears locally but quietly
+  // comes back on the next reload/sync, leaving both a lead and a quote for
+  // the same project.
+  saveSRC({deletedLeadIds:[id]});
   window.SRC_renderLeads();
   closeSendLeadModal();
   var names=shopIds.map(function(sid){var a=(window.PRODUCTION_ADMINS||[]).filter(function(x){return x.shopId===sid;})[0];return a?a.name:sid;}).join(', ');
