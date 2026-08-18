@@ -3810,12 +3810,22 @@ function carveNoteReadonly(q){
     '<div style="font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-silver);margin-bottom:0.3rem;">Carve requested a revision · '+esc(q.carveNote.time)+'</div>'+
     '<div style="font-size:0.82rem;color:var(--cm-text);line-height:1.5;">'+esc(q.carveNote.text)+'</div></div>';
 }
-function collapsedSummaryLine(b,q,won,lost,inProd){
+// Shown both to Carve Admin (alongside the quote line) and to the vendor
+// (on their own Quotes tab) once a quote is marked unsuccessful — the reason
+// entered in SRC_markQuoteUnsuccessful is shared with the vendor by design.
+function unsuccessfulNoteReadonly(q){
+  if(!q||!q.unsuccessful)return '';
+  return '<div style="margin-top:0.6rem;padding:0.6rem 0.7rem;border-left:2px solid var(--cm-text-subtle);background:rgba(182,182,182,0.05);border-radius:0 var(--r-sm) var(--r-sm) 0;">'+
+    '<div style="font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.3rem;">Not selected'+(q.unsuccessfulAt?(' · '+esc(q.unsuccessfulAt)):'')+'</div>'+
+    (q.unsuccessfulReason?'<div style="font-size:0.82rem;color:var(--cm-text);line-height:1.5;">'+esc(q.unsuccessfulReason)+'</div>':'<div style="font-size:0.82rem;color:var(--cm-text-subtle);font-style:italic;">No reason given.</div>')+'</div>';
+}
+function collapsedSummaryLine(b,q,won,lost,inProd,quoteUnsuccessful){
   var flag=(q&&q.carveNote)?'⚑ Carve requested changes — ':'';
   var qLine=q?('<span style="color:var(--cm-text-strong);font-size:1.05em;">'+moneyRMB(q.priceRMB)+' (≈ '+money(q.price)+') · '+q.days+' days</span>'):'';
   if(inProd)return flag+'In production'+(b.assignedTech?(' · assigned to '+TECHS.filter(function(t){return t.id===b.assignedTech;})[0].name):'')+(qLine?(' · '+qLine):'');
   if(won)return flag+'Awarded to you'+(qLine?(' — '+qLine):'')+' — assign a technician to proceed to production.';
   if(lost)return 'Awarded to another shop.';
+  if(quoteUnsuccessful)return 'Not selected'+(q&&q.unsuccessfulReason?(' — '+esc(q.unsuccessfulReason)):'.');
   if(q)return flag+'Quote submitted: '+qLine;
   return 'Action needed — no quote submitted yet.';
 }
@@ -4459,12 +4469,24 @@ function renderCarveAdminBriefCard(b){
         html+='<div class="qline2'+(q.unsuccessful?' qline2--unsuccessful':'')+'"><div class="qf-name"><span class="av">'+s.av+'</span><div><div class="nm">'+(admin?admin.name:s.name)+(isVariant&&q.label?(' <span style="color:var(--cm-text-subtle);font-weight:var(--w-regular);">— '+esc(q.label)+'</span>'):'')+(low?'<span class="lowtag">Lowest</span>':'')+'</div><div class="lc">'+(admin?admin.company:s.loc)+(isVariant?' · Variation':'')+'</div></div></div>'+
           '<div class="qf-price">'+money(q.price)+(q.priceRMB?'<div style="font-family:var(--font-mono);font-weight:var(--w-regular);font-size:0.62rem;color:var(--cm-text-subtle);margin-top:2px;">converted from '+moneyRMB(q.priceRMB)+' RMB</div>':'')+'</div><div class="qf-days">'+q.days+' days</div>'+
           '<div style="text-align:right;">'+actionHtml+'</div>'+
-          quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+carveCommentBlock(b,s.id,opt.variantIndex,q)+'</div>';
+          quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+unsuccessfulNoteReadonly(q)+carveCommentBlock(b,s.id,opt.variantIndex,q)+'</div>';
       });
     });
     html+='</div>';
     }else if(!confirmed&&!b.picked){
-      html+='<div class="hint" style="margin-top:0.6rem;">'+(invitedNames.length?('Awaiting quotes from '+esc(invitedNames.join(', '))+'.'):'Not yet sent to any vendors for quoting.')+'</div>';
+      // Only list vendors who haven't submitted anything at all yet — a vendor
+      // whose quote was marked unsuccessful HAS responded, so they shouldn't
+      // still show as "awaiting" here (the "Show unsuccessful quotes" toggle
+      // above is where that response actually lives).
+      var notRespondedNames=(b.invited||[]).filter(function(sid){return allOptionsFor(b,sid).length===0;}).map(vendorCompany);
+      if(!invitedNames.length){
+        html+='<div class="hint" style="margin-top:0.6rem;">Not yet sent to any vendors for quoting.</div>';
+      }else if(notRespondedNames.length){
+        html+='<div class="hint" style="margin-top:0.6rem;">Awaiting quotes from '+esc(notRespondedNames.join(', '))+'.</div>';
+      }
+      // else: every invited vendor has responded (all unsuccessful) — the
+      // "Show unsuccessful quotes" toggle above already covers this, so no
+      // separate hint is shown.
     }
     if(confirmed||b.picked!=null)html+=clientQuoteSection(b);
     // Auto-heal: a project that's already awarded with a client price sent, but has no
@@ -4758,8 +4780,13 @@ window.SRC_markQuoteUnsuccessful=function(id,shopId,variantIndex){
   if(isNaN(vi))vi=null;
   var q=vi==null?b.quotes[shopId]:(b.variations&&b.variations[shopId]&&b.variations[shopId][vi]);
   if(!q)return;
-  if(!confirm('Mark this quote from '+shop(shopId).name+' as unsuccessful? It moves out of the main list — you can reopen it later from "Show unsuccessful quotes".'))return;
-  q.unsuccessful=true;q.unsuccessfulAt=new Date().toISOString().slice(0,10);
+  // Reason is entered here and shown directly on the vendor's own Quotes tab
+  // (see unsuccessfulNoteReadonly / renderProdAdminCard) — Cancel aborts the
+  // whole action, same as the old confirm() did; an empty reason is allowed
+  // (still marks it unsuccessful, just with no explanation shown).
+  var reason=prompt('Mark this quote from '+shop(shopId).name+' as unsuccessful. Reason (shared with the vendor):','');
+  if(reason===null)return;
+  q.unsuccessful=true;q.unsuccessfulAt=new Date().toISOString().slice(0,10);q.unsuccessfulReason=reason.trim()||null;
   if(b.picked===shopId&&(b.pickedVariantIndex==null?null:b.pickedVariantIndex)===vi){b.picked=null;b.pickedVariantIndex=null;b.clientQuote=null;}
   saveSRC();SRC_render();
 };
@@ -4770,7 +4797,7 @@ window.SRC_reopenQuoteUnsuccessful=function(id,shopId,variantIndex){
   if(isNaN(vi))vi=null;
   var q=vi==null?b.quotes[shopId]:(b.variations&&b.variations[shopId]&&b.variations[shopId][vi]);
   if(!q)return;
-  delete q.unsuccessful;delete q.unsuccessfulAt;
+  delete q.unsuccessful;delete q.unsuccessfulAt;delete q.unsuccessfulReason;
   saveSRC();SRC_render();
 };
 /* ---- Soft pick: choose the basis for the client quote WITHOUT notifying any shop. Freely switchable until confirmed with production. ---- */
@@ -4854,17 +4881,22 @@ window.SRC_editInvoiceNumber=function(bid){
 /* ---- Production Admin (our shop): quote open briefs, add variation quotes, assign techs to awarded jobs ---- */
 function renderProdAdminCard(b){
   var q=b.quotes[OUR_SHOP], won=b.awarded===OUR_SHOP, lost=b.status==='awarded'&&!won;
+  // A quote can be marked unsuccessful by Carve Admin without the whole brief
+  // being awarded elsewhere yet (e.g. still waiting on other vendors) — this
+  // is a separate, per-quote state from `lost`, which only covers the
+  // brief-is-fully-awarded case.
+  var quoteUnsuccessful=!!(q&&q.unsuccessful);
   var inProd=won&&b.stage==='production';
   if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=false; // all quotes start collapsed by default
   var expanded=SRC_EXPANDED[b.id];
-  var chip=inProd?'<span class="chip active">In production</span>':won?'<span class="chip active">Awarded to you</span>':lost?'<span class="chip await">Not selected</span>':(q&&q.carveNote)?'<span class="chip await">Revision requested</span>':q?'<span class="chip done">Quote Submitted</span>':'<span class="chip active">Action needed</span>';
+  var chip=inProd?'<span class="chip active">In production</span>':won?'<span class="chip active">Awarded to you</span>':lost?'<span class="chip await">Not selected</span>':quoteUnsuccessful?'<span class="chip await">Not selected</span>':(q&&q.carveNote)?'<span class="chip await">Revision requested</span>':q?'<span class="chip done">Quote Submitted</span>':'<span class="chip active">Action needed</span>';
   var codeBits2=[]; if(b.code)codeBits2.push(esc(b.code)); if(b.sentDate)codeBits2.push('received '+esc(b.sentDate));
   var html='<div class="panel src-card"><div class="panel__head" style="cursor:pointer;" onclick="SRC_toggleExpand(\''+b.id+'\')"><div><span class="src-card__code">'+codeBits2.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+chip+'<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);">'+(expanded?'▾ Collapse':'▸ Expand')+'</span></div></div>';
   if(!expanded){
     // The awarded option can be a variation, not the shop's base quote — use the
     // actual winning option so the collapsed summary shows the right price/days.
     var summaryQ=won?(winningQuote(b)||q):q;
-    html+='<div class="panel__body"><div style="font-size:0.85rem;color:var(--cm-text-muted);">'+collapsedSummaryLine(b,summaryQ,won,lost,inProd)+'</div></div></div>';
+    html+='<div class="panel__body"><div style="font-size:0.85rem;color:var(--cm-text-muted);">'+collapsedSummaryLine(b,summaryQ,won,lost,inProd,quoteUnsuccessful)+'</div></div></div>';
     return html;
   }
   html+='<div class="panel__body">';
@@ -4894,6 +4926,9 @@ function renderProdAdminCard(b){
     }
   }else if(lost){
     html+='<div style="font-size:0.84rem;color:var(--cm-text-muted);margin-top:0.6rem;">Awarded to another shop. Thanks for quoting — we’ll keep you in the loop.</div>';
+  }else if(quoteUnsuccessful){
+    html+='<div style="margin-top:0.2rem;">'+
+      '<div class="qline2 qline2--unsuccessful"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm" style="font-size:0.95rem;">'+moneyRMB(q.priceRMB)+'</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-text-strong);">'+q.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">≈ '+money(q.price)+'</div><div></div><div></div>'+quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+unsuccessfulNoteReadonly(q)+'</div></div>';
   }else if(q){
     html+='<div style="margin-top:0.2rem;">'+
       '<div class="qline2"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm" style="font-size:0.95rem;">'+moneyRMB(q.priceRMB)+'</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-text-strong);">'+q.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">≈ '+money(q.price)+'</div><div></div><div style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_unquote(\''+b.id+'\')">Revise</button></div>'+quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+carveNoteReadonly(q)+'</div></div>';
@@ -4902,7 +4937,7 @@ function renderProdAdminCard(b){
       '<div class="full" style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_quote(\''+b.id+'\')">Send quote to Carve</button></div></div>';
   }
   html+='</div>';
-  if(q&&!lost&&!won)html+=variationsSection(b);
+  if(q&&!lost&&!won&&!quoteUnsuccessful)html+=variationsSection(b);
   html+='</div></div>';
   return html;
 }
