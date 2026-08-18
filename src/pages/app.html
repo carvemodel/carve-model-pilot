@@ -3748,8 +3748,6 @@ var SRC_EXPANDED={};                  // briefId -> true/false; production admin
 window.SRC_toggleExpand=function(bid){SRC_EXPANDED[bid]=!SRC_EXPANDED[bid];SRC_render();};
 var SRC_SHOW_UNSUCCESSFUL_QUOTES={};  // briefId -> true/false; per-brief toggle to reveal quotes marked unsuccessful
 window.SRC_toggleShowUnsuccessfulQuotes=function(bid){SRC_SHOW_UNSUCCESSFUL_QUOTES[bid]=!SRC_SHOW_UNSUCCESSFUL_QUOTES[bid];SRC_render();};
-var SRC_SHOW_ARCHIVED_BRIEFS=false;   // page-level toggle: hide archived (tidied-away) briefs by default
-window.SRC_toggleShowArchivedBriefs=function(){SRC_SHOW_ARCHIVED_BRIEFS=!SRC_SHOW_ARCHIVED_BRIEFS;SRC_render();};
 var SRC_SHOW_LEAD_SUBMITTED=false;    // page-level toggle: briefs freshly sent for quotation (no vendor quotes yet)
                                        // sit collapsed under their own category by default so they don't clutter
                                        // the main list; newest submission first once expanded.
@@ -4320,6 +4318,7 @@ function SRC_render(){
 // A quote that's just open, or picked and sent to the client but not yet
 // accepted, is still "pending" either way until it's actually awarded.
 function srcBriefGroupRank(b){
+  if(b.archived)return 3; // archived — tidied away regardless of how it ended up
   if(b.status==='awarded')return 0; // successful — confirmed with production
   var opts=0,uns=0;
   SHOPS.forEach(function(s){allOptionsFor(b,s.id).forEach(function(opt){if(opt.data.unsuccessful)uns++;else opts++;});});
@@ -4398,18 +4397,16 @@ function SRC_carveAdmin(){
       '<div class="kpi"><span class="mock__k">Avg. days to award</span><div class="big">'+(avgAwardDays==null?'—':avgAwardDays+'d')+'</div></div>'+
       '</div>';
   }
-  var archivedBriefsCount=SDB.briefs.filter(function(b){return b.archived;}).length;
-  if(archivedBriefsCount>0){
-    html+='<div style="text-align:right;margin-bottom:0.8rem;"><span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleShowArchivedBriefs()">'+(SRC_SHOW_ARCHIVED_BRIEFS?'Hide archived ('+archivedBriefsCount+')':'Show archived ('+archivedBriefsCount+')')+'</span></div>';
-  }
   // Split into "Lead submitted" — freshly sent for quotation, no vendor has quoted back
-  // yet — vs everything else (has at least one quote, or already awarded). The former
-  // sits collapsed under its own category by default so a growing backlog of unanswered
-  // leads doesn't bury projects that actually need a decision; newest submission first.
-  // Respects the Period selector above (same inSrcRange(b.sentDate) test the "Briefs
-  // received" KPI uses) so the list, the status filter counts, and the KPI row all
-  // describe the same date range instead of the list always showing everything.
-  var visibleBriefs=SDB.briefs.filter(function(b){return (!b.archived||SRC_SHOW_ARCHIVED_BRIEFS)&&inSrcRange(b.sentDate);});
+  // yet — vs everything else (has at least one quote, is archived, or already awarded).
+  // The former sits collapsed under its own category by default so a growing backlog of
+  // unanswered leads doesn't bury projects that actually need a decision; newest
+  // submission first. Respects the Period selector above (same inSrcRange(b.sentDate)
+  // test the "Briefs received" KPI uses) so the list, the status filter counts, and the
+  // KPI row all describe the same date range instead of the list always showing
+  // everything. Archived briefs used to be hidden behind a separate toggle — they're now
+  // just their own group in the status filter below (see srcBriefGroupRank).
+  var visibleBriefs=SDB.briefs.filter(function(b){return inSrcRange(b.sentDate);});
   var leadSubmittedList=[], restList=[];
   visibleBriefs.forEach(function(b){
     var opts=0; SHOPS.forEach(function(s){opts+=allOptionsFor(b,s.id).length;});
@@ -4417,15 +4414,15 @@ function SRC_carveAdmin(){
     else{restList.push(b);}
   });
   leadSubmittedList.sort(function(a,c){return (c.sentDate||'').localeCompare(a.sentDate||'');});
-  // Stable sort into successful / unsuccessful / pending (see
+  // Stable sort into successful / pending / unsuccessful / archived (see
   // srcBriefGroupRank), then let the status filter below narrow the list down
   // to just one group at a time.
   restList.sort(function(a,c){return srcBriefGroupRank(a)-srcBriefGroupRank(c);});
-  var groupCounts={'0':0,'1':0,'2':0};
+  var groupCounts={'0':0,'1':0,'2':0,'3':0};
   restList.forEach(function(b){groupCounts[String(srcBriefGroupRank(b))]++;});
-  var filterLabels={all:'All','0':'Successful','1':'Unsuccessful','2':'Pending'};
+  var filterLabels={all:'All','0':'Successful','2':'Pending','1':'Unsuccessful','3':'Archived'};
   html+='<div class="daterange" style="margin-top:0.8rem;"><span class="daterange__label">Status</span><div class="daterange__seg">'+
-    ['all','0','1','2'].map(function(g){
+    ['all','0','2','1','3'].map(function(g){
       var count=g==='all'?restList.length:groupCounts[g];
       return '<button type="button" class="'+(SRC_GROUP_FILTER===g?'on':'')+'" onclick="setSrcGroupFilter(\''+g+'\')">'+filterLabels[g]+' ('+count+')</button>';
     }).join('')+
