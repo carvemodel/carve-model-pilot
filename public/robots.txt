@@ -5,5 +5,6 @@ Disallow: /quotation
 Disallow: /factory-sourcing
 Disallow: /photo-markup-review
 Disallow: /login
+Disallow: /admin-works
 
 Sitemap: https://www.physical-model.com/sitemap-index.xml
