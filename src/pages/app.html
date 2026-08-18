@@ -1617,6 +1617,17 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
+<!-- Vendor's own quote detail modal — the vendor's Quotes tab shows a lean list of
+     rows; clicking one opens the full brief + your quotation here (same content that
+     used to live inline in an expandable card) instead of expanding inline, so the
+     list itself stays cheap to scan as brief volume grows. -->
+<div class="modal-overlay" id="prodDetailModal" hidden>
+  <div class="modal modal--wide" style="max-width:920px;" role="dialog" aria-modal="true" aria-label="Brief detail">
+    <div class="modal__head"><div><span class="src-card__code" id="prodDetailCode"></span><span class="src-card__t" id="prodDetailTitle" style="margin-left:0.6rem;"></span></div><button class="modal__x" onclick="SRC_closeProdDetail()" aria-label="Close">×</button></div>
+    <div class="modal__body" id="prodDetailBody"></div>
+  </div>
+</div>
+
 <!-- Add lead modal (manual: referral / cold call / email) -->
 <div class="modal-overlay" id="addLeadModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Add a lead">
@@ -3744,8 +3755,6 @@ var RMB_PER_USD=7.2;                  // demo FX rate — production shops quote
 var SRC_PENDING_BFILE={};             // holds boundary-file metadata picked but not yet submitted, keyed by "<prefix>-<briefId>"
 var SRC_BFILE_UPLOADING={};           // true while a boundary file's upload is still in flight, same keys as above
 var SRC_OPEN_VARIATION={};            // briefId -> true while a shop's "add variation" form is open
-var SRC_EXPANDED={};                  // briefId -> true/false; production admin's per-brief expand state
-window.SRC_toggleExpand=function(bid){SRC_EXPANDED[bid]=!SRC_EXPANDED[bid];SRC_render();};
 var SRC_SHOW_UNSUCCESSFUL_QUOTES={};  // briefId -> true/false; per-brief toggle to reveal quotes marked unsuccessful
 window.SRC_toggleShowUnsuccessfulQuotes=function(bid){SRC_SHOW_UNSUCCESSFUL_QUOTES[bid]=!SRC_SHOW_UNSUCCESSFUL_QUOTES[bid];SRC_render();};
 var SRC_SHOW_LEAD_SUBMITTED=false;    // page-level toggle: briefs freshly sent for quotation (no vendor quotes yet)
@@ -4390,7 +4399,7 @@ function SRC_carveAdmin(){
       '</div></div>'+
       '<div class="leads-dash">'+
       '<div class="kpi"><span class="mock__k">Briefs received</span><div class="big">'+dashTotal+'</div></div>'+
-      '<div class="kpi"><span class="mock__k">Awaiting response</span><div class="big">'+dashPending+'</div></div>'+
+      '<div class="kpi"><span class="mock__k">Awaiting vendor response</span><div class="big">'+dashPending+'</div></div>'+
       '<div class="kpi"><span class="mock__k">Quotes received</span><div class="big">'+dashQuotedCount+'</div></div>'+
       '<div class="kpi"><span class="mock__k">Conversion rate</span><div class="big">'+(dashConversionRate==null?'—':dashConversionRate+'%')+'</div></div>'+
       '<div class="kpi"><span class="mock__k">Avg. vendor response</span><div class="big">'+(avgResponseDays==null?'—':avgResponseDays+'d')+'</div></div>'+
@@ -4466,7 +4475,7 @@ function renderCarveAdminBriefRow(b){
     var daysSinceSent=b.sentDate?Math.max(0,Math.floor((Date.now()-new Date(b.sentDate+'T00:00:00').getTime())/86400000)):null;
     var statusText=confirmed?('Confirmed with production · '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' · In production':''))
       :pickedNotConfirmed?('Selected · '+shop(b.picked).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+' · not yet confirmed with production')
-      :noResponseYet?('Awaiting response'+(daysSinceSent!=null?(' · sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):''))
+      :noResponseYet?('Awaiting vendor response'+(daysSinceSent!=null?(' · sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):''))
       :totalOptions===0?('All quotes unsuccessful ('+unsuccessfulCount+')')
       :('Open · '+totalOptions+' option'+(totalOptions==1?'':'s')+(unsuccessfulCount?(' · '+unsuccessfulCount+' unsuccessful'):''));
     var priceBit=wq?money(wq.price):(best!=null?money(best):'');
@@ -4875,7 +4884,7 @@ window.SRC_markQuoteUnsuccessful=function(id,shopId,variantIndex){
   var q=vi==null?b.quotes[shopId]:(b.variations&&b.variations[shopId]&&b.variations[shopId][vi]);
   if(!q)return;
   // Reason is entered here and shown directly on the vendor's own Quotes tab
-  // (see unsuccessfulNoteReadonly / renderProdAdminCard) — Cancel aborts the
+  // (see unsuccessfulNoteReadonly / renderProdAdminDetail) — Cancel aborts the
   // whole action, same as the old confirm() did; an empty reason is allowed
   // (still marks it unsuccessful, just with no explanation shown).
   var reason=prompt('Mark this quote from '+shop(shopId).name+' as unsuccessful. Reason (shared with the vendor):','');
@@ -4974,7 +4983,90 @@ window.SRC_editInvoiceNumber=function(bid){
 };
 
 /* ---- Production Admin (our shop): quote open briefs, add variation quotes, assign techs to awarded jobs ---- */
-function renderProdAdminCard(b){
+// A brief can have several submitted options from us — the primary quote plus
+// any variations — and each is marked unsuccessful independently (see
+// SRC_markQuoteUnsuccessful's variantIndex param). So "did this brief go badly
+// for us" is never just about the primary quote: if the primary was marked
+// unsuccessful but a variation is still live and awaiting Carve's decision,
+// this brief is still Active, not Unsuccessful. Only when every option we've
+// submitted has been marked unsuccessful does the brief actually count as
+// Unsuccessful for us.
+function vendorLiveOptions(b){
+  return allOptionsFor(b,OUR_SHOP).filter(function(o){return !o.data.unsuccessful;});
+}
+// Sort/filter rank for the vendor's own Quotes list — 0 awarded (this shop won
+// it), 1 needs your quote (nothing submitted yet, or a live option needs
+// revision per Carve's note), 2 active (at least one live option is in and
+// it's genuinely just waiting on Carve's decision), 3 unsuccessful (either
+// this brief went to another shop, or every option we submitted came back
+// unsuccessful).
+function vendorBriefGroupRank(b){
+  var won=b.awarded===OUR_SHOP;
+  var lost=b.status==='awarded'&&!won;
+  if(won)return 0;
+  if(lost)return 3;
+  var allOpts=allOptionsFor(b,OUR_SHOP);
+  if(!allOpts.length)return 1; // never quoted
+  var live=vendorLiveOptions(b);
+  if(!live.length)return 3; // every option we submitted was marked unsuccessful
+  var needsRevision=live.some(function(o){return !!o.data.carveNote;});
+  return needsRevision?1:2;
+}
+var SRC_VENDOR_GROUP_FILTER='all';    // 'all' | '0' (awarded) | '1' (needs your quote) | '2' (active) |
+                                       // '3' (unsuccessful) — see vendorBriefGroupRank. Narrows the vendor's
+                                       // own Quotes list to one status. Kept separate from SRC_GROUP_FILTER
+                                       // (Carve Admin's own status filter) since the two use different rank
+                                       // meanings and only one of the two views is ever showing at a time.
+window.setSrcVendorGroupFilter=function(g){SRC_VENDOR_GROUP_FILTER=g;SRC_render();};
+// Lean single-line row for the vendor's own Quotes list — title, status, and a
+// price hint if there's a quote to show. Click opens the full detail in
+// prodDetailModal (see SRC_openProdDetail / renderProdAdminDetail) rather than
+// expanding inline, so scanning stays fast as brief volume grows.
+function renderProdAdminRow(b){
+  var q=b.quotes[OUR_SHOP], won=b.awarded===OUR_SHOP, lost=b.status==='awarded'&&!won;
+  var inProd=won&&b.stage==='production';
+  var allOpts=allOptionsFor(b,OUR_SHOP), live=vendorLiveOptions(b);
+  // Every option we submitted (primary + variations) has to be unsuccessful for
+  // the row to actually read as unsuccessful — one bad primary quote doesn't
+  // sink a still-live variation.
+  var quoteUnsuccessful=allOpts.length>0&&live.length===0;
+  // The awarded option can be a variation, not the shop's base quote — use the
+  // actual winning option so the row shows the right price. Otherwise prefer a
+  // live option over the primary quote, so a still-pending variation doesn't
+  // get hidden behind an unsuccessful primary.
+  var summaryQ=won?(winningQuote(b)||q):(live.length?live[0].data:q);
+  var priceBit=summaryQ?money(summaryQ.price):'';
+  return '<div class="panel src-card" style="cursor:pointer;padding:0.85rem 1.2rem;margin-bottom:0.6rem;" onclick="SRC_openProdDetail(\''+b.id+'\')">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">'+
+      '<div style="min-width:0;flex:1;"><div class="src-card__t" style="font-size:0.92rem;">'+esc(b.title)+'</div><div style="font-size:0.78rem;color:var(--cm-text-subtle);margin-top:0.2rem;">'+collapsedSummaryLine(b,summaryQ,won,lost,inProd,quoteUnsuccessful)+'</div></div>'+
+      (priceBit?'<div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);flex:none;">'+priceBit+'</div>':'')+
+      '<span style="color:var(--cm-text-subtle);flex:none;">→</span>'+
+    '</div>'+
+  '</div>';
+}
+var SRC_OPEN_PROD_DETAIL_ID=null;
+window.SRC_openProdDetail=function(id){
+  SRC_OPEN_PROD_DETAIL_ID=id;
+  SRC_renderProdDetailModal();
+  document.getElementById('prodDetailModal').hidden=false;
+};
+window.SRC_closeProdDetail=function(){
+  document.getElementById('prodDetailModal').hidden=true;
+  SRC_OPEN_PROD_DETAIL_ID=null;
+};
+function SRC_renderProdDetailModal(){
+  if(!SRC_OPEN_PROD_DETAIL_ID)return;
+  var b=SDB.briefs.filter(function(x){return x.id===SRC_OPEN_PROD_DETAIL_ID;})[0];
+  if(!b){SRC_closeProdDetail();return;} // e.g. deleted while open
+  var titleEl=document.getElementById('prodDetailTitle'); if(titleEl)titleEl.textContent=b.title;
+  var codeBits=[]; if(b.code)codeBits.push(esc(b.code)); if(b.sentDate)codeBits.push('received '+esc(b.sentDate));
+  var codeEl=document.getElementById('prodDetailCode'); if(codeEl)codeEl.innerHTML=codeBits.join(' · ');
+  var bodyEl=document.getElementById('prodDetailBody'); if(bodyEl)bodyEl.innerHTML=renderProdAdminDetail(b);
+}
+// Full brief + quotation detail — same content that used to live inline in
+// each expandable card, now shown in prodDetailModal instead (see
+// renderProdAdminRow for the lean list this replaces).
+function renderProdAdminDetail(b){
   var q=b.quotes[OUR_SHOP], won=b.awarded===OUR_SHOP, lost=b.status==='awarded'&&!won;
   // A quote can be marked unsuccessful by Carve Admin without the whole brief
   // being awarded elsewhere yet (e.g. still waiting on other vendors) — this
@@ -4982,19 +5074,7 @@ function renderProdAdminCard(b){
   // brief-is-fully-awarded case.
   var quoteUnsuccessful=!!(q&&q.unsuccessful);
   var inProd=won&&b.stage==='production';
-  if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=false; // all quotes start collapsed by default
-  var expanded=SRC_EXPANDED[b.id];
-  var chip=inProd?'<span class="chip active">In production</span>':won?'<span class="chip active">Awarded to you</span>':lost?'<span class="chip await">Not selected</span>':quoteUnsuccessful?'<span class="chip await">Not selected</span>':(q&&q.carveNote)?'<span class="chip await">Revision requested</span>':q?'<span class="chip done">Quote Submitted</span>':'<span class="chip active">Action needed</span>';
-  var codeBits2=[]; if(b.code)codeBits2.push(esc(b.code)); if(b.sentDate)codeBits2.push('received '+esc(b.sentDate));
-  var html='<div class="panel src-card"><div class="panel__head" style="cursor:pointer;" onclick="SRC_toggleExpand(\''+b.id+'\')"><div><span class="src-card__code">'+codeBits2.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+chip+'<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);">'+(expanded?'▾ Collapse':'▸ Expand')+'</span></div></div>';
-  if(!expanded){
-    // The awarded option can be a variation, not the shop's base quote — use the
-    // actual winning option so the collapsed summary shows the right price/days.
-    var summaryQ=won?(winningQuote(b)||q):q;
-    html+='<div class="panel__body"><div style="font-size:0.85rem;color:var(--cm-text-muted);">'+collapsedSummaryLine(b,summaryQ,won,lost,inProd,quoteUnsuccessful)+'</div></div></div>';
-    return html;
-  }
-  html+='<div class="panel__body">';
+  var html='';
   html+='<div class="src-section-label">Project brief</div>';
   html+=productionBriefBody(b);
   html+='<div class="src-section" style="border-top:1px solid var(--cm-line-faint);margin-top:1.1rem;padding-top:1rem;">';
@@ -5032,8 +5112,11 @@ function renderProdAdminCard(b){
       '<div class="full" style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_quote(\''+b.id+'\')">Send quote to Carve</button></div></div>';
   }
   html+='</div>';
-  if(q&&!lost&&!won&&!quoteUnsuccessful)html+=variationsSection(b);
-  html+='</div></div>';
+  // Shown whenever the brief isn't fully resolved (won/lost) and there's a
+  // primary quote to build on — regardless of whether that primary itself was
+  // marked unsuccessful. A variation can still be alive and awaiting Carve's
+  // decision even after the primary quote wasn't — see vendorBriefGroupRank.
+  if(q&&!lost&&!won)html+=variationsSection(b);
   return html;
 }
 function sectionLabel(text){
@@ -5049,28 +5132,17 @@ function SRC_prodAdmin(){
     if(an||cn){ if(an!==cn) return cn.localeCompare(an); }
     return byDate(a,c);
   };
-  // A brief Carve just left a revision comment on needs a new bid, same as one
-  // that was never quoted — so it moves back into Active quotations (not just
-  // reordered within Submitted) until the shop resubmits. Doesn't apply to
-  // anything already awarded/in production, even if an old comment is still
-  // sitting on the record.
-  var needsRevision=function(b){var q=b.quotes[OUR_SHOP];return !!(q&&q.carveNote)&&b.status!=='awarded';};
-  // Most recently submitted quote first — falls back to the brief's sentDate
-  // for older quotes recorded before quotedAt was tracked.
-  var byQuotedDesc=function(a,c){
-    var aq=(a.quotes[OUR_SHOP]&&(a.quotes[OUR_SHOP].quotedAt||a.sentDate))||'';
-    var cq=(c.quotes[OUR_SHOP]&&(c.quotes[OUR_SHOP].quotedAt||c.sentDate))||'';
-    return cq.localeCompare(aq);
-  };
-  var activeList=ours.filter(function(b){return b.awarded!==OUR_SHOP&&(!b.quotes[OUR_SHOP]||needsRevision(b));}).sort(byCommentThenDate);
-  var awardedList=ours.filter(function(b){return b.awarded===OUR_SHOP;}).sort(byQuotedDesc);
-  var submittedList=ours.filter(function(b){return b.awarded!==OUR_SHOP&&!!b.quotes[OUR_SHOP]&&!needsRevision(b);}).sort(byQuotedDesc);
+  // Most recently active first within a status group (see vendorBriefGroupRank
+  // for the actual grouping, which is option-aware — a primary quote marked
+  // unsuccessful doesn't by itself push a brief into the Unsuccessful group if
+  // a variation is still live).
+  var vendorSorted=ours.slice().sort(byCommentThenDate).sort(function(a,c){return vendorBriefGroupRank(a)-vendorBriefGroupRank(c);});
   // Dashboard: briefs received in the selected period, current backlog needing a
   // bid, quotes submitted in the period, and how long it took to respond (sent →
   // quoted). Quoted/response both fall back to sentDate when an older quote has
   // no quotedAt on record yet.
   var dashTotal=ours.filter(function(b){return inSrcRange(b.sentDate);}).length;
-  var dashPending=activeList.length;
+  var dashPending=ours.filter(function(b){return vendorBriefGroupRank(b)===1&&inSrcRange(b.sentDate);}).length;
   var dashQuoted=ours.filter(function(b){var q=b.quotes[OUR_SHOP];return !!q&&inSrcRange(q.quotedAt||b.sentDate);}).length;
   var dashAwarded=ours.filter(function(b){return b.awarded===OUR_SHOP&&inSrcRange(b.sentDate);}).length;
   var html='<div class="daterange"><span class="daterange__label">Period</span><div class="daterange__seg">'+
@@ -5099,28 +5171,46 @@ function SRC_prodAdmin(){
   if(!ours.length){
     html+='<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No briefs yet. Carve will invite your shop when a model suits you.</div></div>';
   }else{
-    html+=sectionLabel('Active quotations · '+activeList.length);
-    activeList.forEach(function(b){html+=renderProdAdminCard(b);});
-    html+=sectionLabel('Awarded · '+awardedList.length);
-    awardedList.forEach(function(b){html+=renderProdAdminCard(b);});
-    html+=sectionLabel('Submitted quotes · '+submittedList.length);
-    submittedList.forEach(function(b){html+=renderProdAdminCard(b);});
+    var vendorGroupCounts={'0':0,'1':0,'2':0,'3':0};
+    vendorSorted.forEach(function(b){vendorGroupCounts[String(vendorBriefGroupRank(b))]++;});
+    var vendorFilterLabels={all:'All','0':'Awarded','1':'Needs your quote','2':'Active','3':'Unsuccessful'};
+    html+='<div class="daterange" style="margin-top:0.8rem;"><span class="daterange__label">Status</span><div class="daterange__seg">'+
+      ['all','0','1','2','3'].map(function(g){
+        var count=g==='all'?vendorSorted.length:vendorGroupCounts[g];
+        return '<button type="button" class="'+(SRC_VENDOR_GROUP_FILTER===g?'on':'')+'" onclick="setSrcVendorGroupFilter(\''+g+'\')">'+vendorFilterLabels[g]+' ('+count+')</button>';
+      }).join('')+
+      '</div></div>';
+    var vendorFilterActive=SRC_VENDOR_GROUP_FILTER!=='all';
+    var filteredVendorList=vendorFilterActive?vendorSorted.filter(function(b){return String(vendorBriefGroupRank(b))===SRC_VENDOR_GROUP_FILTER;}):vendorSorted;
+    if(vendorFilterActive&&!filteredVendorList.length){
+      html+='<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No briefs in this status right now.</div></div>';
+    }
+    filteredVendorList.forEach(function(b){html+=renderProdAdminRow(b);});
   }
   setSrcBody(html);
   ours.forEach(function(b){
     if(document.getElementById('src-pkgdims-'+b.id))SRC_renderPkgDims('src',b.id);
     if(document.getElementById('varnew-pkgdims-'+b.id))SRC_renderPkgDims('varnew',b.id);
   });
+  // Keep the detail modal in sync — every state-changing action (quoting,
+  // marking a variation, assigning a tech, etc.) re-renders via
+  // SRC_render()/SRC_prodAdmin(), and if that action was triggered from inside
+  // the open modal, its content needs to refresh too rather than going stale
+  // until it's closed and reopened.
+  SRC_renderProdDetailModal();
 }
 function variationsSection(b){
   var vars=(b.variations&&b.variations[OUR_SHOP])||[];
   var html='<div style="margin-top:0.9rem;padding-top:0.9rem;border-top:1px solid var(--cm-line-faint);">';
   html+='<div style="font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);margin-bottom:0.6rem;">Variation quotes ('+vars.length+')</div>';
   vars.forEach(function(v,i){
-    html+='<div class="qline2"><div class="qf-name"><div><div class="nm">'+esc(v.label)+'</div><div class="lc" style="font-family:var(--font-mono);">'+moneyRMB(v.priceRMB)+'</div></div></div>'+
+    // A variation is marked unsuccessful independently of the primary quote
+    // (see SRC_markQuoteUnsuccessful's variantIndex param) — show that plainly
+    // instead of a Revise button, same treatment as an unsuccessful primary.
+    html+='<div class="qline2'+(v.unsuccessful?' qline2--unsuccessful':'')+'"><div class="qf-name"><div><div class="nm">'+esc(v.label)+'</div><div class="lc" style="font-family:var(--font-mono);">'+moneyRMB(v.priceRMB)+'</div></div></div>'+
       '<div class="qf-price">'+money(v.price)+'</div><div class="qf-days">'+v.days+' days</div>'+
-      '<div style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_reviseVariation(\''+b.id+'\','+i+')">Revise</button></div>'+
-      quoteSpecLine(v,b)+extrasLine(v)+boundaryFileLine(v)+(v.note?'<div class="qf-note">'+esc(v.note)+'</div>':'')+carveNoteReadonly(v)+
+      (v.unsuccessful?'<div></div>':'<div style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_reviseVariation(\''+b.id+'\','+i+')">Revise</button></div>')+
+      quoteSpecLine(v,b)+extrasLine(v)+boundaryFileLine(v)+(v.note?'<div class="qf-note">'+esc(v.note)+'</div>':'')+(v.unsuccessful?unsuccessfulNoteReadonly(v):carveNoteReadonly(v))+
     '</div>';
   });
   if(SRC_OPEN_VARIATION[b.id]){
