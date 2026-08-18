@@ -356,16 +356,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   window.__blobUpload = upload;
 </script>
 <script is:inline>
-/* ---- GA4 form_start: fires once per page load, on the first field the
-   visitor actually interacts with — not on page load or button click. ---- */
-(function(){
-  var fired=false;
-  document.getElementById('quoteForm').addEventListener('input',function(){
-    if(fired)return;
-    fired=true;
-    if(typeof gtag==='function')gtag('event','form_start',{form_id:'quoteForm',form_name:'Contact — Preliminary Estimate'});
-  },{capture:true});
-})();
 /* ---- Wizard navigation ---- */
 var wizStep=1, wizMax=4;
 function showStep(n){
