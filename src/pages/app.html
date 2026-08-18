@@ -4395,12 +4395,19 @@ function renderCarveAdminBriefCard(b){
     var wq=winningQuote(b);
     var confirmed=b.status==='awarded';
     var pickedNotConfirmed=!confirmed&&b.picked!=null;
-    var noResponseYet=!confirmed&&!pickedNotConfirmed&&totalOptions===0;
+    // "No response yet" must also check unsuccessfulCount — a brief whose
+    // only submitted quote was marked unsuccessful HAS been responded to, it
+    // just didn't work out. Without this, the collapsed card (the default
+    // view — nothing is expanded until clicked) kept showing "Awaiting
+    // response" even after you'd already marked something unsuccessful,
+    // making it look like nothing happened.
+    var noResponseYet=!confirmed&&!pickedNotConfirmed&&totalOptions===0&&unsuccessfulCount===0;
     var daysSinceSent=b.sentDate?Math.max(0,Math.floor((Date.now()-new Date(b.sentDate+'T00:00:00').getTime())/86400000)):null;
     var statusText=confirmed?('Confirmed with production · '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' · In production':''))
       :pickedNotConfirmed?('Selected · '+shop(b.picked).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+' · not yet confirmed with production')
       :noResponseYet?('Awaiting response'+(daysSinceSent!=null?(' · sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):''))
-      :('Open · '+totalOptions+' option'+(totalOptions==1?'':'s'));
+      :totalOptions===0?('All quotes unsuccessful ('+unsuccessfulCount+')')
+      :('Open · '+totalOptions+' option'+(totalOptions==1?'':'s')+(unsuccessfulCount?(' · '+unsuccessfulCount+' unsuccessful'):''));
     var vendorCompany=function(sid){var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===sid;})[0];var s=shop(sid);return admin?admin.company:(s?s.name:sid);};
     var invitedNames=(b.invited||[]).map(vendorCompany);
     var codeBits=[]; if(b.sentDate)codeBits.push('sent '+esc(b.sentDate)+(invitedNames.length?' to '+esc(invitedNames.join(', ')):''));
