@@ -4335,24 +4335,22 @@ function SRC_carveAdmin(){
   if(!SDB.briefs.length){html+='<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects submitted yet. New requests from the website\'s contact form will appear here automatically.</div></div>';}
   if(SDB.briefs.length){
     // Studio-wide metrics for the selected period: volume in, current backlog needing a
-    // vendor response, quotes actually received, how many converted to production, how
-    // fast vendors typically respond (sent -> quoted), and how many quotes closed out
-    // without converting.
+    // vendor response, quotes actually received, how fast vendors typically respond
+    // (sent -> quoted), and win-rate/speed of closing (sent -> awarded). Raw
+    // successful/unsuccessful/pending counts live in the status filter below instead of
+    // here, since that list is now visible at a glance.
     var dashTotal=SDB.briefs.filter(function(b){return inSrcRange(b.sentDate);}).length;
     var dashPending=SDB.briefs.filter(function(b){
-      if(b.archived||b.status==='awarded')return false;
+      if(b.archived||b.status==='awarded'||!inSrcRange(b.sentDate))return false;
       var opts=0; SHOPS.forEach(function(s){opts+=allOptionsFor(b,s.id).length;});
       return opts===0;
     }).length;
-    var dashQuotedCount=0, dashUnsuccessfulCount=0, responseDaysSum=0, responseDaysN=0;
+    var dashQuotedCount=0, responseDaysSum=0, responseDaysN=0;
     SDB.briefs.forEach(function(b){
       SHOPS.forEach(function(s){
         allOptionsFor(b,s.id).forEach(function(opt){
           var q=opt.data;
-          if(q.unsuccessful){
-            if(inSrcRange(q.unsuccessfulAt||q.quotedAt||b.sentDate))dashUnsuccessfulCount++;
-            return;
-          }
+          if(q.unsuccessful)return;
           var qDate=q.quotedAt||b.sentDate;
           if(!inSrcRange(qDate))return;
           dashQuotedCount++;
@@ -4365,6 +4363,15 @@ function SRC_carveAdmin(){
     });
     var dashAwarded=SDB.briefs.filter(function(b){return b.status==='awarded'&&inSrcRange(b.sentDate);}).length;
     var avgResponseDays=responseDaysN?Math.round(responseDaysSum/responseDaysN*10)/10:null;
+    var dashConversionRate=dashTotal?Math.round(dashAwarded/dashTotal*100):null;
+    var awardDaysSum=0,awardDaysN=0;
+    SDB.briefs.forEach(function(b){
+      if(b.status==='awarded'&&inSrcRange(b.sentDate)&&b.awardedAt&&b.sentDate){
+        var d=Math.round((new Date(b.awardedAt+'T00:00:00')-new Date(b.sentDate+'T00:00:00'))/86400000);
+        if(d>=0){awardDaysSum+=d;awardDaysN++;}
+      }
+    });
+    var avgAwardDays=awardDaysN?Math.round(awardDaysSum/awardDaysN*10)/10:null;
     html+='<div class="daterange"><span class="daterange__label">Period</span><div class="daterange__seg">'+
       '<button type="button" class="'+(srcRange.mode==='all'?'on':'')+'" data-range="all" onclick="setSrcRange(\'all\',this)">All time</button>'+
       '<button type="button" class="'+(srcRange.mode==='30'?'on':'')+'" data-range="30" onclick="setSrcRange(\'30\',this)">Last 30 days</button>'+
@@ -4380,9 +4387,9 @@ function SRC_carveAdmin(){
       '<div class="kpi"><span class="mock__k">Briefs received</span><div class="big">'+dashTotal+'</div></div>'+
       '<div class="kpi"><span class="mock__k">Awaiting response</span><div class="big">'+dashPending+'</div></div>'+
       '<div class="kpi"><span class="mock__k">Quotes received</span><div class="big">'+dashQuotedCount+'</div></div>'+
-      '<div class="kpi"><span class="mock__k">Confirmed w/ production</span><div class="big">'+dashAwarded+'</div></div>'+
+      '<div class="kpi"><span class="mock__k">Conversion rate</span><div class="big">'+(dashConversionRate==null?'—':dashConversionRate+'%')+'</div></div>'+
       '<div class="kpi"><span class="mock__k">Avg. vendor response</span><div class="big">'+(avgResponseDays==null?'—':avgResponseDays+'d')+'</div></div>'+
-      '<div class="kpi"><span class="mock__k">Unsuccessful quotes</span><div class="big">'+dashUnsuccessfulCount+'</div></div>'+
+      '<div class="kpi"><span class="mock__k">Avg. days to award</span><div class="big">'+(avgAwardDays==null?'—':avgAwardDays+'d')+'</div></div>'+
       '</div>';
   }
   var archivedBriefsCount=SDB.briefs.filter(function(b){return b.archived;}).length;
@@ -4393,7 +4400,10 @@ function SRC_carveAdmin(){
   // yet — vs everything else (has at least one quote, or already awarded). The former
   // sits collapsed under its own category by default so a growing backlog of unanswered
   // leads doesn't bury projects that actually need a decision; newest submission first.
-  var visibleBriefs=SDB.briefs.filter(function(b){return !b.archived||SRC_SHOW_ARCHIVED_BRIEFS;});
+  // Respects the Period selector above (same inSrcRange(b.sentDate) test the "Briefs
+  // received" KPI uses) so the list, the status filter counts, and the KPI row all
+  // describe the same date range instead of the list always showing everything.
+  var visibleBriefs=SDB.briefs.filter(function(b){return (!b.archived||SRC_SHOW_ARCHIVED_BRIEFS)&&inSrcRange(b.sentDate);});
   var leadSubmittedList=[], restList=[];
   visibleBriefs.forEach(function(b){
     var opts=0; SHOPS.forEach(function(s){opts+=allOptionsFor(b,s.id).length;});
@@ -4848,7 +4858,7 @@ window.SRC_reopenForQuotes=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   if(!confirm('Reopen "'+b.title+'" for quotes? This undoes the confirmed award — the assigned technician loses access, and Carve goes back to comparing options.'))return;
   var prevShop=b.awarded;
-  b.status='open';b.awarded=null;b.awardedVariantIndex=null;b.picked=null;b.pickedVariantIndex=null;b.clientQuote=null;b.stage='sourcing';b.assignedTech=null;
+  b.status='open';b.awarded=null;b.awardedVariantIndex=null;b.picked=null;b.pickedVariantIndex=null;b.clientQuote=null;b.stage='sourcing';b.assignedTech=null;b.awardedAt=null;
   if(prevShop)notifyShop(prevShop,'"'+b.title+'" was reopened for quotes by Carve Model.');
   saveSRC();SRC_render();
 };
@@ -4904,6 +4914,7 @@ window.SRC_award=function(id,shopId,variantIndex){
   var sameBasis=b.picked===shopId&&(b.pickedVariantIndex==null?null:b.pickedVariantIndex)===vi;
   if(!confirm((already?'Switch confirmed production to ':'Confirm ')+b.title+' with '+label+'? '+(already?'The previous shop will be told they are no longer awarded. ':'')+'They\u2019ll be notified the job is theirs; other quoted shops are told they weren\u2019t selected. Client identity stays private.'))return;
   b.status='awarded';b.awarded=shopId;b.awardedVariantIndex=vi;b.picked=shopId;b.pickedVariantIndex=vi;
+  b.awardedAt=new Date().toISOString().slice(0,10); // for the "Avg. days to award" dashboard metric
   if(!sameBasis)b.clientQuote=null; // basis changed — the finalized client price no longer matches, needs re-review
   // The invoice number is issued the moment production is confirmed — not before,
   // since a quote alone doesn't guarantee the project moves forward. Stays fixed
