@@ -1608,6 +1608,17 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
+<!-- Project/quote detail modal — the Quotes tab shows a lean list of rows;
+     clicking one opens the full brief here (project brief, client contact,
+     quote comparison, client-quote status) instead of expanding inline, so
+     the list itself stays cheap to scan as the number of projects grows. -->
+<div class="modal-overlay" id="briefDetailModal" hidden>
+  <div class="modal modal--wide" style="max-width:920px;" role="dialog" aria-modal="true" aria-label="Project detail">
+    <div class="modal__head"><div><span class="src-card__code" id="briefDetailCode"></span><span class="src-card__t" id="briefDetailTitle" style="margin-left:0.6rem;"></span></div><div style="display:flex;align-items:center;gap:0.7rem;"><div id="briefDetailActions" style="display:flex;gap:0.5rem;"></div><button class="modal__x" onclick="SRC_closeBriefDetail()" aria-label="Close">×</button></div></div>
+    <div class="modal__body" id="briefDetailBody"></div>
+  </div>
+</div>
+
 <!-- Add lead modal (manual: referral / cold call / email) -->
 <div class="modal-overlay" id="addLeadModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Add a lead">
@@ -3736,6 +3747,9 @@ var SRC_SHOW_LEAD_SUBMITTED=false;    // page-level toggle: briefs freshly sent 
                                        // sit collapsed under their own category by default so they don't clutter
                                        // the main list; newest submission first once expanded.
 window.SRC_toggleShowLeadSubmitted=function(){SRC_SHOW_LEAD_SUBMITTED=!SRC_SHOW_LEAD_SUBMITTED;SRC_render();};
+var SRC_GROUP_FILTER='all';           // 'all' | '0' (successful) | '1' (unsuccessful) | '2' (pending) —
+                                       // see srcBriefGroupRank. Narrows the main Quotes list to one status.
+window.setSrcGroupFilter=function(g){SRC_GROUP_FILTER=g;SRC_render();};
 var SRC_OPEN_COMMENT={};              // "briefId|shopId|optKey" -> true while Carve's revision-request textarea is open
 /* Simulated email notifications: an in-app inbox per shop + a toast confirming the "email" was sent. */
 function notifyShop(shopId,text){
@@ -4293,6 +4307,18 @@ function SRC_render(){
 }
 
 /* ---- Carve Admin: send briefs, compare EVERY submitted option (primary + variations) from every shop, award, finalize for client ---- */
+// Sort rank for the main Quotes list — 0 successful, 1 unsuccessful, 2
+// pending a client decision. "Successful" means actually confirmed with
+// production (clicked Award) — not just having a live quote sitting there.
+// A quote that's just open, or picked and sent to the client but not yet
+// accepted, is still "pending" either way until it's actually awarded.
+function srcBriefGroupRank(b){
+  if(b.status==='awarded')return 0; // successful — confirmed with production
+  var opts=0,uns=0;
+  SHOPS.forEach(function(s){allOptionsFor(b,s.id).forEach(function(opt){if(opt.data.unsuccessful)uns++;else opts++;});});
+  if(opts===0&&uns>0)return 1; // unsuccessful — nothing viable left
+  return 2; // pending — open, under review, or with the client, not yet confirmed
+}
 window.SRC_updateBadges=function(){
   var openCount=SDB.briefs.filter(function(b){return b.status==='open';}).length;
   var badge=document.getElementById('sourcingBadge');
@@ -4375,32 +4401,54 @@ function SRC_carveAdmin(){
     else{restList.push(b);}
   });
   leadSubmittedList.sort(function(a,c){return (c.sentDate||'').localeCompare(a.sentDate||'');});
-  if(leadSubmittedList.length){
+  // Stable sort into successful / unsuccessful / pending (see
+  // srcBriefGroupRank), then let the status filter below narrow the list down
+  // to just one group at a time.
+  restList.sort(function(a,c){return srcBriefGroupRank(a)-srcBriefGroupRank(c);});
+  var groupCounts={'0':0,'1':0,'2':0};
+  restList.forEach(function(b){groupCounts[String(srcBriefGroupRank(b))]++;});
+  var filterLabels={all:'All','0':'Successful','1':'Unsuccessful','2':'Pending'};
+  html+='<div class="daterange" style="margin-top:0.8rem;"><span class="daterange__label">Status</span><div class="daterange__seg">'+
+    ['all','0','1','2'].map(function(g){
+      var count=g==='all'?restList.length:groupCounts[g];
+      return '<button type="button" class="'+(SRC_GROUP_FILTER===g?'on':'')+'" onclick="setSrcGroupFilter(\''+g+'\')">'+filterLabels[g]+' ('+count+')</button>';
+    }).join('')+
+    '</div></div>';
+  var groupFilterActive=SRC_GROUP_FILTER!=='all';
+  if(!groupFilterActive&&leadSubmittedList.length){
     html+='<div style="margin-bottom:0.8rem;"><span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleShowLeadSubmitted()">'+(SRC_SHOW_LEAD_SUBMITTED?'▾ Lead submitted ('+leadSubmittedList.length+')':'▸ Lead submitted ('+leadSubmittedList.length+') — awaiting vendor response')+'</span></div>';
     if(SRC_SHOW_LEAD_SUBMITTED){
-      leadSubmittedList.forEach(function(b){html+=renderCarveAdminBriefCard(b);});
+      leadSubmittedList.forEach(function(b){html+=renderCarveAdminBriefRow(b);});
     }
   }
-  restList.forEach(function(b){html+=renderCarveAdminBriefCard(b);});
+  var filteredRestList=groupFilterActive?restList.filter(function(b){return String(srcBriefGroupRank(b))===SRC_GROUP_FILTER;}):restList;
+  if(groupFilterActive&&!filteredRestList.length){
+    html+='<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects in this status right now.</div></div>';
+  }
+  filteredRestList.forEach(function(b){html+=renderCarveAdminBriefRow(b);});
   setSrcBody(html);
   SDB.briefs.forEach(function(b){
     if((b.status==='awarded'||b.picked!=null)&&(!b.clientQuote||!b.clientQuote.sent)&&document.getElementById('cq-pkgn-'+b.id))SRC_renderPkgDims('cq',b.id);
   });
+  // Keep the detail modal in sync — every state-changing action (award, mark
+  // unsuccessful, etc.) re-renders via SRC_render()/SRC_carveAdmin(), and if
+  // that action was triggered from inside the open modal, its content needs
+  // to refresh too rather than going stale until it's closed and reopened.
+  SRC_renderBriefDetailModal();
 }
-function renderCarveAdminBriefCard(b){
-    var html='';
+// Lean single-line row for the main Quotes list — title, status, and a price
+// hint if there's a live quote to show. Click opens the full detail in
+// briefDetailModal (see SRC_openBriefDetail / renderCarveAdminBriefDetail)
+// rather than expanding inline, so scanning stays fast as project volume
+// grows; all the real detail — brief, client contact, quote comparison,
+// client-quote status — lives in the modal instead.
+function renderCarveAdminBriefRow(b){
     var quoted=Object.keys(b.quotes);
     var best=null;quoted.forEach(function(s){if(b.quotes[s].unsuccessful)return;if(best===null||b.quotes[s].price<best)best=b.quotes[s].price;});
     var totalOptions=0,unsuccessfulCount=0; SHOPS.forEach(function(s){allOptionsFor(b,s.id).forEach(function(opt){if(opt.data.unsuccessful)unsuccessfulCount++;else totalOptions++;});});
     var wq=winningQuote(b);
     var confirmed=b.status==='awarded';
     var pickedNotConfirmed=!confirmed&&b.picked!=null;
-    // "No response yet" must also check unsuccessfulCount — a brief whose
-    // only submitted quote was marked unsuccessful HAS been responded to, it
-    // just didn't work out. Without this, the collapsed card (the default
-    // view — nothing is expanded until clicked) kept showing "Awaiting
-    // response" even after you'd already marked something unsuccessful,
-    // making it look like nothing happened.
     var noResponseYet=!confirmed&&!pickedNotConfirmed&&totalOptions===0&&unsuccessfulCount===0;
     var daysSinceSent=b.sentDate?Math.max(0,Math.floor((Date.now()-new Date(b.sentDate+'T00:00:00').getTime())/86400000)):null;
     var statusText=confirmed?('Confirmed with production · '+shop(b.awarded).name.split(' ')[0]+(wq&&wq.label?' ('+esc(wq.label)+')':'')+(b.stage==='production'?' · In production':''))
@@ -4408,27 +4456,54 @@ function renderCarveAdminBriefCard(b){
       :noResponseYet?('Awaiting response'+(daysSinceSent!=null?(' · sent '+daysSinceSent+(daysSinceSent===1?' day':' days')+' ago'):''))
       :totalOptions===0?('All quotes unsuccessful ('+unsuccessfulCount+')')
       :('Open · '+totalOptions+' option'+(totalOptions==1?'':'s')+(unsuccessfulCount?(' · '+unsuccessfulCount+' unsuccessful'):''));
-    var vendorCompany=function(sid){var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===sid;})[0];var s=shop(sid);return admin?admin.company:(s?s.name:sid);};
-    var invitedNames=(b.invited||[]).map(vendorCompany);
-    var codeBits=[]; if(b.sentDate)codeBits.push('sent '+esc(b.sentDate)+(invitedNames.length?' to '+esc(invitedNames.join(', ')):''));
-    var codeDisplay=b.code?('<span style="cursor:pointer;" onclick="SRC_editInvoiceNumber(\''+b.id+'\')" title="Click to edit the invoice number">'+esc(b.code)+' ✎</span>'+(codeBits.length?' · ':'')):'';
-    if(SRC_EXPANDED[b.id]===undefined)SRC_EXPANDED[b.id]=false; // all briefs start collapsed by default
-    var expanded=SRC_EXPANDED[b.id];
+    var priceBit=wq?money(wq.price):(best!=null?money(best):'');
+    return '<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+(b.archived?' src-card--archived':'')+'" style="cursor:pointer;padding:0.85rem 1.2rem;margin-bottom:0.6rem;" onclick="SRC_openBriefDetail(\''+b.id+'\')">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">'+
+        '<div style="min-width:0;flex:1;"><div class="src-card__t" style="font-size:0.92rem;">'+esc(b.title)+'</div><div style="font-size:0.78rem;color:var(--cm-text-subtle);margin-top:0.2rem;">'+esc(statusText)+'</div></div>'+
+        (priceBit?'<div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);flex:none;">'+priceBit+'</div>':'')+
+        '<span style="color:var(--cm-text-subtle);flex:none;">→</span>'+
+      '</div>'+
+    '</div>';
+}
+// Actions shown in the detail modal's header — same set that used to live on
+// each card's panel head.
+function renderCarveAdminBriefDetailActions(b){
+    var confirmed=b.status==='awarded';
     var statusAction=confirmed?'<button class="btn btn--ghost btn--sm" onclick="SRC_reopenForQuotes(\''+b.id+'\')">↺ Reopen for quotes</button>':'';
-    // Available any time the project isn't already confirmed with a production
-    // shop — same "Obtain Quotation" action as leads, just reused on an
-    // already-sent brief instead of needing to keep the original lead around
-    // to send to a second vendor later (see SRC_inviteMoreVendors).
     var inviteMoreAction=confirmed?'':'<button class="btn btn--ghost btn--sm" onclick="SRC_inviteMoreVendors(\''+b.id+'\')">Obtain Quotation →</button>';
     var archiveAction=b.archived?'<button class="btn btn--ghost btn--sm" onclick="SRC_unarchiveBrief(\''+b.id+'\')">Unarchive</button>'
       :'<button class="btn btn--ghost btn--sm" onclick="SRC_archiveBrief(\''+b.id+'\')">Archive</button>';
     var deleteAction=confirmed?'':'<button class="btn btn--ghost btn--sm btn--danger" onclick="SRC_deleteBrief(\''+b.id+'\')">Delete</button>';
-    var headActions=statusAction+inviteMoreAction+archiveAction+deleteAction;
-    html+='<div class="panel src-card'+(noResponseYet&&daysSinceSent!=null&&daysSinceSent>=3?' src-card--stale':'')+(b.archived?' src-card--archived':'')+'"><div class="panel__head"><div><span class="src-card__code">'+codeDisplay+codeBits.join(' · ')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><div style="display:flex;align-items:center;gap:0.7rem;">'+headActions+'<span style="cursor:pointer;font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);" onclick="SRC_toggleExpand(\''+b.id+'\')">'+(expanded?'▾ Collapse':'▸ Expand')+'</span>'+'</div></div><div class="panel__body">';
-    if(!expanded){
-      html+='<div style="font-size:0.85rem;color:var(--cm-text-muted);">'+esc(statusText)+'</div></div></div>';
-      return html;
-    }
+    return statusAction+inviteMoreAction+archiveAction+deleteAction;
+}
+var SRC_OPEN_DETAIL_ID=null;
+window.SRC_openBriefDetail=function(id){
+  SRC_OPEN_DETAIL_ID=id;
+  SRC_renderBriefDetailModal();
+  document.getElementById('briefDetailModal').hidden=false;
+};
+window.SRC_closeBriefDetail=function(){
+  document.getElementById('briefDetailModal').hidden=true;
+  SRC_OPEN_DETAIL_ID=null;
+};
+function SRC_renderBriefDetailModal(){
+  if(!SRC_OPEN_DETAIL_ID)return;
+  var b=(SDB.briefs||[]).filter(function(x){return x.id===SRC_OPEN_DETAIL_ID;})[0];
+  if(!b){SRC_closeBriefDetail();return;} // e.g. deleted while open
+  var titleEl=document.getElementById('briefDetailTitle'); if(titleEl)titleEl.textContent=b.title;
+  var codeEl=document.getElementById('briefDetailCode');
+  if(codeEl)codeEl.innerHTML=b.code?('<span style="cursor:pointer;" onclick="SRC_editInvoiceNumber(\''+b.id+'\')" title="Click to edit the invoice number">'+esc(b.code)+' ✎</span>'):'';
+  var actEl=document.getElementById('briefDetailActions'); if(actEl)actEl.innerHTML=renderCarveAdminBriefDetailActions(b);
+  var bodyEl=document.getElementById('briefDetailBody'); if(bodyEl)bodyEl.innerHTML=renderCarveAdminBriefDetail(b);
+}
+function renderCarveAdminBriefDetail(b){
+    var html='';
+    var quoted=Object.keys(b.quotes);
+    var best=null;quoted.forEach(function(s){if(b.quotes[s].unsuccessful)return;if(best===null||b.quotes[s].price<best)best=b.quotes[s].price;});
+    var totalOptions=0,unsuccessfulCount=0; SHOPS.forEach(function(s){allOptionsFor(b,s.id).forEach(function(opt){if(opt.data.unsuccessful)unsuccessfulCount++;else totalOptions++;});});
+    var confirmed=b.status==='awarded';
+    var vendorCompany=function(sid){var admin=(window.PRODUCTION_ADMINS||[]).filter(function(p){return p.shopId===sid;})[0];var s=shop(sid);return admin?admin.company:(s?s.name:sid);};
+    var invitedNames=(b.invited||[]).map(vendorCompany);
     html+=productionBriefBody(b);
     html+='<div class="src-withheld" style="border-style:solid;"><div class="wh-h">Client Contact</div>'+
       '<div class="row"><span class="l">Client</span><span>'+esc(b.client.Name)+'</span></div>'+
@@ -4502,7 +4577,6 @@ function renderCarveAdminBriefCard(b){
     if(confirmed&&b.clientQuote&&b.clientQuote.price&&!b.clientQuote.invoice){
       if(ensureClientInvoice(b))saveSRC();
     }
-    html+='</div></div>';
     return html;
 }
 
