@@ -3804,7 +3804,10 @@ window.SRC_saveComment=function(bid,shopId,vi){
   opt.carveNote={text:txt,time:'just now'};
   b.lastCommentAt=new Date().toISOString(); // bumps this brief to the top of the shop's Submitted quotes list
   delete SRC_OPEN_COMMENT[bid+'|'+shopId+'|'+optKey(vi)];
-  notifyShop(shopId,'Carve requested a revision on "'+b.title+'".');
+  // Include the actual comment text, not just a generic status line — the
+  // vendor should be able to see what changed right in the update banner
+  // without having to go find and open the specific quote first.
+  notifyShop(shopId,'Carve requested a revision on "'+b.title+'": '+txt);
   showEmailToast('Sent to '+shop(shopId).name+' — revision requested on "'+b.title+'".');
   saveSRC();SRC_render();
 };
