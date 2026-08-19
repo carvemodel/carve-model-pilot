@@ -4278,9 +4278,15 @@ window.SRC_renderPkgDims=function(prefix,bid){
    markup afterward — this is a backstop that works regardless of what caused
    the rebuild.
 */
-function srcCaptureDraft(){
+// containerId defaults to 'srcBody' but can target a modal body instead (see
+// SRC_renderBriefDetailModal / SRC_renderProdDetailModal) — any in-progress
+// form (like a vendor's not-yet-submitted quote) now lives inside those
+// modals rather than always in srcBody, and needs the same protection: a
+// background poll re-render shouldn't wipe out what someone is mid-typing.
+function srcCaptureDraft(containerId){
   var draft={};
-  document.querySelectorAll('#srcBody input[id], #srcBody textarea[id], #srcBody select[id]').forEach(function(el){
+  var sel='#'+(containerId||'srcBody');
+  document.querySelectorAll(sel+' input[id], '+sel+' textarea[id], '+sel+' select[id]').forEach(function(el){
     if(el.type==='file')return;
     if(el.type==='checkbox'||el.type==='radio'){draft[el.id]={checked:el.checked};}
     else{draft[el.id]={value:el.value};}
@@ -4519,7 +4525,17 @@ function SRC_renderBriefDetailModal(){
   var codeEl=document.getElementById('briefDetailCode');
   if(codeEl)codeEl.innerHTML=b.code?('<span style="cursor:pointer;" onclick="SRC_editInvoiceNumber(\''+b.id+'\')" title="Click to edit the invoice number">'+esc(b.code)+' ✎</span>'):'';
   var actEl=document.getElementById('briefDetailActions'); if(actEl)actEl.innerHTML=renderCarveAdminBriefDetailActions(b);
-  var bodyEl=document.getElementById('briefDetailBody'); if(bodyEl)bodyEl.innerHTML=renderCarveAdminBriefDetail(b);
+  var bodyEl=document.getElementById('briefDetailBody');
+  if(bodyEl){
+    // Any state-changing action elsewhere (including the background poll —
+    // see pullSourcing/POLL_MS) re-renders this modal too. Without capturing
+    // and restoring in-progress input here, an admin mid-typing something
+    // inside the modal (e.g. a client price, a note) would see it silently
+    // wiped out once that poll fires.
+    var draft=srcCaptureDraft('briefDetailBody');
+    bodyEl.innerHTML=renderCarveAdminBriefDetail(b);
+    srcRestoreDraft(draft);
+  }
 }
 function renderCarveAdminBriefDetail(b){
     var html='';
@@ -5064,7 +5080,18 @@ function SRC_renderProdDetailModal(){
   var titleEl=document.getElementById('prodDetailTitle'); if(titleEl)titleEl.textContent=b.title;
   var codeBits=[]; if(b.code)codeBits.push(esc(b.code)); if(b.sentDate)codeBits.push('received '+esc(b.sentDate));
   var codeEl=document.getElementById('prodDetailCode'); if(codeEl)codeEl.innerHTML=codeBits.join(' · ');
-  var bodyEl=document.getElementById('prodDetailBody'); if(bodyEl)bodyEl.innerHTML=renderProdAdminDetail(b);
+  var bodyEl=document.getElementById('prodDetailBody');
+  if(bodyEl){
+    // Same reasoning as SRC_renderBriefDetailModal: the background poll (see
+    // pullSourcing/POLL_MS) re-renders this modal periodically, and without
+    // this, a vendor filling out a not-yet-submitted quote here would see
+    // their in-progress cost/dimensions/etc. silently reset to blank once
+    // that poll fires — which is exactly the "data disappears after a while"
+    // report this fixes.
+    var draft=srcCaptureDraft('prodDetailBody');
+    bodyEl.innerHTML=renderProdAdminDetail(b);
+    srcRestoreDraft(draft);
+  }
 }
 // Full brief + quotation detail — same content that used to live inline in
 // each expandable card, now shown in prodDetailModal instead (see
@@ -5238,6 +5265,9 @@ window.SRC_addVariation=function(bid){
   if(!label){alert('Give this variation a short label, e.g. "Smaller scale option".');return;}
   var data=collectQuoteFormData('varnew',bid,b);
   if(!data){alert('Add a cost and a production time.');return;}
+  // Package size is required — same rule as the primary quote (see SRC_quote).
+  if(!data.packages){alert('Add the approximate package count.');return;}
+  if(data.packageDimsList.length<data.packages){alert('Add the package dimensions for each case ('+data.packageDimsList.length+' of '+data.packages+' entered).');return;}
   data.label=label;
   if(!b.variations)b.variations={};
   if(!b.variations[OUR_SHOP])b.variations[OUR_SHOP]=[];
@@ -5261,6 +5291,10 @@ window.SRC_quote=function(id){
   if(SRC_BFILE_UPLOADING['src-'+id]){alert('The dimension/boundary file is still uploading — please wait a moment and try again.');return;}
   var data=collectQuoteFormData('src',id,b);
   if(!data){alert('Add a cost and a production time.');return;}
+  // Package size is required — Carve needs real shipping dimensions to plan
+  // freight before a quote can be accepted, not just an approximate count.
+  if(!data.packages){alert('Add the approximate package count.');return;}
+  if(data.packageDimsList.length<data.packages){alert('Add the package dimensions for each case ('+data.packageDimsList.length+' of '+data.packages+' entered).');return;}
   data.quotedAt=new Date().toISOString().slice(0,10);
   b.quotes[OUR_SHOP]=data;
   logHistory(b,OUR_SHOP,data,'Submitted');
