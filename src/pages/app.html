@@ -4082,7 +4082,7 @@ function quoteFormFields(prefix,bid,b){
   html+='<div class="full"><label>Model Boundary Image</label>'+
     '<div class="reqfiles" onclick="document.getElementById(\''+idp+'bfile-'+bid+'\').click()">'+
       '<input id="'+idp+'bfile-'+bid+'" type="file" style="display:none;" onchange="SRC_boundaryFilePicked(\''+prefix+'\',\''+bid+'\',this)">'+
-      '<span id="'+idp+'bfile-label-'+bid+'">Drop a file or click to upload</span>'+
+      '<span id="'+idp+'bfile-label-'+bid+'">'+bfileLabelText(prefix+'-'+bid)+'</span>'+
     '</div></div>';
   html+='<div><label>Approx. package count</label><input id="'+idp+'pkgn-'+bid+'" type="number" min="1" placeholder="e.g. 2" oninput="SRC_renderPkgDims(\''+prefix+'\',\''+bid+'\')"></div>';
   html+='<div class="full" id="'+idp+'pkgdims-'+bid+'"></div>';
@@ -4119,6 +4119,22 @@ function collectQuoteFormData(prefix,bid,b){
   return {priceRMB:rmb,price:rmbToUsd(rmb),days:d,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,boundaryFile:bfile,note:note};
 }
 
+// Boundary-file label text for a given "<prefix>-<bid>" key, derived from
+// current upload state — used both right after a pick/upload finishes AND
+// whenever the form itself gets rebuilt (e.g. a poll-triggered re-render).
+// Without this, the label always fell back to the blank placeholder on
+// rebuild, so an already-uploaded file looked like it had vanished even
+// though SRC_PENDING_BFILE still had it and the quote would have submitted
+// correctly.
+function bfileLabelText(key){
+  if(SRC_BFILE_UPLOADING[key])return 'Uploading…';
+  var f=SRC_PENDING_BFILE[key];
+  if(f&&f.name){
+    var sizeStr=f.size?(f.size/1024/1024>=1?(f.size/1024/1024).toFixed(1)+' MB':Math.round(f.size/1024)+' KB'):'';
+    return esc(f.name)+(sizeStr?' · '+sizeStr:'')+(f.url?'':' — upload failed, try again');
+  }
+  return 'Drop a file or click to upload';
+}
 window.SRC_boundaryFilePicked=function(prefix,bid,input){
   var key=prefix+'-'+bid;
   var f=input.files&&input.files[0];
@@ -4201,6 +4217,12 @@ function buildPkgDimRow(prefix,bid,i,seedVals){
       var inp=document.createElement('input');
       inp.type='number'; if(unitKey==='in')inp.step='0.1';
       inp.className='f-'+d+'-'+unitKey;
+      // Stable id (alongside the existing class, which readPkgDimAt/SRC_renderPkgDims's
+      // own prevRows logic still key off) so this gets picked up by the generic
+      // srcCaptureDraft/srcRestoreDraft draft-preservation mechanism too — see
+      // srcRestorePkgDims, which rebuilds this whole row from scratch on a
+      // full re-render, so the id needs to exist before restore can refill it.
+      inp.id=prefix+'-pkgdim-'+bid+'-'+i+'-'+d+unitKey;
       inp.placeholder=unitLabel;
       inputs[d+unitKey]=inp;
       grid.appendChild(inp);
@@ -4303,6 +4325,26 @@ function srcRestoreDraft(draft){
       el.value=d.value;
     }
   });
+}
+// The package-dimensions sub-widget (see quoteFormFields / SRC_renderPkgDims)
+// starts out as an empty wrapper on every render — its rows only exist once
+// SRC_renderPkgDims runs, normally triggered by the package-count field's own
+// oninput handler. A plain innerHTML rebuild (or the srcRestoreDraft pass
+// above, which only fills fields that already exist in the DOM) leaves it
+// empty even after the count itself was restored. So: restore the plain
+// fields first, then for any package-count field left with a real value,
+// rebuild its dimension rows and restore the same draft again now that those
+// row inputs exist (see buildPkgDimRow's id=).
+function srcRestorePkgDims(containerId,draft){
+  var container=document.getElementById(containerId);
+  if(!container)return;
+  container.querySelectorAll('input[id*="-pkgn-"]').forEach(function(pkgnEl){
+    if(!pkgnEl.value)return;
+    var m=pkgnEl.id.match(/^(.+)-pkgn-(.+)$/);
+    if(!m||!window.SRC_renderPkgDims)return;
+    window.SRC_renderPkgDims(m[1],m[2]);
+  });
+  srcRestoreDraft(draft);
 }
 function setSrcBody(html){
   var draft=srcCaptureDraft();
@@ -4518,7 +4560,7 @@ function SRC_renderBriefDetailModal(){
     // wiped out once that poll fires.
     var draft=srcCaptureDraft('briefDetailBody');
     bodyEl.innerHTML=renderCarveAdminBriefDetail(b);
-    srcRestoreDraft(draft);
+    srcRestorePkgDims('briefDetailBody',draft);
   }
 }
 function renderCarveAdminBriefDetail(b){
@@ -5074,7 +5116,7 @@ function SRC_renderProdDetailModal(){
     // report this fixes.
     var draft=srcCaptureDraft('prodDetailBody');
     bodyEl.innerHTML=renderProdAdminDetail(b);
-    srcRestoreDraft(draft);
+    srcRestorePkgDims('prodDetailBody',draft);
   }
 }
 // Full brief + quotation detail — same content that used to live inline in
@@ -5672,7 +5714,12 @@ var POLL_MS=5000, pollTimer=null;
 var srcLastInputAt=0;
 document.addEventListener('input',function(e){
   var t=e.target;
-  if(t&&t.closest&&(t.closest('#srcBody')||t.closest('#view-sourcing'))){
+  // briefDetailModal/prodDetailModal hold in-progress quote forms too (see
+  // renderProdAdminDetail / renderCarveAdminBriefDetail) but live outside
+  // #srcBody and #view-sourcing entirely — without checking them here, typing
+  // into a vendor's quote form never counted as "editing," so this skip check
+  // silently stopped protecting it the moment those forms moved into a modal.
+  if(t&&t.closest&&(t.closest('#srcBody')||t.closest('#view-sourcing')||t.closest('#briefDetailModal')||t.closest('#prodDetailModal'))){
     srcLastInputAt=Date.now();
   }
 },true);
