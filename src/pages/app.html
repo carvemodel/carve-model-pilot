@@ -4338,12 +4338,19 @@ function srcRestoreDraft(draft){
 function srcRestorePkgDims(containerId,draft){
   var container=document.getElementById(containerId);
   if(!container)return;
+  // Pass 1: restore plain fields first, including the package-count field
+  // itself — the rebuild check below reads pkgn.value, which is only
+  // populated after this runs. Without this pass the check always sees an
+  // empty field (fresh render) and never rebuilds the dimension rows at all.
+  srcRestoreDraft(draft);
   container.querySelectorAll('input[id*="-pkgn-"]').forEach(function(pkgnEl){
     if(!pkgnEl.value)return;
     var m=pkgnEl.id.match(/^(.+)-pkgn-(.+)$/);
     if(!m||!window.SRC_renderPkgDims)return;
     window.SRC_renderPkgDims(m[1],m[2]);
   });
+  // Pass 2: the rebuild above just created fresh, empty per-case dimension
+  // inputs (with stable ids — see buildPkgDimRow) — restore into those too.
   srcRestoreDraft(draft);
 }
 function setSrcBody(html){
