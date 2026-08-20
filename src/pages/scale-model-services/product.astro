@@ -42,13 +42,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .svc-checklist{list-style:none;padding:0;margin:1.8rem 0 0;display:grid;gap:0.75rem;max-width:68ch;}
 .svc-checklist li{display:flex;gap:0.7rem;align-items:flex-start;font-size:0.98rem;color:var(--cm-text-muted);}
 .svc-checklist li svg{flex:none;margin-top:4px;color:var(--cm-silver);}
-.svc-types{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(1.6rem,3vw,2.6rem);margin-top:2rem;}
+.svc-types{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.6rem,3vw,2.6rem);margin-top:2rem;}
 .svc-type{padding-top:0;border-top:0;}
 .svc-type__media{margin-bottom:0.9rem;}
 .svc-type__media image-slot{width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);}
 .svc-type h3{font-size:1.1rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
 .svc-type p{margin-top:0.5rem;color:var(--cm-text-muted);font-size:0.92rem;max-width:none;}
-@media(max-width:760px){.svc-types{grid-template-columns:1fr;}}
+@media(max-width:900px){.svc-types{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.svc-types{grid-template-columns:1fr;}}
 .svc-steps{display:grid;gap:0;margin-top:2rem;max-width:68ch;}
 .svc-step{display:grid;grid-template-columns:2.4rem 1fr;gap:1rem;padding-block:1rem;border-bottom:1px solid var(--cm-line-faint);}
 .svc-step:last-child{border-bottom:0;}

@@ -42,13 +42,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .svc-checklist{list-style:none;padding:0;margin:1.8rem 0 0;display:grid;gap:0.75rem;max-width:68ch;}
 .svc-checklist li{display:flex;gap:0.7rem;align-items:flex-start;font-size:0.98rem;color:var(--cm-text-muted);}
 .svc-checklist li svg{flex:none;margin-top:4px;color:var(--cm-silver);}
-.svc-types{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(1.6rem,3vw,2.6rem);margin-top:2rem;}
+.svc-types{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.6rem,3vw,2.6rem);margin-top:2rem;}
 .svc-type{padding-top:0;border-top:0;}
 .svc-type__media{margin-bottom:0.9rem;}
 .svc-type__media image-slot{width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);}
 .svc-type h3{font-size:1.1rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
 .svc-type p{margin-top:0.5rem;color:var(--cm-text-muted);font-size:0.92rem;max-width:none;}
-@media(max-width:760px){.svc-types{grid-template-columns:1fr;}}
+@media(max-width:900px){.svc-types{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.svc-types{grid-template-columns:1fr;}}
 .svc-steps{display:grid;gap:0;margin-top:2rem;max-width:68ch;}
 .svc-step{display:grid;grid-template-columns:2.4rem 1fr;gap:1rem;padding-block:1rem;border-bottom:1px solid var(--cm-line-faint);}
 .svc-step:last-child{border-bottom:0;}
@@ -111,7 +112,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Produce a durable display or campaign object</li>
       </ul>
     </div>
-    <div class="svc-split__media"><image-slot id="svc-film-why" placeholder="Drop a project photo"></image-slot></div>
+    <div class="svc-split__media"><image-slot id="svc-film-why" placeholder="Drop a project photo" src="/assets/film-physical.webp"></image-slot></div>
   </div>
 </div></section>
 
@@ -153,7 +154,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </ul>
       <p class="svc-note">This helps concentrate effort where it will be visible and useful.</p>
     </div>
-    <div class="svc-split__media"><image-slot id="svc-film-design" placeholder="Drop a project photo"></image-slot></div>
+    <div class="svc-split__media"><image-slot id="svc-film-design" placeholder="Drop a project photo" src="/assets/film-shot.webp"></image-slot></div>
   </div>
 </div></section>
 

@@ -46,6 +46,13 @@ body{background:var(--cm-ink-950);}
 .status.ok{color:#7fd0a0;}
 .status.err{color:#e5837a;}
 .empty{text-align:center;color:var(--cm-text-muted);padding:3rem 0;border:1px dashed var(--cm-border);border-radius:var(--r-sm);}
+.extra-row{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem;}
+.extra-thumb{position:relative;width:64px;height:52px;border-radius:5px;overflow:hidden;background:var(--cm-ink-800);border:1px solid var(--cm-border);}
+.extra-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.extra-thumb__rm{position:absolute;top:1px;right:1px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,0.7);border:0;color:#fff;font-size:0.6rem;line-height:1;cursor:pointer;padding:0;}
+.extra-thumb__rm:hover{background:#e5837a;}
+.extra-add{width:64px;height:52px;border-radius:5px;border:1px dashed var(--cm-border);display:flex;align-items:center;justify-content:center;color:var(--cm-text-subtle);font-size:1.2rem;cursor:pointer;}
+.extra-add:hover{color:var(--cm-text-strong);border-color:var(--cm-border-strong);}
 </style>
 </head>
 <body>
@@ -104,8 +111,30 @@ function getToken(){ return sessionStorage.getItem(TOKEN_KEY) || ''; }
 function uid(){ return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 function addProject(){
-  projects.push({ id: uid(), name: '', category: 'architecture', tag: '', scale: '', material: '', imageUrl: '', imageWidth: 0, imageHeight: 0 });
+  projects.push({ id: uid(), name: '', category: 'architecture', tag: '', scale: '', material: '', imageUrl: '', imageWidth: 0, imageHeight: 0, images: [] });
   render();
+}
+
+function removeExtraPhoto(i, j){
+  projects[i].images.splice(j, 1);
+  render();
+}
+
+function handleExtraUpload(i, input){
+  var f = input.files && input.files[0];
+  if(!f) return;
+  if(!projects[i].images) projects[i].images = [];
+  var uploadPromise = window.__blobUpload
+    ? window.__blobUpload('works/' + uid() + '-' + f.name, f, { access: 'public', handleUploadUrl: '/api/upload', multipart: true }).then(function(blob){ return blob.url; })
+    : fetch('/api/upload?path=works', { method: 'POST', headers: { 'Content-Type': f.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(f.name) }, body: f }).then(function(r){ return r.json(); }).then(function(d){ return d.url; });
+
+  uploadPromise.then(function(url){
+    projects[i].images.push(url);
+    render();
+  }).catch(function(err){
+    console.error('Upload failed', err);
+    alert('Upload failed — try again');
+  });
 }
 
 function removeProject(i){
@@ -138,6 +167,10 @@ function render(){
     var thumb = p.imageUrl
       ? '<img src="' + p.imageUrl + '" alt="">' + (p.imageWidth ? '<span class="dims">' + p.imageWidth + '×' + p.imageHeight + '</span>' : '')
       : 'Drop / click<br>to upload';
+    var extraThumbs = (p.images || []).map(function(url, j){
+      return '<div class="extra-thumb"><img src="' + url + '" alt="">' +
+        '<button type="button" class="extra-thumb__rm" onclick="removeExtraPhoto(' + i + ',' + j + ')" aria-label="Remove photo">✕</button></div>';
+    }).join('');
     return (
       '<div class="card" data-i="' + i + '">' +
         '<label class="thumb">' + thumb + '<input type="file" accept="image/*" onchange="handleUpload(' + i + ', this)"></label>' +
@@ -147,6 +180,13 @@ function render(){
           '<div class="f"><label>Tags (comma-separated)</label><input value="' + escAttr(p.tag) + '" placeholder="e.g. Masterplan, Retail" oninput="updateField(' + i + ',\'tag\',this.value)"></div>' +
           '<div class="f"><label>Scale</label><input value="' + escAttr(p.scale) + '" placeholder="e.g. 1:500 or Film-grade" oninput="updateField(' + i + ',\'scale\',this.value)"></div>' +
           '<div class="f" style="grid-column:1/-1"><label>Material</label><input value="' + escAttr(p.material) + '" placeholder="e.g. ABS" oninput="updateField(' + i + ',\'material\',this.value)"></div>' +
+          '<div class="f" style="grid-column:1/-1">' +
+            '<label>Additional photos (visitors scroll through these plus the cover photo when they open this project)</label>' +
+            '<div class="extra-row">' +
+              extraThumbs +
+              '<label class="extra-add">+<input type="file" accept="image/*" style="display:none" onchange="handleExtraUpload(' + i + ', this)"></label>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
         '<div class="card__actions">' +
           '<button class="iconbtn" onclick="moveProject(' + i + ',-1)">↑ Up</button>' +
@@ -259,6 +299,7 @@ function boot(){
   setStatus('Loading…');
   fetch('/api/works').then(function(r){ return r.json(); }).then(function(data){
     projects = (data && Array.isArray(data.projects)) ? data.projects : [];
+    projects.forEach(function(p){ if(!Array.isArray(p.images)) p.images = []; });
     render();
     setStatus('');
   }).catch(function(){
