@@ -44,7 +44,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .svc-block ul{list-style:none;padding:0;margin:1.6rem 0 0;display:grid;gap:0.7rem;}
 .svc-block li{display:flex;gap:0.7rem;align-items:flex-start;font-size:0.95rem;color:var(--cm-text-muted);}
 .svc-block li svg{flex:none;margin-top:4px;color:var(--cm-silver);}
-@media(max-width:900px){.svc-block{grid-template-columns:1fr;}.svc-block:nth-child(even) .svc-block__media{order:0;}}
+@media(max-width:900px){.svc-block,.svc-block:nth-child(even){grid-template-columns:1fr;}.svc-block:nth-child(even) .svc-block__media{order:0;}}
 .dr-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:clamp(2rem,4vw,4rem);align-items:start;margin-top:1.5rem;}
 @media(max-width:820px){.dr-grid{grid-template-columns:1fr;}}
 .markets-line{white-space:nowrap;}
