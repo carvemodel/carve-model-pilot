@@ -20,14 +20,16 @@ function getClient() {
   return clientPromise;
 }
 
-// ── New-lead email notification ─────────────────────────────────────────
-// Fires once per genuinely-new lead id (never on edits to an existing lead,
-// so re-saves from the admin Studio Portal don't re-notify). Sent via
-// Resend's REST API directly — no SDK dependency, just fetch (available in
-// the Vercel Node runtime). Configured entirely through env vars so no
-// secret ever lives in source:
-//   RESEND_API_KEY    required — from resend.com. If unset, notification is
-//                      silently skipped (logged) so lead submission itself
+// ── Email notifications (new lead, new vendor quotation) ──────────────────
+// Both fire only on genuinely-new items (never on edits/re-saves of
+// something already stored), detected by diffing the incoming payload
+// against what was in Redis BEFORE this save. Sent via Resend's REST API
+// directly — no SDK dependency, just fetch (available in the Vercel Node
+// runtime). Configured entirely through env vars so no secret ever lives in
+// source. Both notification types share the same recipient/sender config —
+// one Resend setup covers leads and quotations, no extra env vars needed:
+//   RESEND_API_KEY    required — from resend.com. If unset, notifications are
+//                      silently skipped (logged) so the underlying save
 //                      never fails because of email config.
 //   LEAD_NOTIFY_TO     recipient address. Defaults to support@physical-model.com.
 //   LEAD_NOTIFY_FROM   sender shown on the email. Must be on a domain
@@ -42,54 +44,33 @@ function escapeHtml(s) {
   }[c]));
 }
 
-async function sendLeadNotification(lead) {
+// Small fixed lookup so the email shows a real shop name instead of a raw
+// id — mirrors the SHOPS list in app.html. Falls back to the id itself for
+// any shop added there later without a matching update here.
+const SHOP_NAMES = { meridian: 'Meridian Scale Works', atlas: 'Atlas Model Fabrication', northpoint: 'Bohai Model' };
+
+function rowsTable(rows) {
+  return '<table cellpadding="0" cellspacing="0">' +
+    rows.filter(([, v]) => v).map(([k, v]) => (
+      '<tr><td style="padding:3px 14px 3px 0;color:#666;white-space:nowrap;">' + escapeHtml(k) + '</td>' +
+      '<td style="padding:3px 0;">' + escapeHtml(v) + '</td></tr>'
+    )).join('') +
+    '</table>';
+}
+
+async function sendNotificationEmail(subject, html) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.warn('RESEND_API_KEY not set — skipping new-lead notification email');
+    console.warn('RESEND_API_KEY not set — skipping notification email:', subject);
     return;
   }
   const to = process.env.LEAD_NOTIFY_TO || 'support@physical-model.com';
   const from = process.env.LEAD_NOTIFY_FROM || 'Carve Model <onboarding@resend.dev>';
-
-  const c = lead.client || {};
-  const rows = [
-    ['Name', c.Name],
-    ['Company', c.Company],
-    ['Email', c.Email],
-    ['Phone', c.Phone],
-    ['Project', lead.title],
-    ['Type', lead.type],
-    ['Intended use', lead.intendedUse],
-    ['Scale', lead.scale],
-    ['Model size', lead.modelsize],
-    ['Quantity', lead.quantity],
-    ['Timeline', lead.timeline],
-    ['Deliver to', lead.deliveryTo],
-    ['Notes', lead.notes],
-  ].filter(([, v]) => v);
-
-  const html =
-    '<div style="font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#111;">' +
-    '<h2 style="margin:0 0 12px;">New lead: ' + escapeHtml(lead.title || 'Untitled project') + '</h2>' +
-    '<table cellpadding="0" cellspacing="0">' +
-    rows.map(([k, v]) => (
-      '<tr><td style="padding:3px 14px 3px 0;color:#666;white-space:nowrap;">' + escapeHtml(k) + '</td>' +
-      '<td style="padding:3px 0;">' + escapeHtml(v) + '</td></tr>'
-    )).join('') +
-    '</table>' +
-    '<p style="margin-top:16px;"><a href="https://www.carvecreation.com/login">Open Studio Portal →</a></p>' +
-    '</div>';
-
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject: 'New lead: ' + (lead.title || c.Name || 'Untitled project'),
-        html,
-      }),
+      body: JSON.stringify({ from, to: [to], subject, html }),
     });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
@@ -98,6 +79,82 @@ async function sendLeadNotification(lead) {
   } catch (err) {
     console.error('Resend notification error:', err);
   }
+}
+
+async function sendLeadNotification(lead) {
+  const c = lead.client || {};
+  const html =
+    '<div style="font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#111;">' +
+    '<h2 style="margin:0 0 12px;">New lead: ' + escapeHtml(lead.title || 'Untitled project') + '</h2>' +
+    rowsTable([
+      ['Name', c.Name], ['Company', c.Company], ['Email', c.Email], ['Phone', c.Phone],
+      ['Project', lead.title], ['Type', lead.type], ['Intended use', lead.intendedUse],
+      ['Scale', lead.scale], ['Model size', lead.modelsize], ['Quantity', lead.quantity],
+      ['Timeline', lead.timeline], ['Deliver to', lead.deliveryTo], ['Notes', lead.notes],
+    ]) +
+    '<p style="margin-top:16px;"><a href="https://www.carvecreation.com/login">Open Studio Portal →</a></p>' +
+    '</div>';
+  await sendNotificationEmail('New lead: ' + (lead.title || c.Name || 'Untitled project'), html);
+}
+
+// entry: { brief, shopId, quote, variationLabel } — variationLabel is set
+// only for a variation quote (SRC_addVariation), null for the primary quote
+// (SRC_quote).
+async function sendQuoteNotification(entry) {
+  const { brief, shopId, quote, variationLabel } = entry;
+  const shopName = SHOP_NAMES[shopId] || shopId;
+  const kind = variationLabel ? ('Variation quote — ' + variationLabel) : 'Quote';
+  const html =
+    '<div style="font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#111;">' +
+    '<h2 style="margin:0 0 12px;">New ' + escapeHtml(kind.toLowerCase()) + ' from ' + escapeHtml(shopName) + '</h2>' +
+    rowsTable([
+      ['Project', brief.title], ['Reference', brief.code], ['Shop', shopName],
+      ['Price', quote.price != null ? ('$' + quote.price) : null],
+      ['Price (RMB)', quote.priceRMB != null ? ('¥' + quote.priceRMB) : null],
+      ['Production time', quote.days != null ? (quote.days + ' days') : null],
+      ['Category', quote.category], ['Scale', quote.scale], ['Material', quote.material],
+      ['Base', quote.base], ['Model dimensions', quote.modelDims],
+      ['Packages', quote.packages], ['Note', quote.note],
+    ]) +
+    '<p style="margin-top:16px;"><a href="https://www.carvecreation.com/login">Open Studio Portal →</a></p>' +
+    '</div>';
+  await sendNotificationEmail(
+    'New quote from ' + shopName + ': ' + (brief.title || brief.id),
+    html
+  );
+}
+
+// Diffs incoming briefs against what was stored before this save and
+// returns one entry per genuinely-new quote — a primary quote appearing at
+// quotes[shopId] where it wasn't there before, or a variation appended to
+// variations[shopId] beyond the previously-stored count. A revise (which
+// deletes then re-adds) naturally shows up again as new, which is the
+// desired behavior — that's a fresh number worth a notification.
+function detectNewQuotes(currentBriefs, incomingBriefs) {
+  const currentById = new Map();
+  (currentBriefs || []).forEach((b) => { if (b && b.id) currentById.set(b.id, b); });
+  const found = [];
+  (incomingBriefs || []).forEach((incoming) => {
+    if (!incoming || !incoming.id) return;
+    const prev = currentById.get(incoming.id);
+    const prevQuotes = (prev && prev.quotes) || {};
+    const incQuotes = incoming.quotes || {};
+    Object.keys(incQuotes).forEach((shopId) => {
+      if (incQuotes[shopId] && !prevQuotes[shopId]) {
+        found.push({ brief: incoming, shopId, quote: incQuotes[shopId], variationLabel: null });
+      }
+    });
+    const prevVars = (prev && prev.variations) || {};
+    const incVars = incoming.variations || {};
+    Object.keys(incVars).forEach((shopId) => {
+      const prevArr = prevVars[shopId] || [];
+      const incArr = incVars[shopId] || [];
+      for (let i = prevArr.length; i < incArr.length; i++) {
+        if (incArr[i]) found.push({ brief: incoming, shopId, quote: incArr[i], variationLabel: incArr[i].label || 'Variation' });
+      }
+    });
+  });
+  return found;
 }
 
 module.exports = async (req, res) => {
@@ -150,6 +207,7 @@ module.exports = async (req, res) => {
       // never re-trigger the email.
       const existingLeadIds = new Set(current.leads.map((l) => l && l.id));
       const newLeads = (body.leads || []).filter((l) => l && l.id && !existingLeadIds.has(l.id));
+      const newQuotes = detectNewQuotes(current.briefs, body.briefs);
 
       function mergeById(currentList, incomingList, deletedIds) {
         const deleted = new Set(deletedIds || []);
@@ -167,9 +225,13 @@ module.exports = async (req, res) => {
       await redis.set(KEY, JSON.stringify(data));
 
       // Fire-and-await (but never fail the request over it): a bad Resend
-      // key or a transient API error must not stop the lead from saving.
-      if (newLeads.length) {
-        await Promise.allSettled(newLeads.map(sendLeadNotification));
+      // key or a transient API error must not stop the save itself.
+      const notifications = [
+        ...newLeads.map((l) => sendLeadNotification(l)),
+        ...newQuotes.map((q) => sendQuoteNotification(q)),
+      ];
+      if (notifications.length) {
+        await Promise.allSettled(notifications);
       }
 
       res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads });
