@@ -48,10 +48,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .svc-type__media image-slot{width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);}
 .svc-type h3{font-size:1.1rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
 .svc-type p{margin-top:0.5rem;color:var(--cm-text-muted);font-size:0.92rem;max-width:none;}
-.svc-type--media-left{display:flex;align-items:flex-start;gap:1.1rem;}
-.svc-type--media-left .svc-type__media{margin-bottom:0;flex:0 0 42%;}
 @media(max-width:900px){.svc-types{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:560px){.svc-types{grid-template-columns:1fr;}.svc-type--media-left{flex-direction:column;}.svc-type--media-left .svc-type__media{flex:none;width:100%;}}
+@media(max-width:560px){.svc-types{grid-template-columns:1fr;}}
 .svc-steps{display:grid;gap:0;margin-top:2rem;max-width:68ch;}
 .svc-step{display:grid;grid-template-columns:2.4rem 1fr;gap:1rem;padding-block:1rem;border-bottom:1px solid var(--cm-line-faint);}
 .svc-step:last-child{border-bottom:0;}
@@ -127,7 +125,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <a class="btn btn--ghost svc-all-btn" href="/works">View Our Work <span class="arrow">→</span></a>
   </div>
   <div class="svc-types">
-    <div class="svc-type svc-type--media-left"><div class="svc-type__media"><image-slot id="svc-ptype-appearance" placeholder="Drop appearance/form prototype photo" src="/assets/product-appearance.jpg"></image-slot></div><div><h3>Appearance & Form Prototypes</h3><p>Models developed to evaluate a product’s form, proportion, color, materials, finishes, and overall visual character.</p></div></div>
+    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-ptype-appearance" placeholder="Drop appearance/form prototype photo" src="/assets/product-appearance.jpg" position="0% 50%"></image-slot></div><h3>Appearance & Form Prototypes</h3><p>Models developed to evaluate a product’s form, proportion, color, materials, finishes, and overall visual character.</p></div>
     <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-ptype-form" placeholder="Drop ergonomic/interaction prototype photo"></image-slot></div><h3>Ergonomic & Interaction Prototypes</h3><p>Models used to evaluate physical size, handling, comfort, reach, control placement, and how the product interacts with its user.</p></div>
     <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-ptype-functional" placeholder="Drop functional/assembly prototype photo" src="/assets/product-function.jpg"></image-slot></div><h3>Functional & Assembly Prototypes</h3><p>Prototypes developed to evaluate selected movements, mechanisms, component fit, connections, removable parts, and assembly sequences.</p></div>
   </div>
