@@ -12,7 +12,9 @@ interface Props {
   heading: string;
   headingHtml?: string; // optional HTML version of heading, e.g. with <em> highlights
   lead: string;
+  leadHtml?: string; // optional HTML version of lead, e.g. with inline links
   leadExtra?: string; // optional second paragraph, rendered after lead and before the cover image
+  leadExtraHtml?: string; // optional HTML version of leadExtra, e.g. with inline links
   coverId: string;
   coverImage?: string; // optional real image src to replace the placeholder cover
   coverCaption?: string; // optional caption overlay shown on a real cover image
@@ -22,7 +24,7 @@ interface Props {
   footerButtons?: { label: string; href: string }[]; // optional override for the bottom CTA button(s)
 }
 const {
-  title, description, slug, metaLabel, publishDate, publishDateISO, readTime, heading, headingHtml, lead, leadExtra, coverId, coverImage, coverCaption, coverMockup,
+  title, description, slug, metaLabel, publishDate, publishDateISO, readTime, heading, headingHtml, lead, leadHtml, leadExtra, leadExtraHtml, coverId, coverImage, coverCaption, coverMockup,
   footerHeading = 'Planning an architectural model?',
   footerText = "Send us the approximate project dimensions, intended use, available files, and preferred display size. Even if the design is still developing, we can recommend an appropriate starting scale, scope, and level of detail.",
   footerButtons = [{ label: 'Get a Preliminary Estimate →', href: '/contact' }],
@@ -82,8 +84,8 @@ const {
   <a class="article__back" href="/blog">← All Journals</a>
   <div class="article__meta"><span>{metaLabel}</span><span><time datetime={publishDateISO}>{publishDate}</time></span>{readTime && <span>{readTime}</span>}</div>
   {headingHtml ? <h1 class="display-lg" set:html={headingHtml} /> : <h1 class="display-lg">{heading}</h1>}
-  <p class="article__lead lead">{lead}</p>
-  {leadExtra && <p class="article__lead-extra lead">{leadExtra}</p>}
+  {leadHtml ? <p class="article__lead lead" set:html={leadHtml} /> : <p class="article__lead lead">{lead}</p>}
+  {leadExtraHtml ? <p class="article__lead-extra lead" set:html={leadExtraHtml} /> : (leadExtra && <p class="article__lead-extra lead">{leadExtra}</p>)}
   <div class="article__cover">{coverMockup ? (
     <div class="mock" aria-hidden="true">
       <div class="mock__bar"><i></i><i></i><i></i><span>studio.physical-model.com</span></div>
