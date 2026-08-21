@@ -3932,6 +3932,10 @@ function readDimTriplet(prefix,bid){
 function seedSRC(){return {briefs:[],leads:[]};}
 var SKEY='cm_portal_sourcing_v22', SDB=loadSRC(), apiReady=false;
 window.SDB=SDB;
+// Ids removed locally via deleteLead()/SRC_deleteBrief() but not yet confirmed
+// gone from the server (the delete's saveSRC() call is fire-and-forget — see
+// pullSourcing() below for why this list exists).
+var srcPendingDeleteLeadIds=[], srcPendingDeleteBriefIds=[];
 // One-time cleanup: briefs sent before Materials/Base were dropped from the
 // client brief still carry those two placeholder keys on disk (local storage
 // or the shared API) — strip them so old data matches what new briefs look
@@ -5020,6 +5024,7 @@ window.SRC_deleteBrief=function(id){
   if(!confirm('Delete "'+b.title+'"? This permanently removes the project and all its quotes — it cannot be recovered. If you just want it out of the way, use Archive instead.'))return;
   if(!confirm('Are you sure? This is the last step — the project will be permanently deleted.'))return;
   SDB.briefs=(SDB.briefs||[]).filter(function(x){return x.id!==id;});
+  srcPendingDeleteBriefIds.push(id);
   saveSRC({deletedBriefIds:[id]});
   SRC_render();
 };
@@ -5579,6 +5584,7 @@ window.deleteLead=function(id){
   if(!confirm('Delete "'+lead.title+'"? This permanently removes the lead — it cannot be recovered. If you just want it out of the way, use Archive instead.'))return;
   if(!confirm('Are you sure? This is the last step — the lead will be permanently deleted.'))return;
   SDB.leads=(SDB.leads||[]).filter(function(l){return l.id!==id;});
+  srcPendingDeleteLeadIds.push(id);
   saveSRC({deletedLeadIds:[id]});
   window.SRC_renderArchivedLeads&&window.SRC_renderArchivedLeads();
   window.SRC_renderLeads();
@@ -5730,11 +5736,40 @@ document.addEventListener('input',function(e){
     srcLastInputAt=Date.now();
   }
 },true);
+// Merges a freshly-pulled server list into the in-memory one instead of
+// blindly replacing it. Before this, pullSourcing() did `SDB.leads=data.leads`
+// on every 5s poll — if that GET landed even slightly before a very recent
+// saveSRC() POST had actually been written to Redis (saveSRC() fires the
+// POST and never waits for it — see saveSRC() above), the poll would silently
+// overwrite the just-added lead (or brief) right back out of SDB, making it
+// look like records "get cleaned" a few seconds after being added. Merging by
+// id instead keeps anything local that the server snapshot doesn't know about
+// yet, while still picking up items added elsewhere (another tab, a client
+// submission) and taking the server's version when both sides have the same
+// id. pendingDeleteIds excludes ids that were just removed locally via
+// deleteLead()/SRC_deleteBrief() but might still be in this particular server
+// snapshot because that delete's own save hasn't landed yet — without this,
+// a poll could resurrect something the admin just deleted.
+function mergeSrcList(localList,serverList,pendingDeleteIds){
+  var deleted={};(pendingDeleteIds||[]).forEach(function(id){deleted[id]=true;});
+  var byId={},order=[];
+  (localList||[]).forEach(function(item){if(item&&item.id&&!deleted[item.id]){if(!(item.id in byId))order.push(item.id);byId[item.id]=item;}});
+  (serverList||[]).forEach(function(item){if(item&&item.id&&!deleted[item.id]){if(!(item.id in byId))order.push(item.id);byId[item.id]=item;}});
+  return order.map(function(id){return byId[id];});
+}
+// Once a server snapshot no longer contains a pending-delete id, that delete
+// has propagated — stop excluding it (keeps the list from growing forever).
+function reconcilePendingDeletes(pendingArr,serverList){
+  var serverIds={};(serverList||[]).forEach(function(item){if(item&&item.id)serverIds[item.id]=true;});
+  for(var i=pendingArr.length-1;i>=0;i--){if(!serverIds[pendingArr[i]])pendingArr.splice(i,1);}
+}
 function pullSourcing(){
   return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
     if(data&&(data.briefs||data.leads)){
-      SDB.briefs=data.briefs||[];
-      SDB.leads=data.leads||[];
+      SDB.briefs=mergeSrcList(SDB.briefs,data.briefs||[],srcPendingDeleteBriefIds);
+      SDB.leads=mergeSrcList(SDB.leads,data.leads||[],srcPendingDeleteLeadIds);
+      reconcilePendingDeletes(srcPendingDeleteBriefIds,data.briefs||[]);
+      reconcilePendingDeletes(srcPendingDeleteLeadIds,data.leads||[]);
       migrateBriefFields(SDB.briefs);
       if(window.syncClientsFromLeads)window.syncClientsFromLeads();
       try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
