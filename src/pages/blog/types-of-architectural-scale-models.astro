@@ -13,39 +13,47 @@ import BlogPostLayout from '../../layouts/BlogPostLayout.astro';
   lead="Architectural models can support different stages of design, approval, construction, presentation, and documentation. The right type depends on what the audience needs to understand and what decision the model must support."
   leadHtml="<a href=&quot;/architectural-scale-models&quot;>Architectural models</a> can support different stages of design, approval, construction, presentation, and documentation. The right type depends on what the audience needs to understand and what decision the model must support."
   coverId="types-of-architectural-scale-models-cover"
-  coverImage="/assets/hero-photo.png"
-  coverCaption="Mixed Use Development · 1:144 · ABS"
+  coverImage="/assets/journal-type-hero.jpg"
+  coverCaption="Residential · 1:80 · ABS"
 >
 <p>These categories are not mutually exclusive. A single model may combine massing, site context, detailed architecture, interiors, lighting, and presentation features.</p>
 
+<image-slot id="journal-type-massing" placeholder="Drop concept/massing model photo" src="/assets/type-concept.webp" style="width:100%;aspect-ratio:16/9;border-radius:var(--r-sm);margin:2rem 0 1.5rem;"></image-slot>
 <h2>Concept and massing models</h2>
 <p>Concept and massing models simplify a project into its primary volumes, heights, proportions, and site relationships.</p>
 <p>They are commonly used during early design studies, internal reviews, planning discussions, and presentations where the overall design intent matters more than materials or façade details.</p>
 
+<image-slot id="journal-type-planning" placeholder="Drop planning/design-review model photo" src="/assets/type-planning.webp" style="width:100%;aspect-ratio:16/9;border-radius:var(--r-sm);margin:2rem 0 1.5rem;"></image-slot>
 <h2>Planning and design-review models</h2>
 <p>Planning and design-review models help teams evaluate height, density, setbacks, circulation, neighboring context, public space, and the relationship between a proposal and its surroundings.</p>
 <p>They can support planning applications, entitlement discussions, community presentations, stakeholder reviews, and internal design decisions.</p>
 
+<image-slot id="journal-type-masterplan" placeholder="Drop masterplan/urban model photo" src="/assets/type-masterplan-v2.webp" style="width:100%;aspect-ratio:16/9;border-radius:var(--r-sm);margin:2rem 0 1.5rem;"></image-slot>
 <h2>Masterplan and urban-planning models</h2>
 <p>Masterplan models represent larger developments containing multiple buildings, streets, open spaces, infrastructure, and landscape.</p>
 <p>They help audiences understand development phases, circulation, density, site organization, and relationships that may be difficult to interpret from plans or individual renderings.</p>
 
+<image-slot id="journal-type-presentation" placeholder="Drop presentation/sales-gallery model photo" src="/assets/type-presentation.webp" style="width:100%;aspect-ratio:16/9;border-radius:var(--r-sm);margin:2rem 0 1.5rem;"></image-slot>
 <h2>Presentation and sales-gallery models</h2>
 <p>Presentation models communicate a developed design through carefully selected architectural detail, materials, glazing, landscaping, lighting, and finishes.</p>
 <p>They are commonly used for investor meetings, client presentations, sales galleries, marketing environments, public exhibitions, and other situations where the model must communicate clearly and create a strong physical presence.</p>
 
+<image-slot id="journal-type-topo" placeholder="Drop topographic/site model photo" src="/assets/type-topo.webp" style="width:100%;aspect-ratio:16/9;border-radius:var(--r-sm);margin:2rem 0 1.5rem;"></image-slot>
 <h2>Topographic and site models</h2>
 <p>Topographic models show terrain, contours, water, roads, vegetation, site boundaries, and the relationship between a project and its natural or constructed context.</p>
 <p>They are useful for landscape design, hillside development, infrastructure planning, environmental review, site analysis, and presentation.</p>
 
+<image-slot id="journal-type-interior" placeholder="Drop interior/section model photo" src="/assets/type-interior.webp" style="width:100%;aspect-ratio:16/9;border-radius:var(--r-sm);margin:2rem 0 1.5rem;"></image-slot>
 <h2>Interior and section models</h2>
 <p>Interior models represent rooms, units, floors, or larger interior environments. Section models reveal spatial relationships that would otherwise remain hidden inside the building.</p>
 <p>They can help audiences understand circulation, ceiling heights, structure, program relationships, furniture, finishes, and the experience of moving through a space.</p>
 
+<image-slot id="journal-type-coordination" placeholder="Drop coordination/construction model photo" src="/assets/type-construction.webp" style="width:100%;aspect-ratio:16/9;border-radius:var(--r-sm);margin:2rem 0 1.5rem;"></image-slot>
 <h2>Coordination and construction models</h2>
 <p>Coordination models isolate important assemblies, structural relationships, construction sequences, access conditions, or technically complex areas.</p>
 <p>They can help design and construction teams communicate proposed solutions, review buildability, coordinate stakeholders, and prepare for fabrication or installation.</p>
 
+<image-slot id="journal-type-asbuilt" placeholder="Drop existing-condition/as-built model photo" src="/assets/type-asbuilt.webp" style="width:100%;aspect-ratio:16/9;border-radius:var(--r-sm);margin:2rem 0 1.5rem;"></image-slot>
 <h2>Existing-condition and as-built models</h2>
 <p>Existing-condition models document a building, site, facility, or piece of infrastructure as it currently exists.</p>
 <p>They may be used for renovation planning, facility communication, exhibitions, stakeholder presentations, fundraising, historical documentation, or as a physical record of a completed project.</p>
