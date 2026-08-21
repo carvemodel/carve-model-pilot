@@ -2527,8 +2527,26 @@ function ensureClientContact(l){
     co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:null,processedLeadIds:l.id?[l.id]:[]});
   }
 }
+// COMPANIES (the Client Contact / Clients tab) is rebuilt from scratch on
+// every page load — it's never itself persisted, only ever derived here. It
+// used to only look at SDB.leads, so the moment a lead is sent for
+// quotation (SRC_confirmSendLead moves it out of SDB.leads and into
+// SDB.briefs, deleting the lead), that client's contact card had nothing
+// left to rebuild itself from on the next reload and would vanish — even
+// though the client and their project were still very much on record as a
+// brief. Processing briefs here too keeps their contact card alive for as
+// long as the brief exists, converted or not.
 function syncClientsFromLeads(){
   (window.SDB.leads||[]).forEach(ensureClientContact);
+  (window.SDB.briefs||[]).forEach(function(b){
+    if(!b||!b.client||!b.client.Email)return;
+    // Reuse the lead's original id (if this brief was converted from one) so
+    // ensureClientContact recognizes it as the same inquiry already counted
+    // while it was still a lead, instead of double-counting it as a second
+    // quote request now that it's a brief.
+    ensureClientContact({id:b.originalLeadId||('brief:'+b.id),client:b.client});
+
+  });
 }
 /* "Last activity" should reflect the client actually using the portal (signing in),
    not just the moment their brief was received — call this whenever a client
@@ -5681,7 +5699,7 @@ window.SRC_confirmSendLead=function(){
   var proj=alSplitLoc(lead.title||'');
   var projLoc=proj.b?(proj.b+(proj.c?', '+proj.c:'')):'Not specified';
   var brief={
-    id:'b'+Date.now(),title:lead.title,invited:shopIds,sentDate:today,leadReceivedAt:lead.receivedAt||null,
+    id:'b'+Date.now(),originalLeadId:id,title:lead.title,invited:shopIds,sentDate:today,leadReceivedAt:lead.receivedAt||null,
     brief:{
       'Model type':lead.type,
       'Project location':projLoc,
