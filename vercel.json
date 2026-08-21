@@ -1,4 +1,5 @@
 {
+  "trailingSlash": false,
   "redirects": [
     { "source": "/home", "destination": "/", "permanent": true },
     { "source": "/portfolio-scale-models", "destination": "/works", "permanent": true },
