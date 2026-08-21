@@ -11,7 +11,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   imageSlot={true}
 >
 <Fragment slot="head">
-<script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","serviceType":"Product Prototypes & Mockups","provider":{"@type":"ProfessionalService","name":"Carve Model","areaServed":["United States","Canada"]}}`} />
+<script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","@id":"https://www.physical-model.com/scale-model-services/product#service","url":"https://www.physical-model.com/scale-model-services/product","name":"Product Prototypes & Mockups","serviceType":"Product prototypes and physical mockups","provider":{"@id":"https://www.physical-model.com/#organization"},"areaServed":[{"@type":"Country","name":"United States"},{"@type":"Country","name":"Canada"}]}`} />
 <style>
 .breadcrumb{padding-top:1.6rem;}
 .breadcrumb a{font-family:var(--font-mono);font-size:0.78rem;letter-spacing:0.04em;color:var(--cm-text-subtle);transition:color var(--dur-2);}
