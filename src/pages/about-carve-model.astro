@@ -11,6 +11,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   imageSlot={true}
 >
 <Fragment slot="head">
+<script type="application/ld+json" is:inline set:html={`{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "@id": "https://www.physical-model.com/about-carve-model#webpage",
+  "url": "https://www.physical-model.com/about-carve-model",
+  "name": "About Carve Model",
+  "isPartOf": {
+    "@id": "https://www.physical-model.com/#website"
+  },
+  "mainEntity": {
+    "@id": "https://www.physical-model.com/#organization"
+  },
+  "about": {
+    "@id": "https://www.physical-model.com/#organization"
+  }
+}`} />
 <style>
 .page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,4rem);}
 .page-hero h1{margin-top:1.4rem;}.page-hero p{margin-top:1.4rem;}

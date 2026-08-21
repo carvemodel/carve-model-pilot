@@ -8,6 +8,8 @@ interface Props {
   metaLabel: string; // e.g. "Guide · Scale"
   publishDate: string; // human-readable, e.g. "August 11, 2026"
   publishDateISO: string; // machine-readable, e.g. "2026-08-11", used for <time> and schema.org
+  lastReviewedDate?: string; // human-readable, e.g. "August 20, 2026" — shown next to the publish date
+  lastReviewedDateISO?: string; // machine-readable, used for <time> and schema.org dateModified
   readTime?: string; // e.g. "6 min read"
   heading: string;
   headingHtml?: string; // optional HTML version of heading, e.g. with <em> highlights
@@ -24,13 +26,16 @@ interface Props {
   footerButtons?: { label: string; href: string }[]; // optional override for the bottom CTA button(s)
 }
 const {
-  title, description, slug, metaLabel, publishDate, publishDateISO, readTime, heading, headingHtml, lead, leadHtml, leadExtra, leadExtraHtml, coverId, coverImage, coverCaption, coverMockup,
+  title, description, slug, metaLabel, publishDate, publishDateISO, lastReviewedDate, lastReviewedDateISO, readTime, heading, headingHtml, lead, leadHtml, leadExtra, leadExtraHtml, coverId, coverImage, coverCaption, coverMockup,
   footerHeading = 'Planning an architectural model?',
   footerText = "Send us the approximate project dimensions, intended use, available files, and preferred display size. Even if the design is still developing, we can recommend an appropriate starting scale, scope, and level of detail.",
   footerButtons = [{ label: 'Get a Preliminary Estimate →', href: '/contact' }],
 } = Astro.props;
 ---
 <style>
+.article__byline{margin-top:0.6rem;font-size:0.85rem;color:var(--cm-text-subtle);}
+.article__byline a{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--cm-border-strong);transition:color var(--dur-2),text-decoration-color var(--dur-2);}
+.article__byline a:hover{color:var(--cm-text-strong);text-decoration-color:currentColor;}
 .article__lead-extra{margin-top:1rem;}
 .article-foot .btn--primary,.article-foot .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
 .article-foot .btn--primary:hover,.article-foot .btn--ghost:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
@@ -69,12 +74,25 @@ const {
 <script type="application/ld+json" is:inline set:html={JSON.stringify({
   "@context": "https://schema.org",
   "@type": "BlogPosting",
+  "@id": `https://www.physical-model.com/blog/${slug}#article`,
   "headline": heading,
   "description": description,
-  "author": { "@type": "Organization", "name": "Carve Model" },
-  "publisher": { "@type": "Organization", "name": "Carve Model" },
+  "image": coverImage ? `https://www.physical-model.com${coverImage}` : "https://www.physical-model.com/assets/logo-full.png",
+  "author": {
+    "@type": "Organization",
+    "@id": "https://www.physical-model.com/#organization",
+    "name": "Carve Model",
+    "url": "https://www.physical-model.com/",
+  },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://www.physical-model.com/#organization",
+    "name": "Carve Model",
+    "url": "https://www.physical-model.com/",
+    "logo": { "@id": "https://www.physical-model.com/#logo" },
+  },
   "datePublished": publishDateISO,
-  "dateModified": publishDateISO,
+  "dateModified": lastReviewedDateISO || publishDateISO,
   "mainEntityOfPage": `https://www.physical-model.com/blog/${slug}`,
 })} />
 </Fragment>
@@ -82,7 +100,8 @@ const {
 <main>
 <section class="section" style="padding-top:clamp(2rem,4vw,3rem);padding-bottom:0;"><div class="container narrow article">
   <a class="article__back" href="/blog">← All Journals</a>
-  <div class="article__meta"><span>{metaLabel}</span><span><time datetime={publishDateISO}>{publishDate}</time></span>{readTime && <span>{readTime}</span>}</div>
+  <div class="article__meta"><span>{metaLabel}</span><span><time datetime={publishDateISO}>Published {publishDate}</time>{lastReviewedDate && <> · <time datetime={lastReviewedDateISO}>Last reviewed {lastReviewedDate}</time></>}</span>{readTime && <span>{readTime}</span>}</div>
+  <p class="article__byline">{metaLabel.startsWith('Studio Update') ? <>Published by the <a href="/about-carve-model">Carve Model team</a>.</> : <>Written and reviewed by the <a href="/about-carve-model">Carve Model team</a>.</>}</p>
   {headingHtml ? <h1 class="display-lg" set:html={headingHtml} /> : <h1 class="display-lg">{heading}</h1>}
   {leadHtml ? <p class="article__lead lead" set:html={leadHtml} /> : <p class="article__lead lead">{lead}</p>}
   {leadExtraHtml ? <p class="article__lead-extra lead" set:html={leadExtraHtml} /> : (leadExtra && <p class="article__lead-extra lead">{leadExtra}</p>)}
@@ -121,6 +140,12 @@ const {
 <section class="section" style="padding-top:clamp(2.5rem,4vw,3.5rem);"><div class="container narrow">
   <div class="prose">
     <slot />
+    {!metaLabel.startsWith('Studio Update') && (
+      <>
+        <h3>About this guide</h3>
+        <p>This guide was prepared by the <a href="/about-carve-model">Carve Model team</a> using our experience defining, coordinating, fabricating, reviewing, packaging, and delivering physical models. Project requirements vary, so recommendations are confirmed during the review of each project.</p>
+      </>
+    )}
     <div class="article-foot">
       <div class="callout" style="border-left-color:var(--cm-silver);">
         <strong>{footerHeading}</strong> {footerText}
