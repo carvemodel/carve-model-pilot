@@ -50,25 +50,90 @@ if (process.env.REDIS_URL) {
 <meta name="twitter:title" content="Carve Model — Architectural Scale Model Maker">
 <meta name="twitter:description" content="Physical models built for clarity, scale, and realism.">
 <script type="application/ld+json" is:inline set:html={`{
-  "@context":"https://schema.org",
-  "@type":"ProfessionalService",
-  "name":"Carve Model",
-  "description":"Professional physical model studio fabricating architectural scale models, sales-gallery models, film miniatures, and product prototypes.",
-  "url":"https://www.physical-model.com/",
-  "image":"https://www.physical-model.com/assets/logo-full.png",
-  "areaServed":["United States","Canada"],
-  "address":{"@type":"PostalAddress","streetAddress":"1370 Valley Vista Dr #200","addressLocality":"Diamond Bar","addressRegion":"CA","postalCode":"91765","addressCountry":"US"},
-  "telephone":"+1-877-856-6665",
-  "email":"support@physical-model.com",
-  "slogan":"Physical Models for Confident Decisions",
-  "priceRange":"$$$",
-  "knowsAbout":["Architectural scale models","Sales gallery models","Film miniatures","Product prototypes","Topographic models"],
-  "makesOffer":[
-    {"@type":"Offer","itemOffered":{"@type":"Service","name":"Architectural Scale Models"}},
-    {"@type":"Offer","itemOffered":{"@type":"Service","name":"Sales Gallery & Presentation Models"}},
-    {"@type":"Offer","itemOffered":{"@type":"Service","name":"Product Prototypes"}},
-    {"@type":"Offer","itemOffered":{"@type":"Service","name":"Film & Commercial Miniatures"}},
-    {"@type":"Offer","itemOffered":{"@type":"Service","name":"Art Installations & Sculpture"}}
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "ProfessionalService",
+      "@id": "https://www.physical-model.com/#organization",
+      "name": "Carve Model",
+      "legalName": "Carve Creation Corporation",
+      "url": "https://www.physical-model.com/",
+      "description": "Los Angeles physical model studio creating architectural scale models, product prototypes, film miniatures, and art maquettes for clients across the United States and Canada.",
+      "logo": {
+        "@type": "ImageObject",
+        "@id": "https://www.physical-model.com/#logo",
+        "url": "https://www.physical-model.com/assets/logo-full.png"
+      },
+      "image": {
+        "@id": "https://www.physical-model.com/#logo"
+      },
+      "telephone": "+1-877-856-6665",
+      "email": "support@physical-model.com",
+      "priceRange": "US$4,000+",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1370 Valley Vista Dr #200",
+        "addressLocality": "Diamond Bar",
+        "addressRegion": "CA",
+        "postalCode": "91765",
+        "addressCountry": "US"
+      },
+      "hasMap": "https://maps.app.goo.gl/qarhUhH3gmnGwbqK7",
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "09:00",
+        "closes": "18:00"
+      },
+      "areaServed": [
+        {
+          "@type": "Country",
+          "name": "United States"
+        },
+        {
+          "@type": "Country",
+          "name": "Canada"
+        }
+      ],
+      "sameAs": [
+        "https://www.instagram.com/carvemodel/",
+        "https://www.linkedin.com/company/109973397/"
+      ],
+      "knowsAbout": [
+        "Architectural scale models",
+        "Real estate presentation models",
+        "Product prototypes and mockups",
+        "Film and commercial miniatures",
+        "Art maquettes and prototypes"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://www.physical-model.com/#website",
+      "url": "https://www.physical-model.com/",
+      "name": "Carve Model",
+      "publisher": {
+        "@id": "https://www.physical-model.com/#organization"
+      }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://www.physical-model.com/#webpage",
+      "url": "https://www.physical-model.com/",
+      "name": "Carve Model — Architectural Scale Model Maker for Developers & Architects",
+      "isPartOf": {
+        "@id": "https://www.physical-model.com/#website"
+      },
+      "about": {
+        "@id": "https://www.physical-model.com/#organization"
+      }
+    }
   ]
 }`} />
 <style>
