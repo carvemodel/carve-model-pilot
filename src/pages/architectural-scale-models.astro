@@ -12,6 +12,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 >
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","@id":"https://www.physical-model.com/architectural-scale-models#service","url":"https://www.physical-model.com/architectural-scale-models","name":"Architectural & Real Estate Models","serviceType":"Architectural & Real Estate Models","provider":{"@id":"https://www.physical-model.com/#organization"},"areaServed":[{"@type":"Country","name":"United States"},{"@type":"Country","name":"Canada"}]}`} />
+<script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"BreadcrumbList","@id":"https://www.physical-model.com/architectural-scale-models#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.physical-model.com/"},{"@type":"ListItem","position":2,"name":"Services","item":"https://www.physical-model.com/scale-model-services"},{"@type":"ListItem","position":3,"name":"Architectural & Real Estate Models","item":"https://www.physical-model.com/architectural-scale-models"}]}`} />
 <style>
 .breadcrumb{padding-top:1.6rem;}
 .breadcrumb a{font-family:var(--font-mono);font-size:0.78rem;letter-spacing:0.04em;color:var(--cm-text-subtle);transition:color var(--dur-2);}

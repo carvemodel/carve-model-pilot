@@ -95,6 +95,16 @@ const {
   "dateModified": lastReviewedDateISO || publishDateISO,
   "mainEntityOfPage": `https://www.physical-model.com/blog/${slug}`,
 })} />
+<script type="application/ld+json" is:inline set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "@id": `https://www.physical-model.com/blog/${slug}#breadcrumb`,
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.physical-model.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Journal", "item": "https://www.physical-model.com/blog" },
+    { "@type": "ListItem", "position": 3, "name": heading, "item": `https://www.physical-model.com/blog/${slug}` },
+  ],
+})} />
 </Fragment>
 
 <main>
