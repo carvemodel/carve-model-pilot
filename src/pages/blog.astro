@@ -62,6 +62,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .filters{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:2rem;}
 .filter{font-family:var(--font-mono);font-size:0.74rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-gray-400);border:1px solid var(--cm-border);border-radius:var(--r-pill);padding:0.5rem 1rem;background:transparent;transition:0.16s;}
 .filter.on,.filter:hover{color:var(--cm-ink-900);background:var(--cm-silver);border-color:transparent;}
+[data-journal-cat].journal-first{padding-top:clamp(2rem,4vw,3rem) !important;}
 </style>
 </Fragment>
 
@@ -194,10 +195,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 function filterJournal(cat, btn){
   document.querySelectorAll('.filters .filter').forEach(function(f){f.classList.remove('on');});
   btn.classList.add('on');
-  document.querySelectorAll('[data-journal-cat]').forEach(function(sec){
-    sec.style.display = (cat === 'all' || sec.dataset.journalCat === cat) ? '' : 'none';
+  var sections = document.querySelectorAll('[data-journal-cat]');
+  var firstVisible = null;
+  sections.forEach(function(sec){
+    var visible = (cat === 'all' || sec.dataset.journalCat === cat);
+    sec.style.display = visible ? '' : 'none';
+    sec.classList.remove('journal-first');
+    if (visible && !firstVisible) firstVisible = sec;
   });
+  if (firstVisible) firstVisible.classList.add('journal-first');
 }
+filterJournal('all', document.querySelector('.filters .filter[data-f="all"]'));
 </script>
 </Fragment>
 </BaseLayout>
