@@ -301,7 +301,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <input id="filelink" name="filelink" type="url" placeholder="Dropbox, Google Drive, WeTransfer, or OneDrive link" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addLink();}">
             <button type="button" class="btn btn--ghost btn--sm" onclick="addLink()">+ Add link</button>
           </div>
-          <div class="hint">Architectural files are often large — a shared cloud link is perfect. Please set it to "anyone with the link can view." Have more than one large file? Add a link for each, then click "+ Add link" (or just leave the last one in the box — it's included automatically).</div>
+          <div class="hint">Architectural files are often large — a shared cloud link is perfect. Share a secure file link with the appropriate access permissions. If your project requires restricted access or an NDA, let us know before providing confidential materials. Have more than one large file? Add a link for each, then click "+ Add link" (or just leave the last one in the box — it's included automatically).</div>
         </div>
       </fieldset>
 
@@ -337,7 +337,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <button type="button" class="btn btn--primary" id="wizNextBtn" onclick="wizNext()">Continue →</button>
         <button type="submit" class="btn btn--primary" id="wizSubmit" style="display:none;">Send project details →</button>
       </div>
-      <p class="form-note">By submitting, you agree to be contacted about your project. We never share your information. No account required. See our <a href="/privacy-policy">Privacy Policy</a>.</p>
+      <p class="form-note">By submitting, you agree to be contacted about your project. Your information is used only to review, coordinate, and deliver your project. No account is required. See our <a href="/privacy-policy">Privacy Policy</a>.</p>
     </form>
   </div>
 </div>
