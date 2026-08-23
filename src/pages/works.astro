@@ -108,6 +108,8 @@ if (process.env.REDIS_URL) {
 .lightbox__track::-webkit-scrollbar{display:none;}
 .lightbox__track :global(img){flex:0 0 100%;width:100%;height:100%;scroll-snap-align:center;object-fit:contain;display:block;box-shadow:var(--shadow-lg);}
 .lightbox__cap{margin-top:1rem;font-family:var(--font-mono);font-size:0.78rem;letter-spacing:0.03em;color:var(--cm-gray-300);text-align:center;}
+.lightbox__case-study{color:var(--cm-silver);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--cm-border-strong);transition:color var(--dur-2),text-decoration-color var(--dur-2);}
+.lightbox__case-study:hover{color:var(--cm-text-strong);text-decoration-color:currentColor;}
 .lightbox__count{display:block;margin-top:0.3rem;font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-gray-500);text-align:center;}
 .lightbox__close{position:absolute;top:clamp(1rem,3vw,2rem);right:clamp(1rem,3vw,2rem);width:40px;height:40px;border-radius:50%;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);color:var(--cm-text-strong);font-size:1.2rem;line-height:1;cursor:pointer;z-index:5;}
 .lightbox__close:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
@@ -170,7 +172,7 @@ if (process.env.REDIS_URL) {
             ))}
           </div>
           {p.imageUrl
-            ? <img src={p.imageUrl} alt={p.name} style={`aspect-ratio:${ratio};object-fit:cover;`} loading="lazy" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} onclick="openLightbox(this)" />
+            ? <img src={p.imageUrl} alt={p.name} style={`aspect-ratio:${ratio};object-fit:cover;`} loading="lazy" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} data-case-study-url={p.caseStudyUrl || ''} onclick="openLightbox(this)" />
             : <image-slot id={p.id} placeholder="Drop project photo" style={`aspect-ratio:${ratio};`}></image-slot>}
           <span class="corner tl"></span><span class="corner br"></span>
           <span class="slot-label">{label}</span>
@@ -309,7 +311,18 @@ function openLightbox(img){
   var startIdx = images.indexOf(full);
   if(startIdx < 0) startIdx = 0;
   buildLightboxTrack(img.alt || '');
-  document.getElementById('lightboxCap').textContent = img.getAttribute('data-caption') || '';
+  var capEl = document.getElementById('lightboxCap');
+  var captionText = img.getAttribute('data-caption') || '';
+  var caseStudyUrl = img.getAttribute('data-case-study-url') || '';
+  capEl.textContent = captionText;
+  if(caseStudyUrl){
+    var link = document.createElement('a');
+    link.href = caseStudyUrl;
+    link.className = 'lightbox__case-study';
+    link.textContent = 'Read the case study →';
+    capEl.appendChild(document.createTextNode(captionText ? '  ·  ' : ''));
+    capEl.appendChild(link);
+  }
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow = 'hidden';
   lightboxIndex = startIdx;
