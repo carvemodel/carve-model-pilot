@@ -111,7 +111,7 @@ function getToken(){ return sessionStorage.getItem(TOKEN_KEY) || ''; }
 function uid(){ return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 function addProject(){
-  projects.push({ id: uid(), name: '', category: 'architecture', tag: '', scale: '', material: '', imageUrl: '', imageWidth: 0, imageHeight: 0, images: [] });
+  projects.push({ id: uid(), name: '', category: 'architecture', tag: '', scale: '', material: '', imageUrl: '', imageWidth: 0, imageHeight: 0, images: [], caseStudyUrl: '' });
   render();
 }
 
@@ -180,6 +180,7 @@ function render(){
           '<div class="f"><label>Tags (comma-separated)</label><input value="' + escAttr(p.tag) + '" placeholder="e.g. Masterplan, Retail" oninput="updateField(' + i + ',\'tag\',this.value)"></div>' +
           '<div class="f"><label>Scale</label><input value="' + escAttr(p.scale) + '" placeholder="e.g. 1:500 or Film-grade" oninput="updateField(' + i + ',\'scale\',this.value)"></div>' +
           '<div class="f" style="grid-column:1/-1"><label>Material</label><input value="' + escAttr(p.material) + '" placeholder="e.g. ABS" oninput="updateField(' + i + ',\'material\',this.value)"></div>' +
+          '<div class="f" style="grid-column:1/-1"><label>Case study link (optional)</label><input value="' + escAttr(p.caseStudyUrl) + '" placeholder="e.g. /blog/atlanta-mixed-use-architectural-model-installation" oninput="updateField(' + i + ',\'caseStudyUrl\',this.value)"></div>' +
           '<div class="f" style="grid-column:1/-1">' +
             '<label>Additional photos (visitors scroll through these plus the cover photo when they open this project)</label>' +
             '<div class="extra-row">' +
