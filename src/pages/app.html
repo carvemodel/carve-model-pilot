@@ -2128,7 +2128,7 @@ function submitAssignManager(){
   var b=findBrief(_pendingAssignBriefId);
   if(b){
     b.assignedManager=document.getElementById('assignManagerSelect').value||null;
-    if(typeof saveSRC==='function')saveSRC();
+    if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
     if(typeof SRC_render==='function')SRC_render();
     if(window.renderAwardedProjects)window.renderAwardedProjects();
     if(window.renderMyAssigned)window.renderMyAssigned();
@@ -2187,7 +2187,7 @@ function setBriefManager(id,email){
   var b=findBrief(id);
   if(!b)return;
   b.assignedManager=email||null;
-  if(typeof saveSRC==='function')saveSRC();
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   if(window.renderMyAssigned)window.renderMyAssigned();
 }
 
@@ -2260,10 +2260,12 @@ function removeMember(id){
   window.SDB.team=(window.SDB.team||[]).filter(function(x){return x.id!==id;});
   // A removed Client Manager can't stay assigned to a project — clear it so
   // that project just shows unassigned rather than pointing at a dead email.
+  var affectedBriefIds=[];
   (window.SDB.briefs||[]).forEach(function(b){
-    if(b.assignedManager&&m.email&&b.assignedManager.toLowerCase()===m.email.toLowerCase())b.assignedManager=null;
+    if(b.assignedManager&&m.email&&b.assignedManager.toLowerCase()===m.email.toLowerCase()){b.assignedManager=null;affectedBriefIds.push(b.id);}
   });
-  if(typeof saveSRC==='function')saveSRC();
+  if(window.srcPendingDeleteTeamIds)window.srcPendingDeleteTeamIds.push(id);
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:affectedBriefIds,deletedTeamIds:[id]});
   renderTeam();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
   if(window.renderMyAssigned)window.renderMyAssigned();
@@ -2323,7 +2325,8 @@ function removeVendor(id){
   if(!v)return;
   if(!confirm('Remove '+v.name+' as a vendor? They will immediately lose portal access and be removed from Sourcing & Quotes.'))return;
   window.SDB.vendors=(window.SDB.vendors||[]).filter(function(x){return x.id!==id;});
-  if(typeof saveSRC==='function')saveSRC();
+  if(window.srcPendingDeleteVendorIds)window.srcPendingDeleteVendorIds.push(id);
+  if(typeof saveSRC==='function')saveSRC({deletedVendorIds:[id]});
   // Mutate in place (splice), not reassign: other code closes over the
   // original SHOPS/PRODUCTION_ADMINS array objects directly, not window.*,
   // so replacing window.SHOPS with a new filtered array would leave those
@@ -4212,8 +4215,24 @@ function attemptLogin(){
         return;
       }
       var realEmail=res.data.email||email;
-      localStorage.setItem(SESSION_KEY,JSON.stringify({email:realEmail,role:res.data.role,name:res.data.name||null}));
+      // Wipe whatever this browser had cached from a PREVIOUS identity
+      // (this same person's earlier session, or — on a shared computer —
+      // someone else's, e.g. Carve Admin's own full data if they'd been
+      // using this browser) before doing anything else. SDB was loaded
+      // synchronously from localStorage the moment this page's scripts ran,
+      // long before this login happened, so without this a vendor could
+      // briefly see stale cached briefs/vendors that don't belong to them
+      // rendered from that old cache while the fresh, correctly-scoped pull
+      // below is still in flight.
+      if(window.SDB){window.SDB.briefs=[];window.SDB.leads=[];window.SDB.vendors=[];window.SDB.team=[];}
+      try{localStorage.removeItem(window.SKEY||'cm_portal_sourcing_v22');}catch(e){}
+      localStorage.setItem(SESSION_KEY,JSON.stringify({email:realEmail,role:res.data.role,name:res.data.name||null,token:res.data.token||null}));
       enterSession(res.data.role,realEmail,res.data.name);
+      // Refresh right away with the just-issued token rather than waiting up
+      // to POLL_MS for the next scheduled poll to pick up real, correctly-
+      // scoped data (a factory login otherwise sees a stale/unfiltered pull
+      // from before signing in for a few seconds).
+      if(typeof pullSourcing==='function')pullSourcing();
     })
     .catch(function(){
       if(btn){btn.disabled=false;btn.textContent='Sign in';}
@@ -4236,8 +4255,18 @@ function enterSession(role,email,name){
   if(role==='client'&&window.recordClientActivity)window.recordClientActivity(email);
   if(role==='factory'){
     var admin=PRODUCTION_ADMINS.filter(function(p){return p.email.toLowerCase()===email.toLowerCase();})[0];
+    // Always set explicitly, including to '' when no match — OUR_SHOP must
+    // never be left pointing at whatever shop a PREVIOUS factory session (or
+    // the hardcoded default) happened to leave it on. Leaving it stale here
+    // is exactly what let one vendor's account silently show another
+    // vendor's quotes: if the lookup failed (e.g. this browser hadn't yet
+    // synced the vendor roster), OUR_SHOP simply stayed at its old value
+    // instead of being cleared, and SRC_prodAdmin()/SRC_updateBadges() had no
+    // way to tell "not linked to a shop" apart from "linked to shop X" — see
+    // the '' guard in SRC_prodAdmin for how this is now shown to the vendor
+    // instead of silently rendering someone else's queue.
+    if(window.SRC_setShop)window.SRC_setShop(admin?admin.shopId:'');
     if(admin){
-      if(window.SRC_setShop)window.SRC_setShop(admin.shopId);
       var wn=document.getElementById('whoName'), wr=document.getElementById('whoRole');
       if(wn)wn.textContent=admin.name;
       if(wr)wr.textContent='Production Admin \u00b7 '+admin.company;
@@ -4252,9 +4281,27 @@ function enterSession(role,email,name){
     document.body.classList.remove('impersonating');
   }
 }
+// Clears this browser's cached sourcing data (briefs/leads/vendors/team) so
+// that whichever identity is about to load next — after a reload triggered
+// by logging out, impersonating, or returning from impersonation — starts
+// from nothing and is forced to populate itself from a fresh, correctly-
+// scoped pull, rather than potentially rendering (even briefly) whatever
+// the PREVIOUS identity on this browser had cached. See the matching reset
+// in attemptLogin() for the non-reload (plain sign-in) path.
+function clearSourcingCache(){
+  try{localStorage.removeItem(window.SKEY||'cm_portal_sourcing_v22');}catch(e){}
+}
 function logOutSession(){
+  var s=currentSession();
+  if(s&&s.token){
+    // Best-effort: invalidate the token server-side so it can't still be
+    // used if it leaked somehow. Never block the actual logout on this —
+    // clearing localStorage below is what matters for this browser.
+    fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'logout',token:s.token})}).catch(function(){});
+  }
   localStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(IMPERSONATE_KEY);
+  clearSourcingCache();
   location.reload();
 }
 /* ---- IT: log in as a team member's/vendor's account to diagnose issues ----
@@ -4268,9 +4315,34 @@ function impersonateAccount(email,role,name){
   if(!email||!role)return;
   if(!confirm('Log in as '+(name||email)+'? You\u2019ll see exactly what they see, and can return to your own account at any time from the banner at the top.'))return;
   var mine=currentSession();
-  if(mine){try{localStorage.setItem(IMPERSONATE_KEY,JSON.stringify(mine));}catch(e){}}
-  localStorage.setItem(SESSION_KEY,JSON.stringify({email:email,role:role,name:name||null}));
-  location.reload();
+  // Now goes through the server (see the 'impersonate' action in
+  // api/auth.js) rather than just writing the target role/email straight
+  // into localStorage: that used to mean literally anyone with devtools
+  // access could grant themselves any role by editing localStorage
+  // directly, with nothing server-side to stop it. The server now requires
+  // Carve Admin's OWN real, verified session token before it will mint one
+  // for the target account \u2014 still password-free for the target (Owner
+  // already knows who they're impersonating), but no longer forgeable.
+  fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'impersonate',token:mine&&mine.token,email:email,role:role,name:name})})
+    .then(function(r){return r.json().catch(function(){return {};}).then(function(d){return {ok:r.ok,data:d};});})
+    .then(function(res){
+      if(!res.ok||!res.data||!res.data.token){
+        alert((res.data&&res.data.error)||'Could not start impersonation. Try signing in again.');
+        return;
+      }
+      if(mine){try{localStorage.setItem(IMPERSONATE_KEY,JSON.stringify(mine));}catch(e){}}
+      localStorage.setItem(SESSION_KEY,JSON.stringify({email:res.data.email,role:res.data.role,name:res.data.name||null,token:res.data.token}));
+      // Carve Admin's OWN browser almost certainly has full, unfiltered
+      // sourcing data cached from their normal Owner session — without
+      // clearing it here, reloading straight into the impersonated
+      // account would let that cache render (briefly, until the next
+      // scoped pull overwrites it) as if it belonged to the account being
+      // impersonated. This is exactly the "briefly see other vendor's
+      // info" report this fixes.
+      clearSourcingCache();
+      location.reload();
+    })
+    .catch(function(){alert('Could not reach the server. Check your connection and try again.');});
 }
 window.impersonateAccount=impersonateAccount;
 function returnFromImpersonation(){
@@ -4278,6 +4350,7 @@ function returnFromImpersonation(){
   if(!raw)return;
   localStorage.setItem(SESSION_KEY,raw);
   try{localStorage.removeItem(IMPERSONATE_KEY);}catch(e){}
+  clearSourcingCache();
   location.reload();
 }
 window.returnFromImpersonation=returnFromImpersonation;
@@ -4309,7 +4382,7 @@ function submitAccountSettings(e){
   var newPass2=document.getElementById('acctNewPass2').value;
   if(newPass&&newPass!==newPass2){err.textContent='New passwords do not match.';err.hidden=false;return false;}
   if(newPass&&newPass.length<8){err.textContent='New password must be at least 8 characters.';err.hidden=false;return false;}
-  var payload={action:'updateAccount',email:s.email,currentPassword:currentPass};
+  var payload={action:'updateAccount',email:s.email,currentPassword:currentPass,token:s.token};
   if(newEmail&&newEmail.toLowerCase()!==s.email.toLowerCase())payload.newEmail=newEmail;
   if(newPass)payload.newPassword=newPass;
   var btn=e.target.querySelector('button[type="submit"]');
@@ -4324,7 +4397,10 @@ function submitAccountSettings(e){
         return;
       }
       var updatedEmail=res.data.email, updatedRole=res.data.role, updatedName=res.data.name;
-      localStorage.setItem(SESSION_KEY,JSON.stringify({email:updatedEmail,role:updatedRole,name:updatedName||s.name||null}));
+      // Same token — api/auth.js's updateAccount refreshes what THAT token
+      // resolves to server-side (see the carve:session: update there) rather
+      // than issuing a new one, so it's still valid here.
+      localStorage.setItem(SESSION_KEY,JSON.stringify({email:updatedEmail,role:updatedRole,name:updatedName||s.name||null,token:s.token}));
       var lbl=document.getElementById('sessionLabel');
       if(lbl)lbl.textContent='Signed in · '+updatedEmail;
       // Best-effort: if this browser's own Team & Access roster has a matching
@@ -4358,7 +4434,11 @@ function submitAccountSettings(e){
       // but a session set here only ever comes from a successful /api/auth
       // login (real invited accounts included), so the ACCOUNTS lookup would
       // wrongly log out anyone whose account isn't in that fixed list.
-      if(s&&s.role&&s.email){enterSession(s.role,s.email,s.name);return;}
+      // A session saved before real server-side sessions existed has no
+      // token — api/sourcing.js now requires one to trust any role claim, so
+      // treat a token-less stored session as expired and require a fresh
+      // login rather than silently letting every role-gated call fail closed.
+      if(s&&s.role&&s.email&&s.token){enterSession(s.role,s.email,s.name);return;}
     }catch(e){}
     document.getElementById('loginGate').style.display='flex';
   });
@@ -4377,7 +4457,10 @@ var BASE_MATERIALS=['Plywood','Foam','Wrought Iron'];
 window.SPECIAL_REQS=SPECIAL_REQS; window.MODEL_MATERIALS=MODEL_MATERIALS; window.BASE_MATERIALS=BASE_MATERIALS;
 var MODEL_CATEGORIES=['Building only','Building with landscape','Topography / terrain model','Interior model','Section / cutaway model','Masterplan / site model','Product / industrial prototype','Mixed / other'];
 var OUR_SHOP='northpoint';            // Production Admin/Tech act for this shop in the demo
-window.SRC_setShop=function(id){if(id)OUR_SHOP=id;};
+// Deliberately accepts '' (and sets it) so a factory login that couldn't be
+// matched to a shop can explicitly CLEAR OUR_SHOP rather than leave it
+// pointing at whatever it was before — see enterSession().
+window.SRC_setShop=function(id){OUR_SHOP=id||'';};
 var ME_TECH='sam';                    // Production Technician identity
 var RMB_PER_USD=7.2;                  // demo FX rate — production shops quote in RMB, Carve sees USD
 var SRC_PENDING_BFILE={};             // holds boundary-file metadata picked but not yet submitted, keyed by "<prefix>-<briefId>"
@@ -4434,13 +4517,13 @@ window.SRC_saveComment=function(bid,shopId,vi){
   // without having to go find and open the specific quote first.
   notifyShop(shopId,'Carve requested a revision on "'+b.title+'": '+txt);
   showEmailToast('Sent to '+shop(shopId).name+' — revision requested on "'+b.title+'".');
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_clearComment=function(bid,shopId,vi){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
   var opt=getOption(b,shopId,vi);
   if(opt)delete opt.carveNote;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 /* Carve Admin's inline control on each quote option: view/add/edit/clear a revision request */
 function carveCommentBlock(b,shopId,vi,q){
@@ -4570,22 +4653,41 @@ function seedSRC(){
 }
 var SKEY='cm_portal_sourcing_v22', SDB=loadSRC(), apiReady=false;
 window.SDB=SDB;
-// Any vendor added via Team & Access in a previous session needs to be wired
-// back into SHOPS/PRODUCTION_ADMINS on reload (those two arrays reset to their
-// hardcoded defaults on every page load; SDB.vendors is the persisted source
-// of truth) so it's still selectable when inviting shops to quote a project.
-(SDB.vendors||[]).forEach(function(v){
-  if(window.SHOPS&&!window.SHOPS.some(function(s){return s.id===v.id;})){
-    window.SHOPS.push({id:v.id,name:v.name,loc:v.loc||'Not specified',av:initialsOf(v.name)});
-  }
-  if(v.email&&window.PRODUCTION_ADMINS&&!window.PRODUCTION_ADMINS.some(function(a){return a.shopId===v.id;})){
-    window.PRODUCTION_ADMINS.push({shopId:v.id,name:v.contact||v.name,company:v.name,email:v.email});
-  }
-});
+window.SKEY=SKEY; // exposed so a session change (login/impersonate/logout, in an earlier script block) can clear this browser's cached data before the new identity ever renders anything
+// Any vendor added via Team & Access — on THIS browser or, now that vendors
+// sync through /api/sourcing (see pullSourcing below), on any other admin's
+// browser too — needs to be wired into SHOPS/PRODUCTION_ADMINS: those two
+// arrays reset to their hardcoded single-demo-vendor default on every page
+// load, so SDB.vendors (persisted) is the real source of truth. This used to
+// run once, only at load, from whatever SDB.vendors this ONE browser's own
+// localStorage happened to have — meaning a vendor added on Carve Admin's
+// computer simply didn't exist yet on that vendor's OWN computer, so their
+// login email matched nothing here, OUR_SHOP silently stayed on its default,
+// and they'd see whichever shop that default happened to be — a real
+// cross-account leak, not just a sync-timing quirk. Now also re-run after
+// every pullSourcing() poll (see below), once SDB.vendors has actually been
+// pulled from the shared server store, so it converges on every device.
+function reconcileVendorsIntoShops(){
+  (SDB.vendors||[]).forEach(function(v){
+    if(window.SHOPS&&!window.SHOPS.some(function(s){return s.id===v.id;})){
+      window.SHOPS.push({id:v.id,name:v.name,loc:v.loc||'Not specified',av:initialsOf(v.name)});
+    }
+    if(v.email&&window.PRODUCTION_ADMINS&&!window.PRODUCTION_ADMINS.some(function(a){return a.shopId===v.id;})){
+      window.PRODUCTION_ADMINS.push({shopId:v.id,name:v.contact||v.name,company:v.name,email:v.email});
+    }
+  });
+}
+window.reconcileVendorsIntoShops=reconcileVendorsIntoShops;
+reconcileVendorsIntoShops();
 // Ids removed locally via deleteLead()/SRC_deleteBrief() but not yet confirmed
 // gone from the server (the delete's saveSRC() call is fire-and-forget — see
 // pullSourcing() below for why this list exists).
-var srcPendingDeleteLeadIds=[], srcPendingDeleteBriefIds=[];
+var srcPendingDeleteLeadIds=[], srcPendingDeleteBriefIds=[], srcPendingDeleteVendorIds=[], srcPendingDeleteTeamIds=[];
+// Exposed on window: removeMember()/removeVendor() (Team & Access, an
+// earlier <script> block with no closure access to this IIFE's own
+// variables) push onto these same array objects by reference.
+window.srcPendingDeleteVendorIds=srcPendingDeleteVendorIds;
+window.srcPendingDeleteTeamIds=srcPendingDeleteTeamIds;
 // One-time cleanup: briefs sent before Materials/Base were dropped from the
 // client brief still carry those two placeholder keys on disk (local storage
 // or the shared API) — strip them so old data matches what new briefs look
@@ -4620,9 +4722,41 @@ function saveSRC(opts){
     // a lead/brief another tab or a client submission added in the meantime). An
     // id only actually gets removed server-side if it's explicitly listed below —
     // see deleteLead(), the one place that really deletes rather than just editing.
-    var payload={briefs:SDB.briefs,leads:SDB.leads||[]};
+    // vendors/team ride along on every save (like briefs/leads do) so any
+    // OTHER browser's next pull picks up a newly-added vendor/team member —
+    // see reconcileVendorsIntoShops() above for why this matters: without
+    // it, a vendor's own device never learns its own account's shop mapping.
+    var payload={briefs:SDB.briefs,leads:SDB.leads||[],vendors:SDB.vendors||[],team:SDB.team||[]};
+    // Tell the server who's actually saving. For a factory (vendor) session
+    // this is load-bearing, not just informational: the server uses it to
+    // resolve which shop this caller owns, then rewrites this save so it can
+    // only ever touch that vendor's OWN quotes[shopId]/variations[shopId] on
+    // a changed brief — never the client's info, Carve's client-facing
+    // price, or another shop's quote — no matter what this tab's own
+    // (deliberately redacted) local copy of that brief looks like. See
+    // filterDataForFactory / vendorScopedBriefUpdate in api/sourcing.js.
+    // token is what the server actually verifies (see resolveSession in
+    // api/sourcing.js) — role/email are still sent for context but a role
+    // claim with no valid token behind it is now treated as an unverified,
+    // maximally-restricted vendor rather than trusted outright.
+    var srcSess=(typeof currentSession==='function')?currentSession():null;
+    if(srcSess&&srcSess.role){payload.role=srcSess.role;payload.email=srcSess.email;payload.token=srcSess.token;}
     if(opts&&opts.deletedLeadIds&&opts.deletedLeadIds.length)payload.deletedLeadIds=opts.deletedLeadIds;
     if(opts&&opts.deletedBriefIds&&opts.deletedBriefIds.length)payload.deletedBriefIds=opts.deletedBriefIds;
+    if(opts&&opts.deletedVendorIds&&opts.deletedVendorIds.length)payload.deletedVendorIds=opts.deletedVendorIds;
+    if(opts&&opts.deletedTeamIds&&opts.deletedTeamIds.length)payload.deletedTeamIds=opts.deletedTeamIds;
+    // Tells the server exactly which brief(s) this particular save is
+    // intentionally changing (see mergeById's allowedIds in api/sourcing.js).
+    // Without this, EVERY save anywhere in the app — adding a vendor,
+    // renaming a team member, anything — carries this tab's entire local
+    // briefs array, and if that tab's copy of some OTHER brief hadn't caught
+    // up with a recent change yet, the server used to just accept it anyway,
+    // silently reverting that other brief (e.g. a vendor's quote vanishing
+    // and the project going back to "awaiting quote" minutes after they
+    // submitted it). Only call sites that changed a specific brief pass
+    // this; everything else falls back to the original trust-everything
+    // behavior, unchanged.
+    if(opts&&opts.changedBriefIds&&opts.changedBriefIds.length)payload.changedBriefIds=opts.changedBriefIds;
     fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .catch(function(e){console.error('Sourcing API sync failed:',e);});
   }
@@ -5303,7 +5437,7 @@ function renderCarveAdminBriefDetail(b){
     // invoice yet (e.g. it reached this state before invoicing existed), gets one issued
     // now rather than staying stuck.
     if(confirmed&&b.clientQuote&&b.clientQuote.price&&!b.clientQuote.invoice){
-      if(ensureClientInvoice(b))saveSRC();
+      if(ensureClientInvoice(b))saveSRC({changedBriefIds:[b.id]});
     }
     return html;
 }
@@ -5355,7 +5489,7 @@ window.SRC_markInvoicePaid=function(bid,which){
   var today=new Date().toISOString().slice(0,10);
   if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=today;}
   else{inv.balanceStatus='paid';inv.balancePaidAt=today;}
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
@@ -5368,7 +5502,7 @@ window.SRC_reportInvoicePayment=function(bid,which,method){
   var today=new Date().toISOString().slice(0,10);
   if(which==='deposit'){inv.depositStatus='reported';inv.depositReportedAt=today;inv.depositReportedMethod=method||'';}
   else{inv.balanceStatus='reported';inv.balanceReportedAt=today;inv.balanceReportedMethod=method||'';}
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
@@ -5380,7 +5514,7 @@ window.SRC_reopenInvoicePayment=function(bid,which){
   var inv=b.clientQuote.invoice;
   if(which==='deposit'){inv.depositStatus='due';delete inv.depositPaidAt;delete inv.depositReportedAt;delete inv.depositReportedMethod;}
   else{inv.balanceStatus='due';delete inv.balancePaidAt;delete inv.balanceReportedAt;delete inv.balanceReportedMethod;}
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
@@ -5396,7 +5530,7 @@ window.SRC_editInvoiceId=function(bid,which){
   next=next.trim();
   if(!next)return;
   if(which==='deposit')inv.depositId=next; else inv.balanceId=next;
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
@@ -5563,7 +5697,7 @@ window.SRC_saveClientQuote=function(id){
   b.clientQuote={price:price,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true,clientComments:prevComments};
   if(prevInvoice)b.clientQuote.invoice=prevInvoice; // price edited after invoicing — keep the already-issued invoice as-is
   var invoiceCreated=(b.status==='awarded')&&ensureClientInvoice(b);
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
   showEmailToast((wasSent?'Updated quote resent to ':'Quote sent to ')+'the client — they\'ll see it in their portal.'+(invoiceCreated?' Invoice '+b.clientQuote.invoice.depositId+' generated and sent to their Studio Portal.':''));
 };
 window.SRC_sendStudioReply=function(ev,id){
@@ -5576,14 +5710,14 @@ window.SRC_sendStudioReply=function(ev,id){
   if(!b.clientQuote){return false;}
   if(!b.clientQuote.clientComments)b.clientQuote.clientComments=[];
   b.clientQuote.clientComments.unshift({text:text,time:'just now',from:'studio'});
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
   showEmailToast('Reply sent to the client on "'+b.title+'".');
   return false;
 };
 window.SRC_editClientQuote=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   if(b.clientQuote)b.clientQuote.sent=false;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_reopenForQuotes=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -5591,7 +5725,7 @@ window.SRC_reopenForQuotes=function(id){
   var prevShop=b.awarded;
   b.status='open';b.awarded=null;b.awardedVariantIndex=null;b.picked=null;b.pickedVariantIndex=null;b.clientQuote=null;b.stage='sourcing';b.assignedTech=null;b.awardedAt=null;
   if(prevShop)notifyShop(prevShop,'"'+b.title+'" was reopened for quotes by Carve Model.');
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 /* ---- Close out a single vendor's quotation that didn't convert — they didn't get picked, or the client
    said no. Tracked per quote (not per brief), since a brief can have other quotes still in play. ---- */
@@ -5610,7 +5744,7 @@ window.SRC_markQuoteUnsuccessful=function(id,shopId,variantIndex){
   if(reason===null)return;
   q.unsuccessful=true;q.unsuccessfulAt=new Date().toISOString().slice(0,10);q.unsuccessfulReason=reason.trim()||null;
   if(b.picked===shopId&&(b.pickedVariantIndex==null?null:b.pickedVariantIndex)===vi){b.picked=null;b.pickedVariantIndex=null;b.clientQuote=null;}
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_reopenQuoteUnsuccessful=function(id,shopId,variantIndex){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -5620,7 +5754,7 @@ window.SRC_reopenQuoteUnsuccessful=function(id,shopId,variantIndex){
   var q=vi==null?b.quotes[shopId]:(b.variations&&b.variations[shopId]&&b.variations[shopId][vi]);
   if(!q)return;
   delete q.unsuccessful;delete q.unsuccessfulAt;delete q.unsuccessfulReason;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 /* ---- Soft pick: choose the basis for the client quote WITHOUT notifying any shop. Freely switchable until confirmed with production. ---- */
 window.SRC_pick=function(id,shopId,variantIndex){
@@ -5632,7 +5766,7 @@ window.SRC_pick=function(id,shopId,variantIndex){
   if(b.clientQuote&&b.clientQuote.sent&&!confirm('A quote based on a different option was already sent to the client. Switching will clear that draft so you can re-finalize pricing from the new option. Continue?'))return;
   b.picked=shopId;b.pickedVariantIndex=vi;
   b.clientQuote=null;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_award=function(id,shopId,variantIndex){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -5664,7 +5798,7 @@ window.SRC_award=function(id,shopId,variantIndex){
       notifyShop(s.id,'"'+b.title+'" was awarded to another shop.');
     }
   });
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
   // First time this brief is awarded, prompt to assign a Client Manager to
   // manage it going forward — skip the prompt on a re-award/shop switch if
   // one's already assigned (change it anytime from the Projects tab instead).
@@ -5676,13 +5810,13 @@ window.SRC_archiveBrief=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   if(!b)return;
   b.archived=true;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_unarchiveBrief=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   if(!b)return;
   delete b.archived;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_deleteBrief=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -5703,7 +5837,7 @@ window.SRC_editInvoiceNumber=function(bid){
   next=next.trim();
   if(!next)return;
   b.code=next;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 
 /* ---- Production Admin (our shop): quote open briefs, add variation quotes, assign techs to awarded jobs ---- */
@@ -5858,7 +5992,20 @@ function sectionLabel(text){
   return '<div style="font-family:var(--font-mono);font-size:0.74rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-strong);font-weight:var(--w-medium);margin:1.1rem 0 0.6rem;">'+text+'</div>';
 }
 function SRC_prodAdmin(){
-  document.getElementById('srcNotice').hidden=true;
+  var notice=document.getElementById('srcNotice');
+  // Safety guard: OUR_SHOP is only ever '' when this account's email couldn't
+  // be matched to a shop (see enterSession()/SRC_setShop). Refuse to render
+  // ANY briefs in that state rather than fall through to whatever OUR_SHOP's
+  // stale/default value would otherwise filter on — that fallback used to
+  // silently show one vendor's account another vendor's quotes.
+  if(!OUR_SHOP){
+    notice.hidden=false;
+    notice.innerHTML='<b>This account isn\u2019t linked to a production shop yet.</b> Nothing will show here until Carve Admin fixes that \u2014 contact them rather than resubmitting anything. (This is a safety guard, not a bug: your account will never fall back to showing another shop\u2019s quotes.)';
+    setSrcBody('');
+    window.SRC_updateBadges();
+    return;
+  }
+  notice.hidden=true;
   window.SRC_updateBadges();
   var ours=SDB.briefs.filter(function(b){return (b.invited&&b.invited.indexOf(OUR_SHOP)>=0)||b.quotes[OUR_SHOP]||b.awarded===OUR_SHOP;});
   var byDate=function(a,c){return (a.sentDate||'').localeCompare(c.sentDate||'');};
@@ -5980,7 +6127,7 @@ window.SRC_addVariation=function(bid){
   logHistory(b,OUR_SHOP,data,'Submitted variation');
   delete SRC_PENDING_BFILE['varnew-'+bid];
   delete SRC_OPEN_VARIATION[bid];
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_reviseVariation=function(bid,idx){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
@@ -5989,7 +6136,7 @@ window.SRC_reviseVariation=function(bid,idx){
     b.variations[OUR_SHOP].splice(idx,1);
   }
   SRC_OPEN_VARIATION[bid]=true;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_quote=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -6004,16 +6151,21 @@ window.SRC_quote=function(id){
   b.quotes[OUR_SHOP]=data;
   logHistory(b,OUR_SHOP,data,'Submitted');
   delete SRC_PENDING_BFILE['src-'+id];
-  saveSRC();SRC_render();
+  // changedBriefIds tells the server this save is intentionally updating this
+  // exact brief, so it can never be overwritten by some OTHER save elsewhere
+  // in the app whose local copy hadn't caught up yet (see mergeById in
+  // api/sourcing.js) — the fix for quotes appearing to silently vanish and
+  // the project going back to "awaiting quote" after a vendor submitted one.
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
-window.SRC_unquote=function(id){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];if(b.quotes[OUR_SHOP])logHistory(b,OUR_SHOP,b.quotes[OUR_SHOP],'Revised (previous version)');delete b.quotes[OUR_SHOP];delete b.lastCommentAt;saveSRC();SRC_render();};
-window.SRC_assign=function(id,tech){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];b.assignedTech=(b.assignedTech===tech?null:tech);saveSRC();SRC_render();};
+window.SRC_unquote=function(id){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];if(b.quotes[OUR_SHOP])logHistory(b,OUR_SHOP,b.quotes[OUR_SHOP],'Revised (previous version)');delete b.quotes[OUR_SHOP];delete b.lastCommentAt;saveSRC({changedBriefIds:[b.id]});SRC_render();};
+window.SRC_assign=function(id,tech){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];b.assignedTech=(b.assignedTech===tech?null:tech);saveSRC({changedBriefIds:[b.id]});SRC_render();};
 window.SRC_proceedToFactory=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   if(!b.assignedTech){alert('Assign a technician first.');return;}
   var techName=TECHS.filter(function(t){return t.id===b.assignedTech;})[0].name;
   if(!confirm('Proceed to production for '+b.title+'? This kicks off the project management stage — '+techName+' gets access to Milestones, Files, and Photo Review.'))return;
-  b.stage='production';saveSRC();SRC_render();
+  b.stage='production';saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 
 /* ---- Production Technician: only jobs assigned to me, everything but price ---- */
@@ -6056,14 +6208,14 @@ window.SRC_acceptClientQuote=function(bid){
   // This just covers it if somehow neither happened yet.
   ensureClientInvoice(b);
   b.clientQuote.accepted=true;
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
 };
 window.SRC_addClientComment=function(bid,text){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
   if(!b||!b.clientQuote)return false;
   if(!b.clientQuote.clientComments)b.clientQuote.clientComments=[];
   b.clientQuote.clientComments.unshift({text:text,time:'just now',from:'client'});
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
   return true;
 };
 function daysBetween(fromStr,toStr){
@@ -6330,7 +6482,7 @@ window.SRC_confirmSendLead=function(){
     var newShopIds=[]; document.querySelectorAll('.sendlead-chk:checked').forEach(function(cb){newShopIds.push(cb.value);});
     if(!newShopIds.length){alert('Select at least one production shop to invite.');return;}
     brief.invited=(brief.invited||[]).concat(newShopIds.filter(function(sid){return (brief.invited||[]).indexOf(sid)<0;}));
-    saveSRC();
+    saveSRC({changedBriefIds:[brief.id]});
     closeSendLeadModal();
     SRC_render();
     var names2=newShopIds.map(function(sid){var a=(window.PRODUCTION_ADMINS||[]).filter(function(x){return x.shopId===sid;})[0];return a?a.name:sid;}).join(', ');
@@ -6373,7 +6525,7 @@ window.SRC_confirmSendLead=function(){
   // explicitly listed. Without this, the lead disappears locally but quietly
   // comes back on the next reload/sync, leaving both a lead and a quote for
   // the same project.
-  saveSRC({deletedLeadIds:[id]});
+  saveSRC({deletedLeadIds:[id],changedBriefIds:[brief.id]});
   window.SRC_renderLeads();
   closeSendLeadModal();
   var names=shopIds.map(function(sid){var a=(window.PRODUCTION_ADMINS||[]).filter(function(x){return x.shopId===sid;})[0];return a?a.name:sid;}).join(', ');
@@ -6430,14 +6582,64 @@ function reconcilePendingDeletes(pendingArr,serverList){
   var serverIds={};(serverList||[]).forEach(function(item){if(item&&item.id)serverIds[item.id]=true;});
   for(var i=pendingArr.length-1;i>=0;i--){if(!serverIds[pendingArr[i]])pendingArr.splice(i,1);}
 }
+// Vendor (factory) sessions ask the server to filter the response itself —
+// see filterDataForFactory in api/sourcing.js — so a vendor's browser never
+// receives other vendors' quotes or any client's contact info over the wire
+// in the first place, rather than relying only on this file's own rendering
+// to hide it. Covers every pull once a session exists (including on a fresh
+// page load restoring a stored session, since currentSession() reads
+// localStorage synchronously, before enterSession() has even run) — the
+// only gap is the very first, pre-login pull on a brand-new device that has
+// never signed in here before, which still fetches unfiltered since no
+// email is known yet at that point.
+function sourcingQuery(){
+  var s=(typeof currentSession==='function')?currentSession():null;
+  // token is what the server actually verifies (see resolveSession in
+  // api/sourcing.js) — email is no longer trusted on its own, so a
+  // session missing a token (shouldn't happen post-login, but guards
+  // against a stale pre-real-auth session slipping through) sends nothing
+  // and falls back to the same "no role claimed" full-data path admin
+  // roles already use, rather than a spoofable role=factory&email=... pair.
+  if(s&&s.role==='factory'&&s.token)return '?role=factory&token='+encodeURIComponent(s.token);
+  return '';
+}
 function pullSourcing(){
-  return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
-    if(data&&(data.briefs||data.leads)){
-      SDB.briefs=mergeSrcList(SDB.briefs,data.briefs||[],srcPendingDeleteBriefIds);
-      SDB.leads=mergeSrcList(SDB.leads,data.leads||[],srcPendingDeleteLeadIds);
+  return fetch('/api/sourcing'+sourcingQuery()).then(function(r){return r.json();}).then(function(data){
+    if(data&&(data.briefs||data.leads||data.vendors||data.team)){
+      // Additive merge-by-id (below) is right for an admin pull: the server
+      // always sends the FULL admin-visible set, so a lagging tab's local
+      // copy of some other record is still legitimate data worth keeping
+      // around between polls. For a factory (vendor) session it's the
+      // opposite: the server has already redacted the response down to
+      // EXACTLY what this vendor may see (see filterDataForFactory in
+      // api/sourcing.js), so it must be treated as the whole truth, not just
+      // a source of updates to merge in. Additive-only merging would let
+      // stale/leaked entries — e.g. another vendor's briefs cached from a
+      // previous session on this same browser (Carve Admin's "Log in as",
+      // or simply a shared computer) — sit in SDB and keep rendering
+      // forever, since nothing ever removes an id just because a later,
+      // correctly-scoped pull didn't include it. So for a factory session,
+      // REPLACE each list with exactly what this pull returned (still
+      // honoring any pending local deletes) instead of merging into
+      // whatever was already cached.
+      var scopedSess=(typeof currentSession==='function')?currentSession():null;
+      var isScopedPull=!!(scopedSess&&scopedSess.role==='factory');
+      SDB.briefs=mergeSrcList(isScopedPull?[]:SDB.briefs,data.briefs||[],srcPendingDeleteBriefIds);
+      SDB.leads=mergeSrcList(isScopedPull?[]:SDB.leads,data.leads||[],srcPendingDeleteLeadIds);
+      // vendors/team now sync the same way — see reconcileVendorsIntoShops()
+      // above for why this matters: without pulling these from the server,
+      // a vendor added on a DIFFERENT browser never reaches this one, so a
+      // login from that vendor's own device couldn't be matched to its shop
+      // and silently fell back to showing whichever shop was default — one
+      // vendor's account displaying another vendor's quotes.
+      SDB.vendors=mergeSrcList(isScopedPull?[]:SDB.vendors,data.vendors||[],srcPendingDeleteVendorIds);
+      SDB.team=mergeSrcList(isScopedPull?[]:SDB.team,data.team||[],srcPendingDeleteTeamIds);
       reconcilePendingDeletes(srcPendingDeleteBriefIds,data.briefs||[]);
       reconcilePendingDeletes(srcPendingDeleteLeadIds,data.leads||[]);
+      reconcilePendingDeletes(srcPendingDeleteVendorIds,data.vendors||[]);
+      reconcilePendingDeletes(srcPendingDeleteTeamIds,data.team||[]);
       migrateBriefFields(SDB.briefs);
+      if(window.reconcileVendorsIntoShops)window.reconcileVendorsIntoShops();
       if(window.syncClientsFromLeads)window.syncClientsFromLeads();
       try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
       // Skip the re-render while a field is actively focused OR was typed into in
@@ -6455,13 +6657,26 @@ function pullSourcing(){
         if(window.SRC_renderLeads)window.SRC_renderLeads();
         if(window.renderAwardedProjects)window.renderAwardedProjects();
         if(window.renderMyAssigned)window.renderMyAssigned();
+        if(window.renderTeam)window.renderTeam();
+        if(window.renderVendors)window.renderVendors();
       }
     }
   });
 }
+window.pullSourcing=pullSourcing; // exposed so attemptLogin() can force an immediate, correctly-scoped refresh right after signing in
 pullSourcing().then(function(){
   apiReady=true;
   // Nothing existed yet server-side (fresh store) — seed it with whatever local data we have.
+  // Owner-only: a factory (vendor) session now gets a server-FILTERED response
+  // scoped to just its own shop (see filterDataForFactory in api/sourcing.js)
+  // — for a vendor with no briefs yet, that filtered result legitimately
+  // looks "empty" even though the real store has plenty of other projects in
+  // it. Running this seed-with-local-data POST for that vendor would blast
+  // the ENTIRE shared store down to just their own tiny (filtered, missing
+  // everyone else's data) local copy. Only ever run this from an owner
+  // session, or before any session exists at all (first-ever setup).
+  var seedSession=(typeof currentSession==='function')?currentSession():null;
+  if(seedSession&&seedSession.role!=='owner')return;
   return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
     if(!data||(!data.briefs&&!data.leads)){
       return fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:SDB.briefs,leads:SDB.leads||[]})});

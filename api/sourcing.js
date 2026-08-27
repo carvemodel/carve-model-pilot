@@ -11,6 +11,43 @@ const { createClient } = require('redis');
 const KEY = 'carve:sourcing';
 let clientPromise;
 
+// ── Real server-side sessions ───────────────────────────────────────────────
+// A caller used to be trusted to say who it was — a query string or POST body
+// could just claim role=factory&email=... (or, worse, role=owner) and this
+// file had no way to know that was false. api/auth.js's "login" action now
+// mints a random token and stores {email,role,name} under it server-side
+// (carve:session:<token>, same Redis instance/KEY namespace) when someone
+// really does sign in. Resolving that token here means the role/email this
+// file actually acts on come from a verified record, never from whatever the
+// request itself asserts — a vendor changing role=factory to role=owner in
+// their own request no longer does anything, because nothing here trusts the
+// role field unless a real token backs it up (see effectiveRole below).
+async function resolveSession(redis, token) {
+  if (!token) return null;
+  try {
+    const raw = await redis.get('carve:session:' + token);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    console.error('resolveSession error:', err);
+    return null;
+  }
+}
+// A caller that names a role at all (body.role / query.role) is asserting
+// "I am a logged-in app user of this type" — that assertion is only ever
+// honored if a real session token backs it up; otherwise it's treated as the
+// most-restricted case (an unverified vendor with no matched shop) rather
+// than either fully trusted (the old bug) or silently ignored (which would
+// let a forged role=factory claim fall through as if it were a normal,
+// unrestricted admin call). A caller that names NO role at all — e.g. the
+// public contact form's `{leads:[...]}` POST from an anonymous site visitor,
+// which has no concept of login — is untouched by any of this and keeps
+// working exactly as before.
+function effectiveIdentity(claimedRole, session) {
+  if (!claimedRole) return { role: null, email: null };
+  if (session) return { role: session.role, email: session.email };
+  return { role: 'factory', email: null };
+}
+
 function getClient() {
   if (!clientPromise) {
     const client = createClient({ url: process.env.REDIS_URL });
@@ -198,6 +235,20 @@ module.exports = async (req, res) => {
       const data = raw ? JSON.parse(raw) : { briefs: [], leads: [] };
       if (!data.leads) data.leads = [];
       if (!data.briefs) data.briefs = [];
+      if (!data.vendors) data.vendors = [];
+      if (!data.team) data.team = [];
+      const query = req.query || {};
+      if (query.role) {
+        const session = await resolveSession(redis, query.token);
+        const identity = effectiveIdentity(query.role, session);
+        if (identity.role === 'factory') {
+          res.status(200).json(filterDataForFactory(data, identity.email));
+          return;
+        }
+        // A verified session that isn't factory (owner/sales/prodtech/etc.)
+        // falls through to the normal full-data response below — unchanged
+        // from today's trust level for admin roles.
+      }
       res.status(200).json(data);
       return;
     }
@@ -208,6 +259,12 @@ module.exports = async (req, res) => {
         try { body = JSON.parse(body); } catch (e) { body = {}; }
       }
       body = body || {};
+      // See effectiveIdentity() above: body.role is only ever trusted if a
+      // real session token backs it up. A request with no role field at all
+      // (the public contact form's anonymous lead submission, most notably)
+      // is untouched by this and behaves exactly as before.
+      const postSession = body.role ? await resolveSession(redis, body.token) : null;
+      const identity = effectiveIdentity(body.role, postSession);
 
       // Every save used to be a blind overwrite of the whole store with whatever
       // this one browser tab currently had in memory. With more than one tab/
@@ -224,27 +281,117 @@ module.exports = async (req, res) => {
       const current = raw ? JSON.parse(raw) : { briefs: [], leads: [] };
       if (!current.leads) current.leads = [];
       if (!current.briefs) current.briefs = [];
+      if (!current.vendors) current.vendors = [];
+      if (!current.team) current.team = [];
+
+      // A factory (vendor) caller's local briefs are the server-FILTERED,
+      // redacted view from GET (see filterDataForFactory) — their browser
+      // never had the client's contact info, Carve's client-facing price,
+      // or any OTHER shop's quotes/variations to begin with. If their POST
+      // were allowed to overwrite a changed brief wholesale like any other
+      // caller's, that missing data would be genuinely DELETED from the
+      // shared store the instant they submitted a quote, not just hidden
+      // from their own view. So for a factory caller, rewrite each brief
+      // they're allowed to touch (per changedBriefIds) into "the currently
+      // stored brief, with only that vendor's own quotes[shopId] /
+      // variations[shopId] swapped in" — everything else on it (client,
+      // clientQuote, every other shop's data, status, award, etc.) is left
+      // exactly as already stored, completely untouched by whatever the
+      // vendor's necessarily-incomplete local copy contains.
+      function vendorScopedBriefUpdate(currentBrief, incomingBrief, shopId) {
+        const merged = Object.assign({}, currentBrief);
+        const quotes = Object.assign({}, currentBrief.quotes || {});
+        if (incomingBrief.quotes && incomingBrief.quotes[shopId]) quotes[shopId] = incomingBrief.quotes[shopId];
+        else delete quotes[shopId];
+        merged.quotes = quotes;
+        const variations = Object.assign({}, currentBrief.variations || {});
+        if (incomingBrief.variations && incomingBrief.variations[shopId]) variations[shopId] = incomingBrief.variations[shopId];
+        else delete variations[shopId];
+        merged.variations = variations;
+        return merged;
+      }
+      let briefsForMerge = body.briefs;
+      if (identity.role === 'factory') {
+        const emailKey = String(identity.email || '').toLowerCase();
+        const vendor = current.vendors.find((v) => v && v.email && v.email.toLowerCase() === emailKey);
+        const shopId = vendor ? vendor.id : null;
+        const allowed = new Set(body.changedBriefIds || []);
+        briefsForMerge = shopId ? (body.briefs || [])
+          .filter((incoming) => incoming && incoming.id && allowed.has(incoming.id))
+          .map((incoming) => {
+            const cur = current.briefs.find((b) => b && b.id === incoming.id);
+            // A vendor's own brand-new brief should never happen (they only
+            // ever act on briefs Carve already sent them) — if it somehow
+            // did, there's nothing safe to scope it against, so drop it
+            // rather than trust it wholesale.
+            return cur ? vendorScopedBriefUpdate(cur, incoming, shopId) : null;
+          })
+          .filter(Boolean) : []; // no matched vendor — fail closed, same rule as GET
+      }
 
       // Snapshot which lead ids already existed BEFORE merging, so a
       // notification only fires for ids that are genuinely new — an admin
       // re-saving an existing lead (status change, note edit, etc.) must
       // never re-trigger the email.
       const existingLeadIds = new Set(current.leads.map((l) => l && l.id));
-      const newLeads = (body.leads || []).filter((l) => l && l.id && !existingLeadIds.has(l.id));
-      const newQuotes = detectNewQuotes(current.briefs, body.briefs);
+      const newLeads = identity.role === 'factory' ? [] : (body.leads || []).filter((l) => l && l.id && !existingLeadIds.has(l.id));
+      const newQuotes = detectNewQuotes(current.briefs, briefsForMerge);
 
-      function mergeById(currentList, incomingList, deletedIds) {
+      // allowedIds, when given, restricts what an incoming item is allowed to
+      // OVERWRITE: for an id that already exists in currentList, the incoming
+      // copy is only accepted if its id is in allowedIds — otherwise whatever
+      // is already stored is kept as-is. This closes a real bug: saveSRC()
+      // in app.html POSTs this browser tab's ENTIRE local briefs array on
+      // every single save, anywhere in the app — adding a vendor, renaming a
+      // team member, anything. If that tab's local copy of some OTHER brief
+      // hasn't caught up with a recent change yet (e.g. it's been open a
+      // while and missed the last poll, or two saves from different
+      // people/tabs raced), the old code would still blindly take that stale
+      // copy and stomp the newer one — observed as a vendor's just-submitted
+      // quote vanishing and the project going back to "awaiting quote"
+      // minutes later, because some unrelated save elsewhere overwrote it
+      // with a snapshot from before the quote existed. Brand-new ids (not
+      // already in currentList) are always accepted regardless of
+      // allowedIds — a caller can't have stale data for a record that didn't
+      // exist yet. allowedIds is optional and defaults to "trust everything"
+      // (the original behavior) so older/unmigrated call sites that don't
+      // pass it keep working exactly as before.
+      function mergeById(currentList, incomingList, deletedIds, allowedIds) {
         const deleted = new Set(deletedIds || []);
+        const allowed = allowedIds ? new Set(allowedIds) : null;
         const byId = new Map();
         (currentList || []).forEach((item) => { if (item && item.id) byId.set(item.id, item); });
-        (incomingList || []).forEach((item) => { if (item && item.id) byId.set(item.id, item); });
+        (incomingList || []).forEach((item) => {
+          if (!item || !item.id) return;
+          if (allowed && byId.has(item.id) && !allowed.has(item.id)) return;
+          byId.set(item.id, item);
+        });
         deleted.forEach((id) => byId.delete(id));
         return Array.from(byId.values());
       }
 
+      // vendors/team merge the same way leads do (no changedIds protection —
+      // these are lower-collision, effectively admin-only edits). Persisting
+      // them here at all is the actual fix for a real cross-account leak:
+      // these two lists used to live ONLY in whichever browser tab created
+      // them (app.html's PRODUCTION_ADMINS/SHOPS, rebuilt from SDB.vendors,
+      // which was localStorage-only). A vendor added on Carve Admin's laptop
+      // simply didn't exist yet on that vendor's own device — so when they
+      // logged in, their email matched nothing, and the portal silently fell
+      // back to showing whichever OTHER shop happened to be the default,
+      // i.e. one vendor's account displaying a different vendor's quotes.
+      // A factory caller must never be able to touch the vendors/team
+      // rosters or the leads list — those are Carve-admin-only data. Their
+      // local copies of those lists (from the GET filter) are already
+      // empty/self-only, but nothing previously stopped a crafted POST body
+      // from smuggling in extra entries; fail closed by ignoring those
+      // fields entirely for factory-role saves.
+      const isFactorySave = identity.role === 'factory';
       const data = {
-        briefs: mergeById(current.briefs, body.briefs, body.deletedBriefIds),
-        leads: mergeById(current.leads, body.leads, body.deletedLeadIds),
+        briefs: mergeById(current.briefs, briefsForMerge, isFactorySave ? [] : body.deletedBriefIds, body.changedBriefIds),
+        leads: isFactorySave ? current.leads : mergeById(current.leads, body.leads, body.deletedLeadIds),
+        vendors: isFactorySave ? current.vendors : mergeById(current.vendors, body.vendors, body.deletedVendorIds),
+        team: isFactorySave ? current.team : mergeById(current.team, body.team, body.deletedTeamIds),
       };
       await redis.set(KEY, JSON.stringify(data));
 
@@ -264,7 +411,7 @@ module.exports = async (req, res) => {
         await Promise.allSettled(notifications);
       }
 
-      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads });
+      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads, vendors: data.vendors, team: data.team });
       return;
     }
 
