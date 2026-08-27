@@ -226,6 +226,64 @@ async function filterClaimed(redis, items, keyFn) {
   return items.filter((_, i) => claimed[i]);
 }
 
+// ── Vendor-safe data filtering (server-side isolation) ──────────────────────
+// A factory (vendor) caller's GET response must never contain another
+// vendor's quotes/variations, Carve's internal client contact/pricing
+// fields, the vendor/team roster, or leads — vendorSafeBrief() strips a
+// brief down to only the fields a vendor is allowed to see, scoped to their
+// own shopId's quotes/variations. isBriefRelevantToShop() decides whether a
+// brief should be included at all (invited to quote it, already quoted it,
+// or was awarded it). filterDataForFactory() ties both together and is the
+// single choke point the GET handler below calls for any role=factory
+// request — restored here after a merge (dedupe-lead-quote-notifications,
+// based on an older main) silently dropped these three definitions while
+// leaving the call site intact, which is what caused every factory GET to
+// 500 with "filterDataForFactory is not defined".
+function vendorSafeBrief(b, shopId) {
+  const quotes = {};
+  if (b.quotes && b.quotes[shopId]) quotes[shopId] = b.quotes[shopId];
+  const variations = {};
+  if (b.variations && b.variations[shopId]) variations[shopId] = b.variations[shopId];
+  return {
+    id: b.id,
+    title: b.title,
+    code: b.code || null,
+    brief: b.brief || {},
+    notes: b.notes || null,
+    files: b.files || [],
+    link: b.link || null,
+    status: b.status || null,
+    awarded: b.awarded || null,
+    awardedVariantIndex: b.awardedVariantIndex == null ? null : b.awardedVariantIndex,
+    stage: b.stage || null,
+    assignedTech: b.assignedTech || null,
+    invited: b.invited || [],
+    sentDate: b.sentDate || null,
+    lastCommentAt: b.lastCommentAt || null,
+    archived: !!b.archived,
+    quotes,
+    variations,
+  };
+}
+function isBriefRelevantToShop(b, shopId) {
+  return !!(b && ((b.invited || []).indexOf(shopId) >= 0 || (b.quotes && b.quotes[shopId]) || b.awarded === shopId));
+}
+function filterDataForFactory(data, email) {
+  const emailKey = String(email || '').toLowerCase();
+  const vendor = (data.vendors || []).find((v) => v && v.email && v.email.toLowerCase() === emailKey);
+  // No matching vendor for this email — same fail-closed rule as the client:
+  // show nothing rather than guess. See SRC_prodAdmin's '' guard in app.html.
+  if (!vendor) return { briefs: [], leads: [], vendors: [], team: [] };
+  const shopId = vendor.id;
+  const briefs = (data.briefs || [])
+    .filter((b) => isBriefRelevantToShop(b, shopId))
+    .map((b) => vendorSafeBrief(b, shopId));
+  // Only the caller's OWN vendor record — needed so their own device can
+  // resolve its own shopId (see reconcileVendorsIntoShops in app.html) —
+  // never the full roster.
+  return { briefs, leads: [], vendors: [vendor], team: [] };
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
