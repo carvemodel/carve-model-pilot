@@ -157,6 +157,76 @@ function detectNewQuotes(currentBriefs, incomingBriefs) {
   return found;
 }
 
+// ── Vendor-side data isolation (server-side) ───────────────────────────────
+// Everything above this used to hand the ENTIRE store — every project, every
+// client's name/email/phone, every OTHER vendor's price and quote — to
+// whoever called GET /api/sourcing, with all narrowing to "just this
+// vendor's own jobs" happening in app.html's JS after the fact. That's fine
+// against accidental bugs in that JS, but it means the actual data leaves
+// the server for every vendor's browser regardless: opening devtools'
+// Network tab, or just typing `SDB` in the console, would show a vendor
+// every other vendor's pricing and every client's contact info. This
+// filters the response itself for factory (vendor) callers, mirroring the
+// exact same "which briefs are mine" rule app.html's SRC_prodAdmin() already
+// uses client-side, so the two can never drift apart:
+//   invited.includes(shopId) || quotes[shopId] exists || awarded === shopId
+// Each matching brief is then rebuilt from an explicit allowlist of fields a
+// vendor actually needs (project spec, files, their own quote/variations) —
+// never copied-and-redacted, so a new sensitive field added to a brief later
+// doesn't automatically leak just because nobody remembered to strip it.
+// Note on trust: like every other action in this pilot (see api/auth.js's
+// admin actions), there's no server-side session token yet — role/email are
+// just what the caller claims in the query string. This stops the normal
+// app flow from ever transmitting other people's data to a vendor's
+// browser, which is the actual leak that was reported. It does NOT stop a
+// deliberately malicious caller who crafts their own request claiming
+// role=owner — closing that fully needs real verified sessions, a bigger
+// change than this fix. Flagged here rather than left implicit.
+function vendorSafeBrief(b, shopId) {
+  const quotes = {};
+  if (b.quotes && b.quotes[shopId]) quotes[shopId] = b.quotes[shopId];
+  const variations = {};
+  if (b.variations && b.variations[shopId]) variations[shopId] = b.variations[shopId];
+  return {
+    id: b.id,
+    title: b.title,
+    code: b.code || null,
+    brief: b.brief || {},
+    notes: b.notes || null,
+    files: b.files || [],
+    link: b.link || null,
+    status: b.status || null,
+    awarded: b.awarded || null,
+    awardedVariantIndex: b.awardedVariantIndex == null ? null : b.awardedVariantIndex,
+    stage: b.stage || null,
+    assignedTech: b.assignedTech || null,
+    invited: b.invited || [],
+    sentDate: b.sentDate || null,
+    lastCommentAt: b.lastCommentAt || null,
+    archived: !!b.archived,
+    quotes,
+    variations,
+  };
+}
+function isBriefRelevantToShop(b, shopId) {
+  return !!(b && ((b.invited || []).indexOf(shopId) >= 0 || (b.quotes && b.quotes[shopId]) || b.awarded === shopId));
+}
+function filterDataForFactory(data, email) {
+  const emailKey = String(email || '').toLowerCase();
+  const vendor = (data.vendors || []).find((v) => v && v.email && v.email.toLowerCase() === emailKey);
+  // No matching vendor for this email — same fail-closed rule as the client:
+  // show nothing rather than guess. See SRC_prodAdmin's '' guard in app.html.
+  if (!vendor) return { briefs: [], leads: [], vendors: [], team: [] };
+  const shopId = vendor.id;
+  const briefs = (data.briefs || [])
+    .filter((b) => isBriefRelevantToShop(b, shopId))
+    .map((b) => vendorSafeBrief(b, shopId));
+  // Only the caller's OWN vendor record — needed so their own device can
+  // resolve its own shopId (see reconcileVendorsIntoShops in app.html) —
+  // never the full roster.
+  return { briefs, leads: [], vendors: [vendor], team: [] };
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -176,6 +246,11 @@ module.exports = async (req, res) => {
       if (!data.briefs) data.briefs = [];
       if (!data.vendors) data.vendors = [];
       if (!data.team) data.team = [];
+      const query = req.query || {};
+      if (query.role === 'factory') {
+        res.status(200).json(filterDataForFactory(data, query.email));
+        return;
+      }
       res.status(200).json(data);
       return;
     }
@@ -205,13 +280,58 @@ module.exports = async (req, res) => {
       if (!current.vendors) current.vendors = [];
       if (!current.team) current.team = [];
 
+      // A factory (vendor) caller's local briefs are the server-FILTERED,
+      // redacted view from GET (see filterDataForFactory) — their browser
+      // never had the client's contact info, Carve's client-facing price,
+      // or any OTHER shop's quotes/variations to begin with. If their POST
+      // were allowed to overwrite a changed brief wholesale like any other
+      // caller's, that missing data would be genuinely DELETED from the
+      // shared store the instant they submitted a quote, not just hidden
+      // from their own view. So for a factory caller, rewrite each brief
+      // they're allowed to touch (per changedBriefIds) into "the currently
+      // stored brief, with only that vendor's own quotes[shopId] /
+      // variations[shopId] swapped in" — everything else on it (client,
+      // clientQuote, every other shop's data, status, award, etc.) is left
+      // exactly as already stored, completely untouched by whatever the
+      // vendor's necessarily-incomplete local copy contains.
+      function vendorScopedBriefUpdate(currentBrief, incomingBrief, shopId) {
+        const merged = Object.assign({}, currentBrief);
+        const quotes = Object.assign({}, currentBrief.quotes || {});
+        if (incomingBrief.quotes && incomingBrief.quotes[shopId]) quotes[shopId] = incomingBrief.quotes[shopId];
+        else delete quotes[shopId];
+        merged.quotes = quotes;
+        const variations = Object.assign({}, currentBrief.variations || {});
+        if (incomingBrief.variations && incomingBrief.variations[shopId]) variations[shopId] = incomingBrief.variations[shopId];
+        else delete variations[shopId];
+        merged.variations = variations;
+        return merged;
+      }
+      let briefsForMerge = body.briefs;
+      if (body.role === 'factory') {
+        const emailKey = String(body.email || '').toLowerCase();
+        const vendor = current.vendors.find((v) => v && v.email && v.email.toLowerCase() === emailKey);
+        const shopId = vendor ? vendor.id : null;
+        const allowed = new Set(body.changedBriefIds || []);
+        briefsForMerge = shopId ? (body.briefs || [])
+          .filter((incoming) => incoming && incoming.id && allowed.has(incoming.id))
+          .map((incoming) => {
+            const cur = current.briefs.find((b) => b && b.id === incoming.id);
+            // A vendor's own brand-new brief should never happen (they only
+            // ever act on briefs Carve already sent them) — if it somehow
+            // did, there's nothing safe to scope it against, so drop it
+            // rather than trust it wholesale.
+            return cur ? vendorScopedBriefUpdate(cur, incoming, shopId) : null;
+          })
+          .filter(Boolean) : []; // no matched vendor — fail closed, same rule as GET
+      }
+
       // Snapshot which lead ids already existed BEFORE merging, so a
       // notification only fires for ids that are genuinely new — an admin
       // re-saving an existing lead (status change, note edit, etc.) must
       // never re-trigger the email.
       const existingLeadIds = new Set(current.leads.map((l) => l && l.id));
-      const newLeads = (body.leads || []).filter((l) => l && l.id && !existingLeadIds.has(l.id));
-      const newQuotes = detectNewQuotes(current.briefs, body.briefs);
+      const newLeads = body.role === 'factory' ? [] : (body.leads || []).filter((l) => l && l.id && !existingLeadIds.has(l.id));
+      const newQuotes = detectNewQuotes(current.briefs, briefsForMerge);
 
       // allowedIds, when given, restricts what an incoming item is allowed to
       // OVERWRITE: for an id that already exists in currentList, the incoming
@@ -256,11 +376,18 @@ module.exports = async (req, res) => {
       // logged in, their email matched nothing, and the portal silently fell
       // back to showing whichever OTHER shop happened to be the default,
       // i.e. one vendor's account displaying a different vendor's quotes.
+      // A factory caller must never be able to touch the vendors/team
+      // rosters or the leads list — those are Carve-admin-only data. Their
+      // local copies of those lists (from the GET filter) are already
+      // empty/self-only, but nothing previously stopped a crafted POST body
+      // from smuggling in extra entries; fail closed by ignoring those
+      // fields entirely for factory-role saves.
+      const isFactorySave = body.role === 'factory';
       const data = {
-        briefs: mergeById(current.briefs, body.briefs, body.deletedBriefIds, body.changedBriefIds),
-        leads: mergeById(current.leads, body.leads, body.deletedLeadIds),
-        vendors: mergeById(current.vendors, body.vendors, body.deletedVendorIds),
-        team: mergeById(current.team, body.team, body.deletedTeamIds),
+        briefs: mergeById(current.briefs, briefsForMerge, isFactorySave ? [] : body.deletedBriefIds, body.changedBriefIds),
+        leads: isFactorySave ? current.leads : mergeById(current.leads, body.leads, body.deletedLeadIds),
+        vendors: isFactorySave ? current.vendors : mergeById(current.vendors, body.vendors, body.deletedVendorIds),
+        team: isFactorySave ? current.team : mergeById(current.team, body.team, body.deletedTeamIds),
       };
       await redis.set(KEY, JSON.stringify(data));
 
