@@ -239,6 +239,10 @@ body{background:var(--cm-ink-950);}
 .rolepill--sales{border-color:#2A6FDB;color:#7aa6e6;}
 .rolepill--factory{border-color:#C2703D;color:#d49a72;}
 .rolepill--cm{border-color:#7B4FC9;color:#b79ae8;}
+.teamrow__right{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;justify-content:flex-end;}
+.rowbtn{background:none;border:1px solid var(--cm-border);color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.03em;text-transform:uppercase;padding:0.3rem 0.55rem;border-radius:var(--r-sm);white-space:nowrap;}
+.rowbtn:hover{color:var(--cm-text);border-color:var(--cm-text-subtle);}
+.rowbtn--danger:hover{color:#e08a8a;border-color:#e08a8a;}
 .perm-table{width:100%;border-collapse:collapse;font-size:0.86rem;min-width:420px;}
 .perm-table th{text-align:left;font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-text-subtle);padding:0 0.8rem 0.7rem;border-bottom:1px solid var(--cm-border-strong);}
 .perm-table th:not(:first-child),.perm-table td:not(:first-child){text-align:center;width:78px;}
@@ -659,6 +663,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       </button>
     </nav>
     <div class="side__foot">
+      <a href="#" onclick="openAccountSettings();return false;" style="margin-bottom:0.5rem;">Account settings</a>
       <a href="#" onclick="if(confirm('Log out of your Carve Model account?'))logOutSession();return false;">Log out</a>
     </div>
   </aside>
@@ -1504,12 +1509,30 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="mfield"><label for="memEmail">Email</label><input id="memEmail" type="email" required placeholder="priya@physical-model.com"></div>
           <div class="mfield"><label for="memRole">Role</label>
             <select id="memRole" required>
-              <option value="clientmanager">Client Manager</option>
+              <option value="sales">Client Manager</option>
             </select>
           </div>
           <button class="btn btn--primary full" type="submit" style="margin-top:0.4rem;">Add member &amp; send invite</button>
         </form>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Account settings (every role) -->
+<div class="modal-overlay" id="accountModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Account settings">
+    <div class="modal__head"><h3>Account settings</h3><button class="modal__x" onclick="closeAccountSettings()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <p class="modal__intro">Update the email or password used to sign in to your Carve Model workspace.</p>
+      <form onsubmit="return submitAccountSettings(event)">
+        <div class="mfield"><label for="acctCurrentPass">Current password</label><input id="acctCurrentPass" type="password" required placeholder="Confirm it's you" autocomplete="current-password"></div>
+        <div class="mfield"><label for="acctEmail">Email</label><input id="acctEmail" type="email" required autocomplete="email"></div>
+        <div class="mfield"><label for="acctNewPass">New password <span class="opt">(optional)</span></label><input id="acctNewPass" type="password" minlength="8" placeholder="Leave blank to keep current" autocomplete="new-password"></div>
+        <div class="mfield"><label for="acctNewPass2">Confirm new password</label><input id="acctNewPass2" type="password" placeholder="Re-enter new password" autocomplete="new-password"></div>
+        <div class="login-err" id="acctErr" hidden style="margin-top:0.4rem;"></div>
+        <button class="btn btn--primary full" type="submit" style="margin-top:0.4rem;">Save changes</button>
+      </form>
     </div>
   </div>
 </div>
@@ -1966,13 +1989,17 @@ function copyLink(){
 function initialsOf(name){
   return (name||'').trim().split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase()||'??';
 }
-var ROLE_LABELS={owner:'Owner',sales:'Sales',factory:'Factory Representative',clientmanager:'Client Manager'};
-var ROLE_PILL_CLASS={owner:'rolepill--owner',sales:'rolepill--sales',factory:'rolepill--factory',clientmanager:'rolepill--cm'};
+// Note: "Client Manager" uses role key 'sales' — that's the role already wired
+// into PERM/ROLE_INFO/ACCOUNTS with real portal permissions. 'clientmanager' was
+// never added to PERM, so anyone logging in with that key would see a blank
+// portal (every perm-gated class requires a specific role list). Displaying it
+// as "Client Manager" here is purely a label change, not a new role.
+var ROLE_LABELS={owner:'Owner',sales:'Client Manager',factory:'Factory Representative'};
+var ROLE_PILL_CLASS={owner:'rolepill--owner',sales:'rolepill--cm',factory:'rolepill--factory'};
 var ROLE_AVATAR_STYLE={
   owner:'',
-  sales:'background:linear-gradient(135deg,#2A6FDB,#1a4a99);color:#fff;',
-  factory:'background:linear-gradient(135deg,#C2703D,#8a4e29);color:#fff;',
-  clientmanager:'background:linear-gradient(135deg,#7B4FC9,#4d2f85);color:#fff;'
+  sales:'background:linear-gradient(135deg,#7B4FC9,#4d2f85);color:#fff;',
+  factory:'background:linear-gradient(135deg,#C2703D,#8a4e29);color:#fff;'
 };
 function renderTeam(){
   var list=document.getElementById('teamList');
@@ -1982,10 +2009,14 @@ function renderTeam(){
     var isOwner=m.role==='owner';
     var avAttr=isOwner?' class="av studio"':' class="av" style="'+(ROLE_AVATAR_STYLE[m.role]||'')+'"';
     var youTag=m.you?' <span class="you-tag">You</span>':'';
+    var actions=m.email?(
+      '<button class="rowbtn" type="button" onclick="resetMemberAccess(\''+esc(m.id)+'\')">Reset access</button>'+
+      '<button class="rowbtn rowbtn--danger" type="button" onclick="removeMember(\''+esc(m.id)+'\')">Remove</button>'
+    ):'<button class="rowbtn rowbtn--danger" type="button" onclick="removeMember(\''+esc(m.id)+'\')">Remove</button>';
     return '<div class="teamrow">'+
       '<div class="teamrow__who"><span'+avAttr+'>'+esc(initialsOf(m.name))+'</span>'+
       '<div><div class="teamrow__name">'+esc(m.name)+youTag+'</div><div class="teamrow__email">'+esc(m.email)+'</div></div></div>'+
-      '<span class="rolepill '+(ROLE_PILL_CLASS[m.role]||'')+'">'+esc(ROLE_LABELS[m.role]||m.role)+'</span>'+
+      '<div class="teamrow__right"><span class="rolepill '+(ROLE_PILL_CLASS[m.role]||'')+'">'+esc(ROLE_LABELS[m.role]||m.role)+'</span>'+actions+'</div>'+
     '</div>';
   }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No team members yet.</div>';
 }
@@ -1994,15 +2025,82 @@ function renderVendors(){
   if(!list)return;
   var vendors=(window.SDB&&window.SDB.vendors)||[];
   list.innerHTML=vendors.map(function(v){
+    var actions=v.email?(
+      '<button class="rowbtn" type="button" onclick="resetVendorAccess(\''+esc(v.id)+'\')">Reset access</button>'+
+      '<button class="rowbtn rowbtn--danger" type="button" onclick="removeVendor(\''+esc(v.id)+'\')">Remove</button>'
+    ):'<button class="rowbtn rowbtn--danger" type="button" onclick="removeVendor(\''+esc(v.id)+'\')">Remove</button>';
     return '<div class="teamrow">'+
       '<div class="teamrow__who"><span class="av" style="background:var(--cm-surface-2);color:var(--cm-text-strong);">'+esc(initialsOf(v.name))+'</span>'+
       '<div><div class="teamrow__name">'+esc(v.name)+'</div><div class="teamrow__email">'+esc(v.loc||'Location not specified')+(v.email?' · '+esc(v.email):'')+'</div></div></div>'+
-      (v.contact?'<span class="rolepill" style="color:var(--cm-text-muted);">'+esc(v.contact)+'</span>':'')+
+      '<div class="teamrow__right">'+(v.contact?'<span class="rolepill" style="color:var(--cm-text-muted);">'+esc(v.contact)+'</span>':'')+actions+'</div>'+
     '</div>';
   }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No vendors yet.</div>';
 }
 window.renderTeam=renderTeam;
 window.renderVendors=renderVendors;
+
+// Carve Admin's authority over a team member's/vendor's login access is kept
+// independent of whatever password they've set: "Reset access" revokes the
+// current password (they'll need a fresh invite to set a new one — sent
+// immediately below), and "Remove" revokes access entirely and takes them
+// off the roster. Both call the server directly by email, no dependency on
+// the account's current password.
+function resetMemberAccess(id){
+  var m=(window.SDB.team||[]).filter(function(x){return x.id===id;})[0];
+  if(!m)return;
+  if(!confirm('Reset access for '+m.name+'? Their current password (if any) will stop working, and a new invite will be sent to '+m.email+'.'))return;
+  fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'adminResetAccess',email:m.email})})
+    .then(function(){
+      return fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:m.name,email:m.email,role:m.role})});
+    })
+    .then(function(r){return r.json().catch(function(){return {};});})
+    .then(function(data){
+      alert((data&&data.emailed)?('Access reset. A new invite was sent to '+m.email+'.'):('Access reset, but the invite email didn\'t send — share the sign-up link with '+m.email+' directly.'));
+    })
+    .catch(function(){alert('Could not reach the server. Please try again.');});
+}
+function removeMember(id){
+  var m=(window.SDB.team||[]).filter(function(x){return x.id===id;})[0];
+  if(!m)return;
+  if(!confirm('Remove '+m.name+' from the team? They will immediately lose portal access.'))return;
+  window.SDB.team=(window.SDB.team||[]).filter(function(x){return x.id!==id;});
+  if(typeof saveSRC==='function')saveSRC();
+  renderTeam();
+  if(m.email){
+    fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'adminRemoveAccount',email:m.email})}).catch(function(){});
+  }
+}
+function resetVendorAccess(id){
+  var v=(window.SDB.vendors||[]).filter(function(x){return x.id===id;})[0];
+  if(!v||!v.email)return;
+  if(!confirm('Reset access for '+v.name+'? Their current password (if any) will stop working, and a new invite will be sent to '+v.email+'.'))return;
+  fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'adminResetAccess',email:v.email})})
+    .then(function(){
+      return fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:v.contact||v.name,email:v.email,role:'factory'})});
+    })
+    .then(function(r){return r.json().catch(function(){return {};});})
+    .then(function(data){
+      alert((data&&data.emailed)?('Access reset. A new invite was sent to '+v.email+'.'):('Access reset, but the invite email didn\'t send — share the sign-up link with '+v.email+' directly.'));
+    })
+    .catch(function(){alert('Could not reach the server. Please try again.');});
+}
+function removeVendor(id){
+  var v=(window.SDB.vendors||[]).filter(function(x){return x.id===id;})[0];
+  if(!v)return;
+  if(!confirm('Remove '+v.name+' as a vendor? They will immediately lose portal access and be removed from Sourcing & Quotes.'))return;
+  window.SDB.vendors=(window.SDB.vendors||[]).filter(function(x){return x.id!==id;});
+  if(typeof saveSRC==='function')saveSRC();
+  // Mutate in place (splice), not reassign: other code closes over the
+  // original SHOPS/PRODUCTION_ADMINS array objects directly, not window.*,
+  // so replacing window.SHOPS with a new filtered array would leave those
+  // closures still seeing the removed vendor.
+  if(window.SHOPS){var si=window.SHOPS.findIndex(function(s){return s.id===id;});if(si>=0)window.SHOPS.splice(si,1);}
+  if(window.PRODUCTION_ADMINS){var pi=window.PRODUCTION_ADMINS.findIndex(function(a){return a.shopId===id;});if(pi>=0)window.PRODUCTION_ADMINS.splice(pi,1);}
+  renderVendors();
+  if(v.email){
+    fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'adminRemoveAccount',email:v.email})}).catch(function(){});
+  }
+}
 function openAddMember(){document.getElementById('addMemberModal').hidden=false;}
 function closeAddMember(){document.getElementById('addMemberModal').hidden=true;var f=document.getElementById('addMemberForm').querySelector('form');if(f)f.reset();}
 function createTeamMember(e){
@@ -2016,7 +2114,19 @@ function createTeamMember(e){
   if(typeof saveSRC==='function')saveSRC();
   renderTeam();
   closeAddMember();
-  alert('Added '+name+' as '+(ROLE_LABELS[role]||role)+'. In the live portal they would receive an email invite to set their password.');
+  var roleLabel=ROLE_LABELS[role]||role;
+  fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:role})})
+    .then(function(r){return r.json().catch(function(){return {};});})
+    .then(function(data){
+      if(data&&data.emailed){
+        alert('Added '+name+' as '+roleLabel+'. An invite email was sent to '+email+' to set their password.');
+      }else{
+        alert('Added '+name+' as '+roleLabel+', but no invite email was sent (email service isn\'t configured yet) — send them the sign-up link directly.');
+      }
+    })
+    .catch(function(){
+      alert('Added '+name+' as '+roleLabel+', but the invite email failed to send — send them the sign-up link directly.');
+    });
   return false;
 }
 function openAddVendor(){document.getElementById('addVendorModal').hidden=false;}
@@ -2038,7 +2148,22 @@ function createVendor(e){
   if(email&&window.PRODUCTION_ADMINS)window.PRODUCTION_ADMINS.push({shopId:id,name:contact||name,company:name,email:email});
   renderVendors();
   closeAddVendor();
-  alert('Added '+name+' as a vendor. They can now be invited to quote projects from Sourcing & Quotes.');
+  if(!email){
+    alert('Added '+name+' as a vendor. They can now be invited to quote projects from Sourcing & Quotes. Add a contact email later to send them portal login access.');
+    return false;
+  }
+  fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:contact||name,email:email,role:'factory'})})
+    .then(function(r){return r.json().catch(function(){return {};});})
+    .then(function(data){
+      if(data&&data.emailed){
+        alert('Added '+name+' as a vendor. An invite email was sent to '+email+' so they can set a password and sign in.');
+      }else{
+        alert('Added '+name+' as a vendor, but no invite email was sent (email service isn\'t configured yet) — send them the sign-up link directly.');
+      }
+    })
+    .catch(function(){
+      alert('Added '+name+' as a vendor, but the invite email failed to send — send them the sign-up link directly.');
+    });
   return false;
 }
 </script>
@@ -3827,18 +3952,42 @@ var SESSION_KEY='cm_portal_session';
 function attemptLogin(){
   var email=document.getElementById('loginEmail').value.trim().toLowerCase();
   var pass=document.getElementById('loginPass').value;
-  var role=ACCOUNTS[email];
   var err=document.getElementById('loginErr');
-  if(!role||!pass){err.hidden=false;return;}
+  var btn=document.querySelector('#loginGate button[type="submit"]');
+  if(!email||!pass){err.textContent="That email isn't recognized. Check with your Carve Model contact.";err.hidden=false;return;}
   err.hidden=true;
-  localStorage.setItem(SESSION_KEY,JSON.stringify({email:email,role:role}));
-  enterSession(role,email);
+  if(btn){btn.disabled=true;btn.textContent='Signing in…';}
+  fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',email:email,password:pass})})
+    .then(function(r){return r.json().catch(function(){return {};}).then(function(d){return {ok:r.ok,data:d};});})
+    .then(function(res){
+      if(btn){btn.disabled=false;btn.textContent='Sign in';}
+      if(!res.ok||!res.data||!res.data.role){
+        err.textContent=(res.data&&res.data.error)||"That email isn't recognized. Check with your Carve Model contact.";
+        err.hidden=false;
+        return;
+      }
+      var realEmail=res.data.email||email;
+      localStorage.setItem(SESSION_KEY,JSON.stringify({email:realEmail,role:res.data.role,name:res.data.name||null}));
+      enterSession(res.data.role,realEmail,res.data.name);
+    })
+    .catch(function(){
+      if(btn){btn.disabled=false;btn.textContent='Sign in';}
+      err.textContent='Could not reach the server. Check your connection and try again.';
+      err.hidden=false;
+    });
 }
-function enterSession(role,email){
+function enterSession(role,email,name){
   document.getElementById('loginGate').style.display='none';
   var lbl=document.getElementById('sessionLabel');
   if(lbl)lbl.textContent='Signed in \u00b7 '+email;
   setRole(role);
+  // Real invited accounts carry a real name \u2014 show it instead of the fixed
+  // per-role demo persona from ROLE_INFO (setRole() just set those fields).
+  if(name){
+    var wn=document.getElementById('whoName'), wa=document.getElementById('whoAv');
+    if(wn)wn.textContent=name;
+    if(wa&&typeof initialsOf==='function')wa.textContent=initialsOf(name);
+  }
   if(role==='client'&&window.recordClientActivity)window.recordClientActivity(email);
   if(role==='factory'){
     var admin=PRODUCTION_ADMINS.filter(function(p){return p.email.toLowerCase()===email.toLowerCase();})[0];
@@ -3854,13 +4003,84 @@ function logOutSession(){
   localStorage.removeItem(SESSION_KEY);
   location.reload();
 }
+
+/* ---- Account settings: every role can change their own email/password ---- */
+function currentSession(){
+  try{return JSON.parse(localStorage.getItem(SESSION_KEY))||null;}catch(e){return null;}
+}
+function openAccountSettings(){
+  var s=currentSession();
+  if(!s||!s.email){alert('Sign in first to manage account settings.');return;}
+  document.getElementById('acctEmail').value=s.email;
+  document.getElementById('acctCurrentPass').value='';
+  document.getElementById('acctNewPass').value='';
+  document.getElementById('acctNewPass2').value='';
+  document.getElementById('acctErr').hidden=true;
+  document.getElementById('accountModal').hidden=false;
+}
+function closeAccountSettings(){document.getElementById('accountModal').hidden=true;}
+function submitAccountSettings(e){
+  e.preventDefault();
+  var s=currentSession();
+  if(!s||!s.email){closeAccountSettings();return false;}
+  var err=document.getElementById('acctErr');
+  err.hidden=true;
+  var currentPass=document.getElementById('acctCurrentPass').value;
+  var newEmail=document.getElementById('acctEmail').value.trim();
+  var newPass=document.getElementById('acctNewPass').value;
+  var newPass2=document.getElementById('acctNewPass2').value;
+  if(newPass&&newPass!==newPass2){err.textContent='New passwords do not match.';err.hidden=false;return false;}
+  if(newPass&&newPass.length<8){err.textContent='New password must be at least 8 characters.';err.hidden=false;return false;}
+  var payload={action:'updateAccount',email:s.email,currentPassword:currentPass};
+  if(newEmail&&newEmail.toLowerCase()!==s.email.toLowerCase())payload.newEmail=newEmail;
+  if(newPass)payload.newPassword=newPass;
+  var btn=e.target.querySelector('button[type="submit"]');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json().catch(function(){return {};}).then(function(d){return {ok:r.ok,data:d};});})
+    .then(function(res){
+      if(btn){btn.disabled=false;btn.textContent='Save changes';}
+      if(!res.ok||!res.data||!res.data.email){
+        err.textContent=(res.data&&res.data.error)||'Could not save changes.';
+        err.hidden=false;
+        return;
+      }
+      var updatedEmail=res.data.email, updatedRole=res.data.role, updatedName=res.data.name;
+      localStorage.setItem(SESSION_KEY,JSON.stringify({email:updatedEmail,role:updatedRole,name:updatedName||s.name||null}));
+      var lbl=document.getElementById('sessionLabel');
+      if(lbl)lbl.textContent='Signed in · '+updatedEmail;
+      // Best-effort: if this browser's own Team & Access roster has a matching
+      // entry (by old email), keep its email in sync too. Team/vendor rosters
+      // live only in this browser's localStorage, not on the server, so this
+      // can't reach other admins' browsers — a known limitation of that data
+      // model, unrelated to this change.
+      if(window.SDB&&window.SDB.team){
+        window.SDB.team.forEach(function(m){if(m.email&&m.email.toLowerCase()===s.email.toLowerCase())m.email=updatedEmail;});
+        if(typeof saveSRC==='function')saveSRC();
+        if(typeof renderTeam==='function')renderTeam();
+      }
+      closeAccountSettings();
+      alert('Account settings saved.');
+    })
+    .catch(function(){
+      if(btn){btn.disabled=false;btn.textContent='Save changes';}
+      err.textContent='Could not reach the server. Check your connection and try again.';
+      err.hidden=false;
+    });
+  return false;
+}
 (function(){
   var raw=localStorage.getItem(SESSION_KEY);
   if(!raw){document.getElementById('loginGate').style.display='flex';return;}
   window.addEventListener('load',function(){
     try{
       var s=JSON.parse(raw);
-      if(s&&s.role&&ACCOUNTS[s.email]===s.role){enterSession(s.role,s.email);return;}
+      // Trust a stored session directly rather than re-checking it against the
+      // hardcoded ACCOUNTS map: ACCOUNTS only covers the legacy demo emails,
+      // but a session set here only ever comes from a successful /api/auth
+      // login (real invited accounts included), so the ACCOUNTS lookup would
+      // wrongly log out anyone whose account isn't in that fixed list.
+      if(s&&s.role&&s.email){enterSession(s.role,s.email,s.name);return;}
     }catch(e){}
     document.getElementById('loginGate').style.display='flex';
   });
@@ -4063,7 +4283,7 @@ function seedSRC(){
   return {
     briefs:[],leads:[],
     team:[
-      {id:'t_cm_charles',name:'Charles Liu',email:'charles6liu@gmail.com',role:'clientmanager',you:true}
+      {id:'t_cm_charles',name:'Charles Liu',email:'cliu@physical-model.com',role:'sales',you:true}
     ],
     vendors:[
       {id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',contact:'Xin Liao',email:'13918826884@163.com'}

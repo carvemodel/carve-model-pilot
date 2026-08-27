@@ -50,6 +50,8 @@ body{background:var(--cm-ink-950);min-height:100vh;}
 .auth__demo-nav span{letter-spacing:0.04em;text-transform:uppercase;}
 .auth__demo-nav button{background:none;border:1px solid var(--cm-border);color:var(--cm-gray-300);border-radius:var(--r-pill);padding:0.3rem 0.7rem;font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.03em;transition:color var(--dur-2),border-color var(--dur-2);}
 .auth__demo-nav button:hover{color:var(--cm-text-strong);border-color:var(--cm-text-subtle);}
+.auth__err{font-size:0.82rem;color:#e08a8a;margin-top:0.7rem;line-height:1.4;}
+.btn[disabled]{opacity:0.6;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -68,49 +70,21 @@ body{background:var(--cm-ink-950);min-height:100vh;}
         <div class="field"><label for="loginPw">Password</label>
           <div class="pw-wrap"><input id="loginPw" class="full-pw" type="password" required placeholder="Your password" autocomplete="current-password"><button type="button" class="toggle" onclick="togglePw('loginPw',this)">Show</button></div>
         </div>
+        <div class="auth__err" id="err-login" hidden></div>
         <button class="btn btn--primary btn--lg full" type="submit">Sign in</button>
       </form>
       <div class="auth__alt">
-        <button class="linkbtn" onclick="showPanel('magic')">Email me a link instead</button>
-        <button class="linkbtn" onclick="showPanel('forgot')">Forgot password?</button>
+        <button class="linkbtn" onclick="showPanel('unavailable')">Forgot password?</button>
       </div>
       <div class="auth__foot">New client? <a href="/contact">Request a quote</a> to get started.</div>
     </div>
 
-    <!-- MAGIC LINK -->
-    <div class="auth-panel" id="panel-magic" hidden>
-      <h1>Email a sign-in link</h1>
-      <p class="auth__sub">We'll send a one-time link to your inbox — no password needed.</p>
-      <form onsubmit="return sendMagic(event)">
-        <div class="field"><label for="magicEmail">Email</label><input id="magicEmail" type="email" required placeholder="you@firm.com" autocomplete="email"></div>
-        <button class="btn btn--primary btn--lg full" type="submit">Send sign-in link</button>
-      </form>
-      <div style="text-align:center;"><button class="auth__back" onclick="showPanel('login')">← Back to sign in</button></div>
-    </div>
-    <div class="auth-panel" id="panel-magic-sent" hidden>
+    <!-- PASSWORD RESET NOT YET AVAILABLE -->
+    <div class="auth-panel" id="panel-unavailable" hidden>
       <div class="auth__confirm">
-        <div class="auth__icon">✓</div>
-        <h1>Check your inbox</h1>
-        <p>If an account exists for <b id="magicAddr">that email</b>, a sign-in link is on its way. It expires in 15 minutes.</p>
-      </div>
-      <div style="text-align:center;"><button class="auth__back" onclick="showPanel('login')">← Back to sign in</button></div>
-    </div>
-
-    <!-- FORGOT PASSWORD -->
-    <div class="auth-panel" id="panel-forgot" hidden>
-      <h1>Reset your password</h1>
-      <p class="auth__sub">Enter your email and we'll send a link to choose a new password.</p>
-      <form onsubmit="return sendReset(event)">
-        <div class="field"><label for="resetEmail">Email</label><input id="resetEmail" type="email" required placeholder="you@firm.com" autocomplete="email"></div>
-        <button class="btn btn--primary btn--lg full" type="submit">Send reset link</button>
-      </form>
-      <div style="text-align:center;"><button class="auth__back" onclick="showPanel('login')">← Back to sign in</button></div>
-    </div>
-    <div class="auth-panel" id="panel-reset-sent" hidden>
-      <div class="auth__confirm">
-        <div class="auth__icon">✓</div>
-        <h1>Reset link sent</h1>
-        <p>If an account exists for <b id="resetAddr">that email</b>, a password-reset link is on its way.</p>
+        <div class="auth__icon">i</div>
+        <h1>Not available yet</h1>
+        <p>Self-service password reset isn't set up during this pilot. Contact your Carve Model project lead directly and they can help you regain access.</p>
       </div>
       <div style="text-align:center;"><button class="auth__back" onclick="showPanel('login')">← Back to sign in</button></div>
     </div>
@@ -118,14 +92,15 @@ body{background:var(--cm-ink-950);min-height:100vh;}
     <!-- SET PASSWORD (invite) -->
     <div class="auth-panel" id="panel-invite" hidden>
       <h1>Set your password</h1>
-      <p class="auth__sub">You've been invited to your Carve Model workspace. Choose a password to finish setting up your account.</p>
-      <form onsubmit="return setPassword(event)">
-        <div class="field"><label for="inviteEmail">Email</label><input id="inviteEmail" type="email" value="jane@firm.com" readonly></div>
+      <p class="auth__sub" id="inviteSub">Checking your invite…</p>
+      <form onsubmit="return setPassword(event)" hidden>
+        <div class="field"><label for="inviteEmail">Email</label><input id="inviteEmail" type="email" readonly></div>
         <div class="field"><label for="invitePw">Create password</label>
           <div class="pw-wrap"><input id="invitePw" class="full-pw" type="password" required minlength="8" placeholder="At least 8 characters" autocomplete="new-password"><button type="button" class="toggle" onclick="togglePw('invitePw',this)">Show</button></div>
           <div class="hint">Use 8+ characters with a mix of letters and numbers.</div>
         </div>
         <div class="field"><label for="invitePw2">Confirm password</label><input id="invitePw2" type="password" required placeholder="Re-enter password" autocomplete="new-password"></div>
+        <div class="auth__err" id="err-invite" hidden></div>
         <button class="btn btn--primary btn--lg full" type="submit">Set password &amp; continue</button>
       </form>
     </div>
@@ -142,25 +117,93 @@ function togglePw(id,btn){
   var i=document.getElementById(id);
   if(i.type==='password'){i.type='text';btn.textContent='Hide';}else{i.type='password';btn.textContent='Show';}
 }
-function go(){ try{localStorage.setItem('cm_session','1');}catch(e){} location.href='/app'; }
-function signIn(e){e.preventDefault();go();return false;}
+
+// Real backend calls against api/auth.js — same Redis-backed accounts the
+// Studio Portal (app.html) itself logs into. SESSION_KEY here must match
+// app.html's SESSION_KEY ('cm_portal_session') so a session set on this page
+// is recognized once redirected to /app.
+var SESSION_KEY='cm_portal_session';
+function callAuth(action,extra){
+  var body=Object.assign({action:action},extra||{});
+  return fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){return r.json().catch(function(){return {};}).then(function(d){return {ok:r.ok,data:d};});});
+}
+function setSession(email,role,name){
+  try{localStorage.setItem(SESSION_KEY,JSON.stringify({email:email,role:role,name:name||null}));}catch(e){}
+}
+function showErr(name,msg){var el=document.getElementById('err-'+name);if(el){el.textContent=msg;el.hidden=false;}}
+function clearErr(name){var el=document.getElementById('err-'+name);if(el)el.hidden=true;}
+function setBusy(btn,busy,label){if(!btn)return;btn.disabled=busy;if(label)btn.textContent=label;}
+
+function signIn(e){
+  e.preventDefault();
+  clearErr('login');
+  var email=document.getElementById('loginEmail').value.trim();
+  var pw=document.getElementById('loginPw').value;
+  var btn=e.target.querySelector('button[type="submit"]');
+  setBusy(btn,true,'Signing in…');
+  callAuth('login',{email:email,password:pw}).then(function(res){
+    setBusy(btn,false,'Sign in');
+    if(!res.ok||!res.data||!res.data.role){
+      showErr('login',(res.data&&res.data.error)||'Incorrect email or password.');
+      return;
+    }
+    setSession(res.data.email||email,res.data.role,res.data.name);
+    location.href='/app';
+  }).catch(function(){
+    setBusy(btn,false,'Sign in');
+    showErr('login','Could not reach the server. Check your connection and try again.');
+  });
+  return false;
+}
+
 function setPassword(e){
   e.preventDefault();
+  clearErr('invite');
   var a=document.getElementById('invitePw').value,b=document.getElementById('invitePw2').value;
-  if(a!==b){alert('Passwords do not match. Please re-enter.');return false;}
-  go();return false;
+  if(a!==b){showErr('invite','Passwords do not match. Please re-enter.');return false;}
+  if(a.length<8){showErr('invite','Password must be at least 8 characters.');return false;}
+  var token=new URLSearchParams(location.search).get('invite');
+  var btn=e.target.querySelector('button[type="submit"]');
+  setBusy(btn,true,'Setting password…');
+  callAuth('acceptInvite',{token:token,password:a}).then(function(res){
+    setBusy(btn,false,'Set password & continue');
+    if(!res.ok||!res.data||!res.data.role){
+      showErr('invite',(res.data&&res.data.error)||'This invite link is invalid or has expired.');
+      return;
+    }
+    setSession(res.data.email,res.data.role,res.data.name);
+    location.href='/app';
+  }).catch(function(){
+    setBusy(btn,false,'Set password & continue');
+    showErr('invite','Could not reach the server. Check your connection and try again.');
+  });
+  return false;
 }
-function sendMagic(e){e.preventDefault();document.getElementById('magicAddr').textContent=document.getElementById('magicEmail').value||'that email';showPanel('magic-sent');return false;}
-function sendReset(e){e.preventDefault();document.getElementById('resetAddr').textContent=document.getElementById('resetEmail').value||'that email';showPanel('reset-sent');return false;}
 
-// Route: an invite link (/login?invite=TOKEN&email=...) opens the set-password panel.
+// Route: an invite link (/login?invite=TOKEN) opens the set-password panel
+// and resolves the token against the server before showing the form, so an
+// expired/invalid link fails honestly instead of silently accepting anything.
 (function(){
   var q=new URLSearchParams(location.search);
-  if(q.get('invite')!==null){
-    var em=q.get('email');
-    if(em)document.getElementById('inviteEmail').value=em;
-    showPanel('invite');
-  }
+  var token=q.get('invite');
+  if(token===null)return;
+  showPanel('invite');
+  var form=document.querySelector('#panel-invite form');
+  var sub=document.getElementById('inviteSub');
+  callAuth('resolveInvite',{token:token}).then(function(res){
+    if(!res.ok||!res.data||!res.data.email){
+      if(sub)sub.textContent='';
+      showErr('invite',(res.data&&res.data.error)||'This invite link is invalid or has expired.');
+      return;
+    }
+    document.getElementById('inviteEmail').value=res.data.email;
+    if(sub)sub.textContent="You've been invited to your Carve Model workspace"+(res.data.name?(', '+res.data.name):'')+". Choose a password to finish setting up your account.";
+    if(form)form.hidden=false;
+  }).catch(function(){
+    if(sub)sub.textContent='';
+    showErr('invite','Could not reach the server. Check your connection and try again.');
+  });
 })();
 </script>
 </body>
