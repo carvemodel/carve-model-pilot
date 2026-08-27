@@ -428,6 +428,7 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .projassign__awarded{display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;color:var(--cm-text-subtle);}
 .projassign__row{margin-top:0.6rem;}
 .projassign__contact{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.8rem;}
+.projassign__invoice{border-top:1px solid var(--cm-line-faint);margin-top:0.9rem;padding-top:0.2rem;}
 .inv-ok{width:46px;height:46px;border-radius:50%;background:var(--cm-silver);color:var(--cm-ink-900);display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:1rem;}
 .inv-ok-h{font-family:var(--font-display);font-size:1.2rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);margin-bottom:0.6rem;}
 .linkbox{display:flex;gap:0.5rem;margin-top:0.4rem;}
@@ -1495,12 +1496,12 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 <tr><td>Leads &amp; pipeline</td><td class="y">✓</td><td class="n">—</td><td class="n">—</td></tr>
                 <tr><td>Clients roster</td><td class="y">✓</td><td class="n">—</td><td class="n">—</td></tr>
                 <tr><td>Quotes &amp; estimates</td><td class="y">Edit</td><td class="n">—</td><td class="n">—</td></tr>
-                <tr><td>Assigned project overview</td><td class="y">✓ (all)</td><td class="y">Assigned + awarded only</td><td class="y">✓</td></tr>
-                <tr><td>Assigned project's client contact</td><td class="y">✓ (all)</td><td class="y">✓</td><td class="n">—</td></tr>
-                <tr><td>Invoices &amp; pricing</td><td class="y">✓</td><td class="y">View</td><td class="n">—</td></tr>
-                <tr><td>Milestones &amp; fabrication</td><td class="y">Edit</td><td class="y">View</td><td class="y">Edit</td></tr>
-                <tr><td>Files &amp; QC photos</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
-                <tr><td>Client messaging</td><td class="y">✓</td><td class="y">✓</td><td class="y">Internal</td></tr>
+                <tr><td>My Projects (assigned + awarded to production)</td><td class="n">—</td><td class="y">✓</td><td class="n">—</td></tr>
+                <tr><td>Assigned project's client contact</td><td class="y">✓ (all, via Projects tab)</td><td class="y">✓</td><td class="n">—</td></tr>
+                <tr><td>Assigned project's invoice</td><td class="y">✓ (all)</td><td class="y">View / download only</td><td class="n">—</td></tr>
+                <tr><td>Milestones &amp; fabrication</td><td class="y">Edit</td><td class="n">—</td><td class="y">Edit</td></tr>
+                <tr><td>Files &amp; QC photos</td><td class="y">✓</td><td class="n">—</td><td class="y">✓</td></tr>
+                <tr><td>Client messaging</td><td class="y">✓</td><td class="n">—</td><td class="y">Internal</td></tr>
                 <tr><td>Team &amp; access control</td><td class="y">✓</td><td class="n">—</td><td class="n">—</td></tr>
               </tbody>
             </table>
@@ -1533,6 +1534,23 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="linkbox"><input id="inviteLink" type="text" readonly><button class="btn btn--ghost btn--sm" onclick="copyLink()" id="copyBtn">Copy</button></div>
         <p class="modal__note">The link is tied to their email and expires in 7 days. In the live portal, it's also emailed automatically.</p>
         <button class="btn btn--primary full" onclick="closeInvite()" style="margin-top:1.2rem;">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Assign a Client Manager (shown right after awarding a brief to production) -->
+<div class="modal-overlay" id="assignManagerModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Assign a Client Manager">
+    <div class="modal__head"><h3>Assign a Client Manager</h3><button class="modal__x" onclick="closeAssignManager()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <p class="modal__intro">Awarded to production. Pick who from Carve's team will manage this project going forward — they'll see it (and its invoice) in their own My Projects view.</p>
+      <div class="mfield"><label for="assignManagerSelect">Client Manager</label>
+        <select id="assignManagerSelect"></select>
+      </div>
+      <div style="display:flex;gap:0.6rem;margin-top:0.4rem;">
+        <button class="btn btn--primary" style="flex:1;" onclick="submitAssignManager()">Assign</button>
+        <button class="btn btn--ghost" style="flex:1;" onclick="closeAssignManager()">Skip for now</button>
       </div>
     </div>
   </div>
@@ -1593,6 +1611,21 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <button class="btn btn--primary full" type="submit" style="margin-top:0.4rem;">Add vendor</button>
         </form>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reassign a vendor's account to a new contact person (owner) -->
+<div class="modal-overlay" id="reassignVendorModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Reassign vendor contact">
+    <div class="modal__head"><h3>Reassign vendor contact</h3><button class="modal__x" onclick="closeReassignVendor()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <p class="modal__intro">Use this when the person who manages this vendor account changes — e.g. someone leaves the factory. The old email loses access immediately, and the new contact gets an invite to set their own password.</p>
+      <form onsubmit="return submitReassignVendor(event)">
+        <div class="mfield"><label for="reassignName">New contact name</label><input id="reassignName" type="text" required placeholder="Alex Kim"></div>
+        <div class="mfield"><label for="reassignEmail">New contact email</label><input id="reassignEmail" type="email" required placeholder="alex@summitmodelworks.com"></div>
+        <button class="btn btn--primary full" type="submit" style="margin-top:0.4rem;">Reassign &amp; send invite</button>
+      </form>
     </div>
   </div>
 </div>
@@ -2069,7 +2102,7 @@ function renderVendors(){
   list.innerHTML=vendors.map(function(v){
     var actions=v.email?(
       '<button class="rowbtn" type="button" onclick="impersonateAccount(\''+esc(v.email)+'\',\'factory\',\''+esc(v.contact||v.name)+'\')">Log in as</button>'+
-      '<button class="rowbtn" type="button" onclick="resetVendorAccess(\''+esc(v.id)+'\')">Reset access</button>'+
+      '<button class="rowbtn" type="button" onclick="openReassignVendor(\''+esc(v.id)+'\')">Reassign contact</button>'+
       '<button class="rowbtn rowbtn--danger" type="button" onclick="removeVendor(\''+esc(v.id)+'\')">Remove</button>'
     ):'<button class="rowbtn rowbtn--danger" type="button" onclick="removeVendor(\''+esc(v.id)+'\')">Remove</button>';
     return '<div class="teamrow">'+
@@ -2082,80 +2115,137 @@ function renderVendors(){
 window.renderTeam=renderTeam;
 window.renderVendors=renderVendors;
 
-/* ---- Project assignments (owner): who's assigned, awarded status, client contact ---- */
-function findProject(id){return (window.SDB.projects||[]).filter(function(p){return p.id===id;})[0];}
-function renderProjectAssignments(){
+/* ---- Client Manager assignment: lives on the awarded brief itself — that's
+   the real project entity in Sourcing & Quotes — instead of a separate
+   registry. Set right after awarding (see SRC_award) or changed anytime
+   from the Projects tab. ---- */
+function awardedBriefs(){return (window.SDB.briefs||[]).filter(function(b){return b.status==='awarded';});}
+function findBrief(id){return (window.SDB.briefs||[]).filter(function(b){return b.id===id;})[0];}
+var _pendingAssignBriefId=null;
+function assignManagerOptions(selectedEmail){
+  var managers=((window.SDB&&window.SDB.team)||[]).filter(function(m){return m.role==='sales';});
+  return '<option value="">— Unassigned —</option>'+managers.map(function(m){
+    var chosen=(selectedEmail&&m.email&&selectedEmail.toLowerCase()===m.email.toLowerCase())?' selected':'';
+    return '<option value="'+esc(m.email)+'"'+chosen+'>'+esc(m.name)+'</option>';
+  }).join('');
+}
+function openAssignManager(briefId){
+  _pendingAssignBriefId=briefId;
+  var b=findBrief(briefId);
+  document.getElementById('assignManagerSelect').innerHTML=assignManagerOptions(b&&b.assignedManager);
+  document.getElementById('assignManagerModal').hidden=false;
+}
+window.openAssignManager=openAssignManager;
+function closeAssignManager(){document.getElementById('assignManagerModal').hidden=true;_pendingAssignBriefId=null;}
+window.closeAssignManager=closeAssignManager;
+function submitAssignManager(){
+  var b=findBrief(_pendingAssignBriefId);
+  if(b){
+    b.assignedManager=document.getElementById('assignManagerSelect').value||null;
+    if(typeof saveSRC==='function')saveSRC();
+    if(typeof SRC_render==='function')SRC_render();
+    if(window.renderAwardedProjects)window.renderAwardedProjects();
+    if(window.renderMyAssigned)window.renderMyAssigned();
+  }
+  closeAssignManager();
+}
+window.submitAssignManager=submitAssignManager;
+
+/* ---- Projects tab (owner): every awarded brief, its assigned Client
+   Manager, client contact, and — click a project to expand it — its
+   Invoice & Payment panel. Invoices deliberately aren't a top-level nav tab
+   anymore; they live under the specific project they belong to. ---- */
+var expandedAwardedId=null;
+function toggleAwardedProject(id){
+  expandedAwardedId=(expandedAwardedId===id)?null:id;
+  renderAwardedProjects();
+}
+window.toggleAwardedProject=toggleAwardedProject;
+function renderAwardedProjects(){
   var wrap=document.getElementById('projectAssignList');
   if(!wrap)return;
-  var projects=(window.SDB&&window.SDB.projects)||[];
-  var managers=((window.SDB&&window.SDB.team)||[]).filter(function(m){return m.role==='sales';});
-  wrap.innerHTML=projects.map(function(p){
-    var options='<option value="">— Unassigned —</option>'+managers.map(function(m){
-      var sel=(p.assignedTo&&m.email&&p.assignedTo.toLowerCase()===m.email.toLowerCase())?' selected':'';
-      return '<option value="'+esc(m.email)+'"'+sel+'>'+esc(m.name)+'</option>';
-    }).join('');
+  wrap.innerHTML=awardedBriefs().map(function(b){
+    var c=b.client||{};
+    var isOpen=expandedAwardedId===b.id;
+    var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
+    var invoicePanel='';
+    if(isOpen){
+      if(hasInvoice&&typeof window.invoiceLineAdmin==='function'){
+        var inv=b.clientQuote.invoice;
+        invoicePanel='<div class="projassign__invoice">'+
+          '<div class="mock__k" style="margin:0.9rem 0 0.5rem;">Invoice &amp; payment</div>'+
+          window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
+          window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
+        '</div>';
+      }else{
+        invoicePanel='<div class="projassign__invoice" style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
+      }
+    }
     return '<div class="projassign">'+
-      '<div class="projassign__head"><span class="projassign__name">'+esc(p.name)+'</span>'+
-        '<label class="projassign__awarded"><input type="checkbox" '+(p.awarded?'checked':'')+' onchange="setProjectAwarded(\''+esc(p.id)+'\',this.checked)"> Awarded to production</label></div>'+
-      '<div class="projassign__row"><div class="mfield" style="margin:0;"><label>Assigned Client Manager</label>'+
-        '<select onchange="setProjectAssignee(\''+esc(p.id)+'\',this.value)">'+options+'</select></div></div>'+
+      '<div class="projassign__head" style="cursor:pointer;" onclick="toggleAwardedProject(\''+esc(b.id)+'\')"><span class="projassign__name">'+esc(b.title)+'</span>'+
+        '<span class="rowbtn">'+(isOpen?'Hide invoice & payment ▲':'Invoice & payment ▼')+'</span></div>'+
       '<div class="projassign__row projassign__contact">'+
-        '<div class="mfield" style="margin:0;"><label>Client company</label><input type="text" value="'+esc(p.company||'')+'" onchange="setProjectField(\''+esc(p.id)+'\',\'company\',this.value)"></div>'+
-        '<div class="mfield" style="margin:0;"><label>Contact name</label><input type="text" value="'+esc(p.contactName||'')+'" onchange="setProjectField(\''+esc(p.id)+'\',\'contactName\',this.value)"></div>'+
-        '<div class="mfield" style="margin:0;"><label>Contact email</label><input type="email" value="'+esc(p.contactEmail||'')+'" onchange="setProjectField(\''+esc(p.id)+'\',\'contactEmail\',this.value)"></div>'+
-        '<div class="mfield" style="margin:0;"><label>Contact phone</label><input type="text" value="'+esc(p.contactPhone||'')+'" onchange="setProjectField(\''+esc(p.id)+'\',\'contactPhone\',this.value)"></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
       '</div>'+
+      '<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
+        '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
+      invoicePanel+
     '</div>';
-  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects yet.</div>';
+  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects have been awarded to production yet. Award a quote from Sourcing &amp; Quotes to see it here.</div>';
 }
-window.renderProjectAssignments=renderProjectAssignments;
-function setProjectAwarded(id,val){var p=findProject(id);if(!p)return;p.awarded=!!val;if(typeof saveSRC==='function')saveSRC();if(window.renderMyAssigned)window.renderMyAssigned();}
-function setProjectAssignee(id,email){var p=findProject(id);if(!p)return;p.assignedTo=email||null;if(typeof saveSRC==='function')saveSRC();if(window.renderMyAssigned)window.renderMyAssigned();}
-function setProjectField(id,field,val){var p=findProject(id);if(!p)return;p[field]=val;if(typeof saveSRC==='function')saveSRC();if(window.renderMyAssigned)window.renderMyAssigned();}
+window.renderAwardedProjects=renderAwardedProjects;
+function setBriefManager(id,email){
+  var b=findBrief(id);
+  if(!b)return;
+  b.assignedManager=email||null;
+  if(typeof saveSRC==='function')saveSRC();
+  if(window.renderMyAssigned)window.renderMyAssigned();
+}
 
 /* ---- Client Manager's own scoped project list ---- */
-// The sidebar's project picker is otherwise unrestricted static HTML (any
-// role can select any of its hardcoded options) — for Client Manager this
-// would let someone bypass the My Projects scoping entirely just by opening
-// the dropdown, so hide every option that isn't one of their own
-// assigned+awarded projects. Runs every time renderMyAssigned() does, since
-// that's called on login, on landing in My Projects, and whenever the
-// project registry changes.
-function restrictProjSelectForSales(allowedIds){
+// The sidebar's legacy project picker only ever had the 3 hardcoded demo
+// options — none of which are real awarded briefs — so it has nothing
+// useful for Client Manager to select; hide it entirely for that role and
+// rely on My Projects' own invoice links instead.
+function restrictProjSelectForSales(){
   var sel=document.getElementById('projSelect');
   if(!sel)return;
   var isSales=document.body.dataset.role==='sales';
   Array.prototype.forEach.call(sel.options,function(opt){
-    if(!opt.value)return; // always keep the "— Select a project —" placeholder
-    opt.hidden=isSales&&allowedIds.indexOf(opt.value)<0;
+    if(!opt.value)return;
+    opt.hidden=isSales;
   });
 }
 function renderMyAssigned(){
   var wrap=document.getElementById('myAssignedList');
   if(!wrap)return;
   var s=(typeof currentSession==='function')?currentSession():null;
-  var email=(s&&s.email)||'';
-  var projects=((window.SDB&&window.SDB.projects)||[]).filter(function(p){
-    return p.awarded&&p.assignedTo&&email&&p.assignedTo.toLowerCase()===email.toLowerCase();
-  });
-  restrictProjSelectForSales(projects.map(function(p){return p.id;}));
-  wrap.innerHTML=projects.map(function(p){
+  var email=(s&&s.email||'').toLowerCase();
+  restrictProjSelectForSales();
+  var mine=awardedBriefs().filter(function(b){return b.assignedManager&&email&&b.assignedManager.toLowerCase()===email;});
+  wrap.innerHTML=mine.map(function(b){
+    var c=b.client||{};
+    var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
+    var invBtns=hasInvoice?(
+      '<button class="btn btn--primary btn--sm" onclick="downloadInvoice(\''+esc(b.id)+'\',\'deposit\')">↓ Deposit invoice</button>'+
+      (b.clientQuote.invoice.balanceId?' <button class="btn btn--ghost btn--sm" onclick="downloadInvoice(\''+esc(b.id)+'\',\'balance\')">↓ Balance invoice</button>':'')
+    ):'<span style="color:var(--cm-text-subtle);font-size:0.86rem;">Invoice not issued yet.</span>';
     return '<div class="projassign">'+
-      '<div class="projassign__head"><span class="projassign__name">'+esc(p.name)+'</span>'+
-        '<button class="btn btn--ghost btn--sm" onclick="openMyAssignedProject(\''+esc(p.id)+'\')">Open project →</button></div>'+
+      '<div class="projassign__head"><span class="projassign__name">'+esc(b.title)+'</span></div>'+
       '<div class="projassign__row projassign__contact">'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(p.company||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(p.contactName||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+(p.contactEmail?('<a href="mailto:'+esc(p.contactEmail)+'">'+esc(p.contactEmail)+'</a>'):'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(p.contactPhone||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+(c.Email?('<a href="mailto:'+esc(c.Email)+'">'+esc(c.Email)+'</a>'):'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
       '</div>'+
-      '<div class="projassign__row"><button class="btn btn--primary btn--sm" onclick="openMyAssignedInvoice(\''+esc(p.id)+'\')">View invoice</button></div>'+
+      '<div class="projassign__row">'+invBtns+'</div>'+
     '</div>';
-  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No projects are currently assigned to you. Once Carve Admin marks a project as awarded to production and assigns it to you, it will appear here.</div>';
+  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No projects are currently assigned to you. Once Carve Admin awards a project to production and assigns it to you, it will appear here.</div>';
 }
 window.renderMyAssigned=renderMyAssigned;
-function openMyAssignedProject(id){var sel=document.getElementById('projSelect');sel.value=id;onProjChange();go('overview');}
-function openMyAssignedInvoice(id){var sel=document.getElementById('projSelect');sel.value=id;onProjChange();go('invoices');}
 
 // Carve Admin's authority over a team member's/vendor's login access is kept
 // independent of whatever password they've set: "Reset access" revokes the
@@ -2184,29 +2274,63 @@ function removeMember(id){
   window.SDB.team=(window.SDB.team||[]).filter(function(x){return x.id!==id;});
   // A removed Client Manager can't stay assigned to a project — clear it so
   // that project just shows unassigned rather than pointing at a dead email.
-  (window.SDB.projects||[]).forEach(function(p){
-    if(p.assignedTo&&m.email&&p.assignedTo.toLowerCase()===m.email.toLowerCase())p.assignedTo=null;
+  (window.SDB.briefs||[]).forEach(function(b){
+    if(b.assignedManager&&m.email&&b.assignedManager.toLowerCase()===m.email.toLowerCase())b.assignedManager=null;
   });
   if(typeof saveSRC==='function')saveSRC();
   renderTeam();
-  if(window.renderProjectAssignments)window.renderProjectAssignments();
+  if(window.renderAwardedProjects)window.renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
   if(m.email){
     fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'adminRemoveAccount',email:m.email})}).catch(function(){});
   }
 }
-function resetVendorAccess(id){
+// Replaces the old "reset access" (same email, new password) for vendors:
+// when the person managing the account changes — someone left the factory —
+// Owner needs to move the account to a NEW email/contact entirely, not just
+// reissue a password to the person who's gone.
+var _pendingReassignVendorId=null;
+function openReassignVendor(id){
   var v=(window.SDB.vendors||[]).filter(function(x){return x.id===id;})[0];
-  if(!v||!v.email)return;
-  if(!confirm('Reset access for '+v.name+'? Their current password (if any) will stop working, and a new invite will be sent to '+v.email+'.'))return;
-  fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'adminResetAccess',email:v.email})})
-    .then(function(){
-      return fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:v.contact||v.name,email:v.email,role:'factory'})});
-    })
+  if(!v)return;
+  _pendingReassignVendorId=id;
+  document.getElementById('reassignName').value='';
+  document.getElementById('reassignEmail').value='';
+  document.getElementById('reassignVendorModal').hidden=false;
+}
+function closeReassignVendor(){
+  document.getElementById('reassignVendorModal').hidden=true;
+  _pendingReassignVendorId=null;
+}
+function submitReassignVendor(e){
+  e.preventDefault();
+  var v=(window.SDB.vendors||[]).filter(function(x){return x.id===_pendingReassignVendorId;})[0];
+  if(!v)return false;
+  var newName=document.getElementById('reassignName').value.trim();
+  var newEmail=document.getElementById('reassignEmail').value.trim();
+  if(!newName||!newEmail)return false;
+  var oldEmail=v.email;
+  v.contact=newName;
+  v.email=newEmail;
+  if(window.PRODUCTION_ADMINS){
+    var admin=window.PRODUCTION_ADMINS.filter(function(a){return a.shopId===v.id;})[0];
+    if(admin){admin.name=newName;admin.email=newEmail;}
+    else window.PRODUCTION_ADMINS.push({shopId:v.id,name:newName,company:v.name,email:newEmail});
+  }
+  if(typeof saveSRC==='function')saveSRC();
+  renderVendors();
+  closeReassignVendor();
+  // Revoke the old contact's login (fire-and-forget) and invite the new one.
+  if(oldEmail){
+    fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'adminRemoveAccount',email:oldEmail})}).catch(function(){});
+  }
+  fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newName,email:newEmail,role:'factory'})})
     .then(function(r){return r.json().catch(function(){return {};});})
     .then(function(data){
-      alert((data&&data.emailed)?('Access reset. A new invite was sent to '+v.email+'.'):('Access reset, but the invite email didn\'t send — share the sign-up link with '+v.email+' directly.'));
+      alert((data&&data.emailed)?('Reassigned to '+newName+'. An invite was sent to '+newEmail+' to set a password.'+(oldEmail?(' '+oldEmail+' no longer has access.'):'')):('Reassigned to '+newName+', but the invite email didn\'t send — share the sign-up link with '+newEmail+' directly.'));
     })
-    .catch(function(){alert('Could not reach the server. Please try again.');});
+    .catch(function(){alert('Reassigned to '+newName+', but couldn\'t reach the server to send the invite — share the sign-up link with '+newEmail+' directly.');});
+  return false;
 }
 function removeVendor(id){
   var v=(window.SDB.vendors||[]).filter(function(x){return x.id===id;})[0];
@@ -2237,7 +2361,7 @@ function createTeamMember(e){
   window.SDB.team.push({id:'t'+Date.now(),name:name,email:email,role:role});
   if(typeof saveSRC==='function')saveSRC();
   renderTeam();
-  if(window.renderProjectAssignments)window.renderProjectAssignments();
+  if(window.renderAwardedProjects)window.renderAwardedProjects();
   closeAddMember();
   var roleLabel=ROLE_LABELS[role]||role;
   fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:role})})
@@ -2326,7 +2450,7 @@ function go(v){
   }
   if(v==='leads'&&window.SRC_renderLeads)window.SRC_renderLeads();
   if(v==='team'){if(window.renderTeam)window.renderTeam();if(window.renderVendors)window.renderVendors();}
-  if(v==='projects'&&window.renderProjectAssignments)window.renderProjectAssignments();
+  if(v==='projects'&&window.renderAwardedProjects)window.renderAwardedProjects();
   if(v==='myassigned'&&window.renderMyAssigned)window.renderMyAssigned();
   if(v==='clients'&&window.scopeClients)window.scopeClients(document.body.dataset.role);
   if(v==='sourcing'&&window.SRC_render)SRC_render();
@@ -3071,7 +3195,7 @@ function onProjChange(){
 var PERM={
   'client-only':['client'],
   'studio-only':['owner','sales','factory','prodtech'],
-  'finance-only':['client','owner','sales'],   // see quotes/invoices (client sees their own; sales/Client Manager view-only, their assigned project only)
+  'finance-only':['client'],                   // client's own project invoice. Owner no longer gets a standalone Invoices nav tab — Invoice & Payment is reached per-project from the Projects tab instead. Client Manager doesn't get this either: the old tab shows whatever brief is "latest" studio-wide, which would leak a different Client Manager's client — they use the correctly-scoped invoice downloads in My Projects.
   'client-quote-only':['client'],               // client-facing Quote nav — Client Manager doesn't see quote/estimate negotiation, only Owner does via Sourcing & Quotes
   'finance-edit':['owner'],                    // edit/resend estimates — Client Manager is view-only on invoices
   'fab-only':['owner','factory','prodtech'],   // fabrication controls
@@ -4459,17 +4583,6 @@ function seedSRC(){
     ],
     vendors:[
       {id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',contact:'Xin Liao',email:'13918826884@163.com'}
-    ],
-    // Project registry: which projects exist, who they belong to, who's
-    // assigned to manage the client relationship, and whether they've been
-    // awarded to production yet. Only 'aria' is a real, fully-wired project
-    // (Overview/Quote/Milestones/Files/Messages/Invoices all key off this id
-    // generically) — the other cards in the studio-wide Projects list are
-    // still static demo dressing and aren't part of this registry yet.
-    // assignedTo is a team member's email (matches SDB.team[].email), or
-    // null if unassigned. Owner edits all of this from the Projects tab.
-    projects:[
-      {id:'aria',name:'Aria Tower — Los Angeles, CA',company:'Reyes Development Group',contactName:'Daniel Reyes',contactEmail:'',contactPhone:'',awarded:true,assignedTo:null}
     ]
   };
 }
@@ -4516,7 +4629,7 @@ function migrateBriefFields(briefs){
 }
 if(migrateBriefFields(SDB.briefs))saveSRC();
 syncClientsFromLeads();
-function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];if(!d.team)d.team=seedSRC().team;if(!d.vendors)d.vendors=seedSRC().vendors;if(!d.projects)d.projects=seedSRC().projects;return d;}}}catch(e){}return seedSRC();}
+function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];if(!d.team)d.team=seedSRC().team;if(!d.vendors)d.vendors=seedSRC().vendors;return d;}}}catch(e){}return seedSRC();}
 function saveSRC(opts){
   try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
   if(apiReady){
@@ -4525,7 +4638,7 @@ function saveSRC(opts){
     // a lead/brief another tab or a client submission added in the meantime). An
     // id only actually gets removed server-side if it's explicitly listed below —
     // see deleteLead(), the one place that really deletes rather than just editing.
-    var payload={briefs:SDB.briefs,leads:SDB.leads||[],projects:SDB.projects||[]};
+    var payload={briefs:SDB.briefs,leads:SDB.leads||[]};
     if(opts&&opts.deletedLeadIds&&opts.deletedLeadIds.length)payload.deletedLeadIds=opts.deletedLeadIds;
     if(opts&&opts.deletedBriefIds&&opts.deletedBriefIds.length)payload.deletedBriefIds=opts.deletedBriefIds;
     fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
@@ -5263,6 +5376,8 @@ window.SRC_markInvoicePaid=function(bid,which){
   saveSRC();
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
+  if(window.renderAwardedProjects)window.renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
 };
 window.SRC_reportInvoicePayment=function(bid,which,method){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
@@ -5274,6 +5389,8 @@ window.SRC_reportInvoicePayment=function(bid,which,method){
   saveSRC();
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
+  if(window.renderAwardedProjects)window.renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
 };
 window.SRC_reopenInvoicePayment=function(bid,which){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
@@ -5284,6 +5401,8 @@ window.SRC_reopenInvoicePayment=function(bid,which){
   saveSRC();
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
+  if(window.renderAwardedProjects)window.renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
 };
 window.SRC_editInvoiceId=function(bid,which){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
@@ -5298,6 +5417,8 @@ window.SRC_editInvoiceId=function(bid,which){
   saveSRC();
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
+  if(window.renderAwardedProjects)window.renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
 };
 function invoiceStatusChip(status){
   if(status==='paid')return '<span class="chip done">Paid</span>';
@@ -5321,6 +5442,11 @@ function invoiceLineAdmin(b,which,id,amt,status,paidAt,reportedAt,reportedMethod
     '<div style="text-align:right;">'+invoiceStatusChip(status)+' <button class="btn btn--ghost btn--sm" style="margin-left:0.5rem;" onclick="downloadInvoice(\''+b.id+'\',\''+which+'\')">Download PDF</button> '+actions+'</div>'+
   '</div>';
 }
+// Exposed so the Projects tab (a separate <script> block) can render a
+// single project's Invoice & Payment panel using the exact same admin
+// controls (mark paid, reopen, confirm reported payment, download PDF) as
+// the old studio-wide dashboard did per row.
+window.invoiceLineAdmin=invoiceLineAdmin;
 /* ---- Carve Admin's Invoices nav: every project across the whole studio that has an
    issued invoice, not just the single most-recently-created one. This is the only
    place invoices/payment status are shown — the Quotes tab stays focused on vendor
@@ -5557,6 +5683,10 @@ window.SRC_award=function(id,shopId,variantIndex){
     }
   });
   saveSRC();SRC_render();
+  // First time this brief is awarded, prompt to assign a Client Manager to
+  // manage it going forward — skip the prompt on a re-award/shop switch if
+  // one's already assigned (change it anytime from the Projects tab instead).
+  if(!b.assignedManager&&typeof openAssignManager==='function')openAssignManager(b.id);
 };
 /* ---- Archive/delete a whole brief (Carve Admin only) — for tidying up projects that are done with,
    regardless of outcome. Archive is reversible; Delete is permanent, same pattern as deleteLead(). ---- */
@@ -6320,10 +6450,9 @@ function reconcilePendingDeletes(pendingArr,serverList){
 }
 function pullSourcing(){
   return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
-    if(data&&(data.briefs||data.leads||data.projects)){
+    if(data&&(data.briefs||data.leads)){
       SDB.briefs=mergeSrcList(SDB.briefs,data.briefs||[],srcPendingDeleteBriefIds);
       SDB.leads=mergeSrcList(SDB.leads,data.leads||[],srcPendingDeleteLeadIds);
-      SDB.projects=mergeSrcList(SDB.projects,data.projects||[],[]);
       reconcilePendingDeletes(srcPendingDeleteBriefIds,data.briefs||[]);
       reconcilePendingDeletes(srcPendingDeleteLeadIds,data.leads||[]);
       migrateBriefFields(SDB.briefs);
@@ -6342,7 +6471,7 @@ function pullSourcing(){
         if(window.SRC_updateBadges)window.SRC_updateBadges();
         if(window.SRC_render)window.SRC_render();
         if(window.SRC_renderLeads)window.SRC_renderLeads();
-        if(window.renderProjectAssignments)window.renderProjectAssignments();
+        if(window.renderAwardedProjects)window.renderAwardedProjects();
         if(window.renderMyAssigned)window.renderMyAssigned();
       }
     }
@@ -6352,8 +6481,8 @@ pullSourcing().then(function(){
   apiReady=true;
   // Nothing existed yet server-side (fresh store) — seed it with whatever local data we have.
   return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
-    if(!data||(!data.briefs&&!data.leads&&!data.projects)){
-      return fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:SDB.briefs,leads:SDB.leads||[],projects:SDB.projects||[]})});
+    if(!data||(!data.briefs&&!data.leads)){
+      return fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:SDB.briefs,leads:SDB.leads||[]})});
     }
   });
 }).catch(function(e){console.error('Sourcing API init failed \u2014 staying local-only:',e);apiReady=true;})
