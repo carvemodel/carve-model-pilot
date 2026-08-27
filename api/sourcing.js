@@ -11,6 +11,43 @@ const { createClient } = require('redis');
 const KEY = 'carve:sourcing';
 let clientPromise;
 
+// ── Real server-side sessions ───────────────────────────────────────────────
+// A caller used to be trusted to say who it was — a query string or POST body
+// could just claim role=factory&email=... (or, worse, role=owner) and this
+// file had no way to know that was false. api/auth.js's "login" action now
+// mints a random token and stores {email,role,name} under it server-side
+// (carve:session:<token>, same Redis instance/KEY namespace) when someone
+// really does sign in. Resolving that token here means the role/email this
+// file actually acts on come from a verified record, never from whatever the
+// request itself asserts — a vendor changing role=factory to role=owner in
+// their own request no longer does anything, because nothing here trusts the
+// role field unless a real token backs it up (see effectiveRole below).
+async function resolveSession(redis, token) {
+  if (!token) return null;
+  try {
+    const raw = await redis.get('carve:session:' + token);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    console.error('resolveSession error:', err);
+    return null;
+  }
+}
+// A caller that names a role at all (body.role / query.role) is asserting
+// "I am a logged-in app user of this type" — that assertion is only ever
+// honored if a real session token backs it up; otherwise it's treated as the
+// most-restricted case (an unverified vendor with no matched shop) rather
+// than either fully trusted (the old bug) or silently ignored (which would
+// let a forged role=factory claim fall through as if it were a normal,
+// unrestricted admin call). A caller that names NO role at all — e.g. the
+// public contact form's `{leads:[...]}` POST from an anonymous site visitor,
+// which has no concept of login — is untouched by any of this and keeps
+// working exactly as before.
+function effectiveIdentity(claimedRole, session) {
+  if (!claimedRole) return { role: null, email: null };
+  if (session) return { role: session.role, email: session.email };
+  return { role: 'factory', email: null };
+}
+
 function getClient() {
   if (!clientPromise) {
     const client = createClient({ url: process.env.REDIS_URL });
@@ -247,9 +284,16 @@ module.exports = async (req, res) => {
       if (!data.vendors) data.vendors = [];
       if (!data.team) data.team = [];
       const query = req.query || {};
-      if (query.role === 'factory') {
-        res.status(200).json(filterDataForFactory(data, query.email));
-        return;
+      if (query.role) {
+        const session = await resolveSession(redis, query.token);
+        const identity = effectiveIdentity(query.role, session);
+        if (identity.role === 'factory') {
+          res.status(200).json(filterDataForFactory(data, identity.email));
+          return;
+        }
+        // A verified session that isn't factory (owner/sales/prodtech/etc.)
+        // falls through to the normal full-data response below — unchanged
+        // from today's trust level for admin roles.
       }
       res.status(200).json(data);
       return;
@@ -261,6 +305,12 @@ module.exports = async (req, res) => {
         try { body = JSON.parse(body); } catch (e) { body = {}; }
       }
       body = body || {};
+      // See effectiveIdentity() above: body.role is only ever trusted if a
+      // real session token backs it up. A request with no role field at all
+      // (the public contact form's anonymous lead submission, most notably)
+      // is untouched by this and behaves exactly as before.
+      const postSession = body.role ? await resolveSession(redis, body.token) : null;
+      const identity = effectiveIdentity(body.role, postSession);
 
       // Every save used to be a blind overwrite of the whole store with whatever
       // this one browser tab currently had in memory. With more than one tab/
@@ -307,8 +357,8 @@ module.exports = async (req, res) => {
         return merged;
       }
       let briefsForMerge = body.briefs;
-      if (body.role === 'factory') {
-        const emailKey = String(body.email || '').toLowerCase();
+      if (identity.role === 'factory') {
+        const emailKey = String(identity.email || '').toLowerCase();
         const vendor = current.vendors.find((v) => v && v.email && v.email.toLowerCase() === emailKey);
         const shopId = vendor ? vendor.id : null;
         const allowed = new Set(body.changedBriefIds || []);
@@ -330,7 +380,7 @@ module.exports = async (req, res) => {
       // re-saving an existing lead (status change, note edit, etc.) must
       // never re-trigger the email.
       const existingLeadIds = new Set(current.leads.map((l) => l && l.id));
-      const newLeads = body.role === 'factory' ? [] : (body.leads || []).filter((l) => l && l.id && !existingLeadIds.has(l.id));
+      const newLeads = identity.role === 'factory' ? [] : (body.leads || []).filter((l) => l && l.id && !existingLeadIds.has(l.id));
       const newQuotes = detectNewQuotes(current.briefs, briefsForMerge);
 
       // allowedIds, when given, restricts what an incoming item is allowed to
@@ -382,7 +432,7 @@ module.exports = async (req, res) => {
       // empty/self-only, but nothing previously stopped a crafted POST body
       // from smuggling in extra entries; fail closed by ignoring those
       // fields entirely for factory-role saves.
-      const isFactorySave = body.role === 'factory';
+      const isFactorySave = identity.role === 'factory';
       const data = {
         briefs: mergeById(current.briefs, briefsForMerge, isFactorySave ? [] : body.deletedBriefIds, body.changedBriefIds),
         leads: isFactorySave ? current.leads : mergeById(current.leads, body.leads, body.deletedLeadIds),

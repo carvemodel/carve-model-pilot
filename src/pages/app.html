@@ -4215,8 +4215,13 @@ function attemptLogin(){
         return;
       }
       var realEmail=res.data.email||email;
-      localStorage.setItem(SESSION_KEY,JSON.stringify({email:realEmail,role:res.data.role,name:res.data.name||null}));
+      localStorage.setItem(SESSION_KEY,JSON.stringify({email:realEmail,role:res.data.role,name:res.data.name||null,token:res.data.token||null}));
       enterSession(res.data.role,realEmail,res.data.name);
+      // Refresh right away with the just-issued token rather than waiting up
+      // to POLL_MS for the next scheduled poll to pick up real, correctly-
+      // scoped data (a factory login otherwise sees a stale/unfiltered pull
+      // from before signing in for a few seconds).
+      if(typeof pullSourcing==='function')pullSourcing();
     })
     .catch(function(){
       if(btn){btn.disabled=false;btn.textContent='Sign in';}
@@ -4266,6 +4271,13 @@ function enterSession(role,email,name){
   }
 }
 function logOutSession(){
+  var s=currentSession();
+  if(s&&s.token){
+    // Best-effort: invalidate the token server-side so it can't still be
+    // used if it leaked somehow. Never block the actual logout on this —
+    // clearing localStorage below is what matters for this browser.
+    fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'logout',token:s.token})}).catch(function(){});
+  }
   localStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(IMPERSONATE_KEY);
   location.reload();
@@ -4281,9 +4293,26 @@ function impersonateAccount(email,role,name){
   if(!email||!role)return;
   if(!confirm('Log in as '+(name||email)+'? You\u2019ll see exactly what they see, and can return to your own account at any time from the banner at the top.'))return;
   var mine=currentSession();
-  if(mine){try{localStorage.setItem(IMPERSONATE_KEY,JSON.stringify(mine));}catch(e){}}
-  localStorage.setItem(SESSION_KEY,JSON.stringify({email:email,role:role,name:name||null}));
-  location.reload();
+  // Now goes through the server (see the 'impersonate' action in
+  // api/auth.js) rather than just writing the target role/email straight
+  // into localStorage: that used to mean literally anyone with devtools
+  // access could grant themselves any role by editing localStorage
+  // directly, with nothing server-side to stop it. The server now requires
+  // Carve Admin's OWN real, verified session token before it will mint one
+  // for the target account \u2014 still password-free for the target (Owner
+  // already knows who they're impersonating), but no longer forgeable.
+  fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'impersonate',token:mine&&mine.token,email:email,role:role,name:name})})
+    .then(function(r){return r.json().catch(function(){return {};}).then(function(d){return {ok:r.ok,data:d};});})
+    .then(function(res){
+      if(!res.ok||!res.data||!res.data.token){
+        alert((res.data&&res.data.error)||'Could not start impersonation. Try signing in again.');
+        return;
+      }
+      if(mine){try{localStorage.setItem(IMPERSONATE_KEY,JSON.stringify(mine));}catch(e){}}
+      localStorage.setItem(SESSION_KEY,JSON.stringify({email:res.data.email,role:res.data.role,name:res.data.name||null,token:res.data.token}));
+      location.reload();
+    })
+    .catch(function(){alert('Could not reach the server. Check your connection and try again.');});
 }
 window.impersonateAccount=impersonateAccount;
 function returnFromImpersonation(){
@@ -4322,7 +4351,7 @@ function submitAccountSettings(e){
   var newPass2=document.getElementById('acctNewPass2').value;
   if(newPass&&newPass!==newPass2){err.textContent='New passwords do not match.';err.hidden=false;return false;}
   if(newPass&&newPass.length<8){err.textContent='New password must be at least 8 characters.';err.hidden=false;return false;}
-  var payload={action:'updateAccount',email:s.email,currentPassword:currentPass};
+  var payload={action:'updateAccount',email:s.email,currentPassword:currentPass,token:s.token};
   if(newEmail&&newEmail.toLowerCase()!==s.email.toLowerCase())payload.newEmail=newEmail;
   if(newPass)payload.newPassword=newPass;
   var btn=e.target.querySelector('button[type="submit"]');
@@ -4337,7 +4366,10 @@ function submitAccountSettings(e){
         return;
       }
       var updatedEmail=res.data.email, updatedRole=res.data.role, updatedName=res.data.name;
-      localStorage.setItem(SESSION_KEY,JSON.stringify({email:updatedEmail,role:updatedRole,name:updatedName||s.name||null}));
+      // Same token — api/auth.js's updateAccount refreshes what THAT token
+      // resolves to server-side (see the carve:session: update there) rather
+      // than issuing a new one, so it's still valid here.
+      localStorage.setItem(SESSION_KEY,JSON.stringify({email:updatedEmail,role:updatedRole,name:updatedName||s.name||null,token:s.token}));
       var lbl=document.getElementById('sessionLabel');
       if(lbl)lbl.textContent='Signed in · '+updatedEmail;
       // Best-effort: if this browser's own Team & Access roster has a matching
@@ -4371,7 +4403,11 @@ function submitAccountSettings(e){
       // but a session set here only ever comes from a successful /api/auth
       // login (real invited accounts included), so the ACCOUNTS lookup would
       // wrongly log out anyone whose account isn't in that fixed list.
-      if(s&&s.role&&s.email){enterSession(s.role,s.email,s.name);return;}
+      // A session saved before real server-side sessions existed has no
+      // token — api/sourcing.js now requires one to trust any role claim, so
+      // treat a token-less stored session as expired and require a fresh
+      // login rather than silently letting every role-gated call fail closed.
+      if(s&&s.role&&s.email&&s.token){enterSession(s.role,s.email,s.name);return;}
     }catch(e){}
     document.getElementById('loginGate').style.display='flex';
   });
@@ -4667,8 +4703,12 @@ function saveSRC(opts){
     // price, or another shop's quote — no matter what this tab's own
     // (deliberately redacted) local copy of that brief looks like. See
     // filterDataForFactory / vendorScopedBriefUpdate in api/sourcing.js.
+    // token is what the server actually verifies (see resolveSession in
+    // api/sourcing.js) — role/email are still sent for context but a role
+    // claim with no valid token behind it is now treated as an unverified,
+    // maximally-restricted vendor rather than trusted outright.
     var srcSess=(typeof currentSession==='function')?currentSession():null;
-    if(srcSess&&srcSess.role){payload.role=srcSess.role;payload.email=srcSess.email;}
+    if(srcSess&&srcSess.role){payload.role=srcSess.role;payload.email=srcSess.email;payload.token=srcSess.token;}
     if(opts&&opts.deletedLeadIds&&opts.deletedLeadIds.length)payload.deletedLeadIds=opts.deletedLeadIds;
     if(opts&&opts.deletedBriefIds&&opts.deletedBriefIds.length)payload.deletedBriefIds=opts.deletedBriefIds;
     if(opts&&opts.deletedVendorIds&&opts.deletedVendorIds.length)payload.deletedVendorIds=opts.deletedVendorIds;
@@ -6522,7 +6562,13 @@ function reconcilePendingDeletes(pendingArr,serverList){
 // email is known yet at that point.
 function sourcingQuery(){
   var s=(typeof currentSession==='function')?currentSession():null;
-  if(s&&s.role==='factory'&&s.email)return '?role=factory&email='+encodeURIComponent(s.email);
+  // token is what the server actually verifies (see resolveSession in
+  // api/sourcing.js) — email is no longer trusted on its own, so a
+  // session missing a token (shouldn't happen post-login, but guards
+  // against a stale pre-real-auth session slipping through) sends nothing
+  // and falls back to the same "no role claimed" full-data path admin
+  // roles already use, rather than a spoofable role=factory&email=... pair.
+  if(s&&s.role==='factory'&&s.token)return '?role=factory&token='+encodeURIComponent(s.token);
   return '';
 }
 function pullSourcing(){
@@ -6567,6 +6613,7 @@ function pullSourcing(){
     }
   });
 }
+window.pullSourcing=pullSourcing; // exposed so attemptLogin() can force an immediate, correctly-scoped refresh right after signing in
 pullSourcing().then(function(){
   apiReady=true;
   // Nothing existed yet server-side (fresh store) — seed it with whatever local data we have.
