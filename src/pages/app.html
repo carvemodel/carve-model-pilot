@@ -3870,9 +3870,7 @@ function logOutSession(){
 <script>
 /* ===== Sourcing & Quotes — integrated into the portal, role-adaptive ===== */
 (function(){
-var SHOPS=[{id:'meridian',name:'Meridian Scale Works',loc:'Portland, OR',av:'MS'},
-           {id:'atlas',name:'Atlas Model Fabrication',loc:'Toronto, ON',av:'AM'},
-           {id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',av:'BM'}];
+var SHOPS=[{id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',av:'BM'}];
 window.SHOPS=SHOPS; // exposed so Team & Access "+ Add vendor" can register new shops
 var TECHS=[{id:'sam',name:'Sam Cole',av:'SC'},{id:'rosa',name:'Rosa Lim',av:'RL'}];
 var SPECIAL_REQS=['Surrounding Landscape / Site Context','No Base','Engraved Base','Interior Lighting','External Lighting','Split into Sections (transport / access)','Display Stand / Plinth','Customized Protective Travel Case','Furniture','Interior Finishes','Removable Roof / Levels'];
@@ -4065,13 +4063,9 @@ function seedSRC(){
   return {
     briefs:[],leads:[],
     team:[
-      {id:'t_owner',name:'Maya Okafor',email:'maya@physical-model.com',role:'owner',you:true},
-      {id:'t_sales',name:'Jordan Lee',email:'jordan@physical-model.com',role:'sales'},
-      {id:'t_factory',name:'Ravi Sharma',email:'ravi@physical-model.com',role:'factory'}
+      {id:'t_owner',name:'Charles Liu',email:'charles6liu@gmail.com',role:'owner',you:true}
     ],
     vendors:[
-      {id:'meridian',name:'Meridian Scale Works',loc:'Portland, OR',contact:null,email:null},
-      {id:'atlas',name:'Atlas Model Fabrication',loc:'Toronto, ON',contact:null,email:null},
       {id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',contact:'Xin Liao',email:'13918826884@163.com'}
     ]
   };
