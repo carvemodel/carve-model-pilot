@@ -47,7 +47,7 @@ function escapeHtml(s) {
 // Small fixed lookup so the email shows a real shop name instead of a raw
 // id — mirrors the SHOPS list in app.html. Falls back to the id itself for
 // any shop added there later without a matching update here.
-const SHOP_NAMES = { meridian: 'Meridian Scale Works', atlas: 'Atlas Model Fabrication', northpoint: 'Bohai Model' };
+const SHOP_NAMES = { northpoint: 'Bohai Model' };
 
 function rowsTable(rows) {
   return '<table cellpadding="0" cellspacing="0">' +
