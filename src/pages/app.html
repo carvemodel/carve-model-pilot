@@ -709,6 +709,14 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <p class="myproj-sub" id="projectsSub">Every project across the studio — open any one to see its full workspace.</p>
       </div>
 
+      <div class="panel" style="margin-bottom:2rem;">
+        <div class="panel__head"><h3>Client Manager assignments</h3></div>
+        <div class="panel__body">
+          <p class="modal__intro" style="margin-bottom:1rem;">Client Managers only see projects that are marked <b>Awarded to production</b> below and assigned to them by name — everything else (Leads, the full Clients roster, and Quotes &amp; estimates) stays Owner-only.</p>
+          <div id="projectAssignList"></div>
+        </div>
+      </div>
+
       <div class="myproj-section">
         <div class="myproj-label"><span class="mock__k">In production</span><span class="myproj-count">1</span></div>
         <button class="projrow projcard" onclick="openProject('aria')">
@@ -1477,13 +1485,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="panel">
           <div class="panel__head"><h3>Vendors</h3><button class="btn btn--ghost btn--sm" onclick="openAddVendor()">+ Add vendor</button></div>
           <div class="panel__body" id="vendorList"></div>
-        </div>
-        <div class="panel">
-          <div class="panel__head"><h3>Project assignments</h3></div>
-          <div class="panel__body">
-            <p class="modal__intro" style="margin-bottom:1rem;">Client Managers only see projects that are marked <b>Awarded to production</b> below and assigned to them by name — everything else (Leads, the full Clients roster, and Quotes &amp; estimates) stays Owner-only.</p>
-            <div id="projectAssignList"></div>
-          </div>
         </div>
         <div class="panel">
           <div class="panel__head"><h3>What each role can access</h3></div>
@@ -2324,7 +2325,8 @@ function go(v){
     else renderPhase1Invoice();
   }
   if(v==='leads'&&window.SRC_renderLeads)window.SRC_renderLeads();
-  if(v==='team'){if(window.renderTeam)window.renderTeam();if(window.renderVendors)window.renderVendors();if(window.renderProjectAssignments)window.renderProjectAssignments();}
+  if(v==='team'){if(window.renderTeam)window.renderTeam();if(window.renderVendors)window.renderVendors();}
+  if(v==='projects'&&window.renderProjectAssignments)window.renderProjectAssignments();
   if(v==='myassigned'&&window.renderMyAssigned)window.renderMyAssigned();
   if(v==='clients'&&window.scopeClients)window.scopeClients(document.body.dataset.role);
   if(v==='sourcing'&&window.SRC_render)SRC_render();
@@ -4465,7 +4467,7 @@ function seedSRC(){
     // generically) — the other cards in the studio-wide Projects list are
     // still static demo dressing and aren't part of this registry yet.
     // assignedTo is a team member's email (matches SDB.team[].email), or
-    // null if unassigned. Owner edits all of this from Team & Access.
+    // null if unassigned. Owner edits all of this from the Projects tab.
     projects:[
       {id:'aria',name:'Aria Tower — Los Angeles, CA',company:'Reyes Development Group',contactName:'Daniel Reyes',contactEmail:'',contactPhone:'',awarded:true,assignedTo:null}
     ]
