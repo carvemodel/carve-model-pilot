@@ -150,11 +150,35 @@ function detectNewQuotes(currentBriefs, incomingBriefs) {
       const prevArr = prevVars[shopId] || [];
       const incArr = incVars[shopId] || [];
       for (let i = prevArr.length; i < incArr.length; i++) {
-        if (incArr[i]) found.push({ brief: incoming, shopId, quote: incArr[i], variationLabel: incArr[i].label || 'Variation' });
+        if (incArr[i]) found.push({ brief: incoming, shopId, quote: incArr[i], variationLabel: incArr[i].label || 'Variation', variantIndex: i });
       }
     });
   });
   return found;
+}
+
+// Guards against sending the same notification twice when two requests for
+// the same new lead/quote race each other (e.g. a slow connection causing a
+// retry, or two near-simultaneous saves). The "is this new" check above
+// reads Redis before writing, so it isn't atomic on its own — two concurrent
+// POSTs can both read the pre-save state and both conclude "this is new".
+// This claims a dedicated key per notification atomically (SET ... NX): only
+// whichever request claims it first actually sends the email; any others
+// silently skip. TTL is just storage hygiene — ids are never reused, so it
+// doesn't affect correctness.
+const NOTIFY_CLAIM_TTL_SECONDS = 30 * 24 * 60 * 60;
+async function claimNotification(redis, key) {
+  try {
+    const result = await redis.set(key, '1', { NX: true, EX: NOTIFY_CLAIM_TTL_SECONDS });
+    return result === 'OK';
+  } catch (err) {
+    console.error('claimNotification error for', key, err);
+    return true; // fail open — better an occasional duplicate than a silently dropped real notification
+  }
+}
+async function filterClaimed(redis, items, keyFn) {
+  const claimed = await Promise.all(items.map((item) => claimNotification(redis, keyFn(item))));
+  return items.filter((_, i) => claimed[i]);
 }
 
 module.exports = async (req, res) => {
@@ -225,10 +249,16 @@ module.exports = async (req, res) => {
       await redis.set(KEY, JSON.stringify(data));
 
       // Fire-and-await (but never fail the request over it): a bad Resend
-      // key or a transient API error must not stop the save itself.
+      // key or a transient API error must not stop the save itself. Claim
+      // each notification atomically first so a racing duplicate request
+      // never sends the same email twice (see claimNotification above).
+      const claimedLeads = await filterClaimed(redis, newLeads, (l) => 'carve:notified:lead:' + l.id);
+      const claimedQuotes = await filterClaimed(redis, newQuotes, (q) => (
+        'carve:notified:quote:' + q.brief.id + ':' + q.shopId + ':' + (q.variationLabel ? ('var:' + q.variantIndex) : 'primary')
+      ));
       const notifications = [
-        ...newLeads.map((l) => sendLeadNotification(l)),
-        ...newQuotes.map((q) => sendQuoteNotification(q)),
+        ...claimedLeads.map((l) => sendLeadNotification(l)),
+        ...claimedQuotes.map((q) => sendQuoteNotification(q)),
       ];
       if (notifications.length) {
         await Promise.allSettled(notifications);
