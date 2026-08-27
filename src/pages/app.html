@@ -50,6 +50,11 @@ body{background:var(--cm-ink-950);}
 .login-card input{background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);color:var(--cm-text-strong);padding:0.6rem 0.7rem;font-size:0.9rem;font-family:inherit;}
 .login-card input:focus{outline:none;border-color:var(--cm-silver);}
 .login-err{font-size:0.8rem;color:#e08a8a;margin-top:0.8rem;line-height:1.4;}
+.impersonate-bar{position:fixed;top:0;left:0;right:0;z-index:600;background:#7B4FC9;color:#fff;display:flex;align-items:center;justify-content:center;gap:1rem;padding:0.55rem 1rem;font-size:0.82rem;flex-wrap:wrap;text-align:center;}
+.impersonate-bar .btn{background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.45);color:#fff;flex:none;}
+.impersonate-bar .btn:hover{background:rgba(255,255,255,0.28);}
+body.impersonating{padding-top:2.5rem;}
+body.impersonating .impersonate-bar{display:flex !important;}
 .side__demo .demo-tag{display:block;margin-bottom:0.5rem;}
 .role-switch{display:grid;grid-template-columns:1fr;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:3px;gap:3px;}
 .role-switch button{flex:1;border:0;background:transparent;color:var(--cm-text-muted);font-size:0.78rem;font-weight:var(--w-semibold);padding:0.5rem;border-radius:2px;transition:0.18s;font-family:var(--font-sans);}
@@ -415,6 +420,14 @@ body{background:var(--cm-ink-950);}
 .mfield label .opt{text-transform:none;letter-spacing:0;color:var(--cm-text-subtle);}
 .mfield input{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-text);border-radius:var(--r-sm);padding:0.78rem 0.9rem;font-family:var(--font-sans);font-size:0.92rem;}
 .mfield input:focus{outline:none;border-color:var(--cm-text-subtle);}
+.mfield select{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-text);border-radius:var(--r-sm);padding:0.78rem 0.9rem;font-family:var(--font-sans);font-size:0.92rem;}
+.mfield select:focus{outline:none;border-color:var(--cm-text-subtle);}
+.projassign{border:1px solid var(--cm-line-faint);border-radius:var(--r-sm);padding:0.9rem 1rem;margin-bottom:0.8rem;}
+.projassign__head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.6rem;flex-wrap:wrap;}
+.projassign__name{font-weight:var(--w-semibold);color:var(--cm-text-strong);}
+.projassign__awarded{display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;color:var(--cm-text-subtle);}
+.projassign__row{margin-top:0.6rem;}
+.projassign__contact{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.8rem;}
 .inv-ok{width:46px;height:46px;border-radius:50%;background:var(--cm-silver);color:var(--cm-ink-900);display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:1rem;}
 .inv-ok-h{font-family:var(--font-display);font-size:1.2rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);margin-bottom:0.6rem;}
 .linkbox{display:flex;gap:0.5rem;margin-top:0.4rem;}
@@ -564,6 +577,10 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 </style>
 </head>
 <body data-role="client">
+<div class="impersonate-bar" id="impersonateBar" style="display:none;">
+  <span>Signed in as Carve Admin, viewing as <b id="impersonateWho"></b> — anything you do here happens on their account.</span>
+  <button class="btn btn--ghost btn--sm" onclick="returnFromImpersonation()">Return to my account</button>
+</div>
 <div class="login-gate" id="loginGate">
   <form class="login-card" onsubmit="attemptLogin();return false;">
     <h2>Sign in to your workspace</h2>
@@ -636,6 +653,10 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <button class="navbtn cm-only" data-view="projects" onclick="go('projects')" style="display:none;">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="3" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="2.5" y="11" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
         Projects
+      </button>
+      <button class="navbtn cmproj-only" data-view="myassigned" onclick="go('myassigned')">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="3" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="2.5" y="11" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
+        My Projects
       </button>
       <button class="navbtn cm-only" data-view="leads" onclick="go('leads')">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2.5 5.5l6.5 4 6.5-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><rect x="2.5" y="4" width="13" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>
@@ -1436,6 +1457,16 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       </div>
     </div>
 
+    <!-- MY PROJECTS (Client Manager only): assigned + awarded-to-production projects -->
+    <section class="view cmproj-only" id="view-myassigned" hidden>
+      <div class="myproj-hero">
+        <span class="mock__k">Your workspace</span>
+        <h2 class="myproj-title">My Projects</h2>
+        <p class="myproj-sub">Projects Carve Admin has assigned to you, once they're awarded to production. Leads, the client pipeline, and quotes &amp; estimates stay with Carve Admin.</p>
+      </div>
+      <div id="myAssignedList"></div>
+    </section>
+
     <!-- TEAM & ACCESS (owner only) -->
     <section class="view owner-only" id="view-team" hidden>
       <div class="cols" style="margin-top:0;grid-template-columns:1fr;">
@@ -1448,18 +1479,27 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="panel__body" id="vendorList"></div>
         </div>
         <div class="panel">
+          <div class="panel__head"><h3>Project assignments</h3></div>
+          <div class="panel__body">
+            <p class="modal__intro" style="margin-bottom:1rem;">Client Managers only see projects that are marked <b>Awarded to production</b> below and assigned to them by name — everything else (Leads, the full Clients roster, and Quotes &amp; estimates) stays Owner-only.</p>
+            <div id="projectAssignList"></div>
+          </div>
+        </div>
+        <div class="panel">
           <div class="panel__head"><h3>What each role can access</h3></div>
           <div class="panel__body" style="overflow-x:auto;">
             <table class="perm-table">
               <thead><tr><th>Capability</th><th>Owner</th><th>Client Manager</th><th>Factory Representative</th></tr></thead>
               <tbody>
-                <tr><td>Project overview &amp; journey</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
-                <tr><td>Quotes &amp; estimates</td><td class="y">Edit</td><td class="y">View</td><td class="n">—</td></tr>
+                <tr><td>Leads &amp; pipeline</td><td class="y">✓</td><td class="n">—</td><td class="n">—</td></tr>
+                <tr><td>Clients roster</td><td class="y">✓</td><td class="n">—</td><td class="n">—</td></tr>
+                <tr><td>Quotes &amp; estimates</td><td class="y">Edit</td><td class="n">—</td><td class="n">—</td></tr>
+                <tr><td>Assigned project overview</td><td class="y">✓ (all)</td><td class="y">Assigned + awarded only</td><td class="y">✓</td></tr>
+                <tr><td>Assigned project's client contact</td><td class="y">✓ (all)</td><td class="y">✓</td><td class="n">—</td></tr>
                 <tr><td>Invoices &amp; pricing</td><td class="y">✓</td><td class="y">View</td><td class="n">—</td></tr>
                 <tr><td>Milestones &amp; fabrication</td><td class="y">Edit</td><td class="y">View</td><td class="y">Edit</td></tr>
                 <tr><td>Files &amp; QC photos</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
                 <tr><td>Client messaging</td><td class="y">✓</td><td class="y">✓</td><td class="y">Internal</td></tr>
-                <tr><td>Invite &amp; manage clients</td><td class="y">✓</td><td class="y">✓</td><td class="n">—</td></tr>
                 <tr><td>Team &amp; access control</td><td class="y">✓</td><td class="n">—</td><td class="n">—</td></tr>
               </tbody>
             </table>
@@ -2010,6 +2050,7 @@ function renderTeam(){
     var avAttr=isOwner?' class="av studio"':' class="av" style="'+(ROLE_AVATAR_STYLE[m.role]||'')+'"';
     var youTag=m.you?' <span class="you-tag">You</span>':'';
     var actions=m.email?(
+      '<button class="rowbtn" type="button" onclick="impersonateAccount(\''+esc(m.email)+'\',\''+esc(m.role)+'\',\''+esc(m.name)+'\')">Log in as</button>'+
       '<button class="rowbtn" type="button" onclick="resetMemberAccess(\''+esc(m.id)+'\')">Reset access</button>'+
       '<button class="rowbtn rowbtn--danger" type="button" onclick="removeMember(\''+esc(m.id)+'\')">Remove</button>'
     ):'<button class="rowbtn rowbtn--danger" type="button" onclick="removeMember(\''+esc(m.id)+'\')">Remove</button>';
@@ -2026,6 +2067,7 @@ function renderVendors(){
   var vendors=(window.SDB&&window.SDB.vendors)||[];
   list.innerHTML=vendors.map(function(v){
     var actions=v.email?(
+      '<button class="rowbtn" type="button" onclick="impersonateAccount(\''+esc(v.email)+'\',\'factory\',\''+esc(v.contact||v.name)+'\')">Log in as</button>'+
       '<button class="rowbtn" type="button" onclick="resetVendorAccess(\''+esc(v.id)+'\')">Reset access</button>'+
       '<button class="rowbtn rowbtn--danger" type="button" onclick="removeVendor(\''+esc(v.id)+'\')">Remove</button>'
     ):'<button class="rowbtn rowbtn--danger" type="button" onclick="removeVendor(\''+esc(v.id)+'\')">Remove</button>';
@@ -2038,6 +2080,81 @@ function renderVendors(){
 }
 window.renderTeam=renderTeam;
 window.renderVendors=renderVendors;
+
+/* ---- Project assignments (owner): who's assigned, awarded status, client contact ---- */
+function findProject(id){return (window.SDB.projects||[]).filter(function(p){return p.id===id;})[0];}
+function renderProjectAssignments(){
+  var wrap=document.getElementById('projectAssignList');
+  if(!wrap)return;
+  var projects=(window.SDB&&window.SDB.projects)||[];
+  var managers=((window.SDB&&window.SDB.team)||[]).filter(function(m){return m.role==='sales';});
+  wrap.innerHTML=projects.map(function(p){
+    var options='<option value="">— Unassigned —</option>'+managers.map(function(m){
+      var sel=(p.assignedTo&&m.email&&p.assignedTo.toLowerCase()===m.email.toLowerCase())?' selected':'';
+      return '<option value="'+esc(m.email)+'"'+sel+'>'+esc(m.name)+'</option>';
+    }).join('');
+    return '<div class="projassign">'+
+      '<div class="projassign__head"><span class="projassign__name">'+esc(p.name)+'</span>'+
+        '<label class="projassign__awarded"><input type="checkbox" '+(p.awarded?'checked':'')+' onchange="setProjectAwarded(\''+esc(p.id)+'\',this.checked)"> Awarded to production</label></div>'+
+      '<div class="projassign__row"><div class="mfield" style="margin:0;"><label>Assigned Client Manager</label>'+
+        '<select onchange="setProjectAssignee(\''+esc(p.id)+'\',this.value)">'+options+'</select></div></div>'+
+      '<div class="projassign__row projassign__contact">'+
+        '<div class="mfield" style="margin:0;"><label>Client company</label><input type="text" value="'+esc(p.company||'')+'" onchange="setProjectField(\''+esc(p.id)+'\',\'company\',this.value)"></div>'+
+        '<div class="mfield" style="margin:0;"><label>Contact name</label><input type="text" value="'+esc(p.contactName||'')+'" onchange="setProjectField(\''+esc(p.id)+'\',\'contactName\',this.value)"></div>'+
+        '<div class="mfield" style="margin:0;"><label>Contact email</label><input type="email" value="'+esc(p.contactEmail||'')+'" onchange="setProjectField(\''+esc(p.id)+'\',\'contactEmail\',this.value)"></div>'+
+        '<div class="mfield" style="margin:0;"><label>Contact phone</label><input type="text" value="'+esc(p.contactPhone||'')+'" onchange="setProjectField(\''+esc(p.id)+'\',\'contactPhone\',this.value)"></div>'+
+      '</div>'+
+    '</div>';
+  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects yet.</div>';
+}
+window.renderProjectAssignments=renderProjectAssignments;
+function setProjectAwarded(id,val){var p=findProject(id);if(!p)return;p.awarded=!!val;if(typeof saveSRC==='function')saveSRC();if(window.renderMyAssigned)window.renderMyAssigned();}
+function setProjectAssignee(id,email){var p=findProject(id);if(!p)return;p.assignedTo=email||null;if(typeof saveSRC==='function')saveSRC();if(window.renderMyAssigned)window.renderMyAssigned();}
+function setProjectField(id,field,val){var p=findProject(id);if(!p)return;p[field]=val;if(typeof saveSRC==='function')saveSRC();if(window.renderMyAssigned)window.renderMyAssigned();}
+
+/* ---- Client Manager's own scoped project list ---- */
+// The sidebar's project picker is otherwise unrestricted static HTML (any
+// role can select any of its hardcoded options) — for Client Manager this
+// would let someone bypass the My Projects scoping entirely just by opening
+// the dropdown, so hide every option that isn't one of their own
+// assigned+awarded projects. Runs every time renderMyAssigned() does, since
+// that's called on login, on landing in My Projects, and whenever the
+// project registry changes.
+function restrictProjSelectForSales(allowedIds){
+  var sel=document.getElementById('projSelect');
+  if(!sel)return;
+  var isSales=document.body.dataset.role==='sales';
+  Array.prototype.forEach.call(sel.options,function(opt){
+    if(!opt.value)return; // always keep the "— Select a project —" placeholder
+    opt.hidden=isSales&&allowedIds.indexOf(opt.value)<0;
+  });
+}
+function renderMyAssigned(){
+  var wrap=document.getElementById('myAssignedList');
+  if(!wrap)return;
+  var s=(typeof currentSession==='function')?currentSession():null;
+  var email=(s&&s.email)||'';
+  var projects=((window.SDB&&window.SDB.projects)||[]).filter(function(p){
+    return p.awarded&&p.assignedTo&&email&&p.assignedTo.toLowerCase()===email.toLowerCase();
+  });
+  restrictProjSelectForSales(projects.map(function(p){return p.id;}));
+  wrap.innerHTML=projects.map(function(p){
+    return '<div class="projassign">'+
+      '<div class="projassign__head"><span class="projassign__name">'+esc(p.name)+'</span>'+
+        '<button class="btn btn--ghost btn--sm" onclick="openMyAssignedProject(\''+esc(p.id)+'\')">Open project →</button></div>'+
+      '<div class="projassign__row projassign__contact">'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(p.company||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(p.contactName||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+(p.contactEmail?('<a href="mailto:'+esc(p.contactEmail)+'">'+esc(p.contactEmail)+'</a>'):'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(p.contactPhone||'—')+'</div></div>'+
+      '</div>'+
+      '<div class="projassign__row"><button class="btn btn--primary btn--sm" onclick="openMyAssignedInvoice(\''+esc(p.id)+'\')">View invoice</button></div>'+
+    '</div>';
+  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No projects are currently assigned to you. Once Carve Admin marks a project as awarded to production and assigns it to you, it will appear here.</div>';
+}
+window.renderMyAssigned=renderMyAssigned;
+function openMyAssignedProject(id){var sel=document.getElementById('projSelect');sel.value=id;onProjChange();go('overview');}
+function openMyAssignedInvoice(id){var sel=document.getElementById('projSelect');sel.value=id;onProjChange();go('invoices');}
 
 // Carve Admin's authority over a team member's/vendor's login access is kept
 // independent of whatever password they've set: "Reset access" revokes the
@@ -2064,8 +2181,14 @@ function removeMember(id){
   if(!m)return;
   if(!confirm('Remove '+m.name+' from the team? They will immediately lose portal access.'))return;
   window.SDB.team=(window.SDB.team||[]).filter(function(x){return x.id!==id;});
+  // A removed Client Manager can't stay assigned to a project — clear it so
+  // that project just shows unassigned rather than pointing at a dead email.
+  (window.SDB.projects||[]).forEach(function(p){
+    if(p.assignedTo&&m.email&&p.assignedTo.toLowerCase()===m.email.toLowerCase())p.assignedTo=null;
+  });
   if(typeof saveSRC==='function')saveSRC();
   renderTeam();
+  if(window.renderProjectAssignments)window.renderProjectAssignments();
   if(m.email){
     fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'adminRemoveAccount',email:m.email})}).catch(function(){});
   }
@@ -2113,6 +2236,7 @@ function createTeamMember(e){
   window.SDB.team.push({id:'t'+Date.now(),name:name,email:email,role:role});
   if(typeof saveSRC==='function')saveSRC();
   renderTeam();
+  if(window.renderProjectAssignments)window.renderProjectAssignments();
   closeAddMember();
   var roleLabel=ROLE_LABELS[role]||role;
   fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:role})})
@@ -2168,7 +2292,7 @@ function createVendor(e){
 }
 </script>
 <script>
-var titles={myprojects:'My Projects',projects:'Projects',overview:'Overview',quote:'Quote',editquote:'Edit Estimate',changes:'Request Changes',milestones:'Milestones',files:'Files',messages:'Messages',invoices:'Invoices',leads:'Leads',clients:'Clients',team:'Team & Access',sourcing:'Quotes'};
+var titles={myprojects:'My Projects',myassigned:'My Projects',projects:'Projects',overview:'Overview',quote:'Quote',editquote:'Edit Estimate',changes:'Request Changes',milestones:'Milestones',files:'Files',messages:'Messages',invoices:'Invoices',leads:'Leads',clients:'Clients',team:'Team & Access',sourcing:'Quotes'};
 var currentProjTitle='Aria Tower — Los Angeles, CA';
 var PROJECT_VIEWS=['overview','quote','editquote','changes','milestones','files','messages','invoices'];
 function go(v){
@@ -2189,18 +2313,19 @@ function go(v){
   document.querySelectorAll('.navbtn').forEach(function(b){b.classList.toggle('on',b.dataset.view===v);});
   document.getElementById('viewTitle').textContent=titles[v];
   // Oversight / portfolio views aren't tied to one project; project views are.
-  var projScoped=(v!=='clients'&&v!=='team'&&v!=='leads'&&v!=='myprojects'&&v!=='projects'&&v!=='sourcing')&&!skipProjectGate;
+  var projScoped=(v!=='clients'&&v!=='team'&&v!=='leads'&&v!=='myprojects'&&v!=='myassigned'&&v!=='projects'&&v!=='sourcing')&&!skipProjectGate;
   var oversightPrefix=(document.body.dataset.role==='client')?'':'Studio · ';
   document.getElementById('crumb').textContent=(projScoped?currentProjTitle+' · ':oversightPrefix)+titles[v];
-  document.body.classList.toggle('at-portfolio',v==='myprojects'||v==='projects');
-  if(v==='myprojects'||v==='projects')document.body.classList.remove('quote-stage');
+  document.body.classList.toggle('at-portfolio',v==='myprojects'||v==='projects'||v==='myassigned');
+  if(v==='myprojects'||v==='projects'||v==='myassigned')document.body.classList.remove('quote-stage');
   if(v==='quote')applyQuoteState();
   if(v==='invoices'){
     if(document.body.dataset.role==='owner'&&typeof window.SRC_carveInvoices==='function')window.SRC_carveInvoices();
     else renderPhase1Invoice();
   }
   if(v==='leads'&&window.SRC_renderLeads)window.SRC_renderLeads();
-  if(v==='team'){if(window.renderTeam)window.renderTeam();if(window.renderVendors)window.renderVendors();}
+  if(v==='team'){if(window.renderTeam)window.renderTeam();if(window.renderVendors)window.renderVendors();if(window.renderProjectAssignments)window.renderProjectAssignments();}
+  if(v==='myassigned'&&window.renderMyAssigned)window.renderMyAssigned();
   if(v==='clients'&&window.scopeClients)window.scopeClients(document.body.dataset.role);
   if(v==='sourcing'&&window.SRC_render)SRC_render();
   var addLeadBtn=document.getElementById('addLeadBtn');
@@ -2944,11 +3069,12 @@ function onProjChange(){
 var PERM={
   'client-only':['client'],
   'studio-only':['owner','sales','factory','prodtech'],
-  'finance-only':['client','owner','sales'],   // see quotes/invoices (client sees their own)
-  'client-quote-only':['client','sales'],       // client-facing Quote nav — owner uses Sourcing & Quotes instead
-  'finance-edit':['owner','sales'],            // edit/resend estimates
+  'finance-only':['client','owner','sales'],   // see quotes/invoices (client sees their own; sales/Client Manager view-only, their assigned project only)
+  'client-quote-only':['client'],               // client-facing Quote nav — Client Manager doesn't see quote/estimate negotiation, only Owner does via Sourcing & Quotes
+  'finance-edit':['owner'],                    // edit/resend estimates — Client Manager is view-only on invoices
   'fab-only':['owner','factory','prodtech'],   // fabrication controls
-  'cm-only':['owner','sales'],                 // invite/manage clients
+  'cm-only':['owner'],                         // studio-wide leads/clients pipeline + full project list — Owner only; Client Manager gets the scoped 'cmproj-only' view instead
+  'cmproj-only':['sales'],                     // Client Manager's own scoped "My Projects" view (assigned + awarded-to-production only)
   'owner-only':['owner'],                       // team & access control
   'cid-only':['client','owner','sales'],        // client identity + client comms (hidden from production)
   'factory-only':['factory','prodtech'],        // production substitutes (anonymized client, internal notes)
@@ -2976,7 +3102,7 @@ function applyPerms(role){
   var curView=document.querySelector('.view:not([hidden])');
   if(curView){
     var navForView=document.querySelector('.navbtn[data-view="'+(curView.id.replace('view-',''))+'"]');
-    var fallbackView=(role==='owner'||role==='sales')?'leads':'overview';
+    var fallbackView=role==='owner'?'leads':(role==='sales'?'myassigned':'overview');
     if(navForView && navForView.classList.contains('perm-off')) go(fallbackView);
     if(curView.classList.contains('perm-off')) go(fallbackView);
   }
@@ -3362,6 +3488,12 @@ function setRole(r){
     if(!sel.value)sel.value='aria';
     onProjChange();
     go('sourcing');
+  }else if(r==='sales'){
+    // Client Manager doesn't land in a specific project — they land on their
+    // own scoped list of assigned + awarded-to-production projects (see
+    // renderMyAssigned()) and pick one from there.
+    sel.value='';
+    go('myassigned');
   }else{
     if(!sel.value)sel.value='aria';
     onProjChange();
@@ -3949,6 +4081,11 @@ var ACCOUNTS={
   '13918826884@163.com':'factory'
 };
 var SESSION_KEY='cm_portal_session';
+// Set only while Carve Admin is using "Log in as" (Team & Access) to view a
+// team member's or vendor's account for IT/diagnosis purposes — holds the
+// Owner's own session so "Return to my account" can restore it. Its mere
+// presence is also how the impersonate banner decides whether to show.
+var IMPERSONATE_KEY='cm_portal_impersonator';
 function attemptLogin(){
   var email=document.getElementById('loginEmail').value.trim().toLowerCase();
   var pass=document.getElementById('loginPass').value;
@@ -3998,11 +4135,44 @@ function enterSession(role,email,name){
       if(wr)wr.textContent='Production Admin \u00b7 '+admin.company;
     }
   }
+  var impRaw=null;try{impRaw=localStorage.getItem(IMPERSONATE_KEY);}catch(e){}
+  if(impRaw){
+    document.body.classList.add('impersonating');
+    var who=document.getElementById('impersonateWho');
+    if(who)who.textContent=(name||email)+' ('+((typeof ROLE_LABELS!=='undefined'&&ROLE_LABELS[role])||role)+')';
+  }else{
+    document.body.classList.remove('impersonating');
+  }
 }
 function logOutSession(){
   localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(IMPERSONATE_KEY);
   location.reload();
 }
+/* ---- IT: log in as a team member's/vendor's account to diagnose issues ----
+   Entirely client-side and password-free by design: Owner already knows
+   this person's email/role/name from the Team & Access roster, so there's
+   nothing to look up or verify server-side. The Owner's own session is
+   stashed under IMPERSONATE_KEY so "Return to my account" can restore it
+   exactly, and the banner (shown via enterSession() above) makes it obvious
+   which account is active the whole time. */
+function impersonateAccount(email,role,name){
+  if(!email||!role)return;
+  if(!confirm('Log in as '+(name||email)+'? You\u2019ll see exactly what they see, and can return to your own account at any time from the banner at the top.'))return;
+  var mine=currentSession();
+  if(mine){try{localStorage.setItem(IMPERSONATE_KEY,JSON.stringify(mine));}catch(e){}}
+  localStorage.setItem(SESSION_KEY,JSON.stringify({email:email,role:role,name:name||null}));
+  location.reload();
+}
+window.impersonateAccount=impersonateAccount;
+function returnFromImpersonation(){
+  var raw=null;try{raw=localStorage.getItem(IMPERSONATE_KEY);}catch(e){}
+  if(!raw)return;
+  localStorage.setItem(SESSION_KEY,raw);
+  try{localStorage.removeItem(IMPERSONATE_KEY);}catch(e){}
+  location.reload();
+}
+window.returnFromImpersonation=returnFromImpersonation;
 
 /* ---- Account settings: every role can change their own email/password ---- */
 function currentSession(){
@@ -4287,6 +4457,17 @@ function seedSRC(){
     ],
     vendors:[
       {id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',contact:'Xin Liao',email:'13918826884@163.com'}
+    ],
+    // Project registry: which projects exist, who they belong to, who's
+    // assigned to manage the client relationship, and whether they've been
+    // awarded to production yet. Only 'aria' is a real, fully-wired project
+    // (Overview/Quote/Milestones/Files/Messages/Invoices all key off this id
+    // generically) — the other cards in the studio-wide Projects list are
+    // still static demo dressing and aren't part of this registry yet.
+    // assignedTo is a team member's email (matches SDB.team[].email), or
+    // null if unassigned. Owner edits all of this from Team & Access.
+    projects:[
+      {id:'aria',name:'Aria Tower — Los Angeles, CA',company:'Reyes Development Group',contactName:'Daniel Reyes',contactEmail:'',contactPhone:'',awarded:true,assignedTo:null}
     ]
   };
 }
@@ -4333,7 +4514,7 @@ function migrateBriefFields(briefs){
 }
 if(migrateBriefFields(SDB.briefs))saveSRC();
 syncClientsFromLeads();
-function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];if(!d.team)d.team=seedSRC().team;if(!d.vendors)d.vendors=seedSRC().vendors;return d;}}}catch(e){}return seedSRC();}
+function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];if(!d.team)d.team=seedSRC().team;if(!d.vendors)d.vendors=seedSRC().vendors;if(!d.projects)d.projects=seedSRC().projects;return d;}}}catch(e){}return seedSRC();}
 function saveSRC(opts){
   try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
   if(apiReady){
@@ -4342,7 +4523,7 @@ function saveSRC(opts){
     // a lead/brief another tab or a client submission added in the meantime). An
     // id only actually gets removed server-side if it's explicitly listed below —
     // see deleteLead(), the one place that really deletes rather than just editing.
-    var payload={briefs:SDB.briefs,leads:SDB.leads||[]};
+    var payload={briefs:SDB.briefs,leads:SDB.leads||[],projects:SDB.projects||[]};
     if(opts&&opts.deletedLeadIds&&opts.deletedLeadIds.length)payload.deletedLeadIds=opts.deletedLeadIds;
     if(opts&&opts.deletedBriefIds&&opts.deletedBriefIds.length)payload.deletedBriefIds=opts.deletedBriefIds;
     fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
@@ -6137,9 +6318,10 @@ function reconcilePendingDeletes(pendingArr,serverList){
 }
 function pullSourcing(){
   return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
-    if(data&&(data.briefs||data.leads)){
+    if(data&&(data.briefs||data.leads||data.projects)){
       SDB.briefs=mergeSrcList(SDB.briefs,data.briefs||[],srcPendingDeleteBriefIds);
       SDB.leads=mergeSrcList(SDB.leads,data.leads||[],srcPendingDeleteLeadIds);
+      SDB.projects=mergeSrcList(SDB.projects,data.projects||[],[]);
       reconcilePendingDeletes(srcPendingDeleteBriefIds,data.briefs||[]);
       reconcilePendingDeletes(srcPendingDeleteLeadIds,data.leads||[]);
       migrateBriefFields(SDB.briefs);
@@ -6158,6 +6340,8 @@ function pullSourcing(){
         if(window.SRC_updateBadges)window.SRC_updateBadges();
         if(window.SRC_render)window.SRC_render();
         if(window.SRC_renderLeads)window.SRC_renderLeads();
+        if(window.renderProjectAssignments)window.renderProjectAssignments();
+        if(window.renderMyAssigned)window.renderMyAssigned();
       }
     }
   });
@@ -6166,8 +6350,8 @@ pullSourcing().then(function(){
   apiReady=true;
   // Nothing existed yet server-side (fresh store) — seed it with whatever local data we have.
   return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
-    if(!data||(!data.briefs&&!data.leads)){
-      return fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:SDB.briefs,leads:SDB.leads||[]})});
+    if(!data||(!data.briefs&&!data.leads&&!data.projects)){
+      return fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:SDB.briefs,leads:SDB.leads||[],projects:SDB.projects||[]})});
     }
   });
 }).catch(function(e){console.error('Sourcing API init failed \u2014 staying local-only:',e);apiReady=true;})
