@@ -2128,7 +2128,7 @@ function submitAssignManager(){
   var b=findBrief(_pendingAssignBriefId);
   if(b){
     b.assignedManager=document.getElementById('assignManagerSelect').value||null;
-    if(typeof saveSRC==='function')saveSRC();
+    if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
     if(typeof SRC_render==='function')SRC_render();
     if(window.renderAwardedProjects)window.renderAwardedProjects();
     if(window.renderMyAssigned)window.renderMyAssigned();
@@ -2187,7 +2187,7 @@ function setBriefManager(id,email){
   var b=findBrief(id);
   if(!b)return;
   b.assignedManager=email||null;
-  if(typeof saveSRC==='function')saveSRC();
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   if(window.renderMyAssigned)window.renderMyAssigned();
 }
 
@@ -2260,10 +2260,11 @@ function removeMember(id){
   window.SDB.team=(window.SDB.team||[]).filter(function(x){return x.id!==id;});
   // A removed Client Manager can't stay assigned to a project — clear it so
   // that project just shows unassigned rather than pointing at a dead email.
+  var affectedBriefIds=[];
   (window.SDB.briefs||[]).forEach(function(b){
-    if(b.assignedManager&&m.email&&b.assignedManager.toLowerCase()===m.email.toLowerCase())b.assignedManager=null;
+    if(b.assignedManager&&m.email&&b.assignedManager.toLowerCase()===m.email.toLowerCase()){b.assignedManager=null;affectedBriefIds.push(b.id);}
   });
-  if(typeof saveSRC==='function')saveSRC();
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:affectedBriefIds});
   renderTeam();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
   if(window.renderMyAssigned)window.renderMyAssigned();
@@ -4434,13 +4435,13 @@ window.SRC_saveComment=function(bid,shopId,vi){
   // without having to go find and open the specific quote first.
   notifyShop(shopId,'Carve requested a revision on "'+b.title+'": '+txt);
   showEmailToast('Sent to '+shop(shopId).name+' — revision requested on "'+b.title+'".');
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_clearComment=function(bid,shopId,vi){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
   var opt=getOption(b,shopId,vi);
   if(opt)delete opt.carveNote;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 /* Carve Admin's inline control on each quote option: view/add/edit/clear a revision request */
 function carveCommentBlock(b,shopId,vi,q){
@@ -4623,6 +4624,18 @@ function saveSRC(opts){
     var payload={briefs:SDB.briefs,leads:SDB.leads||[]};
     if(opts&&opts.deletedLeadIds&&opts.deletedLeadIds.length)payload.deletedLeadIds=opts.deletedLeadIds;
     if(opts&&opts.deletedBriefIds&&opts.deletedBriefIds.length)payload.deletedBriefIds=opts.deletedBriefIds;
+    // Tells the server exactly which brief(s) this particular save is
+    // intentionally changing (see mergeById's allowedIds in api/sourcing.js).
+    // Without this, EVERY save anywhere in the app — adding a vendor,
+    // renaming a team member, anything — carries this tab's entire local
+    // briefs array, and if that tab's copy of some OTHER brief hadn't caught
+    // up with a recent change yet, the server used to just accept it anyway,
+    // silently reverting that other brief (e.g. a vendor's quote vanishing
+    // and the project going back to "awaiting quote" minutes after they
+    // submitted it). Only call sites that changed a specific brief pass
+    // this; everything else falls back to the original trust-everything
+    // behavior, unchanged.
+    if(opts&&opts.changedBriefIds&&opts.changedBriefIds.length)payload.changedBriefIds=opts.changedBriefIds;
     fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .catch(function(e){console.error('Sourcing API sync failed:',e);});
   }
@@ -5303,7 +5316,7 @@ function renderCarveAdminBriefDetail(b){
     // invoice yet (e.g. it reached this state before invoicing existed), gets one issued
     // now rather than staying stuck.
     if(confirmed&&b.clientQuote&&b.clientQuote.price&&!b.clientQuote.invoice){
-      if(ensureClientInvoice(b))saveSRC();
+      if(ensureClientInvoice(b))saveSRC({changedBriefIds:[b.id]});
     }
     return html;
 }
@@ -5355,7 +5368,7 @@ window.SRC_markInvoicePaid=function(bid,which){
   var today=new Date().toISOString().slice(0,10);
   if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=today;}
   else{inv.balanceStatus='paid';inv.balancePaidAt=today;}
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
@@ -5368,7 +5381,7 @@ window.SRC_reportInvoicePayment=function(bid,which,method){
   var today=new Date().toISOString().slice(0,10);
   if(which==='deposit'){inv.depositStatus='reported';inv.depositReportedAt=today;inv.depositReportedMethod=method||'';}
   else{inv.balanceStatus='reported';inv.balanceReportedAt=today;inv.balanceReportedMethod=method||'';}
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
@@ -5380,7 +5393,7 @@ window.SRC_reopenInvoicePayment=function(bid,which){
   var inv=b.clientQuote.invoice;
   if(which==='deposit'){inv.depositStatus='due';delete inv.depositPaidAt;delete inv.depositReportedAt;delete inv.depositReportedMethod;}
   else{inv.balanceStatus='due';delete inv.balancePaidAt;delete inv.balanceReportedAt;delete inv.balanceReportedMethod;}
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
@@ -5396,7 +5409,7 @@ window.SRC_editInvoiceId=function(bid,which){
   next=next.trim();
   if(!next)return;
   if(which==='deposit')inv.depositId=next; else inv.balanceId=next;
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
@@ -5563,7 +5576,7 @@ window.SRC_saveClientQuote=function(id){
   b.clientQuote={price:price,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true,clientComments:prevComments};
   if(prevInvoice)b.clientQuote.invoice=prevInvoice; // price edited after invoicing — keep the already-issued invoice as-is
   var invoiceCreated=(b.status==='awarded')&&ensureClientInvoice(b);
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
   showEmailToast((wasSent?'Updated quote resent to ':'Quote sent to ')+'the client — they\'ll see it in their portal.'+(invoiceCreated?' Invoice '+b.clientQuote.invoice.depositId+' generated and sent to their Studio Portal.':''));
 };
 window.SRC_sendStudioReply=function(ev,id){
@@ -5576,14 +5589,14 @@ window.SRC_sendStudioReply=function(ev,id){
   if(!b.clientQuote){return false;}
   if(!b.clientQuote.clientComments)b.clientQuote.clientComments=[];
   b.clientQuote.clientComments.unshift({text:text,time:'just now',from:'studio'});
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
   showEmailToast('Reply sent to the client on "'+b.title+'".');
   return false;
 };
 window.SRC_editClientQuote=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   if(b.clientQuote)b.clientQuote.sent=false;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_reopenForQuotes=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -5591,7 +5604,7 @@ window.SRC_reopenForQuotes=function(id){
   var prevShop=b.awarded;
   b.status='open';b.awarded=null;b.awardedVariantIndex=null;b.picked=null;b.pickedVariantIndex=null;b.clientQuote=null;b.stage='sourcing';b.assignedTech=null;b.awardedAt=null;
   if(prevShop)notifyShop(prevShop,'"'+b.title+'" was reopened for quotes by Carve Model.');
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 /* ---- Close out a single vendor's quotation that didn't convert — they didn't get picked, or the client
    said no. Tracked per quote (not per brief), since a brief can have other quotes still in play. ---- */
@@ -5610,7 +5623,7 @@ window.SRC_markQuoteUnsuccessful=function(id,shopId,variantIndex){
   if(reason===null)return;
   q.unsuccessful=true;q.unsuccessfulAt=new Date().toISOString().slice(0,10);q.unsuccessfulReason=reason.trim()||null;
   if(b.picked===shopId&&(b.pickedVariantIndex==null?null:b.pickedVariantIndex)===vi){b.picked=null;b.pickedVariantIndex=null;b.clientQuote=null;}
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_reopenQuoteUnsuccessful=function(id,shopId,variantIndex){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -5620,7 +5633,7 @@ window.SRC_reopenQuoteUnsuccessful=function(id,shopId,variantIndex){
   var q=vi==null?b.quotes[shopId]:(b.variations&&b.variations[shopId]&&b.variations[shopId][vi]);
   if(!q)return;
   delete q.unsuccessful;delete q.unsuccessfulAt;delete q.unsuccessfulReason;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 /* ---- Soft pick: choose the basis for the client quote WITHOUT notifying any shop. Freely switchable until confirmed with production. ---- */
 window.SRC_pick=function(id,shopId,variantIndex){
@@ -5632,7 +5645,7 @@ window.SRC_pick=function(id,shopId,variantIndex){
   if(b.clientQuote&&b.clientQuote.sent&&!confirm('A quote based on a different option was already sent to the client. Switching will clear that draft so you can re-finalize pricing from the new option. Continue?'))return;
   b.picked=shopId;b.pickedVariantIndex=vi;
   b.clientQuote=null;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_award=function(id,shopId,variantIndex){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -5664,7 +5677,7 @@ window.SRC_award=function(id,shopId,variantIndex){
       notifyShop(s.id,'"'+b.title+'" was awarded to another shop.');
     }
   });
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
   // First time this brief is awarded, prompt to assign a Client Manager to
   // manage it going forward — skip the prompt on a re-award/shop switch if
   // one's already assigned (change it anytime from the Projects tab instead).
@@ -5676,13 +5689,13 @@ window.SRC_archiveBrief=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   if(!b)return;
   b.archived=true;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_unarchiveBrief=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   if(!b)return;
   delete b.archived;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_deleteBrief=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -5703,7 +5716,7 @@ window.SRC_editInvoiceNumber=function(bid){
   next=next.trim();
   if(!next)return;
   b.code=next;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 
 /* ---- Production Admin (our shop): quote open briefs, add variation quotes, assign techs to awarded jobs ---- */
@@ -5980,7 +5993,7 @@ window.SRC_addVariation=function(bid){
   logHistory(b,OUR_SHOP,data,'Submitted variation');
   delete SRC_PENDING_BFILE['varnew-'+bid];
   delete SRC_OPEN_VARIATION[bid];
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_reviseVariation=function(bid,idx){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
@@ -5989,7 +6002,7 @@ window.SRC_reviseVariation=function(bid,idx){
     b.variations[OUR_SHOP].splice(idx,1);
   }
   SRC_OPEN_VARIATION[bid]=true;
-  saveSRC();SRC_render();
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 window.SRC_quote=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
@@ -6004,16 +6017,21 @@ window.SRC_quote=function(id){
   b.quotes[OUR_SHOP]=data;
   logHistory(b,OUR_SHOP,data,'Submitted');
   delete SRC_PENDING_BFILE['src-'+id];
-  saveSRC();SRC_render();
+  // changedBriefIds tells the server this save is intentionally updating this
+  // exact brief, so it can never be overwritten by some OTHER save elsewhere
+  // in the app whose local copy hadn't caught up yet (see mergeById in
+  // api/sourcing.js) — the fix for quotes appearing to silently vanish and
+  // the project going back to "awaiting quote" after a vendor submitted one.
+  saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
-window.SRC_unquote=function(id){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];if(b.quotes[OUR_SHOP])logHistory(b,OUR_SHOP,b.quotes[OUR_SHOP],'Revised (previous version)');delete b.quotes[OUR_SHOP];delete b.lastCommentAt;saveSRC();SRC_render();};
-window.SRC_assign=function(id,tech){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];b.assignedTech=(b.assignedTech===tech?null:tech);saveSRC();SRC_render();};
+window.SRC_unquote=function(id){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];if(b.quotes[OUR_SHOP])logHistory(b,OUR_SHOP,b.quotes[OUR_SHOP],'Revised (previous version)');delete b.quotes[OUR_SHOP];delete b.lastCommentAt;saveSRC({changedBriefIds:[b.id]});SRC_render();};
+window.SRC_assign=function(id,tech){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];b.assignedTech=(b.assignedTech===tech?null:tech);saveSRC({changedBriefIds:[b.id]});SRC_render();};
 window.SRC_proceedToFactory=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   if(!b.assignedTech){alert('Assign a technician first.');return;}
   var techName=TECHS.filter(function(t){return t.id===b.assignedTech;})[0].name;
   if(!confirm('Proceed to production for '+b.title+'? This kicks off the project management stage — '+techName+' gets access to Milestones, Files, and Photo Review.'))return;
-  b.stage='production';saveSRC();SRC_render();
+  b.stage='production';saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
 
 /* ---- Production Technician: only jobs assigned to me, everything but price ---- */
@@ -6056,14 +6074,14 @@ window.SRC_acceptClientQuote=function(bid){
   // This just covers it if somehow neither happened yet.
   ensureClientInvoice(b);
   b.clientQuote.accepted=true;
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
 };
 window.SRC_addClientComment=function(bid,text){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
   if(!b||!b.clientQuote)return false;
   if(!b.clientQuote.clientComments)b.clientQuote.clientComments=[];
   b.clientQuote.clientComments.unshift({text:text,time:'just now',from:'client'});
-  saveSRC();
+  saveSRC({changedBriefIds:[b.id]});
   return true;
 };
 function daysBetween(fromStr,toStr){
@@ -6330,7 +6348,7 @@ window.SRC_confirmSendLead=function(){
     var newShopIds=[]; document.querySelectorAll('.sendlead-chk:checked').forEach(function(cb){newShopIds.push(cb.value);});
     if(!newShopIds.length){alert('Select at least one production shop to invite.');return;}
     brief.invited=(brief.invited||[]).concat(newShopIds.filter(function(sid){return (brief.invited||[]).indexOf(sid)<0;}));
-    saveSRC();
+    saveSRC({changedBriefIds:[brief.id]});
     closeSendLeadModal();
     SRC_render();
     var names2=newShopIds.map(function(sid){var a=(window.PRODUCTION_ADMINS||[]).filter(function(x){return x.shopId===sid;})[0];return a?a.name:sid;}).join(', ');
@@ -6373,7 +6391,7 @@ window.SRC_confirmSendLead=function(){
   // explicitly listed. Without this, the lead disappears locally but quietly
   // comes back on the next reload/sync, leaving both a lead and a quote for
   // the same project.
-  saveSRC({deletedLeadIds:[id]});
+  saveSRC({deletedLeadIds:[id],changedBriefIds:[brief.id]});
   window.SRC_renderLeads();
   closeSendLeadModal();
   var names=shopIds.map(function(sid){var a=(window.PRODUCTION_ADMINS||[]).filter(function(x){return x.shopId===sid;})[0];return a?a.name:sid;}).join(', ');
