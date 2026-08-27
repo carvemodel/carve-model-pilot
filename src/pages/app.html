@@ -4659,6 +4659,16 @@ function saveSRC(opts){
     // see reconcileVendorsIntoShops() above for why this matters: without
     // it, a vendor's own device never learns its own account's shop mapping.
     var payload={briefs:SDB.briefs,leads:SDB.leads||[],vendors:SDB.vendors||[],team:SDB.team||[]};
+    // Tell the server who's actually saving. For a factory (vendor) session
+    // this is load-bearing, not just informational: the server uses it to
+    // resolve which shop this caller owns, then rewrites this save so it can
+    // only ever touch that vendor's OWN quotes[shopId]/variations[shopId] on
+    // a changed brief — never the client's info, Carve's client-facing
+    // price, or another shop's quote — no matter what this tab's own
+    // (deliberately redacted) local copy of that brief looks like. See
+    // filterDataForFactory / vendorScopedBriefUpdate in api/sourcing.js.
+    var srcSess=(typeof currentSession==='function')?currentSession():null;
+    if(srcSess&&srcSess.role){payload.role=srcSess.role;payload.email=srcSess.email;}
     if(opts&&opts.deletedLeadIds&&opts.deletedLeadIds.length)payload.deletedLeadIds=opts.deletedLeadIds;
     if(opts&&opts.deletedBriefIds&&opts.deletedBriefIds.length)payload.deletedBriefIds=opts.deletedBriefIds;
     if(opts&&opts.deletedVendorIds&&opts.deletedVendorIds.length)payload.deletedVendorIds=opts.deletedVendorIds;
@@ -6500,8 +6510,23 @@ function reconcilePendingDeletes(pendingArr,serverList){
   var serverIds={};(serverList||[]).forEach(function(item){if(item&&item.id)serverIds[item.id]=true;});
   for(var i=pendingArr.length-1;i>=0;i--){if(!serverIds[pendingArr[i]])pendingArr.splice(i,1);}
 }
+// Vendor (factory) sessions ask the server to filter the response itself —
+// see filterDataForFactory in api/sourcing.js — so a vendor's browser never
+// receives other vendors' quotes or any client's contact info over the wire
+// in the first place, rather than relying only on this file's own rendering
+// to hide it. Covers every pull once a session exists (including on a fresh
+// page load restoring a stored session, since currentSession() reads
+// localStorage synchronously, before enterSession() has even run) — the
+// only gap is the very first, pre-login pull on a brand-new device that has
+// never signed in here before, which still fetches unfiltered since no
+// email is known yet at that point.
+function sourcingQuery(){
+  var s=(typeof currentSession==='function')?currentSession():null;
+  if(s&&s.role==='factory'&&s.email)return '?role=factory&email='+encodeURIComponent(s.email);
+  return '';
+}
 function pullSourcing(){
-  return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
+  return fetch('/api/sourcing'+sourcingQuery()).then(function(r){return r.json();}).then(function(data){
     if(data&&(data.briefs||data.leads||data.vendors||data.team)){
       SDB.briefs=mergeSrcList(SDB.briefs,data.briefs||[],srcPendingDeleteBriefIds);
       SDB.leads=mergeSrcList(SDB.leads,data.leads||[],srcPendingDeleteLeadIds);
@@ -6545,6 +6570,16 @@ function pullSourcing(){
 pullSourcing().then(function(){
   apiReady=true;
   // Nothing existed yet server-side (fresh store) — seed it with whatever local data we have.
+  // Owner-only: a factory (vendor) session now gets a server-FILTERED response
+  // scoped to just its own shop (see filterDataForFactory in api/sourcing.js)
+  // — for a vendor with no briefs yet, that filtered result legitimately
+  // looks "empty" even though the real store has plenty of other projects in
+  // it. Running this seed-with-local-data POST for that vendor would blast
+  // the ENTIRE shared store down to just their own tiny (filtered, missing
+  // everyone else's data) local copy. Only ever run this from an owner
+  // session, or before any session exists at all (first-ever setup).
+  var seedSession=(typeof currentSession==='function')?currentSession():null;
+  if(seedSession&&seedSession.role!=='owner')return;
   return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
     if(!data||(!data.briefs&&!data.leads)){
       return fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({briefs:SDB.briefs,leads:SDB.leads||[]})});
