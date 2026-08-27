@@ -187,81 +187,35 @@ function detectNewQuotes(currentBriefs, incomingBriefs) {
       const prevArr = prevVars[shopId] || [];
       const incArr = incVars[shopId] || [];
       for (let i = prevArr.length; i < incArr.length; i++) {
-        if (incArr[i]) found.push({ brief: incoming, shopId, quote: incArr[i], variationLabel: incArr[i].label || 'Variation' });
+        if (incArr[i]) found.push({ brief: incoming, shopId, quote: incArr[i], variationLabel: incArr[i].label || 'Variation', variantIndex: i });
       }
     });
   });
   return found;
 }
 
-// ── Vendor-side data isolation (server-side) ───────────────────────────────
-// Everything above this used to hand the ENTIRE store — every project, every
-// client's name/email/phone, every OTHER vendor's price and quote — to
-// whoever called GET /api/sourcing, with all narrowing to "just this
-// vendor's own jobs" happening in app.html's JS after the fact. That's fine
-// against accidental bugs in that JS, but it means the actual data leaves
-// the server for every vendor's browser regardless: opening devtools'
-// Network tab, or just typing `SDB` in the console, would show a vendor
-// every other vendor's pricing and every client's contact info. This
-// filters the response itself for factory (vendor) callers, mirroring the
-// exact same "which briefs are mine" rule app.html's SRC_prodAdmin() already
-// uses client-side, so the two can never drift apart:
-//   invited.includes(shopId) || quotes[shopId] exists || awarded === shopId
-// Each matching brief is then rebuilt from an explicit allowlist of fields a
-// vendor actually needs (project spec, files, their own quote/variations) —
-// never copied-and-redacted, so a new sensitive field added to a brief later
-// doesn't automatically leak just because nobody remembered to strip it.
-// Note on trust: like every other action in this pilot (see api/auth.js's
-// admin actions), there's no server-side session token yet — role/email are
-// just what the caller claims in the query string. This stops the normal
-// app flow from ever transmitting other people's data to a vendor's
-// browser, which is the actual leak that was reported. It does NOT stop a
-// deliberately malicious caller who crafts their own request claiming
-// role=owner — closing that fully needs real verified sessions, a bigger
-// change than this fix. Flagged here rather than left implicit.
-function vendorSafeBrief(b, shopId) {
-  const quotes = {};
-  if (b.quotes && b.quotes[shopId]) quotes[shopId] = b.quotes[shopId];
-  const variations = {};
-  if (b.variations && b.variations[shopId]) variations[shopId] = b.variations[shopId];
-  return {
-    id: b.id,
-    title: b.title,
-    code: b.code || null,
-    brief: b.brief || {},
-    notes: b.notes || null,
-    files: b.files || [],
-    link: b.link || null,
-    status: b.status || null,
-    awarded: b.awarded || null,
-    awardedVariantIndex: b.awardedVariantIndex == null ? null : b.awardedVariantIndex,
-    stage: b.stage || null,
-    assignedTech: b.assignedTech || null,
-    invited: b.invited || [],
-    sentDate: b.sentDate || null,
-    lastCommentAt: b.lastCommentAt || null,
-    archived: !!b.archived,
-    quotes,
-    variations,
-  };
+// Guards against sending the same notification twice when two requests for
+// the same new lead/quote race each other (e.g. a slow connection causing a
+// retry, or two near-simultaneous saves). The "is this new" check above
+// reads Redis before writing, so it isn't atomic on its own — two concurrent
+// POSTs can both read the pre-save state and both conclude "this is new".
+// This claims a dedicated key per notification atomically (SET ... NX): only
+// whichever request claims it first actually sends the email; any others
+// silently skip. TTL is just storage hygiene — ids are never reused, so it
+// doesn't affect correctness.
+const NOTIFY_CLAIM_TTL_SECONDS = 30 * 24 * 60 * 60;
+async function claimNotification(redis, key) {
+  try {
+    const result = await redis.set(key, '1', { NX: true, EX: NOTIFY_CLAIM_TTL_SECONDS });
+    return result === 'OK';
+  } catch (err) {
+    console.error('claimNotification error for', key, err);
+    return true; // fail open — better an occasional duplicate than a silently dropped real notification
+  }
 }
-function isBriefRelevantToShop(b, shopId) {
-  return !!(b && ((b.invited || []).indexOf(shopId) >= 0 || (b.quotes && b.quotes[shopId]) || b.awarded === shopId));
-}
-function filterDataForFactory(data, email) {
-  const emailKey = String(email || '').toLowerCase();
-  const vendor = (data.vendors || []).find((v) => v && v.email && v.email.toLowerCase() === emailKey);
-  // No matching vendor for this email — same fail-closed rule as the client:
-  // show nothing rather than guess. See SRC_prodAdmin's '' guard in app.html.
-  if (!vendor) return { briefs: [], leads: [], vendors: [], team: [] };
-  const shopId = vendor.id;
-  const briefs = (data.briefs || [])
-    .filter((b) => isBriefRelevantToShop(b, shopId))
-    .map((b) => vendorSafeBrief(b, shopId));
-  // Only the caller's OWN vendor record — needed so their own device can
-  // resolve its own shopId (see reconcileVendorsIntoShops in app.html) —
-  // never the full roster.
-  return { briefs, leads: [], vendors: [vendor], team: [] };
+async function filterClaimed(redis, items, keyFn) {
+  const claimed = await Promise.all(items.map((item) => claimNotification(redis, keyFn(item))));
+  return items.filter((_, i) => claimed[i]);
 }
 
 module.exports = async (req, res) => {
@@ -442,10 +396,16 @@ module.exports = async (req, res) => {
       await redis.set(KEY, JSON.stringify(data));
 
       // Fire-and-await (but never fail the request over it): a bad Resend
-      // key or a transient API error must not stop the save itself.
+      // key or a transient API error must not stop the save itself. Claim
+      // each notification atomically first so a racing duplicate request
+      // never sends the same email twice (see claimNotification above).
+      const claimedLeads = await filterClaimed(redis, newLeads, (l) => 'carve:notified:lead:' + l.id);
+      const claimedQuotes = await filterClaimed(redis, newQuotes, (q) => (
+        'carve:notified:quote:' + q.brief.id + ':' + q.shopId + ':' + (q.variationLabel ? ('var:' + q.variantIndex) : 'primary')
+      ));
       const notifications = [
-        ...newLeads.map((l) => sendLeadNotification(l)),
-        ...newQuotes.map((q) => sendQuoteNotification(q)),
+        ...claimedLeads.map((l) => sendLeadNotification(l)),
+        ...claimedQuotes.map((q) => sendQuoteNotification(q)),
       ];
       if (notifications.length) {
         await Promise.allSettled(notifications);
