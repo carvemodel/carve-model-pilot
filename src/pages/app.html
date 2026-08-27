@@ -4804,6 +4804,17 @@ window.SRC_boundaryFilePicked=function(prefix,bid,input){
   // the file anywhere — meaning Carve Admin could never open or download it,
   // no matter what. Upload it for real now, the same way Add Lead does.
   SRC_BFILE_UPLOADING[key]=true;
+  // Picking a file (and the upload itself) produces no 'input' events, so the
+  // poll's srcLastInputAt-based "isEditing" check saw nothing happening and,
+  // once the 4s grace period lapsed, treated the quote form as idle — a 5s
+  // poll landing mid-upload then rebuilt the whole form from scratch,
+  // silently resetting every scratch field (scale, cost, days, notes…) back
+  // to its seeded default. pullSourcing() below also checks
+  // SRC_BFILE_UPLOADING directly so the form stays protected for the entire
+  // upload, however long it takes; bumping the timestamp here and on
+  // completion additionally keeps the normal typing-grace window fresh right
+  // before and after, so a poll can't slip in right as the upload finishes.
+  if(typeof srcLastInputAt!=='undefined')srcLastInputAt=Date.now();
   if(lbl)lbl.textContent='Uploading '+f.name+' ('+sizeStr+')…';
   var uploadPromise=window.__blobUpload
     ? window.__blobUpload('quotes/'+key+'/'+Date.now()+'-'+f.name,f,{access:'public',handleUploadUrl:'/api/upload',multipart:true}).then(function(blob){return blob.url;})
@@ -4811,12 +4822,14 @@ window.SRC_boundaryFilePicked=function(prefix,bid,input){
   uploadPromise.then(function(url){
     SRC_PENDING_BFILE[key]={name:f.name,size:f.size,url:url};
     delete SRC_BFILE_UPLOADING[key];
+    if(typeof srcLastInputAt!=='undefined')srcLastInputAt=Date.now();
     var lbl2=document.getElementById(prefix+'-bfile-label-'+bid);
     if(lbl2)lbl2.textContent=f.name+' · '+sizeStr;
   }).catch(function(err){
     console.error('Boundary file upload failed',f.name,err);
     SRC_PENDING_BFILE[key]={name:f.name,size:f.size,url:null};
     delete SRC_BFILE_UPLOADING[key];
+    if(typeof srcLastInputAt!=='undefined')srcLastInputAt=Date.now();
     var lbl3=document.getElementById(prefix+'-bfile-label-'+bid);
     if(lbl3)lbl3.textContent=f.name+' · '+sizeStr+' — upload failed, try again';
   });
@@ -6448,7 +6461,14 @@ function pullSourcing(){
       // either way, so nothing is lost — the visible re-render is just deferred
       // until the admin pauses.
       var ae=document.activeElement;
-      var isEditing=(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))||(Date.now()-srcLastInputAt<4000);
+      // A boundary-file upload (see SRC_boundaryFilePicked) produces no 'input'
+      // events for however long it takes to finish, so it was invisible to the
+      // checks below — a poll landing mid-upload would rebuild the form and
+      // silently wipe every other scratch field in it (scale, cost, days,
+      // notes…) back to its seeded default. Treat any in-flight upload as
+      // "editing" too, for its whole duration, not just a fixed grace window.
+      var anyBFileUploading=Object.keys(SRC_BFILE_UPLOADING).length>0;
+      var isEditing=(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))||(Date.now()-srcLastInputAt<4000)||anyBFileUploading;
       if(!isEditing){
         if(window.SRC_updateBadges)window.SRC_updateBadges();
         if(window.SRC_render)window.SRC_render();
