@@ -4465,6 +4465,14 @@ var OUR_SHOP='northpoint';            // Production Admin/Tech act for this shop
 // matched to a shop can explicitly CLEAR OUR_SHOP rather than leave it
 // pointing at whatever it was before — see enterSession().
 window.SRC_setShop=function(id){OUR_SHOP=id||'';};
+// Set (and cleared) by pullSourcing() when a factory-scoped request fails
+// outright (a non-401 error — a 500, a network hiccup, anything that isn't
+// "please sign in again"). Whatever was already on screen must NEVER just
+// sit there unrefreshed in that case — that's exactly how a vendor could
+// end up looking at stale, unrelated data (another vendor's, or Carve's
+// own) with nothing telling them it's wrong. See the guard in
+// SRC_prodAdmin() below.
+var srcFactoryLoadFailed=false;
 var ME_TECH='sam';                    // Production Technician identity
 var RMB_PER_USD=7.2;                  // demo FX rate — production shops quote in RMB, Carve sees USD
 var SRC_PENDING_BFILE={};             // holds boundary-file metadata picked but not yet submitted, keyed by "<prefix>-<briefId>"
@@ -6006,6 +6014,18 @@ function sectionLabel(text){
 }
 function SRC_prodAdmin(){
   var notice=document.getElementById('srcNotice');
+  // Safety guard: if the last attempt to fetch this account's own scoped
+  // data failed outright (see pullSourcing()), refuse to render anything —
+  // including whatever was already on screen from before. Falling through
+  // to stale content here is exactly how a failed request could look like
+  // one vendor seeing another's (or Carve's own) data.
+  if(srcFactoryLoadFailed){
+    notice.hidden=false;
+    notice.innerHTML='<b>Couldn’t load your account’s data.</b> Please refresh the page. If this keeps happening, contact Carve Admin rather than resubmitting anything.';
+    setSrcBody('');
+    window.SRC_updateBadges();
+    return;
+  }
   // Safety guard: OUR_SHOP is only ever '' when this account's email couldn't
   // be matched to a shop (see enterSession()/SRC_setShop). Refuse to render
   // ANY briefs in that state rather than fall through to whatever OUR_SHOP's
@@ -6639,10 +6659,26 @@ function pullSourcing(){
     // that used to just no-op — safe, but gave no indication anything was
     // wrong, which is how a broken session went unnoticed before).
     if(r.status===401){if(typeof window.forceReLogin==='function')window.forceReLogin();return null;}
+    if(!r.ok){
+      // Any other failure (500, a bad gateway, anything not "please sign in
+      // again") for a factory-scoped request must never leave whatever was
+      // already rendered sitting there unrefreshed — see srcFactoryLoadFailed
+      // and the guard in SRC_prodAdmin(). Whatever's on screen could be
+      // stale admin data, another vendor's, anything; showing an explicit
+      // "couldn't load" state is the only safe response to an unconfirmed
+      // scoped fetch.
+      var failSess=(typeof currentSession==='function')?currentSession():null;
+      if(failSess&&failSess.role==='factory'&&srcPullMyGen===srcPullGen){
+        srcFactoryLoadFailed=true;
+        if(window.SRC_render)window.SRC_render();
+      }
+      return null;
+    }
     return r.json();
   }).then(function(data){
     if(!data)return;
     if(srcPullMyGen!==srcPullGen)return;
+    srcFactoryLoadFailed=false;
     if(data&&(data.briefs||data.leads||data.vendors||data.team)){
       // Additive merge-by-id (below) is right for an admin pull: the server
       // always sends the FULL admin-visible set, so a lagging tab's local
@@ -6698,6 +6734,17 @@ function pullSourcing(){
         if(window.renderTeam)window.renderTeam();
         if(window.renderVendors)window.renderVendors();
       }
+    }
+  }).catch(function(e){
+    // A network-level failure (offline, DNS hiccup, etc.) never even reaches
+    // the .then() above — same principle as the !r.ok branch: don't leave
+    // stale/foreign data on screen for a factory session just because this
+    // particular attempt to confirm it couldn't complete.
+    console.error('pullSourcing failed:',e);
+    var failSess=(typeof currentSession==='function')?currentSession():null;
+    if(failSess&&failSess.role==='factory'&&srcPullMyGen===srcPullGen){
+      srcFactoryLoadFailed=true;
+      if(window.SRC_render)window.SRC_render();
     }
   });
 }
