@@ -34,18 +34,26 @@ async function resolveSession(redis, token) {
 }
 // A caller that names a role at all (body.role / query.role) is asserting
 // "I am a logged-in app user of this type" — that assertion is only ever
-// honored if a real session token backs it up; otherwise it's treated as the
-// most-restricted case (an unverified vendor with no matched shop) rather
-// than either fully trusted (the old bug) or silently ignored (which would
-// let a forged role=factory claim fall through as if it were a normal,
-// unrestricted admin call). A caller that names NO role at all — e.g. the
-// public contact form's `{leads:[...]}` POST from an anonymous site visitor,
-// which has no concept of login — is untouched by any of this and keeps
-// working exactly as before.
-function effectiveIdentity(claimedRole, session) {
+// honored if a real session token backs it up. A caller that names NO role
+// at all — e.g. the public contact form's `{leads:[...]}` POST from an
+// anonymous site visitor, which has no concept of login — is untouched by
+// any of this and keeps working exactly as before.
+//
+// An earlier version of this treated a role claim with no valid token as
+// "an unverified vendor with no matched shop" — safe against a vendor
+// forging role=owner, but it ALSO silently caught genuine owner/admin saves
+// whose session simply predated this token system, or whose token had
+// expired for any other benign reason. Because that fallback still returned
+// 200 OK, the save LOOKED successful in the browser while actually being
+// silently discarded server-side — which is how a real vendor/team roster
+// ended up empty with no error ever shown. Failing a request outright with
+// 401 when a claimed role's token doesn't check out is the correct
+// behavior for every role, factory included: the caller finds out
+// immediately and can re-authenticate, instead of a request that appears to
+// succeed while quietly doing less (or nothing) at all.
+function verifiedIdentity(claimedRole, session) {
   if (!claimedRole) return { role: null, email: null };
-  if (session) return { role: session.role, email: session.email };
-  return { role: 'factory', email: null };
+  return { role: session.role, email: session.email };
 }
 
 function getClient() {
@@ -240,7 +248,16 @@ module.exports = async (req, res) => {
       const query = req.query || {};
       if (query.role) {
         const session = await resolveSession(redis, query.token);
-        const identity = effectiveIdentity(query.role, session);
+        if (!session) {
+          // Claimed a role but the token backing it doesn't verify (missing,
+          // expired, or simply never issued because this session predates
+          // the token system). Fail loudly, not quietly — see the note on
+          // verifiedIdentity above for why a silent fallback here is exactly
+          // how the vendor/team roster went missing.
+          res.status(401).json({ error: 'Your session has expired. Please sign in again.' });
+          return;
+        }
+        const identity = verifiedIdentity(query.role, session);
         if (identity.role === 'factory') {
           res.status(200).json(filterDataForFactory(data, identity.email));
           return;
@@ -259,12 +276,23 @@ module.exports = async (req, res) => {
         try { body = JSON.parse(body); } catch (e) { body = {}; }
       }
       body = body || {};
-      // See effectiveIdentity() above: body.role is only ever trusted if a
-      // real session token backs it up. A request with no role field at all
-      // (the public contact form's anonymous lead submission, most notably)
-      // is untouched by this and behaves exactly as before.
-      const postSession = body.role ? await resolveSession(redis, body.token) : null;
-      const identity = effectiveIdentity(body.role, postSession);
+      // See verifiedIdentity() above: body.role is only ever trusted if a
+      // real session token backs it up, and a role claim that DOESN'T check
+      // out fails the request outright (401) rather than silently degrading
+      // it — that silent-degrade behavior is exactly how a real vendor/team
+      // roster went missing with no error ever shown. A request with no
+      // role field at all (the public contact form's anonymous lead
+      // submission, most notably) is untouched by this and behaves exactly
+      // as before.
+      let identity = { role: null, email: null };
+      if (body.role) {
+        const postSession = await resolveSession(redis, body.token);
+        if (!postSession) {
+          res.status(401).json({ error: 'Your session has expired. Please sign in again.' });
+          return;
+        }
+        identity = verifiedIdentity(body.role, postSession);
+      }
 
       // Every save used to be a blind overwrite of the whole store with whatever
       // this one browser tab currently had in memory. With more than one tab/
