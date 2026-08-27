@@ -209,17 +209,41 @@ module.exports = async (req, res) => {
       const newLeads = (body.leads || []).filter((l) => l && l.id && !existingLeadIds.has(l.id));
       const newQuotes = detectNewQuotes(current.briefs, body.briefs);
 
-      function mergeById(currentList, incomingList, deletedIds) {
+      // allowedIds, when given, restricts what an incoming item is allowed to
+      // OVERWRITE: for an id that already exists in currentList, the incoming
+      // copy is only accepted if its id is in allowedIds — otherwise whatever
+      // is already stored is kept as-is. This closes a real bug: saveSRC()
+      // in app.html POSTs this browser tab's ENTIRE local briefs array on
+      // every single save, anywhere in the app — adding a vendor, renaming a
+      // team member, anything. If that tab's local copy of some OTHER brief
+      // hasn't caught up with a recent change yet (e.g. it's been open a
+      // while and missed the last poll, or two saves from different
+      // people/tabs raced), the old code would still blindly take that stale
+      // copy and stomp the newer one — observed as a vendor's just-submitted
+      // quote vanishing and the project going back to "awaiting quote"
+      // minutes later, because some unrelated save elsewhere overwrote it
+      // with a snapshot from before the quote existed. Brand-new ids (not
+      // already in currentList) are always accepted regardless of
+      // allowedIds — a caller can't have stale data for a record that didn't
+      // exist yet. allowedIds is optional and defaults to "trust everything"
+      // (the original behavior) so older/unmigrated call sites that don't
+      // pass it keep working exactly as before.
+      function mergeById(currentList, incomingList, deletedIds, allowedIds) {
         const deleted = new Set(deletedIds || []);
+        const allowed = allowedIds ? new Set(allowedIds) : null;
         const byId = new Map();
         (currentList || []).forEach((item) => { if (item && item.id) byId.set(item.id, item); });
-        (incomingList || []).forEach((item) => { if (item && item.id) byId.set(item.id, item); });
+        (incomingList || []).forEach((item) => {
+          if (!item || !item.id) return;
+          if (allowed && byId.has(item.id) && !allowed.has(item.id)) return;
+          byId.set(item.id, item);
+        });
         deleted.forEach((id) => byId.delete(id));
         return Array.from(byId.values());
       }
 
       const data = {
-        briefs: mergeById(current.briefs, body.briefs, body.deletedBriefIds),
+        briefs: mergeById(current.briefs, body.briefs, body.deletedBriefIds, body.changedBriefIds),
         leads: mergeById(current.leads, body.leads, body.deletedLeadIds),
       };
       await redis.set(KEY, JSON.stringify(data));
