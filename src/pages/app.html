@@ -238,6 +238,7 @@ body{background:var(--cm-ink-950);}
 .rolepill--owner{background:var(--cm-silver);color:var(--cm-ink-900);border-color:transparent;}
 .rolepill--sales{border-color:#2A6FDB;color:#7aa6e6;}
 .rolepill--factory{border-color:#C2703D;color:#d49a72;}
+.rolepill--cm{border-color:#7B4FC9;color:#b79ae8;}
 .perm-table{width:100%;border-collapse:collapse;font-size:0.86rem;min-width:420px;}
 .perm-table th{text-align:left;font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--cm-text-subtle);padding:0 0.8rem 0.7rem;border-bottom:1px solid var(--cm-border-strong);}
 .perm-table th:not(:first-child),.perm-table td:not(:first-child){text-align:center;width:78px;}
@@ -1432,33 +1433,23 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 
     <!-- TEAM & ACCESS (owner only) -->
     <section class="view owner-only" id="view-team" hidden>
-      <div class="notice studio-only"><b>Owner access.</b> You control who's on the team and what each role can see. Roles below define the access every studio account is limited to.</div>
       <div class="cols" style="margin-top:0;grid-template-columns:1fr;">
         <div class="panel">
-          <div class="panel__head"><h3>Team members</h3><button class="btn btn--ghost btn--sm" onclick="alert('Add-member form opens here — name, email, and role. They receive an invite to set their password.')">+ Add member</button></div>
-          <div class="panel__body">
-            <div class="teamrow">
-              <div class="teamrow__who"><span class="av studio">MO</span><div><div class="teamrow__name">Maya Okafor <span class="you-tag">You</span></div><div class="teamrow__email">maya@physical-model.com</div></div></div>
-              <span class="rolepill rolepill--owner">Owner</span>
-            </div>
-            <div class="teamrow">
-              <div class="teamrow__who"><span class="av" style="background:linear-gradient(135deg,#2A6FDB,#1a4a99);color:#fff;">JL</span><div><div class="teamrow__name">Jordan Lee</div><div class="teamrow__email">jordan@physical-model.com</div></div></div>
-              <span class="rolepill rolepill--sales">Sales</span>
-            </div>
-            <div class="teamrow">
-              <div class="teamrow__who"><span class="av" style="background:linear-gradient(135deg,#C2703D,#8a4e29);color:#fff;">RT</span><div><div class="teamrow__name">Ravi Sharma</div><div class="teamrow__email">ravi@physical-model.com</div></div></div>
-              <span class="rolepill rolepill--factory">Factory</span>
-            </div>
-          </div>
+          <div class="panel__head"><h3>Team members</h3><button class="btn btn--ghost btn--sm" onclick="openAddMember()">+ Add member</button></div>
+          <div class="panel__body" id="teamList"></div>
+        </div>
+        <div class="panel">
+          <div class="panel__head"><h3>Vendors</h3><button class="btn btn--ghost btn--sm" onclick="openAddVendor()">+ Add vendor</button></div>
+          <div class="panel__body" id="vendorList"></div>
         </div>
         <div class="panel">
           <div class="panel__head"><h3>What each role can access</h3></div>
           <div class="panel__body" style="overflow-x:auto;">
             <table class="perm-table">
-              <thead><tr><th>Capability</th><th>Owner</th><th>Sales</th><th>Factory</th></tr></thead>
+              <thead><tr><th>Capability</th><th>Owner</th><th>Client Manager</th><th>Factory Representative</th></tr></thead>
               <tbody>
                 <tr><td>Project overview &amp; journey</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
-                <tr><td>Quotes &amp; estimates</td><td class="y">Edit</td><td class="y">Edit</td><td class="n">—</td></tr>
+                <tr><td>Quotes &amp; estimates</td><td class="y">Edit</td><td class="y">View</td><td class="n">—</td></tr>
                 <tr><td>Invoices &amp; pricing</td><td class="y">✓</td><td class="y">View</td><td class="n">—</td></tr>
                 <tr><td>Milestones &amp; fabrication</td><td class="y">Edit</td><td class="y">View</td><td class="y">Edit</td></tr>
                 <tr><td>Files &amp; QC photos</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
@@ -1496,6 +1487,47 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="linkbox"><input id="inviteLink" type="text" readonly><button class="btn btn--ghost btn--sm" onclick="copyLink()" id="copyBtn">Copy</button></div>
         <p class="modal__note">The link is tied to their email and expires in 7 days. In the live portal, it's also emailed automatically.</p>
         <button class="btn btn--primary full" onclick="closeInvite()" style="margin-top:1.2rem;">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add team member modal (owner) -->
+<div class="modal-overlay" id="addMemberModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Add team member">
+    <div class="modal__head"><h3>Add team member</h3><button class="modal__x" onclick="closeAddMember()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <div id="addMemberForm">
+        <p class="modal__intro">Add someone to the Carve internal team. They'll receive an invite to set their own password.</p>
+        <form onsubmit="return createTeamMember(event)">
+          <div class="mfield"><label for="memName">Full name</label><input id="memName" type="text" required placeholder="Priya Nair"></div>
+          <div class="mfield"><label for="memEmail">Email</label><input id="memEmail" type="email" required placeholder="priya@physical-model.com"></div>
+          <div class="mfield"><label for="memRole">Role</label>
+            <select id="memRole" required>
+              <option value="clientmanager">Client Manager</option>
+            </select>
+          </div>
+          <button class="btn btn--primary full" type="submit" style="margin-top:0.4rem;">Add member &amp; send invite</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add vendor modal (owner) -->
+<div class="modal-overlay" id="addVendorModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Add vendor">
+    <div class="modal__head"><h3>Add vendor</h3><button class="modal__x" onclick="closeAddVendor()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <div id="addVendorForm">
+        <p class="modal__intro">Register a new production shop. Once added, they can be invited to quote projects from Sourcing &amp; Quotes.</p>
+        <form onsubmit="return createVendor(event)">
+          <div class="mfield"><label for="venName">Shop / company name</label><input id="venName" type="text" required placeholder="Summit Model Works"></div>
+          <div class="mfield"><label for="venLoc">Location</label><input id="venLoc" type="text" placeholder="Denver, CO"></div>
+          <div class="mfield"><label for="venContact">Contact name <span class="opt">(optional)</span></label><input id="venContact" type="text" placeholder="Alex Kim"></div>
+          <div class="mfield"><label for="venEmail">Contact email <span class="opt">(optional)</span></label><input id="venEmail" type="email" placeholder="alex@summitmodelworks.com"></div>
+          <button class="btn btn--primary full" type="submit" style="margin-top:0.4rem;">Add vendor</button>
+        </form>
       </div>
     </div>
   </div>
@@ -1929,6 +1961,86 @@ function copyLink(){
   try{navigator.clipboard.writeText(i.value);}catch(e){try{document.execCommand('copy');}catch(_){}}
   var b=document.getElementById('copyBtn');b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1600);
 }
+
+/* ---- Team & Access: add member / add vendor ---- */
+function initialsOf(name){
+  return (name||'').trim().split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase()||'??';
+}
+var ROLE_LABELS={owner:'Owner',sales:'Sales',factory:'Factory Representative',clientmanager:'Client Manager'};
+var ROLE_PILL_CLASS={owner:'rolepill--owner',sales:'rolepill--sales',factory:'rolepill--factory',clientmanager:'rolepill--cm'};
+var ROLE_AVATAR_STYLE={
+  owner:'',
+  sales:'background:linear-gradient(135deg,#2A6FDB,#1a4a99);color:#fff;',
+  factory:'background:linear-gradient(135deg,#C2703D,#8a4e29);color:#fff;',
+  clientmanager:'background:linear-gradient(135deg,#7B4FC9,#4d2f85);color:#fff;'
+};
+function renderTeam(){
+  var list=document.getElementById('teamList');
+  if(!list)return;
+  var members=(window.SDB&&window.SDB.team)||[];
+  list.innerHTML=members.map(function(m){
+    var isOwner=m.role==='owner';
+    var avAttr=isOwner?' class="av studio"':' class="av" style="'+(ROLE_AVATAR_STYLE[m.role]||'')+'"';
+    var youTag=m.you?' <span class="you-tag">You</span>':'';
+    return '<div class="teamrow">'+
+      '<div class="teamrow__who"><span'+avAttr+'>'+esc(initialsOf(m.name))+'</span>'+
+      '<div><div class="teamrow__name">'+esc(m.name)+youTag+'</div><div class="teamrow__email">'+esc(m.email)+'</div></div></div>'+
+      '<span class="rolepill '+(ROLE_PILL_CLASS[m.role]||'')+'">'+esc(ROLE_LABELS[m.role]||m.role)+'</span>'+
+    '</div>';
+  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No team members yet.</div>';
+}
+function renderVendors(){
+  var list=document.getElementById('vendorList');
+  if(!list)return;
+  var vendors=(window.SDB&&window.SDB.vendors)||[];
+  list.innerHTML=vendors.map(function(v){
+    return '<div class="teamrow">'+
+      '<div class="teamrow__who"><span class="av" style="background:var(--cm-surface-2);color:var(--cm-text-strong);">'+esc(initialsOf(v.name))+'</span>'+
+      '<div><div class="teamrow__name">'+esc(v.name)+'</div><div class="teamrow__email">'+esc(v.loc||'Location not specified')+(v.email?' · '+esc(v.email):'')+'</div></div></div>'+
+      (v.contact?'<span class="rolepill" style="color:var(--cm-text-muted);">'+esc(v.contact)+'</span>':'')+
+    '</div>';
+  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No vendors yet.</div>';
+}
+window.renderTeam=renderTeam;
+window.renderVendors=renderVendors;
+function openAddMember(){document.getElementById('addMemberModal').hidden=false;}
+function closeAddMember(){document.getElementById('addMemberModal').hidden=true;var f=document.getElementById('addMemberForm').querySelector('form');if(f)f.reset();}
+function createTeamMember(e){
+  e.preventDefault();
+  var name=document.getElementById('memName').value.trim();
+  var email=document.getElementById('memEmail').value.trim();
+  var role=document.getElementById('memRole').value;
+  if(!name||!email||!role)return false;
+  window.SDB.team=window.SDB.team||[];
+  window.SDB.team.push({id:'t'+Date.now(),name:name,email:email,role:role});
+  if(typeof saveSRC==='function')saveSRC();
+  renderTeam();
+  closeAddMember();
+  alert('Added '+name+' as '+(ROLE_LABELS[role]||role)+'. In the live portal they would receive an email invite to set their password.');
+  return false;
+}
+function openAddVendor(){document.getElementById('addVendorModal').hidden=false;}
+function closeAddVendor(){document.getElementById('addVendorModal').hidden=true;var f=document.getElementById('addVendorForm').querySelector('form');if(f)f.reset();}
+function createVendor(e){
+  e.preventDefault();
+  var name=document.getElementById('venName').value.trim();
+  var loc=document.getElementById('venLoc').value.trim();
+  var contact=document.getElementById('venContact').value.trim();
+  var email=document.getElementById('venEmail').value.trim();
+  if(!name)return false;
+  var id='v'+Date.now();
+  window.SDB.vendors=window.SDB.vendors||[];
+  window.SDB.vendors.push({id:id,name:name,loc:loc||null,contact:contact||null,email:email||null});
+  if(typeof saveSRC==='function')saveSRC();
+  // Wire the new vendor into the live sourcing/quoting system so Carve Admin
+  // can invite them to quote a project immediately, without a page reload.
+  if(window.SHOPS)window.SHOPS.push({id:id,name:name,loc:loc||'Not specified',av:initialsOf(name)});
+  if(email&&window.PRODUCTION_ADMINS)window.PRODUCTION_ADMINS.push({shopId:id,name:contact||name,company:name,email:email});
+  renderVendors();
+  closeAddVendor();
+  alert('Added '+name+' as a vendor. They can now be invited to quote projects from Sourcing & Quotes.');
+  return false;
+}
 </script>
 <script>
 var titles={myprojects:'My Projects',projects:'Projects',overview:'Overview',quote:'Quote',editquote:'Edit Estimate',changes:'Request Changes',milestones:'Milestones',files:'Files',messages:'Messages',invoices:'Invoices',leads:'Leads',clients:'Clients',team:'Team & Access',sourcing:'Quotes'};
@@ -1963,6 +2075,7 @@ function go(v){
     else renderPhase1Invoice();
   }
   if(v==='leads'&&window.SRC_renderLeads)window.SRC_renderLeads();
+  if(v==='team'){if(window.renderTeam)window.renderTeam();if(window.renderVendors)window.renderVendors();}
   if(v==='clients'&&window.scopeClients)window.scopeClients(document.body.dataset.role);
   if(v==='sourcing'&&window.SRC_render)SRC_render();
   var addLeadBtn=document.getElementById('addLeadBtn');
@@ -3760,6 +3873,7 @@ function logOutSession(){
 var SHOPS=[{id:'meridian',name:'Meridian Scale Works',loc:'Portland, OR',av:'MS'},
            {id:'atlas',name:'Atlas Model Fabrication',loc:'Toronto, ON',av:'AM'},
            {id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',av:'BM'}];
+window.SHOPS=SHOPS; // exposed so Team & Access "+ Add vendor" can register new shops
 var TECHS=[{id:'sam',name:'Sam Cole',av:'SC'},{id:'rosa',name:'Rosa Lim',av:'RL'}];
 var SPECIAL_REQS=['Surrounding Landscape / Site Context','No Base','Engraved Base','Interior Lighting','External Lighting','Split into Sections (transport / access)','Display Stand / Plinth','Customized Protective Travel Case','Furniture','Interior Finishes','Removable Roof / Levels'];
 var MODEL_MATERIALS=['Full Color ABS / Realistic Visualization','Monochromatic ABS / Massing','Clear Acrylic','ABS with Wood Veneer','Hardwood','Foam','Wrought Iron'];
@@ -3947,9 +4061,35 @@ function readDimTriplet(prefix,bid){
   return mmStr+' mm ('+inStr+' in)';
 }
 
-function seedSRC(){return {briefs:[],leads:[]};}
+function seedSRC(){
+  return {
+    briefs:[],leads:[],
+    team:[
+      {id:'t_owner',name:'Maya Okafor',email:'maya@physical-model.com',role:'owner',you:true},
+      {id:'t_sales',name:'Jordan Lee',email:'jordan@physical-model.com',role:'sales'},
+      {id:'t_factory',name:'Ravi Sharma',email:'ravi@physical-model.com',role:'factory'}
+    ],
+    vendors:[
+      {id:'meridian',name:'Meridian Scale Works',loc:'Portland, OR',contact:null,email:null},
+      {id:'atlas',name:'Atlas Model Fabrication',loc:'Toronto, ON',contact:null,email:null},
+      {id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',contact:'Xin Liao',email:'13918826884@163.com'}
+    ]
+  };
+}
 var SKEY='cm_portal_sourcing_v22', SDB=loadSRC(), apiReady=false;
 window.SDB=SDB;
+// Any vendor added via Team & Access in a previous session needs to be wired
+// back into SHOPS/PRODUCTION_ADMINS on reload (those two arrays reset to their
+// hardcoded defaults on every page load; SDB.vendors is the persisted source
+// of truth) so it's still selectable when inviting shops to quote a project.
+(SDB.vendors||[]).forEach(function(v){
+  if(window.SHOPS&&!window.SHOPS.some(function(s){return s.id===v.id;})){
+    window.SHOPS.push({id:v.id,name:v.name,loc:v.loc||'Not specified',av:initialsOf(v.name)});
+  }
+  if(v.email&&window.PRODUCTION_ADMINS&&!window.PRODUCTION_ADMINS.some(function(a){return a.shopId===v.id;})){
+    window.PRODUCTION_ADMINS.push({shopId:v.id,name:v.contact||v.name,company:v.name,email:v.email});
+  }
+});
 // Ids removed locally via deleteLead()/SRC_deleteBrief() but not yet confirmed
 // gone from the server (the delete's saveSRC() call is fire-and-forget — see
 // pullSourcing() below for why this list exists).
@@ -3979,7 +4119,7 @@ function migrateBriefFields(briefs){
 }
 if(migrateBriefFields(SDB.briefs))saveSRC();
 syncClientsFromLeads();
-function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];return d;}}}catch(e){}return seedSRC();}
+function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];if(!d.team)d.team=seedSRC().team;if(!d.vendors)d.vendors=seedSRC().vendors;return d;}}}catch(e){}return seedSRC();}
 function saveSRC(opts){
   try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
   if(apiReady){
