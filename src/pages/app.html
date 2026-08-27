@@ -4279,6 +4279,19 @@ function enterSession(role,email,name){
     document.body.classList.remove('impersonating');
   }
 }
+// Called when the server rejects a request with 401 (see api/sourcing.js —
+// a claimed role whose token doesn't verify now fails loudly instead of
+// silently degrading, which is exactly the earlier bug that let a real
+// vendor/team roster go missing with no error ever shown). Rather than
+// leaving the app to keep quietly failing every save, force a clean
+// re-login so whatever's wrong with this session gets resolved immediately
+// and visibly.
+function forceReLogin(){
+  try{localStorage.removeItem(SESSION_KEY);}catch(e){}
+  try{sessionStorage.setItem('cm_portal_session_expired','1');}catch(e){}
+  location.reload();
+}
+window.forceReLogin=forceReLogin;
 function logOutSession(){
   var s=currentSession();
   if(s&&s.token){
@@ -4401,9 +4414,22 @@ function submitAccountSettings(e){
     });
   return false;
 }
+function showLoginGate(){
+  var lg=document.getElementById('loginGate');
+  if(lg)lg.style.display='flex';
+  // Set by forceReLogin() when the server rejected a request with 401
+  // (session expired/invalid) — surface why, rather than silently landing
+  // back on a blank sign-in form.
+  var expired=false;
+  try{expired=sessionStorage.getItem('cm_portal_session_expired')==='1';sessionStorage.removeItem('cm_portal_session_expired');}catch(e){}
+  if(expired){
+    var err=document.getElementById('loginErr');
+    if(err){err.textContent='Your session expired — please sign in again.';err.hidden=false;}
+  }
+}
 (function(){
   var raw=localStorage.getItem(SESSION_KEY);
-  if(!raw){document.getElementById('loginGate').style.display='flex';return;}
+  if(!raw){showLoginGate();return;}
   window.addEventListener('load',function(){
     try{
       var s=JSON.parse(raw);
@@ -4418,7 +4444,7 @@ function submitAccountSettings(e){
       // login rather than silently letting every role-gated call fail closed.
       if(s&&s.role&&s.email&&s.token){enterSession(s.role,s.email,s.name);return;}
     }catch(e){}
-    document.getElementById('loginGate').style.display='flex';
+    showLoginGate();
   });
 })();
 </script>
@@ -4735,6 +4761,16 @@ function saveSRC(opts){
     // behavior, unchanged.
     if(opts&&opts.changedBriefIds&&opts.changedBriefIds.length)payload.changedBriefIds=opts.changedBriefIds;
     fetch('/api/sourcing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){
+        // A role claim whose token doesn't verify now fails the save
+        // outright (401) instead of silently accepting it as a
+        // maximally-restricted no-op — see api/sourcing.js. That silent
+        // acceptance is exactly how vendor/team additions looked like they
+        // saved fine in the browser while never actually reaching the
+        // server. Surface it immediately instead of letting more saves
+        // quietly go nowhere.
+        if(r.status===401&&payload.role&&typeof window.forceReLogin==='function')window.forceReLogin();
+      })
       .catch(function(e){console.error('Sourcing API sync failed:',e);});
   }
 }
@@ -6595,7 +6631,17 @@ function sourcingQuery(){
 var srcPullGen=0;
 function pullSourcing(){
   var srcPullMyGen=++srcPullGen;
-  return fetch('/api/sourcing'+sourcingQuery()).then(function(r){return r.json();}).then(function(data){
+  return fetch('/api/sourcing'+sourcingQuery()).then(function(r){
+    // A factory-role pull sends a token; the server 401s if it doesn't
+    // verify (expired, invalid, or a session from before tokens existed).
+    // Force a clean re-login rather than silently treating the error body
+    // as if it were sourcing data (it has none of the expected fields, so
+    // that used to just no-op — safe, but gave no indication anything was
+    // wrong, which is how a broken session went unnoticed before).
+    if(r.status===401){if(typeof window.forceReLogin==='function')window.forceReLogin();return null;}
+    return r.json();
+  }).then(function(data){
+    if(!data)return;
     if(srcPullMyGen!==srcPullGen)return;
     if(data&&(data.briefs||data.leads||data.vendors||data.team)){
       // Additive merge-by-id (below) is right for an admin pull: the server
