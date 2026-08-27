@@ -4215,23 +4215,21 @@ function attemptLogin(){
         return;
       }
       var realEmail=res.data.email||email;
-      // Wipe whatever this browser had cached from a PREVIOUS identity
-      // (this same person's earlier session, or — on a shared computer —
-      // someone else's, e.g. Carve Admin's own full data if they'd been
-      // using this browser) before doing anything else. SDB was loaded
-      // synchronously from localStorage the moment this page's scripts ran,
-      // long before this login happened, so without this a vendor could
-      // briefly see stale cached briefs/vendors that don't belong to them
-      // rendered from that old cache while the fresh, correctly-scoped pull
-      // below is still in flight.
-      if(window.SDB){window.SDB.briefs=[];window.SDB.leads=[];window.SDB.vendors=[];window.SDB.team=[];}
-      try{localStorage.removeItem(window.SKEY||'cm_portal_sourcing_v22');}catch(e){}
       localStorage.setItem(SESSION_KEY,JSON.stringify({email:realEmail,role:res.data.role,name:res.data.name||null,token:res.data.token||null}));
       enterSession(res.data.role,realEmail,res.data.name);
       // Refresh right away with the just-issued token rather than waiting up
       // to POLL_MS for the next scheduled poll to pick up real, correctly-
       // scoped data (a factory login otherwise sees a stale/unfiltered pull
-      // from before signing in for a few seconds).
+      // from before signing in for a few seconds). This does NOT clear the
+      // local cache first — an earlier version of this fix did, to close a
+      // vendor-sees-stale-data report, but wiping SDB/localStorage on every
+      // login (any role) turned out to be the wrong tool: it's destructive
+      // (this browser's cache is sometimes the most complete copy of
+      // vendors/team that exists, if the server's own copy ever fell
+      // behind) and it wasn't even the right fix for the original report —
+      // see the pull-generation guard in pullSourcing() below, which
+      // prevents a stale in-flight request from rendering after a newer one
+      // without ever deleting anything.
       if(typeof pullSourcing==='function')pullSourcing();
     })
     .catch(function(){
@@ -4281,16 +4279,6 @@ function enterSession(role,email,name){
     document.body.classList.remove('impersonating');
   }
 }
-// Clears this browser's cached sourcing data (briefs/leads/vendors/team) so
-// that whichever identity is about to load next — after a reload triggered
-// by logging out, impersonating, or returning from impersonation — starts
-// from nothing and is forced to populate itself from a fresh, correctly-
-// scoped pull, rather than potentially rendering (even briefly) whatever
-// the PREVIOUS identity on this browser had cached. See the matching reset
-// in attemptLogin() for the non-reload (plain sign-in) path.
-function clearSourcingCache(){
-  try{localStorage.removeItem(window.SKEY||'cm_portal_sourcing_v22');}catch(e){}
-}
 function logOutSession(){
   var s=currentSession();
   if(s&&s.token){
@@ -4301,7 +4289,6 @@ function logOutSession(){
   }
   localStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(IMPERSONATE_KEY);
-  clearSourcingCache();
   location.reload();
 }
 /* ---- IT: log in as a team member's/vendor's account to diagnose issues ----
@@ -4332,14 +4319,6 @@ function impersonateAccount(email,role,name){
       }
       if(mine){try{localStorage.setItem(IMPERSONATE_KEY,JSON.stringify(mine));}catch(e){}}
       localStorage.setItem(SESSION_KEY,JSON.stringify({email:res.data.email,role:res.data.role,name:res.data.name||null,token:res.data.token}));
-      // Carve Admin's OWN browser almost certainly has full, unfiltered
-      // sourcing data cached from their normal Owner session — without
-      // clearing it here, reloading straight into the impersonated
-      // account would let that cache render (briefly, until the next
-      // scoped pull overwrites it) as if it belonged to the account being
-      // impersonated. This is exactly the "briefly see other vendor's
-      // info" report this fixes.
-      clearSourcingCache();
       location.reload();
     })
     .catch(function(){alert('Could not reach the server. Check your connection and try again.');});
@@ -4350,7 +4329,6 @@ function returnFromImpersonation(){
   if(!raw)return;
   localStorage.setItem(SESSION_KEY,raw);
   try{localStorage.removeItem(IMPERSONATE_KEY);}catch(e){}
-  clearSourcingCache();
   location.reload();
 }
 window.returnFromImpersonation=returnFromImpersonation;
@@ -4653,7 +4631,6 @@ function seedSRC(){
 }
 var SKEY='cm_portal_sourcing_v22', SDB=loadSRC(), apiReady=false;
 window.SDB=SDB;
-window.SKEY=SKEY; // exposed so a session change (login/impersonate/logout, in an earlier script block) can clear this browser's cached data before the new identity ever renders anything
 // Any vendor added via Team & Access — on THIS browser or, now that vendors
 // sync through /api/sourcing (see pullSourcing below), on any other admin's
 // browser too — needs to be wired into SHOPS/PRODUCTION_ADMINS: those two
@@ -6603,8 +6580,23 @@ function sourcingQuery(){
   if(s&&s.role==='factory'&&s.token)return '?role=factory&token='+encodeURIComponent(s.token);
   return '';
 }
+// Requests don't necessarily resolve in the order they were sent — e.g. the
+// unconditional pull that fires at page load (before login, unfiltered) can
+// still be in flight when attemptLogin() fires its own immediate pull right
+// after signing in, and the OLDER (pre-login) response can arrive SECOND.
+// Without this guard, that stale response would still be applied using
+// whatever session is active BY THEN — meaning a just-logged-in vendor's
+// isScopedPull check below could end up "authoritatively" replacing their
+// data with the old response's full, unfiltered contents. Each call claims
+// the next generation number; a response only gets applied if no NEWER pull
+// has started since — an outdated response is simply discarded, never
+// merged or rendered, rather than trusting stale data because it happens to
+// arrive after the current session changed.
+var srcPullGen=0;
 function pullSourcing(){
+  var srcPullMyGen=++srcPullGen;
   return fetch('/api/sourcing'+sourcingQuery()).then(function(r){return r.json();}).then(function(data){
+    if(srcPullMyGen!==srcPullGen)return;
     if(data&&(data.briefs||data.leads||data.vendors||data.team)){
       // Additive merge-by-id (below) is right for an admin pull: the server
       // always sends the FULL admin-visible set, so a lagging tab's local
