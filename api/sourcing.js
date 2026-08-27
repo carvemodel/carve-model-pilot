@@ -171,10 +171,9 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
       const raw = await redis.get(KEY);
-      const data = raw ? JSON.parse(raw) : { briefs: [], leads: [], projects: [] };
+      const data = raw ? JSON.parse(raw) : { briefs: [], leads: [] };
       if (!data.leads) data.leads = [];
       if (!data.briefs) data.briefs = [];
-      if (!data.projects) data.projects = [];
       res.status(200).json(data);
       return;
     }
@@ -198,10 +197,9 @@ module.exports = async (req, res) => {
       // deletedBriefIds (see deleteLead() in app.html) — absence from the
       // incoming payload alone is never treated as "delete this".
       const raw = await redis.get(KEY);
-      const current = raw ? JSON.parse(raw) : { briefs: [], leads: [], projects: [] };
+      const current = raw ? JSON.parse(raw) : { briefs: [], leads: [] };
       if (!current.leads) current.leads = [];
       if (!current.briefs) current.briefs = [];
-      if (!current.projects) current.projects = [];
 
       // Snapshot which lead ids already existed BEFORE merging, so a
       // notification only fires for ids that are genuinely new — an admin
@@ -223,10 +221,6 @@ module.exports = async (req, res) => {
       const data = {
         briefs: mergeById(current.briefs, body.briefs, body.deletedBriefIds),
         leads: mergeById(current.leads, body.leads, body.deletedLeadIds),
-        // Project records (assigned Client Manager, awarded-to-production
-        // status, client contact info) — same merge-by-id/delete-by-id
-        // pattern as briefs/leads above.
-        projects: mergeById(current.projects, body.projects, body.deletedProjectIds),
       };
       await redis.set(KEY, JSON.stringify(data));
 
@@ -240,7 +234,7 @@ module.exports = async (req, res) => {
         await Promise.allSettled(notifications);
       }
 
-      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads, projects: data.projects });
+      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads });
       return;
     }
 
