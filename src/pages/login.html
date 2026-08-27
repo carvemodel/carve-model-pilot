@@ -128,8 +128,8 @@ function callAuth(action,extra){
   return fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){return r.json().catch(function(){return {};}).then(function(d){return {ok:r.ok,data:d};});});
 }
-function setSession(email,role,name){
-  try{localStorage.setItem(SESSION_KEY,JSON.stringify({email:email,role:role,name:name||null}));}catch(e){}
+function setSession(email,role,name,token){
+  try{localStorage.setItem(SESSION_KEY,JSON.stringify({email:email,role:role,name:name||null,token:token||null}));}catch(e){}
 }
 function showErr(name,msg){var el=document.getElementById('err-'+name);if(el){el.textContent=msg;el.hidden=false;}}
 function clearErr(name){var el=document.getElementById('err-'+name);if(el)el.hidden=true;}
@@ -148,7 +148,7 @@ function signIn(e){
       showErr('login',(res.data&&res.data.error)||'Incorrect email or password.');
       return;
     }
-    setSession(res.data.email||email,res.data.role,res.data.name);
+    setSession(res.data.email||email,res.data.role,res.data.name,res.data.token);
     location.href='/app';
   }).catch(function(){
     setBusy(btn,false,'Sign in');
@@ -172,7 +172,7 @@ function setPassword(e){
       showErr('invite',(res.data&&res.data.error)||'This invite link is invalid or has expired.');
       return;
     }
-    setSession(res.data.email,res.data.role,res.data.name);
+    setSession(res.data.email,res.data.role,res.data.name,res.data.token);
     location.href='/app';
   }).catch(function(){
     setBusy(btn,false,'Set password & continue');

@@ -57,6 +57,29 @@ const LEGACY_ACCOUNTS = {
 
 const INVITE_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days, matches the copy shown in both invite emails
 
+// ── Real server-side sessions ───────────────────────────────────────────────
+// Previously "logging in" only ever set a plain {email,role,name} object in
+// the browser's own localStorage — nothing server-side backed it, so every
+// other API (api/sourcing.js in particular) had no way to tell a real login
+// apart from a request that simply typed the desired role/email into the
+// query string or POST body. A vendor's browser (or anyone with devtools)
+// could claim role=owner and the server had no way to know that was false.
+// A session token closes that: login mints a random, unguessable token,
+// stores {email,role,name} under it server-side (Redis, carve:session:
+// <token>), and returns the token to the browser. Every subsequent request
+// that needs to assert "I am this role/this email" now has to present that
+// token — the role/email actually used server-side comes from the verified
+// Redis record, never from whatever the request itself claims.
+const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days of inactivity before a re-login is required
+function newSessionToken() {
+  return crypto.randomBytes(24).toString('hex');
+}
+async function issueSession(redis, { email, role, name }) {
+  const token = newSessionToken();
+  await redis.set('carve:session:' + token, JSON.stringify({ email, role, name: name || null }), { EX: SESSION_TTL_SECONDS });
+  return token;
+}
+
 function hashPassword(password, salt) {
   return crypto.scryptSync(password, salt, 64).toString('hex');
 }
@@ -125,7 +148,8 @@ module.exports = async (req, res) => {
       const emailKey = invite.email.toLowerCase();
       await redis.set('carve:user:' + emailKey, JSON.stringify({ name: invite.name, email: invite.email, role: invite.role, salt, hash }));
       await redis.del('carve:invite:' + token);
-      res.status(200).json({ ok: true, name: invite.name, email: invite.email, role: invite.role });
+      const sessionToken = await issueSession(redis, { email: invite.email, role: invite.role, name: invite.name });
+      res.status(200).json({ ok: true, name: invite.name, email: invite.email, role: invite.role, token: sessionToken });
       return;
     }
 
@@ -197,6 +221,17 @@ module.exports = async (req, res) => {
       if (targetEmailKey !== emailKey) {
         await redis.del('carve:user:' + emailKey);
       }
+      // If this caller's own session token was sent along, refresh the
+      // server-side record it points to as well — otherwise the token would
+      // keep resolving to the OLD email until it expired or they logged out
+      // and back in, which for a vendor would wrongly stop their own
+      // GET/POST /api/sourcing calls from matching their vendor record.
+      if (body.token) {
+        const raw2 = await redis.get('carve:session:' + body.token);
+        if (raw2) {
+          await redis.set('carve:session:' + body.token, JSON.stringify({ email: updated.email, role: updated.role, name: updated.name }), { EX: SESSION_TTL_SECONDS });
+        }
+      }
       res.status(200).json({ ok: true, email: updated.email, role: updated.role, name: updated.name });
       return;
     }
@@ -234,7 +269,8 @@ module.exports = async (req, res) => {
       if (raw) {
         const user = JSON.parse(raw);
         if (verifyPassword(password, user.salt, user.hash)) {
-          res.status(200).json({ ok: true, name: user.name, email: user.email, role: user.role });
+          const token = await issueSession(redis, { email: user.email, role: user.role, name: user.name });
+          res.status(200).json({ ok: true, name: user.name, email: user.email, role: user.role, token });
         } else {
           res.status(401).json({ error: 'Incorrect password.' });
         }
@@ -245,10 +281,42 @@ module.exports = async (req, res) => {
       // existed, so nothing already using those breaks.
       const legacyRole = LEGACY_ACCOUNTS[emailKey];
       if (legacyRole) {
-        res.status(200).json({ ok: true, name: null, email: email, role: legacyRole });
+        const token = await issueSession(redis, { email: email, role: legacyRole, name: null });
+        res.status(200).json({ ok: true, name: null, email: email, role: legacyRole, token });
         return;
       }
       res.status(404).json({ error: "That email isn't recognized. Check with your Carve Model contact." });
+      return;
+    }
+
+    if (action === 'logout') {
+      // Always idempotent/ok even if the token's already gone (expired, or
+      // logout called twice) — there's nothing meaningful to fail on here.
+      const { token } = body;
+      if (token) await redis.del('carve:session:' + token);
+      res.status(200).json({ ok: true });
+      return;
+    }
+
+    if (action === 'impersonate') {
+      // Backs the Owner-only "Log in as" tool in Team & Access. This used to
+      // be entirely client-side and password-free by design (Owner already
+      // knows the target's email/role/name from the roster they manage, so
+      // there's nothing to look up). It stays password-free for the target
+      // account, but now requires the CALLER to present their own real,
+      // verified Owner session token — so impersonation itself can no longer
+      // be triggered by simply editing localStorage, and the resulting
+      // session is a real server-backed token (needed so a vendor account
+      // reached this way still gets correctly scoped by api/sourcing.js).
+      const { token, email, role, name } = body;
+      if (!token) { res.status(401).json({ error: 'Sign in first.' }); return; }
+      const raw = await redis.get('carve:session:' + token);
+      if (!raw) { res.status(401).json({ error: 'Your session has expired. Sign in again.' }); return; }
+      const caller = JSON.parse(raw);
+      if (caller.role !== 'owner') { res.status(403).json({ error: 'Only Carve Admin can log in as another account.' }); return; }
+      if (!email || !role) { res.status(400).json({ error: 'email and role are required.' }); return; }
+      const newToken = await issueSession(redis, { email, role, name });
+      res.status(200).json({ ok: true, token: newToken, email, role, name: name || null });
       return;
     }
 
