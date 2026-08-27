@@ -1385,21 +1385,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
     <!-- CLIENTS (owner = all · sales = own only) -->
     <section class="view cm-only" id="view-clients" hidden>
       <div class="notice studio-only" id="clientsNotice" hidden></div>
-      <div class="daterange">
-        <span class="daterange__label">Period</span>
-        <div class="daterange__seg">
-          <button type="button" class="on" data-range="all" onclick="setClientRange('all',this)">All time</button>
-          <button type="button" data-range="30" onclick="setClientRange('30',this)">Last 30 days</button>
-          <button type="button" data-range="90" onclick="setClientRange('90',this)">Last 90 days</button>
-          <button type="button" data-range="ytd" onclick="setClientRange('ytd',this)">Year to date</button>
-        </div>
-        <div class="daterange__custom" id="clientCustom">
-          <input type="date" id="clientFrom" aria-label="From date" onchange="applyClientRange()">
-          <span class="daterange__to">→</span>
-          <input type="date" id="clientTo" aria-label="To date" onchange="applyClientRange()">
-        </div>
-      </div>
-      <div class="kpis" id="clientsKpis" style="grid-template-columns:repeat(6,1fr);"></div>
+      <div class="kpis" id="clientsKpis" style="grid-template-columns:repeat(6,1fr);margin-top:0;"></div>
       <div class="panel" style="margin-top:1.25rem;">
         <div class="panel__head"><h3 id="clientsHeading">Clients</h3><div style="display:flex;align-items:center;gap:0.9rem;"><span class="mock__k" id="clientsCount"></span><button class="btn btn--ghost btn--sm" onclick="exportClientsCSV()">↓ Export to Excel (CSV)</button></div></div>
         <div class="panel__body" id="companyList"></div>
