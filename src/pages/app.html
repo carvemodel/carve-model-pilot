@@ -1606,8 +1606,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <form onsubmit="return createVendor(event)">
           <div class="mfield"><label for="venName">Shop / company name</label><input id="venName" type="text" required placeholder="Summit Model Works"></div>
           <div class="mfield"><label for="venLoc">Location</label><input id="venLoc" type="text" placeholder="Denver, CO"></div>
-          <div class="mfield"><label for="venContact">Contact name <span class="opt">(optional)</span></label><input id="venContact" type="text" placeholder="Alex Kim"></div>
-          <div class="mfield"><label for="venEmail">Contact email <span class="opt">(optional)</span></label><input id="venEmail" type="email" placeholder="alex@summitmodelworks.com"></div>
+          <div class="mfield"><label for="venContact">Contact name</label><input id="venContact" type="text" required placeholder="Alex Kim"></div>
+          <div class="mfield"><label for="venEmail">Contact email</label><input id="venEmail" type="email" required placeholder="alex@summitmodelworks.com"></div>
           <button class="btn btn--primary full" type="submit" style="margin-top:0.4rem;">Add vendor</button>
         </form>
       </div>
@@ -2386,21 +2386,17 @@ function createVendor(e){
   var loc=document.getElementById('venLoc').value.trim();
   var contact=document.getElementById('venContact').value.trim();
   var email=document.getElementById('venEmail').value.trim();
-  if(!name)return false;
+  if(!name||!contact||!email)return false;
   var id='v'+Date.now();
   window.SDB.vendors=window.SDB.vendors||[];
-  window.SDB.vendors.push({id:id,name:name,loc:loc||null,contact:contact||null,email:email||null});
+  window.SDB.vendors.push({id:id,name:name,loc:loc||null,contact:contact,email:email});
   if(typeof saveSRC==='function')saveSRC();
   // Wire the new vendor into the live sourcing/quoting system so Carve Admin
   // can invite them to quote a project immediately, without a page reload.
   if(window.SHOPS)window.SHOPS.push({id:id,name:name,loc:loc||'Not specified',av:initialsOf(name)});
-  if(email&&window.PRODUCTION_ADMINS)window.PRODUCTION_ADMINS.push({shopId:id,name:contact||name,company:name,email:email});
+  if(window.PRODUCTION_ADMINS)window.PRODUCTION_ADMINS.push({shopId:id,name:contact,company:name,email:email});
   renderVendors();
   closeAddVendor();
-  if(!email){
-    alert('Added '+name+' as a vendor. They can now be invited to quote projects from Sourcing & Quotes. Add a contact email later to send them portal login access.');
-    return false;
-  }
   fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:contact||name,email:email,role:'factory'})})
     .then(function(r){return r.json().catch(function(){return {};});})
     .then(function(data){
