@@ -174,6 +174,8 @@ module.exports = async (req, res) => {
       const data = raw ? JSON.parse(raw) : { briefs: [], leads: [] };
       if (!data.leads) data.leads = [];
       if (!data.briefs) data.briefs = [];
+      if (!data.vendors) data.vendors = [];
+      if (!data.team) data.team = [];
       res.status(200).json(data);
       return;
     }
@@ -200,6 +202,8 @@ module.exports = async (req, res) => {
       const current = raw ? JSON.parse(raw) : { briefs: [], leads: [] };
       if (!current.leads) current.leads = [];
       if (!current.briefs) current.briefs = [];
+      if (!current.vendors) current.vendors = [];
+      if (!current.team) current.team = [];
 
       // Snapshot which lead ids already existed BEFORE merging, so a
       // notification only fires for ids that are genuinely new — an admin
@@ -242,9 +246,21 @@ module.exports = async (req, res) => {
         return Array.from(byId.values());
       }
 
+      // vendors/team merge the same way leads do (no changedIds protection —
+      // these are lower-collision, effectively admin-only edits). Persisting
+      // them here at all is the actual fix for a real cross-account leak:
+      // these two lists used to live ONLY in whichever browser tab created
+      // them (app.html's PRODUCTION_ADMINS/SHOPS, rebuilt from SDB.vendors,
+      // which was localStorage-only). A vendor added on Carve Admin's laptop
+      // simply didn't exist yet on that vendor's own device — so when they
+      // logged in, their email matched nothing, and the portal silently fell
+      // back to showing whichever OTHER shop happened to be the default,
+      // i.e. one vendor's account displaying a different vendor's quotes.
       const data = {
         briefs: mergeById(current.briefs, body.briefs, body.deletedBriefIds, body.changedBriefIds),
         leads: mergeById(current.leads, body.leads, body.deletedLeadIds),
+        vendors: mergeById(current.vendors, body.vendors, body.deletedVendorIds),
+        team: mergeById(current.team, body.team, body.deletedTeamIds),
       };
       await redis.set(KEY, JSON.stringify(data));
 
@@ -258,7 +274,7 @@ module.exports = async (req, res) => {
         await Promise.allSettled(notifications);
       }
 
-      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads });
+      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads, vendors: data.vendors, team: data.team });
       return;
     }
 

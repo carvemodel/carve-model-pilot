@@ -2264,7 +2264,8 @@ function removeMember(id){
   (window.SDB.briefs||[]).forEach(function(b){
     if(b.assignedManager&&m.email&&b.assignedManager.toLowerCase()===m.email.toLowerCase()){b.assignedManager=null;affectedBriefIds.push(b.id);}
   });
-  if(typeof saveSRC==='function')saveSRC({changedBriefIds:affectedBriefIds});
+  if(window.srcPendingDeleteTeamIds)window.srcPendingDeleteTeamIds.push(id);
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:affectedBriefIds,deletedTeamIds:[id]});
   renderTeam();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
   if(window.renderMyAssigned)window.renderMyAssigned();
@@ -2324,7 +2325,8 @@ function removeVendor(id){
   if(!v)return;
   if(!confirm('Remove '+v.name+' as a vendor? They will immediately lose portal access and be removed from Sourcing & Quotes.'))return;
   window.SDB.vendors=(window.SDB.vendors||[]).filter(function(x){return x.id!==id;});
-  if(typeof saveSRC==='function')saveSRC();
+  if(window.srcPendingDeleteVendorIds)window.srcPendingDeleteVendorIds.push(id);
+  if(typeof saveSRC==='function')saveSRC({deletedVendorIds:[id]});
   // Mutate in place (splice), not reassign: other code closes over the
   // original SHOPS/PRODUCTION_ADMINS array objects directly, not window.*,
   // so replacing window.SHOPS with a new filtered array would leave those
@@ -4237,8 +4239,18 @@ function enterSession(role,email,name){
   if(role==='client'&&window.recordClientActivity)window.recordClientActivity(email);
   if(role==='factory'){
     var admin=PRODUCTION_ADMINS.filter(function(p){return p.email.toLowerCase()===email.toLowerCase();})[0];
+    // Always set explicitly, including to '' when no match — OUR_SHOP must
+    // never be left pointing at whatever shop a PREVIOUS factory session (or
+    // the hardcoded default) happened to leave it on. Leaving it stale here
+    // is exactly what let one vendor's account silently show another
+    // vendor's quotes: if the lookup failed (e.g. this browser hadn't yet
+    // synced the vendor roster), OUR_SHOP simply stayed at its old value
+    // instead of being cleared, and SRC_prodAdmin()/SRC_updateBadges() had no
+    // way to tell "not linked to a shop" apart from "linked to shop X" — see
+    // the '' guard in SRC_prodAdmin for how this is now shown to the vendor
+    // instead of silently rendering someone else's queue.
+    if(window.SRC_setShop)window.SRC_setShop(admin?admin.shopId:'');
     if(admin){
-      if(window.SRC_setShop)window.SRC_setShop(admin.shopId);
       var wn=document.getElementById('whoName'), wr=document.getElementById('whoRole');
       if(wn)wn.textContent=admin.name;
       if(wr)wr.textContent='Production Admin \u00b7 '+admin.company;
@@ -4378,7 +4390,10 @@ var BASE_MATERIALS=['Plywood','Foam','Wrought Iron'];
 window.SPECIAL_REQS=SPECIAL_REQS; window.MODEL_MATERIALS=MODEL_MATERIALS; window.BASE_MATERIALS=BASE_MATERIALS;
 var MODEL_CATEGORIES=['Building only','Building with landscape','Topography / terrain model','Interior model','Section / cutaway model','Masterplan / site model','Product / industrial prototype','Mixed / other'];
 var OUR_SHOP='northpoint';            // Production Admin/Tech act for this shop in the demo
-window.SRC_setShop=function(id){if(id)OUR_SHOP=id;};
+// Deliberately accepts '' (and sets it) so a factory login that couldn't be
+// matched to a shop can explicitly CLEAR OUR_SHOP rather than leave it
+// pointing at whatever it was before — see enterSession().
+window.SRC_setShop=function(id){OUR_SHOP=id||'';};
 var ME_TECH='sam';                    // Production Technician identity
 var RMB_PER_USD=7.2;                  // demo FX rate — production shops quote in RMB, Carve sees USD
 var SRC_PENDING_BFILE={};             // holds boundary-file metadata picked but not yet submitted, keyed by "<prefix>-<briefId>"
@@ -4571,22 +4586,40 @@ function seedSRC(){
 }
 var SKEY='cm_portal_sourcing_v22', SDB=loadSRC(), apiReady=false;
 window.SDB=SDB;
-// Any vendor added via Team & Access in a previous session needs to be wired
-// back into SHOPS/PRODUCTION_ADMINS on reload (those two arrays reset to their
-// hardcoded defaults on every page load; SDB.vendors is the persisted source
-// of truth) so it's still selectable when inviting shops to quote a project.
-(SDB.vendors||[]).forEach(function(v){
-  if(window.SHOPS&&!window.SHOPS.some(function(s){return s.id===v.id;})){
-    window.SHOPS.push({id:v.id,name:v.name,loc:v.loc||'Not specified',av:initialsOf(v.name)});
-  }
-  if(v.email&&window.PRODUCTION_ADMINS&&!window.PRODUCTION_ADMINS.some(function(a){return a.shopId===v.id;})){
-    window.PRODUCTION_ADMINS.push({shopId:v.id,name:v.contact||v.name,company:v.name,email:v.email});
-  }
-});
+// Any vendor added via Team & Access — on THIS browser or, now that vendors
+// sync through /api/sourcing (see pullSourcing below), on any other admin's
+// browser too — needs to be wired into SHOPS/PRODUCTION_ADMINS: those two
+// arrays reset to their hardcoded single-demo-vendor default on every page
+// load, so SDB.vendors (persisted) is the real source of truth. This used to
+// run once, only at load, from whatever SDB.vendors this ONE browser's own
+// localStorage happened to have — meaning a vendor added on Carve Admin's
+// computer simply didn't exist yet on that vendor's OWN computer, so their
+// login email matched nothing here, OUR_SHOP silently stayed on its default,
+// and they'd see whichever shop that default happened to be — a real
+// cross-account leak, not just a sync-timing quirk. Now also re-run after
+// every pullSourcing() poll (see below), once SDB.vendors has actually been
+// pulled from the shared server store, so it converges on every device.
+function reconcileVendorsIntoShops(){
+  (SDB.vendors||[]).forEach(function(v){
+    if(window.SHOPS&&!window.SHOPS.some(function(s){return s.id===v.id;})){
+      window.SHOPS.push({id:v.id,name:v.name,loc:v.loc||'Not specified',av:initialsOf(v.name)});
+    }
+    if(v.email&&window.PRODUCTION_ADMINS&&!window.PRODUCTION_ADMINS.some(function(a){return a.shopId===v.id;})){
+      window.PRODUCTION_ADMINS.push({shopId:v.id,name:v.contact||v.name,company:v.name,email:v.email});
+    }
+  });
+}
+window.reconcileVendorsIntoShops=reconcileVendorsIntoShops;
+reconcileVendorsIntoShops();
 // Ids removed locally via deleteLead()/SRC_deleteBrief() but not yet confirmed
 // gone from the server (the delete's saveSRC() call is fire-and-forget — see
 // pullSourcing() below for why this list exists).
-var srcPendingDeleteLeadIds=[], srcPendingDeleteBriefIds=[];
+var srcPendingDeleteLeadIds=[], srcPendingDeleteBriefIds=[], srcPendingDeleteVendorIds=[], srcPendingDeleteTeamIds=[];
+// Exposed on window: removeMember()/removeVendor() (Team & Access, an
+// earlier <script> block with no closure access to this IIFE's own
+// variables) push onto these same array objects by reference.
+window.srcPendingDeleteVendorIds=srcPendingDeleteVendorIds;
+window.srcPendingDeleteTeamIds=srcPendingDeleteTeamIds;
 // One-time cleanup: briefs sent before Materials/Base were dropped from the
 // client brief still carry those two placeholder keys on disk (local storage
 // or the shared API) — strip them so old data matches what new briefs look
@@ -4621,9 +4654,15 @@ function saveSRC(opts){
     // a lead/brief another tab or a client submission added in the meantime). An
     // id only actually gets removed server-side if it's explicitly listed below —
     // see deleteLead(), the one place that really deletes rather than just editing.
-    var payload={briefs:SDB.briefs,leads:SDB.leads||[]};
+    // vendors/team ride along on every save (like briefs/leads do) so any
+    // OTHER browser's next pull picks up a newly-added vendor/team member —
+    // see reconcileVendorsIntoShops() above for why this matters: without
+    // it, a vendor's own device never learns its own account's shop mapping.
+    var payload={briefs:SDB.briefs,leads:SDB.leads||[],vendors:SDB.vendors||[],team:SDB.team||[]};
     if(opts&&opts.deletedLeadIds&&opts.deletedLeadIds.length)payload.deletedLeadIds=opts.deletedLeadIds;
     if(opts&&opts.deletedBriefIds&&opts.deletedBriefIds.length)payload.deletedBriefIds=opts.deletedBriefIds;
+    if(opts&&opts.deletedVendorIds&&opts.deletedVendorIds.length)payload.deletedVendorIds=opts.deletedVendorIds;
+    if(opts&&opts.deletedTeamIds&&opts.deletedTeamIds.length)payload.deletedTeamIds=opts.deletedTeamIds;
     // Tells the server exactly which brief(s) this particular save is
     // intentionally changing (see mergeById's allowedIds in api/sourcing.js).
     // Without this, EVERY save anywhere in the app — adding a vendor,
@@ -5871,7 +5910,20 @@ function sectionLabel(text){
   return '<div style="font-family:var(--font-mono);font-size:0.74rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-text-strong);font-weight:var(--w-medium);margin:1.1rem 0 0.6rem;">'+text+'</div>';
 }
 function SRC_prodAdmin(){
-  document.getElementById('srcNotice').hidden=true;
+  var notice=document.getElementById('srcNotice');
+  // Safety guard: OUR_SHOP is only ever '' when this account's email couldn't
+  // be matched to a shop (see enterSession()/SRC_setShop). Refuse to render
+  // ANY briefs in that state rather than fall through to whatever OUR_SHOP's
+  // stale/default value would otherwise filter on — that fallback used to
+  // silently show one vendor's account another vendor's quotes.
+  if(!OUR_SHOP){
+    notice.hidden=false;
+    notice.innerHTML='<b>This account isn\u2019t linked to a production shop yet.</b> Nothing will show here until Carve Admin fixes that \u2014 contact them rather than resubmitting anything. (This is a safety guard, not a bug: your account will never fall back to showing another shop\u2019s quotes.)';
+    setSrcBody('');
+    window.SRC_updateBadges();
+    return;
+  }
+  notice.hidden=true;
   window.SRC_updateBadges();
   var ours=SDB.briefs.filter(function(b){return (b.invited&&b.invited.indexOf(OUR_SHOP)>=0)||b.quotes[OUR_SHOP]||b.awarded===OUR_SHOP;});
   var byDate=function(a,c){return (a.sentDate||'').localeCompare(c.sentDate||'');};
@@ -6450,12 +6502,23 @@ function reconcilePendingDeletes(pendingArr,serverList){
 }
 function pullSourcing(){
   return fetch('/api/sourcing').then(function(r){return r.json();}).then(function(data){
-    if(data&&(data.briefs||data.leads)){
+    if(data&&(data.briefs||data.leads||data.vendors||data.team)){
       SDB.briefs=mergeSrcList(SDB.briefs,data.briefs||[],srcPendingDeleteBriefIds);
       SDB.leads=mergeSrcList(SDB.leads,data.leads||[],srcPendingDeleteLeadIds);
+      // vendors/team now sync the same way — see reconcileVendorsIntoShops()
+      // above for why this matters: without pulling these from the server,
+      // a vendor added on a DIFFERENT browser never reaches this one, so a
+      // login from that vendor's own device couldn't be matched to its shop
+      // and silently fell back to showing whichever shop was default — one
+      // vendor's account displaying another vendor's quotes.
+      SDB.vendors=mergeSrcList(SDB.vendors,data.vendors||[],srcPendingDeleteVendorIds);
+      SDB.team=mergeSrcList(SDB.team,data.team||[],srcPendingDeleteTeamIds);
       reconcilePendingDeletes(srcPendingDeleteBriefIds,data.briefs||[]);
       reconcilePendingDeletes(srcPendingDeleteLeadIds,data.leads||[]);
+      reconcilePendingDeletes(srcPendingDeleteVendorIds,data.vendors||[]);
+      reconcilePendingDeletes(srcPendingDeleteTeamIds,data.team||[]);
       migrateBriefFields(SDB.briefs);
+      if(window.reconcileVendorsIntoShops)window.reconcileVendorsIntoShops();
       if(window.syncClientsFromLeads)window.syncClientsFromLeads();
       try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
       // Skip the re-render while a field is actively focused OR was typed into in
@@ -6473,6 +6536,8 @@ function pullSourcing(){
         if(window.SRC_renderLeads)window.SRC_renderLeads();
         if(window.renderAwardedProjects)window.renderAwardedProjects();
         if(window.renderMyAssigned)window.renderMyAssigned();
+        if(window.renderTeam)window.renderTeam();
+        if(window.renderVendors)window.renderVendors();
       }
     }
   });
