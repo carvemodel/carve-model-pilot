@@ -4460,7 +4460,21 @@ var MODEL_MATERIALS=['Full Color ABS / Realistic Visualization','Monochromatic A
 var BASE_MATERIALS=['Plywood','Foam','Wrought Iron'];
 window.SPECIAL_REQS=SPECIAL_REQS; window.MODEL_MATERIALS=MODEL_MATERIALS; window.BASE_MATERIALS=BASE_MATERIALS;
 var MODEL_CATEGORIES=['Building only','Building with landscape','Topography / terrain model','Interior model','Section / cutaway model','Masterplan / site model','Product / industrial prototype','Mixed / other'];
-var OUR_SHOP='northpoint';            // Production Admin/Tech act for this shop in the demo
+// Deliberately '' (not a real shop id) on every fresh script load. This used
+// to default to 'northpoint' (Bohai's real production shop id) as a leftover
+// from the single-demo-vendor era. enterSession() corrects OUR_SHOP via
+// SRC_setShop() once a factory login's email is matched against
+// PRODUCTION_ADMINS -- but that correction runs on window 'load', which can
+// resolve AFTER the very first render (or after the first 5s poll cycle in
+// pullSourcing/POLL_MS below completes). In that window, any render for a
+// factory session would have used whatever OUR_SHOP defaulted to -- and a
+// real shop id there meant a vendor's screen could flash another vendor's
+// briefs and notifications for a few seconds before self-correcting on the
+// next poll. '' has always been a fully-supported, explicitly-handled state
+// (see the '' guard in SRC_prodAdmin, which shows "not linked to a shop
+// yet" and renders nothing else) -- so defaulting here is a pure safety
+// fix, not a new code path.
+var OUR_SHOP='';
 // Deliberately accepts '' (and sets it) so a factory login that couldn't be
 // matched to a shop can explicitly CLEAR OUR_SHOP rather than leave it
 // pointing at whatever it was before — see enterSession().
