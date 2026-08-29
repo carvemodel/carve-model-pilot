@@ -876,8 +876,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="kpi proj-pricing-only"><span class="mock__k">Project Price</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiClientPrice" style="font-size:1.15rem;">—</div><button type="button" class="owner-only" onclick="editProjectPrice()" title="Edit project price -- Carve Admin only" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
         <div class="kpi owner-only"><span class="mock__k">Vendor price</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiVendorPrice" style="font-size:1.15rem;">—</div><button type="button" onclick="editVendorPrice()" title="Edit vendor price" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
         <div class="kpi owner-only"><span class="mock__k">Profit</span><div class="big" id="kpiProfit" style="font-size:1.15rem;">—</div></div>
-        <div class="kpi proj-pricing-only"><span class="mock__k">Est. shipping cost</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiShipEst" style="font-size:1.15rem;">—</div><button type="button" onclick="editEstimatedShipping()" title="Edit estimated shipping cost -- internal only" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
-        <div class="kpi proj-pricing-only"><span class="mock__k">Actual shipping cost</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiShipActual" style="font-size:1.15rem;">—</div><button type="button" onclick="editActualShipping()" title="Enter actual shipping cost -- set at packing & shipping" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
+        <div class="kpi proj-pricing-only" id="kpiShippingCard"><!-- Populated by renderShippingCostCard(): shows Estimated shipping cost
+             until the Client Manager enters the actual figure at the packing/shipping stage,
+             then relabels to Actual shipping cost. --></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Scale</span><div class="big" id="kpiScale">—</div><div class="sub" id="kpiScaleSub"></div></div>
         <div class="kpi proj-invoice-only" style="cursor:pointer;" onclick="openProjectInvoicePanel()"><span class="mock__k">Invoice &amp; Payment</span><div class="big" id="kpiInvoice" style="font-size:1.15rem;">—</div><div class="sub" id="kpiInvoiceSub">Click to view →</div></div>
       </div>
@@ -891,7 +892,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
         <div style="display:flex;flex-direction:column;gap:1.25rem;">
           <div class="panel">
-            <div class="panel__head"><h3>Client information</h3><button type="button" class="btn btn--ghost btn--sm client-edit-only" id="projInfoClientEditBtn" onclick="toggleClientEdit()">Edit</button></div>
+            <div class="panel__head"><h3>Client information</h3></div>
             <div class="panel__body">
               <!-- Editing any field here updates ONLY this project's own
                    client record going forward -- the previous contact stays
@@ -908,9 +909,11 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     <div class="mock__v" id="projInfoClientCM" style="flex:1;">—</div>
                     <button type="button" class="btn btn--ghost btn--sm client-edit-only" id="ceCompanyBtn" onclick="toggleClientFieldEdit('company')">Edit</button>
                   </div>
-                  <div class="client-edit-only" id="ceCompanyWrap" hidden style="margin-top:0.5rem;max-width:280px;display:flex;gap:0.5rem;">
-                    <input type="text" id="ceCompanyInput" style="flex:1;">
-                    <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('company')">Save</button>
+                  <div class="client-edit-only" id="ceCompanyWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="ceCompanyInput" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('company')">Save</button>
+                    </div>
                   </div>
                 </div>
                 <div class="cid-only">
@@ -919,9 +922,11 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     <div class="mock__v" id="projInfoContactName" style="flex:1;">—</div>
                     <button type="button" class="btn btn--ghost btn--sm client-edit-only" id="ceNameBtn" onclick="toggleClientFieldEdit('name')">Edit</button>
                   </div>
-                  <div class="client-edit-only" id="ceNameWrap" hidden style="margin-top:0.5rem;max-width:280px;display:flex;gap:0.5rem;">
-                    <input type="text" id="ceNameInput" style="flex:1;">
-                    <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('name')">Save</button>
+                  <div class="client-edit-only" id="ceNameWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="ceNameInput" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('name')">Save</button>
+                    </div>
                   </div>
                 </div>
                 <div class="cid-only">
@@ -930,9 +935,11 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     <div class="mock__v" id="projInfoContactEmail" style="flex:1;">—</div>
                     <button type="button" class="btn btn--ghost btn--sm client-edit-only" id="ceEmailBtn" onclick="toggleClientFieldEdit('email')">Edit</button>
                   </div>
-                  <div class="client-edit-only" id="ceEmailWrap" hidden style="margin-top:0.5rem;max-width:280px;display:flex;gap:0.5rem;">
-                    <input type="email" id="ceEmailInput" style="flex:1;">
-                    <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('email')">Save</button>
+                  <div class="client-edit-only" id="ceEmailWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="email" id="ceEmailInput" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('email')">Save</button>
+                    </div>
                   </div>
                 </div>
                 <div class="cid-only">
@@ -941,25 +948,12 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     <div class="mock__v" id="projInfoContactPhone" style="flex:1;">—</div>
                     <button type="button" class="btn btn--ghost btn--sm client-edit-only" id="cePhoneBtn" onclick="toggleClientFieldEdit('phone')">Edit</button>
                   </div>
-                  <div class="client-edit-only" id="cePhoneWrap" hidden style="margin-top:0.5rem;max-width:280px;display:flex;gap:0.5rem;">
-                    <input type="text" id="cePhoneInput" style="flex:1;">
-                    <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('phone')">Save</button>
+                  <div class="client-edit-only" id="cePhoneWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="cePhoneInput" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('phone')">Save</button>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <!-- Editing here updates ONLY this project's client record going
-                   forward -- the previous contact stays on record in the
-                   Clients tab (as history) until Carve Admin deletes it; the
-                   new info is tracked there as a separate, new entry. See
-                   saveClientEdit(). -->
-              <div class="client-edit-only" id="projInfoClientEditWrap" hidden style="margin-top:0.9rem;display:flex;flex-direction:column;gap:0.6rem;max-width:320px;">
-                <div class="mfield" style="margin:0;"><label>Company</label><input type="text" id="ceCompany"></div>
-                <div class="mfield" style="margin:0;"><label>Contact name</label><input type="text" id="ceName"></div>
-                <div class="mfield" style="margin:0;"><label>Email</label><input type="email" id="ceEmail"></div>
-                <div class="mfield" style="margin:0;"><label>Phone</label><input type="text" id="cePhone"></div>
-                <div style="display:flex;gap:0.5rem;">
-                  <button type="button" class="btn btn--primary btn--sm" onclick="saveClientEdit()">Save as new contact</button>
-                  <button type="button" class="btn btn--ghost btn--sm" onclick="toggleClientEdit()">Cancel</button>
                 </div>
               </div>
               <div class="proj-cancel client-only" id="projCancelWrap">
@@ -2964,10 +2958,32 @@ function renderProjectPricingPanel(b){
   setText('kpiVendorPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
   setText('kpiProfit',profit!=null?fmtUsd(profit):'—');
   var shipEst=(b.clientQuote&&b.clientQuote.estimatedShippingCost!=null)?b.clientQuote.estimatedShippingCost:null;
-  setText('kpiShipEst',shipEst!=null?fmtUsd(shipEst):'—');
-  setText('kpiShipActual',b.actualShippingCost!=null?fmtUsd(b.actualShippingCost):'—');
+  renderShippingCostCard(b);
 }
 window.renderProjectPricingPanel=renderProjectPricingPanel;
+// Shipping cost is a single card, not two. It starts out as the Estimated
+// shipping cost entered internally when the client quote goes out, and once
+// the Client Manager enters the real figure at the packing & shipping stage
+// the same card relabels itself to Actual shipping cost and shows that
+// number instead. Estimated can be set by Owner or Client Manager; once the
+// actual figure is in play, only the Client Manager (who is at the shipping
+// step) can edit it.
+function renderShippingCostCard(b){
+  var wrap=document.getElementById('kpiShippingCard');
+  if(!wrap)return;
+  var role=document.body.dataset.role;
+  var hasActual=b.actualShippingCost!=null;
+  var shipEst=(b.clientQuote&&b.clientQuote.estimatedShippingCost!=null)?b.clientQuote.estimatedShippingCost:null;
+  var label=hasActual?'Actual shipping cost':'Estimated shipping cost';
+  var val=hasActual?b.actualShippingCost:shipEst;
+  var valText=val!=null?fmtUsd(val):'—';
+  var canEdit=hasActual?(role==='sales'):(role==='owner'||role==='sales');
+  var onclick=hasActual?'editActualShipping()':'editEstimatedShipping()';
+  var title=hasActual?'Edit actual shipping cost -- Carve Client Manager only':'Edit estimated shipping cost -- internal only';
+  var pencil=canEdit?('<button type="button" onclick="'+onclick+'" title="'+esc(title)+'" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>'):'';
+  wrap.innerHTML='<span class="mock__k">'+esc(label)+'</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" style="font-size:1.15rem;">'+esc(valText)+'</div>'+pencil+'</div>';
+}
+window.renderShippingCostCard=renderShippingCostCard;
 // Owner-only price overrides, reached via the pencil icons on the Project
 // Price / Vendor price KPI cards. Client Manager never gets this -- once a
 // project is underway the agreed price is Carve Admin's call only. Project
