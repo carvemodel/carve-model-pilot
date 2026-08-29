@@ -389,7 +389,7 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .jstep__dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.74rem;background:var(--cm-ink-850);border:1.5px solid var(--cm-ink-500);color:var(--cm-text-subtle);position:relative;z-index:2;transition:0.2s;}
 .jstep.done .jstep__dot{background:var(--cm-silver);border-color:var(--cm-silver);color:var(--cm-ink-900);font-weight:var(--w-bold);}
 .jstep.current .jstep__dot{background:var(--cm-white);border-color:var(--cm-white);color:var(--cm-ink-900);font-weight:var(--w-bold);box-shadow:0 0 0 5px rgba(255,255,255,0.12);}
-.jstep__name{font-size:0.82rem;font-weight:var(--w-semibold);color:var(--cm-text-muted);line-height:1.2;display:flex;align-items:flex-start;justify-content:center;min-height:2.4em;}
+.jstep__name{font-size:0.82rem;font-weight:var(--w-semibold);color:var(--cm-text-muted);line-height:1.2;display:flex;align-items:flex-start;justify-content:center;min-height:3.6em;}
 .jstep.done .jstep__name,.jstep.current .jstep__name{color:var(--cm-text-strong);}
 .jstep__date{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.02em;color:var(--cm-text-subtle);white-space:nowrap;min-height:1.3em;}
 .jstep.current .jstep__date{color:var(--cm-silver);}
@@ -838,9 +838,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <p id="journeyNow">Digital fabrication and hand-finishing of the tower massing. QC photos are posted to <b>Files</b> as each section completes.</p>
           </div>
           <div class="journey__next" id="journeyNextWrap">
-            <span class="mock__k">Current stage: <span id="journeyCurrentStageText" style="color:var(--cm-text-strong);">—</span></span>
-            <div class="sub" id="journeyScheduleStatus" style="margin:0.15rem 0 0.6rem;"></div>
-            <span class="mock__k">Next Stage: <span id="journeyNextStageText">—</span></span>
+            <span class="mock__k">Current stage: <span id="journeyCurrentStageText" style="color:var(--cm-text-strong);">—</span><span class="sub" id="journeyScheduleStatus" style="margin-left:0.35rem;"></span></span>
+            <span class="mock__k" style="display:block;margin-top:0.6rem;">Next Stage: <span id="journeyNextStageText">—</span></span>
             <div style="display:flex;flex-direction:column;gap:0.7rem;margin-top:0.7rem;">
               <div>
                 <span class="mock__k">Start</span>
@@ -2334,11 +2333,11 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
   var today=new Date().toISOString().slice(0,10);
   if(today<rangeStart){
     var d=daysBetween(today,rangeStart);
-    return d+' day'+(d===1?'':'s')+' ahead of original schedule';
+    return d+' Day'+(d===1?'':'s')+' Ahead of Schedule';
   }
   if(today>rangeEnd){
     var d2=daysBetween(rangeEnd,today);
-    return d2+' day'+(d2===1?'':'s')+' behind original schedule';
+    return d2+' Day'+(d2===1?'':'s')+' Behind Schedule';
   }
   return 'On schedule';
 }
@@ -3325,7 +3324,8 @@ function renderProjectOverview(b){
   // apparently-unreachable demo path (openCompletedProject) still touches
   // them directly without null checks.
   setText('journeyCurrentStageText',delivered?'Project Completed':stageName);
-  setText('journeyScheduleStatus',(typeof currentStageScheduleStatus==='function')?currentStageScheduleStatus(b):'');
+  var scheduleStatusTxt=(typeof currentStageScheduleStatus==='function')?currentStageScheduleStatus(b):'';
+  setText('journeyScheduleStatus',scheduleStatusTxt?(' | '+scheduleStatusTxt):'');
   setText('journeyNextStageText',delivered?'Complete':(nextStage||'Complete'));
   var jNow=document.getElementById('journeyNow');
   if(jNow)jNow.innerHTML=delivered?'Project complete. Final files are available under Files.':esc(b.projectUpdateNote||('Currently in '+stageName+'.'));
