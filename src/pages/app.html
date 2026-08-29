@@ -3409,7 +3409,7 @@ function renderProjectOverview(b){
       // email address baked into "by" (e.g. "support@physical-model.com
       // (Carve Admin)") -- strip it here at render time so old activity
       // self-heals to just the role label without needing a data migration.
-      var byLabel=h.by?h.by.replace(/^\S+@\S+\.\S+\s*(?=\()/,''):'';
+      var byLabel=(typeof resolveActorDisplay==='function')?resolveActorDisplay(h.by,b):h.by;
       var meta=esc(h.time||'')+(byLabel?' · '+esc(byLabel):'');
       return '<div class="act"><span class="d"></span><div><p>'+line+'</p><div class="t">'+meta+'</div></div></div>';
     }).join(''):'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No activity recorded yet.</div>';
@@ -5780,9 +5780,16 @@ function logHistory(b,shopId,optData,action){
 // real session (e.g. local demo/dev use), and finally just the role label
 // if even that isn't available.
 var ROLE_DISPLAY_LABEL={owner:'Carve Admin',sales:'Client Manager',factory:'Vendor',prodtech:'Production Tech',client:'Client'};
-function currentActorLabel(){
+function currentActorLabel(b){
   var role=document.body.dataset.role;
   var roleLabel=ROLE_DISPLAY_LABEL[role]||'';
+  // Client actions should show THIS project's actual client contact name
+  // (b.client.Name) -- the client login is a single shared demo account,
+  // not one per project, so looking it up in SDB.team (staff only) would
+  // never find a name. Never show the client's email either.
+  if(role==='client'&&b&&b.client&&b.client.Name){
+    return roleLabel?(b.client.Name+' ('+roleLabel+')'):b.client.Name;
+  }
   var sess=(typeof currentSession==='function')?currentSession():null;
   if(sess&&sess.email){
     var member=((window.SDB&&window.SDB.team)||[]).filter(function(t){return t&&t.email&&t.email.toLowerCase()===sess.email.toLowerCase();})[0];
@@ -5797,6 +5804,33 @@ function currentActorLabel(){
   return roleLabel||null;
 }
 window.currentActorLabel=currentActorLabel;
+// Best-effort cleanup for Recent Activity "by" values logged before this
+// fix existed (or by any code path that slipped an email through). Given
+// the project brief (for resolving the client's actual name) and any raw
+// stored label, resolves it to: a named team member ("Charles Liu (Client
+// Manager)"), the Carve Admin account, this project's client by name, a
+// role label from ACCOUNTS, or -- failing all of that -- just strips the
+// email and keeps whatever text (if any) followed it.
+function resolveActorDisplay(raw,b){
+  if(!raw)return raw;
+  var m=/([^\s()]+@[^\s()]+\.[^\s()]+)/.exec(raw);
+  if(!m)return raw;
+  var email=m[1].toLowerCase();
+  var member=((window.SDB&&window.SDB.team)||[]).filter(function(t){return t&&t.email&&t.email.toLowerCase()===email;})[0];
+  if(member&&member.name){
+    var mRoleLabel=ROLE_DISPLAY_LABEL[member.role]||'';
+    return mRoleLabel?(member.name+' ('+mRoleLabel+')'):member.name;
+  }
+  var acctRole=(typeof ACCOUNTS!=='undefined'&&ACCOUNTS[email])||null;
+  if(acctRole==='owner')return ROLE_DISPLAY_LABEL.owner||'Carve Admin';
+  if(b&&b.client&&b.client.Email&&b.client.Email.toLowerCase()===email){
+    var cLabel=ROLE_DISPLAY_LABEL.client||'Client';
+    return b.client.Name?(b.client.Name+' ('+cLabel+')'):cLabel;
+  }
+  if(acctRole&&ROLE_DISPLAY_LABEL[acctRole])return ROLE_DISPLAY_LABEL[acctRole];
+  return raw.replace(/^\S+@\S+\.\S+\s*(?=\()/,'');
+}
+window.resolveActorDisplay=resolveActorDisplay;
 function logProjectEvent(b,action,whenDateStr){
   if(!b.history)b.history=[];
   // whenDateStr lets a caller back-date an entry to when something
@@ -5804,7 +5838,7 @@ function logProjectEvent(b,action,whenDateStr){
   // anyone got around to marking it in the system) instead of always
   // stamping the moment the button was clicked.
   var time=whenDateStr?new Date(whenDateStr+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):nowStamp();
-  b.history.unshift({action:action,time:time,by:currentActorLabel()});
+  b.history.unshift({action:action,time:time,by:currentActorLabel(b)});
 }
 // logProjectEvent is defined inside this IIFE but called from EVERY other
 // <script> block on the page (Client info/spec field saves, date field
