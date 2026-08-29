@@ -391,7 +391,7 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .jstep.current .jstep__dot{background:var(--cm-white);border-color:var(--cm-white);color:var(--cm-ink-900);font-weight:var(--w-bold);box-shadow:0 0 0 5px rgba(255,255,255,0.12);}
 .jstep__name{font-size:0.82rem;font-weight:var(--w-semibold);color:var(--cm-text-muted);line-height:1.2;}
 .jstep.done .jstep__name,.jstep.current .jstep__name{color:var(--cm-text-strong);}
-.jstep__date{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.02em;color:var(--cm-text-subtle);}
+.jstep__date{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.02em;color:var(--cm-text-subtle);white-space:nowrap;min-height:1.3em;}
 .jstep.current .jstep__date{color:var(--cm-silver);}
 .jstep__here{position:absolute;top:-22px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-ink-900);background:var(--cm-silver);padding:2px 7px;border-radius:99px;white-space:nowrap;}
 .jstep.current{}
@@ -1082,6 +1082,19 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   <div class="proj-spec-edit-only" id="psPackageSizeWrap" hidden style="margin-top:0.5rem;max-width:320px;">
                     <div style="display:grid;grid-template-columns:36px 1fr 1fr 1fr;gap:0.4rem;align-items:center;"><span></span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">L</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">W</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">H</span><span style="font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);">mm</span><input id="psPackageSize-l-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','l','mm')"><input id="psPackageSize-w-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','w','mm')"><input id="psPackageSize-h-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','h','mm')"><span style="font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);">in</span><input id="psPackageSize-l-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','l','in')"><input id="psPackageSize-w-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','w','in')"><input id="psPackageSize-h-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','h','in')"></div>
                     <button type="button" class="btn btn--primary btn--sm" style="margin-top:0.5rem;" onclick="saveProjectSpecField('packageSize')">Save</button>
+                  </div>
+                </div>
+                <div>
+                  <span class="mock__k">Project address</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoProjectAddress" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psProjectAddressBtn" onclick="toggleProjectSpecFieldEdit('projectAddress')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psProjectAddressWrap" hidden style="margin-top:0.5rem;max-width:320px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="psProjectAddressInput" placeholder="e.g. Phoenix, Arizona, United States" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('projectAddress')">Save</button>
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -2313,7 +2326,7 @@ function daysBetween(a,z){
 }
 // "3 days ahead of original schedule" / "2 days behind original schedule" --
 // compares today against a stage's estimated date range (see
-// journeyStageEstimate below). Only meaningful when the range has both a
+// journeyStageRange below). Only meaningful when the range has both a
 // start and end (an open-ended range like Post Delivery Support's, or a
 // stage with no computable dates yet, just skips this).
 function scheduleStatusLabel(rangeStart,rangeEnd){
@@ -2330,7 +2343,7 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
   return '';
 }
 // Indicative estimated date (or date range) for each journey stage, shown
-// as a hover tooltip on the timeline -- illustrative only, not a live
+// directly under its dot on the timeline -- illustrative only, not a live
 // production schedule. Derived entirely from the project's own Start date
 // and Target production completion (start + agreed production time), using
 // a fixed, consistent allocation: Confirmed Material Samples always gets
@@ -2343,7 +2356,7 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // end), so it never shows an ahead/behind comparison. Project Kick Off and
 // Project Completed round out the two ends.
 // Raw {start,end,openEnded} for a stage's estimated window -- shared by
-// journeyStageEstimate() (hover tooltip text) and
+// stageDateLabelCompact() (the visible per-dot date label) and
 // currentStageScheduleStatus() (the visible ahead/behind line on the
 // journey card) so the two never drift apart.
 function journeyStageRange(b,stageIndex){
@@ -2379,14 +2392,26 @@ function timelineDerivedStageIndex(b){
   return idx;
 }
 window.timelineDerivedStageIndex=timelineDerivedStageIndex;
-function journeyStageEstimate(b,stageIndex){
-  var r=journeyStageRange(b,stageIndex);
-  if(!r.start)return '';
-  var dateLine='Est. '+(r.end&&r.end!==r.start?(fmtDateShort(r.start)+' – '+fmtDateShort(r.end)):fmtDateShort(r.start))+(r.openEnded?' onward':'');
-  var status=r.end?scheduleStatusLabel(r.start,r.end):'';
-  return status?(dateLine+' · '+status):dateLine;
+// Compact "Aug 22–25" / "Sep 16" / "Sep 26+" label shown directly under
+// each stage dot on the timeline (replaces the old generic "Done"/"Next
+// up"/pct% caption -- no hover needed, the actual estimated date is always
+// visible). Short month+day only, no year (all within the same project
+// year), and collapses to "Mon D–D" when a range stays within one month.
+function fmtStageDateCompact(s){
+  if(!s)return '';
+  try{return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});}catch(e){return s;}
 }
-window.journeyStageEstimate=journeyStageEstimate;
+function stageDateLabelCompact(b,stageIndex){
+  var r=journeyStageRange(b,stageIndex);
+  if(!r.start)return '—';
+  if(!r.end||r.end===r.start)return fmtStageDateCompact(r.start)+(r.openEnded?'+':'');
+  var rsD=new Date(r.start+'T00:00:00'), reD=new Date(r.end+'T00:00:00');
+  if(rsD.getMonth()===reD.getMonth()){
+    return rsD.toLocaleDateString('en-US',{month:'short'})+' '+rsD.getDate()+'–'+reD.getDate();
+  }
+  return fmtStageDateCompact(r.start)+'–'+fmtStageDateCompact(r.end);
+}
+window.stageDateLabelCompact=stageDateLabelCompact;
 // Just the "N days ahead/behind original schedule" phrase (no date range)
 // for whichever stage the project is CURRENTLY sitting at -- shown as its
 // own line on the journey card, right under "Current stage: <name>".
@@ -2542,6 +2567,7 @@ function projectSpecValue(b,field){
     }
     return pkgDims.length?pkgDims.map(function(d,i){return pkgDims.length>1?('#'+(i+1)+' '+d):d;}).join(', '):null;
   }
+  if(field==='projectAddress')return b.projectAddressOverride||(b.brief&&b.brief['Project location'])||null;
   if(field==='deliveryAddress')return b.deliveryAddressOverride||(b.client&&b.client.Address)||(b.brief&&b.brief['Delivery location'])||null;
   return null;
 }
@@ -2559,6 +2585,12 @@ var PROJECT_SPEC_FIELD_META={
   material:{label:'Materials & presentation',display:'projInfoMaterial',wrap:'psMaterialWrap',btn:'psMaterialBtn',type:'select',input:'psMaterialInput',override:'materialOverride'},
   modelSize:{label:'Model size',display:'projInfoModelSize',wrap:'psModelSizeWrap',btn:'psModelSizeBtn',type:'dims',prefix:'psModelSize',override:'modelSizeOverride'},
   packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',type:'dims',prefix:'psPackageSize',override:'packageSizeOverride'},
+  // The project's own site/building address -- distinct from Delivery
+  // address below (where the finished model physically ships to, which can
+  // be a different office entirely). Defaults from the location parsed out
+  // of the client's original brief (b.brief['Project location'], set at
+  // lead intake -- see alSplitLoc()/projLoc in SRC_award).
+  projectAddress:{label:'Project address',display:'projInfoProjectAddress',wrap:'psProjectAddressWrap',btn:'psProjectAddressBtn',type:'text',input:'psProjectAddressInput',override:'projectAddressOverride'},
   deliveryAddress:{label:'Delivery address',display:'projInfoDeliveryAddress',wrap:'psDeliveryAddressWrap',btn:'psDeliveryAddressBtn',type:'text',input:'psDeliveryAddressInput',override:'deliveryAddressOverride'}
 };
 // Live mm<->in sync for the Model size / Package size L/W/H editors --
@@ -3283,13 +3315,12 @@ function renderProjectOverview(b){
       var current=!delivered&&i===idx;
       var cls=done?'done':(current?'current':'');
       var dotTxt=done?'✓':String(i+1);
-      // Native title tooltip -- hovering any stage shows its indicative
-      // estimated date/range (and whether that puts it ahead/behind
-      // schedule against today), see journeyStageEstimate() above.
-      var estimate=(typeof journeyStageEstimate==='function')?journeyStageEstimate(b,i):'';
-      return '<li class="jstep '+cls+'"'+(estimate?(' title="'+esc(estimate)+'"'):'')+'>'+(current?'<span class="jstep__here">You\'re here</span>':'')+
+      // Each stage's indicative estimated date/range shows directly under
+      // its name -- no hover needed (see stageDateLabelCompact() above).
+      var dateLabel=delivered?'Done':((typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,i):'');
+      return '<li class="jstep '+cls+'">'+(current?'<span class="jstep__here">You\'re here</span>':'')+
         '<span class="jstep__dot">'+dotTxt+'</span><span class="jstep__name">'+esc(name)+'</span>'+
-        '<span class="jstep__date">'+(current?(pct+'%'):(done?'Done':'Next up'))+'</span></li>';
+        '<span class="jstep__date">'+esc(dateLabel)+'</span></li>';
     }).join('');
   }
 
@@ -5758,8 +5789,11 @@ function currentActorLabel(){
   var sess=(typeof currentSession==='function')?currentSession():null;
   if(sess&&sess.email){
     var member=((window.SDB&&window.SDB.team)||[]).filter(function(t){return t&&t.email&&t.email.toLowerCase()===sess.email.toLowerCase();})[0];
-    var name=member?member.name:sess.email;
-    return roleLabel?(name+' ('+roleLabel+')'):name;
+    // Only ever show a person's name if we actually have one on file (e.g.
+    // a named team member). Otherwise fall back to just the role label
+    // (e.g. "Carve Admin") rather than exposing the login email address.
+    if(member&&member.name)return roleLabel?(member.name+' ('+roleLabel+')'):member.name;
+    return roleLabel||sess.email;
   }
   var info=(typeof ROLE_INFO!=='undefined'&&ROLE_INFO[role])?ROLE_INFO[role]:null;
   if(info)return roleLabel?(info.name+' ('+roleLabel+')'):info.name;
