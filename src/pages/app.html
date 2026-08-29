@@ -1085,6 +1085,19 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   </div>
                 </div>
                 <div>
+                  <span class="mock__k">Project address</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoProjectAddress" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psProjectAddressBtn" onclick="toggleProjectSpecFieldEdit('projectAddress')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psProjectAddressWrap" hidden style="margin-top:0.5rem;max-width:320px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="psProjectAddressInput" placeholder="e.g. Phoenix, Arizona, United States" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('projectAddress')">Save</button>
+                    </div>
+                  </div>
+                </div>
+                <div>
                   <span class="mock__k">Delivery address</span>
                   <div style="display:flex;align-items:center;gap:0.6rem;">
                     <div class="mock__v" id="projInfoDeliveryAddress" style="flex:1;">—</div>
@@ -2554,6 +2567,7 @@ function projectSpecValue(b,field){
     }
     return pkgDims.length?pkgDims.map(function(d,i){return pkgDims.length>1?('#'+(i+1)+' '+d):d;}).join(', '):null;
   }
+  if(field==='projectAddress')return b.projectAddressOverride||(b.brief&&b.brief['Project location'])||null;
   if(field==='deliveryAddress')return b.deliveryAddressOverride||(b.client&&b.client.Address)||(b.brief&&b.brief['Delivery location'])||null;
   return null;
 }
@@ -2571,6 +2585,12 @@ var PROJECT_SPEC_FIELD_META={
   material:{label:'Materials & presentation',display:'projInfoMaterial',wrap:'psMaterialWrap',btn:'psMaterialBtn',type:'select',input:'psMaterialInput',override:'materialOverride'},
   modelSize:{label:'Model size',display:'projInfoModelSize',wrap:'psModelSizeWrap',btn:'psModelSizeBtn',type:'dims',prefix:'psModelSize',override:'modelSizeOverride'},
   packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',type:'dims',prefix:'psPackageSize',override:'packageSizeOverride'},
+  // The project's own site/building address -- distinct from Delivery
+  // address below (where the finished model physically ships to, which can
+  // be a different office entirely). Defaults from the location parsed out
+  // of the client's original brief (b.brief['Project location'], set at
+  // lead intake -- see alSplitLoc()/projLoc in SRC_award).
+  projectAddress:{label:'Project address',display:'projInfoProjectAddress',wrap:'psProjectAddressWrap',btn:'psProjectAddressBtn',type:'text',input:'psProjectAddressInput',override:'projectAddressOverride'},
   deliveryAddress:{label:'Delivery address',display:'projInfoDeliveryAddress',wrap:'psDeliveryAddressWrap',btn:'psDeliveryAddressBtn',type:'text',input:'psDeliveryAddressInput',override:'deliveryAddressOverride'}
 };
 // Live mm<->in sync for the Model size / Package size L/W/H editors --
