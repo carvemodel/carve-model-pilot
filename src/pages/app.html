@@ -718,84 +718,22 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
       </div>
 
-      <div class="myproj-section">
-        <div class="myproj-label"><span class="mock__k">In production</span><span class="myproj-count">1</span></div>
-        <button class="projrow projcard" onclick="openProject('aria')">
-          <div>
-            <div class="projrow__name">Aria Tower — Los Angeles, CA</div>
-            <div class="projrow__sub cid-only">Reyes Development Group · Investor presentation</div>
-            <div class="projcard__bar"><i style="width:68%"></i></div>
-            <div class="projcard__meta">Fabrication · 68% · target delivery Apr 2, 2026</div>
-          </div>
-          <span class="projrow__stat"><span class="chip active">In production</span></span>
-        </button>
-      </div>
-
-      <div class="myproj-section">
-        <div class="myproj-label"><span class="mock__k">Awaiting deposit</span><span class="myproj-count">1</span></div>
-        <button class="projrow projcard" onclick="openAwaitingDeposit('aria','Maritime Center — Long Beach, CA')">
-          <div>
-            <div class="projrow__name">Maritime Center — Long Beach, CA</div>
-            <div class="projrow__sub cid-only">Coastline Partners · Sales gallery</div>
-            <div class="projcard__meta">Quote approved · deposit invoice CM-1051 sent</div>
-          </div>
-          <span class="projrow__stat"><span class="chip await">Deposit due</span></span>
-        </button>
-      </div>
-
-      <div class="myproj-section">
-        <div class="myproj-label"><span class="mock__k">In review / quoting</span><span class="myproj-count">2</span></div>
-        <button class="projrow projcard" onclick="openProject('harbor')">
-          <div>
-            <div class="projrow__name">Harbor Masterplan — Seattle, WA</div>
-            <div class="projrow__sub cid-only">Halcyon Capital · Masterplan 1:500</div>
-            <div class="projcard__meta">Design review with client</div>
-          </div>
-          <span class="projrow__stat"><span class="chip await">In review</span></span>
-        </button>
-        <button class="projrow projcard" onclick="openQuoteStage('aria','Nova Sales Gallery — Austin, TX')">
-          <div>
-            <div class="projrow__name">Nova Sales Gallery — Austin, TX</div>
-            <div class="projrow__sub cid-only">Nova Residences · Sales gallery 1:50</div>
-            <div class="projcard__meta">Estimate sent · awaiting client review</div>
-          </div>
-          <span class="projrow__stat"><span class="chip await">Quote sent</span></span>
-        </button>
-      </div>
-
-      <div class="myproj-section">
-        <div class="myproj-label"><span class="mock__k">Completed</span><span class="myproj-count">1</span></div>
-        <button class="projrow projcard" onclick="openCompletedProject('Lumen Courtyard — San Diego, CA')">
-          <div>
-            <div class="projrow__name">Lumen Courtyard — San Diego, CA</div>
-            <div class="projrow__sub cid-only">Atelier West · Sales gallery model</div>
-            <div class="projcard__bar"><i style="width:100%"></i></div>
-            <div class="projcard__meta">100% complete · delivered Dec 12, 2025</div>
-          </div>
-          <span class="projrow__stat"><span class="chip done">Delivered</span></span>
-        </button>
-      </div>
+      <!-- Real data only: populated by renderProjectsList() from awardedBriefs(),
+           grouped into Active / Archived / Completed. See renderProjectsList
+           in the script block below -- this replaces what used to be four
+           permanently-hardcoded demo project cards (Aria Tower, Maritime
+           Center, Harbor Masterplan, Nova Sales Gallery, Lumen Courtyard)
+           that never reflected anything actually awarded to production. -->
+      <div id="projectsListWrap"></div>
     </section>
 
     <!-- PICK A PROJECT (shown when a project view is opened with no project selected) -->
     <section class="view" id="view-pickproject" hidden>
       <div class="notice studio-only">Select a project to open its workspace — overview, milestones, files, and messages.</div>
       <div class="panel">
-        <div class="panel__head"><h3>Projects</h3><span class="mock__k">3 active</span></div>
-        <div class="panel__body">
-          <button class="projrow" onclick="openProject('aria')">
-            <div><div class="projrow__name">Aria Tower — Los Angeles, CA</div><div class="projrow__sub">Reyes Development Group · Fabrication 68%</div></div>
-            <span class="projrow__stat"><span class="chip active">In production</span></span>
-          </button>
-          <button class="projrow" onclick="openProject('harbor')">
-            <div><div class="projrow__name">Harbor Masterplan — Seattle, WA</div><div class="projrow__sub">Halcyon Capital · Design review</div></div>
-            <span class="projrow__stat"><span class="chip await">In review</span></span>
-          </button>
-          <button class="projrow" onclick="openProject('nova')">
-            <div><div class="projrow__name">Nova Sales Gallery — Austin, TX</div><div class="projrow__sub">Nova Residences · Quote sent</div></div>
-            <span class="projrow__stat"><span class="chip await">Quote sent</span></span>
-          </button>
-        </div>
+        <div class="panel__head"><h3>Projects</h3><span class="mock__k" id="pickProjectCount"></span></div>
+        <!-- Real data: populated by renderPickProjectList() from awardedBriefs(). -->
+        <div class="panel__body" id="pickProjectBody"></div>
       </div>
     </section>
 
@@ -891,39 +829,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 
         <div class="track" id="journeyTrack">
           <div class="track__line"><i style="width:58%"></i></div>
-          <ol class="track__steps">
-            <li class="jstep done">
-              <span class="jstep__dot">✓</span>
-              <span class="jstep__name">Quote Approved</span>
-              <span class="jstep__date">Mar 5</span>
-            </li>
-            <li class="jstep done">
-              <span class="jstep__dot">✓</span>
-              <span class="jstep__name">Design Review</span>
-              <span class="jstep__date">Feb 28</span>
-            </li>
-            <li class="jstep done">
-              <span class="jstep__dot">✓</span>
-              <span class="jstep__name">Scope &amp; Scale</span>
-              <span class="jstep__date">Mar 4</span>
-            </li>
-            <li class="jstep current">
-              <span class="jstep__here">You're here</span>
-              <span class="jstep__dot">4</span>
-              <span class="jstep__name">Fabrication &amp; QC</span>
-              <span class="jstep__date">68% · due Mar 20</span>
-            </li>
-            <li class="jstep">
-              <span class="jstep__dot">5</span>
-              <span class="jstep__name">Finishing &amp; Paint</span>
-              <span class="jstep__date">Next up</span>
-            </li>
-            <li class="jstep">
-              <span class="jstep__dot">6</span>
-              <span class="jstep__name">Delivery &amp; Install</span>
-              <span class="jstep__date">Apr 2</span>
-            </li>
-          </ol>
+          <!-- Real data: rebuilt by renderProjectOverview() off PROJECT_STAGES + the brief's real projectStage/projectPct/deliveredAt. -->
+          <ol class="track__steps" id="journeySteps"></ol>
         </div>
 
         <div class="journey__foot">
@@ -945,30 +852,26 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="kpi"><span class="mock__k">Status</span><div class="big" id="kpiStatus">Fabrication</div><div class="sub" id="kpiStage">Stage 4 of 6</div></div>
         <div class="kpi"><span class="mock__k">Progress</span><div class="big" id="kpiPct">68%</div><div class="mock__progress" style="margin-top:0.6rem;"><i id="kpiBar" style="width:68%"></i></div></div>
         <div class="kpi"><span class="mock__k">Next milestone</span><div class="big" id="kpiNext" style="font-size:1.15rem;">Finishing &amp; Paint</div><div class="sub" id="kpiNextSub">Due in 6 days</div></div>
-        <div class="kpi"><span class="mock__k">Scale</span><div class="big">1:96</div><div class="sub">1/8" = 1'-0" · imperial</div></div>
+        <div class="kpi"><span class="mock__k">Scale</span><div class="big" id="kpiScale">—</div><div class="sub" id="kpiScaleSub"></div></div>
       </div>
       <div class="cols">
         <div class="panel">
           <div class="panel__head"><h3>Recent activity</h3><span class="mock__k">Live</span></div>
           <div class="panel__body">
-            <div class="act-list">
-              <div class="act"><span class="d"></span><div><p><b>Studio</b> uploaded 6 QC photos of the tower massing.</p><div class="t">2 hours ago</div></div></div>
-              <div class="act"><span class="d"></span><div><p>Milestone <b>Fabrication &amp; QC</b> moved to 68% complete.</p><div class="t">Yesterday · 4:10 PM</div></div></div>
-              <div class="act"><span class="d"></span><div><p><b>You</b> approved the <b>Scope &amp; Scale</b> milestone.</p><div class="t">Mar 4 · 11:22 AM</div></div></div>
-              <div class="act"><span class="d"></span><div><p>Invoice <b>CM-1043</b> (deposit) marked paid.</p><div class="t">Mar 2</div></div></div>
-            </div>
+            <!-- Real data: populated by renderProjectOverview() from the brief's real b.history entries. -->
+            <div class="act-list" id="ovActivityList"></div>
           </div>
         </div>
         <div class="panel">
           <div class="panel__head"><h3>Project</h3></div>
           <div class="panel__body">
             <div style="display:flex;flex-direction:column;gap:0.9rem;">
-              <div class="cm-only"><span class="mock__k">Client</span><div class="mock__v">Reyes Development Group</div></div>
-              <div class="factory-only"><span class="mock__k">Client</span><div class="mock__v">Confidential · Ref RD-014</div></div>
-              <div><span class="mock__k">Carve Lead</span><div class="mock__v">Maya Okafor</div></div>
-              <div><span class="mock__k">Start</span><div class="mock__v">Feb 26, 2026</div></div>
-              <div><span class="mock__k">Target delivery</span><div class="mock__v">Apr 2, 2026</div></div>
-              <div><span class="mock__k">Use case</span><div class="mock__v">Investor presentation</div></div>
+              <div class="cm-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientCM">—</div></div>
+              <div class="factory-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientFactory">—</div></div>
+              <div><span class="mock__k">Carve Lead</span><div class="mock__v" id="projInfoLead">—</div></div>
+              <div><span class="mock__k">Start</span><div class="mock__v" id="projInfoStart">—</div></div>
+              <div><span class="mock__k">Target delivery</span><div class="mock__v" id="projInfoTarget">—</div></div>
+              <div><span class="mock__k">Use case</span><div class="mock__v" id="projInfoUse">—</div></div>
             </div>
             <div class="proj-cancel client-only" id="projCancelWrap">
               <button class="linkbtn-danger" onclick="cancelProject()">Need to cancel this project?</button>
@@ -1177,64 +1080,11 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 
     <!-- MILESTONES -->
     <section class="view" id="view-milestones" hidden>
-      <div class="notice client-only">When the studio completes a stage, you'll be asked to review and approve it here before work continues.</div>
+      <div class="notice">This project's real activity log — quotes, awards, and revisions — recorded as they happen. A structured stage-approval workflow with photo rounds isn't built yet; ask Carve to add it if you need clients to approve each production stage here.</div>
       <div class="panel">
-        <div class="panel__head"><h3>Project timeline</h3><span class="mock__k">4 stages · photo review per round</span></div>
-        <div class="panel__body">
-          <div class="timeline">
-            <div class="ms done">
-              <div class="ms__dot">✓</div>
-              <div class="ms__body"><h4>Stage 1 · Scope &amp; Scale Approval</h4><div class="meta">APPROVED BY CLIENT · MAR 4 — APPROVE THE MODEL</div><p>Overall size, site boundary, model material, base, and special features for machine cutting — locked before any fabrication.</p>
-                <div class="msrounds">
-                  <a class="msround" href="/photo-markup-review?round=s1r1"><span class="msround__t">Cut layout &amp; base plan</span><span class="rr-chip approved">Approved</span><span class="msround__go">Open photo review →</span></a>
-                </div>
-              </div>
-              <div class="ms__status"><span class="chip done">Done</span></div>
-            </div>
-            <div class="ms done">
-              <div class="ms__dot">✓</div>
-              <div class="ms__body"><h4>Stage 2 · Design Review &amp; Planning</h4><div class="meta">APPROVED BY CLIENT · FEB 28 — APPROVE THE BUILDING</div><p>Façade materials, landscape type &amp; color, roads, and building color signed off from the material &amp; color study.</p>
-                <div class="msrounds">
-                  <a class="msround" href="/photo-markup-review?round=s2r1"><span class="msround__t">Material &amp; color study</span><span class="rr-chip approved">Approved</span><span class="msround__go">Open photo review →</span></a>
-                </div>
-              </div>
-              <div class="ms__status"><span class="chip done">Done</span></div>
-            </div>
-            <div class="ms active">
-              <div class="ms__dot">3</div>
-              <div class="ms__body">
-                <h4>Stage 3 · Fabrication &amp; QC</h4><div class="meta">IN PROGRESS · 68% · DUE MAR 20</div>
-                <p>Digital manufacturing and hand-finishing underway. One QC photo round posted after the parts are cut and pre-assembled.</p>
-                <div class="mock__progress" style="max-width:260px;margin-top:0.7rem;"><i style="width:68%"></i></div>
-                <div class="msrounds">
-                  <a class="msround" href="/photo-markup-review?round=s3r1"><span class="msround__t">After cut &amp; pre-assembled</span><span class="rr-chip review">In review · 2 open</span><span class="msround__go">Open photo review →</span></a>
-                </div>
-              </div>
-              <div class="ms__status"><span class="chip active">Active</span></div>
-            </div>
-            <div class="ms" id="ms-finish">
-              <div class="ms__dot">4</div>
-              <div class="ms__body">
-                <h4>Stage 4 · Finishing, Paint &amp; Delivery</h4><div class="meta" id="finishMeta">AWAITING APPROVAL TO BEGIN — 4 PHOTO ROUNDS</div>
-                <p>Final paint, fixings, polish, and packing — reviewed across four photo rounds before the model ships.</p>
-                <div class="msrounds">
-                  <a class="msround" href="/photo-markup-review?round=s4r1"><span class="msround__t">1 · After paint</span><span class="rr-chip review">In review</span><span class="msround__go">Open photo review →</span></a>
-                  <a class="msround" href="/photo-markup-review?round=s4r2"><span class="msround__t">2 · After final fixed</span><span class="rr-chip await">Awaiting upload</span><span class="msround__go">Open photo review →</span></a>
-                  <a class="msround" href="/photo-markup-review?round=s4r3"><span class="msround__t">3 · Cleaned &amp; polished — ready to pack</span><span class="rr-chip await">Awaiting upload</span><span class="msround__go">Open photo review →</span></a>
-                  <a class="msround" href="/photo-markup-review?round=s4r4"><span class="msround__t">4 · After packaged</span><span class="rr-chip await">Awaiting upload</span><span class="msround__go">Open photo review →</span></a>
-                </div>
-                <div class="ms__action studio-only">
-                  <button class="btn btn--ghost btn--sm" onclick="alert('Reminder sent to client.')">Request approval</button>
-                </div>
-                <div class="ms__action client-only" id="finishClientAction">
-                  <button class="btn btn--primary btn--sm" onclick="approveFinish()">Approve &amp; release to paint</button>
-                  <button class="btn btn--ghost btn--sm" onclick="alert('Comment thread opened in Messages.')">Request changes</button>
-                </div>
-              </div>
-              <div class="ms__status"><span class="chip await" id="finishChip">Awaiting</span></div>
-            </div>
-          </div>
-        </div>
+        <div class="panel__head"><h3>Project timeline</h3><span class="mock__k" id="msStageLabel"></span></div>
+        <!-- Real data: populated by renderMilestonesReal() from the brief's real b.history entries (no fabricated photo-review rounds). -->
+        <div class="panel__body" id="msTimelineBody"></div>
       </div>
     </section>
 
@@ -1248,16 +1098,11 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
     <section class="view" id="view-files" hidden>
       <div class="cols" style="margin-top:0;grid-template-columns:1fr;">
         <div class="panel">
-          <div class="panel__head"><h3>Shared files</h3><span class="mock__k">8 items</span></div>
-          <div class="panel__body">
-            <div class="filerow"><div class="ic">DWG</div><div><div class="fn">aria-tower-base.dwg</div><div class="fm">4.2 MB · CAD source</div></div><div class="by">Client<br>Feb 26</div></div>
-            <div class="filerow"><div class="ic">PDF</div><div><div class="fn">façade-elevations.pdf</div><div class="fm">1.1 MB · Reference</div></div><div class="by">Client<br>Feb 26</div></div>
-            <div class="filerow"><div class="ic">3DM</div><div><div class="fn">massing-rebuild.3dm</div><div class="fm">8.7 MB · Rhino · fabrication-ready</div></div><div class="by">Studio<br>Mar 1</div></div>
-            <div class="filerow"><div class="ic">JPG</div><div><div class="fn">qc-photos-set-03.zip</div><div class="fm">22 MB · 6 images</div></div><div class="by">Studio<br>2h ago</div></div>
-            <div class="filerow"><div class="ic">PDF</div><div><div class="fn">finish-spec-sheet.pdf</div><div class="fm">640 KB · Paint &amp; materials</div></div><div class="by">Studio<br>Mar 12</div></div>
-          </div>
+          <div class="panel__head"><h3>Shared files</h3><span class="mock__k" id="filesCount"></span></div>
+          <!-- Real data: populated by renderFilesReal() from the brief's real b.files (originally uploaded with the lead/brief). -->
+          <div class="panel__body" id="filesListBody"></div>
           <div class="panel__body" style="border-top:1px solid var(--cm-line-faint);">
-            <div class="dropzone" onclick="alert('In the live portal, drag files here or browse to upload. Studio is notified instantly.')">
+            <div class="dropzone" onclick="alert('Uploading additional files during production isn\'t built yet — send new files to your Carve contact directly for now.')">
               <strong style="color:var(--cm-text);">Drop files to upload</strong><br>CAD, PDF, Revit, Rhino, SketchUp, or images — up to 250 MB
             </div>
           </div>
@@ -2105,6 +1950,23 @@ window.renderVendors=renderVendors;
    the real project entity in Sourcing & Quotes — instead of a separate
    registry. Set right after awarding (see SRC_award) or changed anytime
    from the Projects tab. ---- */
+// Real, admin-editable production-progress tracking for an awarded brief.
+// Deliberately a short, honest list Carve Admin sets by hand (no automatic
+// derivation from anything else) -- there's no per-substep approval data
+// anywhere in the system to derive this from, so guessing dates/percentages
+// would just be new placeholder content wearing a real-looking UI. Delivery
+// is tracked separately via b.deliveredAt (its own field, not a 5th stage)
+// so "Completed" in the Projects tab has one unambiguous real signal.
+var PROJECT_STAGES=['Fabrication','Finishing & Paint','Quality Check','Packing & Shipping'];
+function projectStageIndex(b){
+  var i=PROJECT_STAGES.indexOf(b.projectStage);
+  return i<0?0:i;
+}
+function fmtDateShort(s){
+  if(!s)return '';
+  try{return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch(e){return s;}
+}
+function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
 function awardedBriefs(){return (window.SDB.briefs||[]).filter(function(b){return b.status==='awarded';});}
 function findBrief(id){return (window.SDB.briefs||[]).filter(function(b){return b.id===id;})[0];}
 var _pendingAssignBriefId=null;
@@ -2178,9 +2040,23 @@ function renderAwardedProjects(){
       '</div>'+
       '<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
         '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
+      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
+        '<div class="mfield" style="margin:0;max-width:220px;"><label>Stage</label><select '+(b.deliveredAt?'disabled':'')+' onchange="setProjectStage(\''+esc(b.id)+'\',this.value)">'+
+          PROJECT_STAGES.map(function(s){return '<option value="'+esc(s)+'" '+(s===(b.projectStage||PROJECT_STAGES[0])?'selected':'')+'>'+esc(s)+'</option>';}).join('')+
+        '</select></div>'+
+        '<div class="mfield" style="margin:0;max-width:140px;"><label>% complete</label><input type="number" min="0" max="100" '+(b.deliveredAt?'disabled':'')+' value="'+(b.deliveredAt?100:(b.projectPct||0))+'" onchange="setProjectPct(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div class="mfield" style="margin:0;max-width:200px;"><label>Target delivery</label><input type="date" '+(b.deliveredAt?'disabled':'')+' value="'+esc(b.targetDelivery||'')+'" onchange="setProjectTarget(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
+          '<button class="btn '+(b.deliveredAt?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(b.deliveredAt?'Un-mark delivered':'Mark delivered')+'</button>'+
+          '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
+        '</div>'+
+      '</div>'+
       invoicePanel+
     '</div>';
   }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects have been awarded to production yet. Award a quote from Sourcing &amp; Quotes to see it here.</div>';
+  renderProjectsList();
+  renderPickProjectList();
+  syncProjectSelectOptions();
 }
 window.renderAwardedProjects=renderAwardedProjects;
 function setBriefManager(id,email){
@@ -2190,6 +2066,116 @@ function setBriefManager(id,email){
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   if(window.renderMyAssigned)window.renderMyAssigned();
 }
+function setProjectStage(id,val){
+  var b=findBrief(id);if(!b)return;
+  b.projectStage=val;
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderAwardedProjects();
+  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+}
+function setProjectPct(id,val){
+  var b=findBrief(id);if(!b)return;
+  var n=parseInt(val,10);if(isNaN(n))n=0;
+  b.projectPct=Math.max(0,Math.min(100,n));
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderAwardedProjects();
+  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+}
+function setProjectTarget(id,val){
+  var b=findBrief(id);if(!b)return;
+  b.targetDelivery=val||null;
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderAwardedProjects();
+  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+}
+function toggleProjectDelivered(id){
+  var b=findBrief(id);if(!b)return;
+  b.deliveredAt=b.deliveredAt?null:new Date().toISOString().slice(0,10);
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderAwardedProjects();
+  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+}
+function toggleProjectArchived(id){
+  var b=findBrief(id);if(!b)return;
+  b.archived=!b.archived;
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderAwardedProjects();
+  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+}
+window.setProjectStage=setProjectStage;
+window.setProjectPct=setProjectPct;
+window.setProjectTarget=setProjectTarget;
+window.toggleProjectDelivered=toggleProjectDelivered;
+window.toggleProjectArchived=toggleProjectArchived;
+
+/* ---- Real Projects tab list (Active / Archived / Completed) -- replaces
+   what used to be four permanently-hardcoded demo project cards. A project
+   only ever appears here once it's been awarded to production (see
+   awardedBriefs()); pre-award stages (quoting, awaiting deposit) live in
+   Sourcing & Quotes instead, per the standing 3-category scheme. ---- */
+function projectRowHtml(b){
+  var c=b.client||{};
+  var delivered=!!b.deliveredAt;
+  var stage=delivered?'Delivered':(b.projectStage||PROJECT_STAGES[0]);
+  var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
+  var chipClass=delivered?'chip done':(b.archived?'chip':'chip active');
+  var chipText=delivered?'Delivered':(b.archived?'Archived':'In production');
+  var meta=esc(stage)+' · '+pct+'%'+(b.targetDelivery&&!delivered?(' · target delivery '+fmtDateShort(b.targetDelivery)):'')+(delivered?(' · delivered '+fmtDateShort(b.deliveredAt)):'');
+  return '<button class="projrow projcard" onclick="openProject(\''+esc(b.id)+'\')">'+
+    '<div>'+
+      '<div class="projrow__name">'+esc(b.title)+'</div>'+
+      '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(b.brief&&b.brief['Intended use']?(' · '+esc(b.brief['Intended use'])):'')+'</div>'+
+      '<div class="projcard__bar"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="projcard__meta">'+meta+'</div>'+
+    '</div>'+
+    '<span class="projrow__stat"><span class="'+chipClass+'">'+chipText+'</span></span>'+
+  '</button>';
+}
+function projectSectionHtml(label,list){
+  if(!list.length)return '';
+  return '<div class="myproj-section"><div class="myproj-label"><span class="mock__k">'+label+'</span><span class="myproj-count">'+list.length+'</span></div>'+
+    list.map(projectRowHtml).join('')+'</div>';
+}
+function renderProjectsList(){
+  var wrap=document.getElementById('projectsListWrap');
+  if(!wrap)return;
+  var all=awardedBriefs();
+  var active=all.filter(function(b){return !b.archived&&!b.deliveredAt;});
+  var archived=all.filter(function(b){return b.archived;});
+  var completed=all.filter(function(b){return !b.archived&&b.deliveredAt;});
+  var html=projectSectionHtml('Active',active)+projectSectionHtml('Archived',archived)+projectSectionHtml('Completed',completed);
+  wrap.innerHTML=html||'<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects have been awarded to production yet.</div></div>';
+}
+window.renderProjectsList=renderProjectsList;
+function renderPickProjectList(){
+  var body=document.getElementById('pickProjectBody');
+  if(!body)return;
+  var all=awardedBriefs();
+  setText('pickProjectCount',all.length+(all.length===1?' project':' projects'));
+  body.innerHTML=all.map(function(b){
+    var c=b.client||{};
+    var delivered=!!b.deliveredAt;
+    var stage=delivered?'Delivered':(b.projectStage||PROJECT_STAGES[0]);
+    var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
+    var chipClass=delivered?'chip done':(b.archived?'chip':'chip active');
+    var chipText=delivered?'Delivered':(b.archived?'Archived':stage);
+    return '<button class="projrow" onclick="openProject(\''+esc(b.id)+'\')">'+
+      '<div><div class="projrow__name">'+esc(b.title)+'</div><div class="projrow__sub">'+esc(c.Company||'—')+' · '+esc(stage)+' '+pct+'%</div></div>'+
+      '<span class="projrow__stat"><span class="'+chipClass+'">'+chipText+'</span></span>'+
+    '</button>';
+  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.9rem;padding:0.5rem 0;">No projects have been awarded to production yet.</div>';
+}
+window.renderPickProjectList=renderPickProjectList;
+function syncProjectSelectOptions(){
+  var sel=document.getElementById('projSelect');
+  if(!sel)return;
+  var cur=sel.value;
+  var list=awardedBriefs();
+  sel.innerHTML='<option value="" id="projPlaceholder">— Select a project —</option>'+
+    list.map(function(b){return '<option value="'+esc(b.id)+'">'+esc(b.title)+'</option>';}).join('');
+  if(list.some(function(b){return b.id===cur;}))sel.value=cur;
+}
+window.syncProjectSelectOptions=syncProjectSelectOptions;
 
 /* ---- Client Manager's own scoped project list ---- */
 // The sidebar's legacy project picker only ever had the 3 hardcoded demo
@@ -2212,15 +2198,19 @@ function renderMyAssigned(){
   var email=(s&&s.email||'').toLowerCase();
   restrictProjSelectForSales();
   var mine=awardedBriefs().filter(function(b){return b.assignedManager&&email&&b.assignedManager.toLowerCase()===email;});
+  syncProjectSelectOptions();
   wrap.innerHTML=mine.map(function(b){
     var c=b.client||{};
     var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
+    var delivered=!!b.deliveredAt;
+    var stage=delivered?'Delivered':(b.projectStage||PROJECT_STAGES[0]);
+    var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
     var invBtns=hasInvoice?(
       '<button class="btn btn--primary btn--sm" onclick="downloadInvoice(\''+esc(b.id)+'\',\'deposit\')">↓ Deposit invoice</button>'+
       (b.clientQuote.invoice.balanceId?' <button class="btn btn--ghost btn--sm" onclick="downloadInvoice(\''+esc(b.id)+'\',\'balance\')">↓ Balance invoice</button>':'')
     ):'<span style="color:var(--cm-text-subtle);font-size:0.86rem;">Invoice not issued yet.</span>';
     return '<div class="projassign">'+
-      '<div class="projassign__head"><span class="projassign__name">'+esc(b.title)+'</span></div>'+
+      '<div class="projassign__head" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><span class="projassign__name">'+esc(b.title)+'</span><span class="rowbtn">'+esc(stage)+' · '+pct+'% ▸</span></div>'+
       '<div class="projassign__row projassign__contact">'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
@@ -2412,6 +2402,7 @@ function go(v){
   if(!skipProjectGate&&PROJECT_VIEWS.indexOf(v)>=0 && !document.getElementById('projSelect').value){
     document.querySelectorAll('.view').forEach(function(s){s.hidden=true;});
     document.getElementById('view-pickproject').hidden=false;
+    if(window.renderPickProjectList)window.renderPickProjectList();
     document.querySelectorAll('.navbtn').forEach(function(b){b.classList.toggle('on',b.dataset.view===v);});
     document.getElementById('viewTitle').textContent=titles[v];
     document.getElementById('crumb').textContent='Studio · Select a project';
@@ -2437,52 +2428,158 @@ function go(v){
   if(v==='team'){if(window.renderTeam)window.renderTeam();if(window.renderVendors)window.renderVendors();}
   if(v==='projects'&&window.renderAwardedProjects)window.renderAwardedProjects();
   if(v==='myassigned'&&window.renderMyAssigned)window.renderMyAssigned();
+  if(v==='milestones'&&window.renderMilestonesReal)window.renderMilestonesReal(findBrief(document.getElementById('projSelect').value));
+  if(v==='files'&&window.renderFilesReal)window.renderFilesReal(findBrief(document.getElementById('projSelect').value));
   if(v==='clients'&&window.scopeClients)window.scopeClients(document.body.dataset.role);
   if(v==='sourcing'&&window.SRC_render)SRC_render();
   var addLeadBtn=document.getElementById('addLeadBtn');
   if(addLeadBtn)addLeadBtn.style.display=(v==='leads')?'':'none';
   document.getElementById('side').classList.remove('open');
 }
-function openProject(val){
+// Opens a REAL awarded brief's project workspace. Used by the Owner's
+// Projects tab, the sidebar project picker, and (once assigned) a Client
+// Manager's My Projects list -- every entry point now passes a real brief
+// id (see renderProjectsList/renderPickProjectList), never a fake demo key.
+function openProject(id){
   document.body.classList.remove('quote-stage');
   document.body.classList.remove('pre-deposit');
+  var b=findBrief(id);
+  if(!b){go(document.body.dataset.role==='owner'?'projects':'overview');return;}
+  window.quoteMode='active';
   var sel=document.getElementById('projSelect');
-  sel.value=val;
+  sel.value=id;
   onProjChange();
-  // Aria is an ACTIVE project — its quote is the approved, read-only baseline,
-  // and the deposit was already paid and confirmed.
-  if(val==='aria'){
-    window.quoteMode='active';
-    document.getElementById('invEmpty').hidden=true;
-    document.getElementById('invIssued').hidden=false;
-    var dchip=document.getElementById('dep-chip');
-    if(dchip){dchip.className='chip done';dchip.textContent='Paid';}
-    var ddesc=document.getElementById('dep-desc');
-    if(ddesc)ddesc.textContent='Deposit · 50% · payment confirmed received Mar 6, 2026';
-    var dpay=document.getElementById('dep-pay');if(dpay)dpay.style.display='none';
-    var dconf=document.getElementById('dep-confirm');if(dconf)dconf.style.display='none';
-    var dban=document.getElementById('dep-banner');if(dban)dban.style.display='none';
-    // Restore in-progress dashboard (in case a completed project was viewed prior)
-    document.getElementById('journeyTitle').textContent="You're in fabrication — Stage 4 of 6";
-    document.getElementById('journeyPct').textContent='68%';
-    var tl=document.querySelector('#journeyTrack .track__line i');if(tl)tl.style.width='58%';
-    document.getElementById('kpiStatus').textContent='Fabrication';
-    document.getElementById('kpiStage').textContent='Stage 4 of 6';
-    document.getElementById('kpiPct').textContent='68%';
-    document.getElementById('kpiBar').style.width='68%';
-    document.getElementById('kpiNext').textContent='Finishing & Paint';
-    document.getElementById('kpiNextSub').textContent='Due in 6 days';
-    var an=document.getElementById('ovNotice');
-    if(an)an.innerHTML='Welcome back. Your model <b><span class="pname">Aria Tower</span></b> is in fabrication — 68% complete, on track for delivery in 6 days.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>';
-    document.getElementById('journeyNow').innerHTML='Digital fabrication and hand-finishing of the tower massing. QC photos are posted to <b>Files</b> as each section completes.';
-    document.getElementById('journeyNextLabel').textContent="What's next — your action";
-    document.getElementById('journeyNextClient').innerHTML='Approve <b>Finishing &amp; Paint</b> to release the model into its final stage.';
-    document.getElementById('journeyNextStudio').innerHTML='Awaiting client approval on <b>Finishing &amp; Paint</b>.';
-    document.getElementById('journeyNextBtnClient').style.display='';
-    document.getElementById('journeyNextBtnStudio').style.display='';
-  }
+  renderProjectOverview(b);
   go('overview');
 }
+// Rebuilds every field on the Overview ("project journey") page from a real
+// brief -- replaces what used to be a single hardcoded demo dashboard
+// (Aria Tower, 68%, Mar 20/Apr 2 dates) that never reflected any actual
+// project. See PROJECT_STAGES above for the honest, admin-set stage list
+// this reads from (b.projectStage/b.projectPct/b.targetDelivery/b.deliveredAt).
+function renderProjectOverview(b){
+  if(!b)return;
+  var delivered=!!b.deliveredAt;
+  var idx=projectStageIndex(b);
+  var totalSteps=PROJECT_STAGES.length+1; // +1 for the final Delivered step
+  var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
+  var stageName=delivered?'Delivered':PROJECT_STAGES[idx];
+  var short=(b.title||'').split(' — ')[0];
+
+  document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
+
+  setText('journeyTitle',delivered?('Delivered — Stage '+totalSteps+' of '+totalSteps):('In production — Stage '+(idx+1)+' of '+totalSteps+' · '+stageName));
+  setText('journeyPct',pct+'%');
+  var tl=document.querySelector('#journeyTrack .track__line i');if(tl)tl.style.width=pct+'%';
+
+  var stepsWrap=document.getElementById('journeySteps');
+  if(stepsWrap){
+    var allSteps=PROJECT_STAGES.concat(['Delivered']);
+    stepsWrap.innerHTML=allSteps.map(function(name,i){
+      var done=delivered?true:(i<idx);
+      var current=!delivered&&i===idx;
+      var cls=done?'done':(current?'current':'');
+      var dotTxt=done?'✓':String(i+1);
+      return '<li class="jstep '+cls+'">'+(current?'<span class="jstep__here">You\'re here</span>':'')+
+        '<span class="jstep__dot">'+dotTxt+'</span><span class="jstep__name">'+esc(name)+'</span>'+
+        '<span class="jstep__date">'+(current?(pct+'%'):(done?'Done':'Next up'))+'</span></li>';
+    }).join('');
+  }
+
+  var nextStage=delivered?null:PROJECT_STAGES[idx+1];
+  setText('journeyNextLabel',delivered?'Status':"What's next");
+  var jnClient=document.getElementById('journeyNextClient');
+  if(jnClient)jnClient.innerHTML=delivered?'Nothing further needed — this project is closed.':(nextStage?('Next up: <b>'+esc(nextStage)+'</b>. We\'ll update you here as production moves forward.'):'Final delivery is being prepared.');
+  var jnStudio=document.getElementById('journeyNextStudio');
+  if(jnStudio)jnStudio.innerHTML=delivered?'Delivered &amp; closed.':'Update this project\'s stage and progress from the Projects tab.';
+  var jnBtnC=document.getElementById('journeyNextBtnClient');if(jnBtnC)jnBtnC.style.display=delivered?'none':'';
+  var jnBtnS=document.getElementById('journeyNextBtnStudio');if(jnBtnS)jnBtnS.style.display=delivered?'none':'';
+  var jNow=document.getElementById('journeyNow');
+  if(jNow)jNow.innerHTML=delivered?'Project complete. Final files are available under Files.':esc(b.projectUpdateNote||('Currently in '+stageName+'.'));
+
+  setText('kpiStatus',stageName);
+  setText('kpiStage','Stage '+(delivered?totalSteps:(idx+1))+' of '+totalSteps);
+  setText('kpiPct',pct+'%');
+  var kpiBar=document.getElementById('kpiBar');if(kpiBar)kpiBar.style.width=pct+'%';
+  setText('kpiNext',nextStage||'Complete');
+  setText('kpiNextSub',b.targetDelivery?('Target '+fmtDateShort(b.targetDelivery)):'—');
+  setText('kpiScale',(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—');
+  setText('kpiScaleSub',(b.clientQuote&&b.clientQuote.material)||(b.brief&&b.brief['Model type'])||'');
+
+  var notice=document.getElementById('ovNotice');
+  if(notice)notice.innerHTML=delivered?
+    ('Your model <b><span class="pname">'+esc(short)+'</span></b> is complete'+(b.deliveredAt?(' and was delivered on '+fmtDateShort(b.deliveredAt)):'')+'. Thank you for working with Carve Model.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>'):
+    ('Welcome back. Your model <b><span class="pname">'+esc(short)+'</span></b> is in '+esc(stageName)+' — '+pct+'% complete'+(b.targetDelivery?(', on track for delivery '+fmtDateShort(b.targetDelivery)):'')+'.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>');
+  var studioNotice=document.querySelector('#view-overview .notice.studio-only');
+  if(studioNotice)studioNotice.innerHTML='<b>Studio view.</b> <span class="pname">'+esc(short)+'</span> is in '+esc(stageName)+(delivered?'.':(' — '+pct+'% complete.'));
+
+  var inv=b.clientQuote&&b.clientQuote.invoice;
+  var overdue=!!(inv&&(inv.depositStatus==='overdue'||inv.balanceStatus==='overdue'));
+  var ob=document.getElementById('overdueBanner');
+  if(ob){
+    ob.hidden=!overdue;
+    if(overdue)setText('overdueInv',inv.balanceStatus==='overdue'?inv.balanceId:inv.depositId);
+  }
+
+  var c=b.client||{};
+  var teamMember=(window.SDB.team||[]).filter(function(t){return t&&t.email&&b.assignedManager&&t.email.toLowerCase()===b.assignedManager.toLowerCase();})[0];
+  setText('projInfoClientCM',c.Company||'—');
+  setText('projInfoClientFactory',b.code?('Confidential · Ref '+b.code):'Confidential');
+  setText('projInfoLead',teamMember?teamMember.name:'—');
+  setText('projInfoStart',b.sentDate?fmtDateShort(b.sentDate):(b.leadReceivedAt?fmtDateShort(b.leadReceivedAt):'—'));
+  setText('projInfoTarget',b.targetDelivery?fmtDateShort(b.targetDelivery):'—');
+  setText('projInfoUse',(b.brief&&b.brief['Intended use'])||'—');
+
+  var actWrap=document.getElementById('ovActivityList');
+  if(actWrap){
+    var hist=(b.history||[]).slice(0,8);
+    actWrap.innerHTML=hist.length?hist.map(function(h){
+      var line=esc(h.action||'Update');
+      if(h.price!=null)line+=' — $'+Number(h.price).toLocaleString('en-US')+(h.days?(', '+h.days+' days'):'');
+      return '<div class="act"><span class="d"></span><div><p>'+line+'</p><div class="t">'+esc(h.time||'')+'</div></div></div>';
+    }).join(''):'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No activity recorded yet.</div>';
+  }
+}
+window.renderProjectOverview=renderProjectOverview;
+// Milestones tab: a REAL activity timeline off the brief's own b.history
+// (quotes, awards, revisions), not a fabricated photo-approval workflow --
+// see the notice in view-milestones for why that structured workflow isn't
+// built yet.
+function renderMilestonesReal(b){
+  setText('msStageLabel',b?(b.deliveredAt?'Delivered':(b.projectStage||PROJECT_STAGES[0])):'');
+  var body=document.getElementById('msTimelineBody');
+  if(!body)return;
+  if(!b){body.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">Select a project to see its timeline.</div>';return;}
+  var hist=b.history||[];
+  if(!hist.length){body.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No activity recorded yet.</div>';return;}
+  body.innerHTML='<div class="timeline">'+hist.map(function(h,i){
+    var line=esc(h.action||'Update');
+    if(h.price!=null)line+=' — $'+Number(h.price).toLocaleString('en-US')+(h.days?(', '+h.days+' days'):'');
+    return '<div class="ms '+(i===0?'active':'done')+'">'+
+      '<div class="ms__dot">'+(i===0?(hist.length-i):'✓')+'</div>'+
+      '<div class="ms__body"><h4>'+line+'</h4><div class="meta">'+esc((h.time||'').toUpperCase())+'</div></div>'+
+      '<div class="ms__status"><span class="chip '+(i===0?'active':'done')+'">'+(i===0?'Latest':'Done')+'</span></div>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+window.renderMilestonesReal=renderMilestonesReal;
+// Files tab: the brief's real b.files (uploaded with the original lead/
+// brief) -- replaces a hardcoded fake file list. Uploading NEW files during
+// production isn't built yet (see the dropzone's honest note in the HTML).
+function renderFilesReal(b){
+  var body=document.getElementById('filesListBody');
+  if(!body)return;
+  var files=(b&&b.files)||[];
+  setText('filesCount',files.length+(files.length===1?' item':' items'));
+  if(!files.length){body.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;padding:0.5rem 0;">No files on this project yet.</div>';return;}
+  body.innerHTML=files.map(function(f){
+    var ext=(f.name||'').split('.').pop().toUpperCase().slice(0,4)||'FILE';
+    var sizeTxt=typeof f.size==='number'?((f.size/1048576).toFixed(1)+' MB'):(f.size||'');
+    var link=f.url?('<a href="'+esc(f.url)+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">'+esc(f.name)+'</a>'):esc(f.name);
+    return '<div class="filerow"><div class="ic">'+esc(ext)+'</div><div><div class="fn">'+link+'</div><div class="fm">'+esc(sizeTxt)+'</div></div><div class="by">'+esc(f.by||'')+(f.date?('<br>'+esc(f.date)):'')+'</div></div>';
+  }).join('');
+}
+window.renderFilesReal=renderFilesReal;
 function applyQuoteState(){
   var m=window.quoteMode||'active';
   if(m==='pending')markQuotePending();
@@ -5984,7 +6081,7 @@ function renderProdAdminDetail(b){
     if(inProd){
       var techName=TECHS.filter(function(t){return t.id===b.assignedTech;})[0].name;
       html+='<div class="assignrow" style="border-top:1px solid var(--cm-line-faint);margin-top:0.9rem;padding-top:0.9rem;"><div style="font-size:0.85rem;color:var(--cm-text);">✓ <b>In production.</b> Assigned to <b style="color:var(--cm-silver);">'+techName+'</b>. Project management is live — Milestones, Files, and Photo Review are active.</div>'+
-        (b.id==='aria'?'<a class="btn btn--ghost btn--sm" href="#" onclick="go(\'milestones\');return false;" style="margin-left:auto;">Go to Milestones →</a>':'')+'</div>';
+        ('<a class="btn btn--ghost btn--sm" href="#" onclick="document.getElementById(\'projSelect\').value=\''+esc(b.id)+'\';onProjChange();go(\'milestones\');return false;" style="margin-left:auto;">Go to Milestones →</a>')+'</div>';
     }else{
       html+='<div class="assignrow" style="border-top:1px solid var(--cm-line-faint);margin-top:0.9rem;padding-top:0.9rem;"><span class="lbl">Assign technician</span>';
       TECHS.forEach(function(t){
