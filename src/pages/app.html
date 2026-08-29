@@ -1980,10 +1980,9 @@ function targetDeliveryDate(b){
 function paymentStatusLabel(b){
   var inv=b.clientQuote&&b.clientQuote.invoice;
   if(!inv)return 'Not invoiced';
-  if(inv.balanceStatus==='paid')return 'Paid in full';
-  if(inv.depositStatus==='paid')return 'Deposit paid';
-  if(inv.depositStatus==='reported'||inv.balanceStatus==='reported')return 'Payment reported';
-  return 'Payment due';
+  if(inv.balanceStatus==='paid')return 'Payment 100% Received';
+  if(inv.depositStatus==='paid')return '50% Deposit Received, 50% Final Due';
+  return '50% Deposit Due';
 }
 function projectStageIndex(b){
   var i=PROJECT_STAGES.indexOf(b.projectStage);
