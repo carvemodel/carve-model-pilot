@@ -853,6 +853,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
               <div><span class="mock__k">Start</span><div class="mock__v" id="projInfoStart">—</div></div>
               <div><span class="mock__k">Target delivery</span><div class="mock__v" id="projInfoTarget">—</div></div>
               <div><span class="mock__k">Use case</span><div class="mock__v" id="projInfoUse">—</div></div>
+              <div><span class="mock__k">Agreed model size</span><div class="mock__v" id="projInfoModelSize">—</div></div>
+              <div><span class="mock__k">Package size <span class="opt">(per vendor)</span></span><div class="mock__v" id="projInfoPackageSize">—</div></div>
             </div>
             <div class="proj-cancel client-only" id="projCancelWrap">
               <button class="linkbtn-danger" onclick="cancelProject()">Need to cancel this project?</button>
@@ -2515,6 +2517,14 @@ function renderProjectOverview(b){
   setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
   setText('projInfoTarget',targetDelivery?fmtDateShort(targetDelivery):'—');
   setText('projInfoUse',(b.brief&&b.brief['Intended use'])||'—');
+  var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+  var modelSize=(b.clientQuote&&b.clientQuote.modelDims)||(wq&&wq.modelDims)||null;
+  setText('projInfoModelSize',modelSize?modelSize:'—');
+  var pkgDims=(wq&&wq.packageDimsList&&wq.packageDimsList.length)?wq.packageDimsList:(wq&&wq.packageDims?[wq.packageDims]:[]);
+  if(!pkgDims.length&&b.clientQuote){
+    pkgDims=(b.clientQuote.packageDimsList&&b.clientQuote.packageDimsList.length)?b.clientQuote.packageDimsList:(b.clientQuote.packageDims?[b.clientQuote.packageDims]:[]);
+  }
+  setText('projInfoPackageSize',pkgDims.length?pkgDims.map(function(d,i){return pkgDims.length>1?('#'+(i+1)+' '+d):d;}).join(', '):'—');
 
   var actWrap=document.getElementById('ovActivityList');
   if(actWrap){
