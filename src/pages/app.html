@@ -88,8 +88,11 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .view[hidden]{display:none;}
 
 /* Cards & grid */
-.kpis{display:flex;flex-wrap:nowrap;gap:1rem;overflow-x:auto;}
-.kpi{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:1.2rem;flex:1 1 200px;min-width:200px;}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+.kpis--proj{display:flex;flex-wrap:nowrap;gap:0.6rem;overflow-x:auto;}
+.kpis--proj .kpi{flex:1 1 0;min-width:0;padding:0.85rem;}
+.kpis--proj .kpi .big{font-size:1.3rem;}
+.kpi{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:1.2rem;}
 .kpi .mock__k{display:block;}
 /* Some KPI rows (e.g. the Clients tab, which has 6 tiles) have labels long enough to
    wrap onto a second line in a narrow column while shorter labels next to them stay
@@ -98,11 +101,17 @@ body.impersonating .impersonate-bar{display:flex !important;}
 #clientsKpis .kpi .mock__k{min-height:2.3em;line-height:1.15;}
 .kpi .big{font-family:var(--font-display);font-weight:var(--w-bold);font-size:1.7rem;color:var(--cm-text-strong);letter-spacing:-0.02em;margin-top:0.5rem;}
 .kpi .sub{font-size:0.78rem;color:var(--cm-text-muted);margin-top:0.2rem;}
-@media(max-width:760px){.kpis{overflow-x:auto;}.kpi{min-width:160px;}}
+@media(max-width:760px){.kpis{grid-template-columns:1fr 1fr;}.kpis--proj{overflow-x:auto;}.kpis--proj .kpi{min-width:110px;flex-basis:110px;}}
 
 .panel{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);}
 .panel__head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.3rem;border-bottom:1px solid var(--cm-line-faint);}
 .panel__head h3{font-size:1.05rem;font-weight:var(--w-semibold);}
+/* Project Overview page: panel headers (Client information, Project
+   information, Recent activity, Invoice & Payment) default to
+   --cm-text-strong (white) same as the data underneath, so nothing reads as
+   more important than anything else. Dial the headers back to silver so the
+   actual project data is what pops. */
+#view-overview .panel__head h3{color:var(--cm-silver);font-weight:var(--w-medium);}
 .panel__head .mock__k{cursor:default;}
 .panel__body{padding:1.3rem;}
 .cols{display:grid;grid-template-columns:1.6fr 1fr;gap:1.25rem;margin-top:1.25rem;}
@@ -826,25 +835,53 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 <span class="mock__k">Start</span>
                 <div style="display:flex;align-items:center;gap:0.6rem;">
                   <div class="mock__v" id="projInfoStart" style="flex:1;">—</div>
-                  <button type="button" class="proj-dates-edit-only" id="projInfoStartBtn" onclick="toggleDateFieldEdit('start')" title="Edit start date" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
+                  <button type="button" class="proj-dates-edit-only" id="projInfoStartBtn" onclick="toggleDateFieldEdit('start')" title="Edit start" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
                 </div>
-                <div class="mfield proj-dates-edit-only" id="projInfoStartWrap" hidden style="margin:0.5rem 0 0;max-width:220px;"><input type="date" id="projInfoStartInput" onchange="setProjectStart(document.getElementById('projSelect').value,this.value)"></div>
+                <div class="mfield proj-dates-edit-only" id="projInfoStartWrap" hidden style="margin:0.5rem 0 0;max-width:220px;">
+                  <div style="display:flex;gap:0.5rem;">
+                    <input type="date" id="projInfoStartInput" style="flex:1;">
+                    <button type="button" class="btn btn--primary btn--sm" onclick="saveDateField('start')">Save</button>
+                  </div>
+                </div>
               </div>
               <div>
-                <span class="mock__k">Target production completion</span>
+                <span class="mock__k">Agreed production time<span class="opt"> (days)</span></span>
+                <div style="display:flex;align-items:center;gap:0.6rem;">
+                  <div class="mock__v" id="projInfoProdDays" style="flex:1;">—</div>
+                  <button type="button" class="proj-dates-edit-only" id="projInfoProdDaysBtn" onclick="toggleDateFieldEdit('prodDays')" title="Edit agreed production time" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
+                </div>
+                <div class="mfield proj-dates-edit-only" id="projInfoProdDaysWrap" hidden style="margin:0.5rem 0 0;max-width:220px;">
+                  <div style="display:flex;gap:0.5rem;">
+                    <input type="number" min="0" id="projInfoProdDaysInput" placeholder="e.g. 14" style="flex:1;">
+                    <button type="button" class="btn btn--primary btn--sm" onclick="saveDateField('prodDays')">Save</button>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <span class="mock__k">Target production completion<span class="opt"> (auto: start + production time)</span></span>
                 <div style="display:flex;align-items:center;gap:0.6rem;">
                   <div class="mock__v" id="projInfoCompletion" style="flex:1;">—</div>
                   <button type="button" class="proj-dates-edit-only" id="projInfoCompletionBtn" onclick="toggleDateFieldEdit('completion')" title="Edit target production completion" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
                 </div>
-                <div class="mfield proj-dates-edit-only" id="projInfoCompletionWrap" hidden style="margin:0.5rem 0 0;max-width:220px;"><input type="date" id="projInfoCompletionInput" onchange="setProductionCompletionOverride(document.getElementById('projSelect').value,this.value)"></div>
+                <div class="mfield proj-dates-edit-only" id="projInfoCompletionWrap" hidden style="margin:0.5rem 0 0;max-width:220px;">
+                  <div style="display:flex;gap:0.5rem;">
+                    <input type="date" id="projInfoCompletionInput" style="flex:1;">
+                    <button type="button" class="btn btn--primary btn--sm" onclick="saveDateField('completion')">Save</button>
+                  </div>
+                </div>
               </div>
               <div>
-                <span class="mock__k">Target delivery</span>
+                <span class="mock__k">Target delivery<span class="opt"> (auto: completion + 5 business days)</span></span>
                 <div style="display:flex;align-items:center;gap:0.6rem;">
                   <div class="mock__v" id="projInfoTarget" style="flex:1;">—</div>
                   <button type="button" class="proj-dates-edit-only" id="projInfoTargetBtn" onclick="toggleDateFieldEdit('target')" title="Edit target delivery" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
                 </div>
-                <div class="mfield proj-dates-edit-only" id="projInfoTargetWrap" hidden style="margin:0.5rem 0 0;max-width:220px;"><input type="date" id="projInfoTargetInput" onchange="setTargetDeliveryOverride(document.getElementById('projSelect').value,this.value)"></div>
+                <div class="mfield proj-dates-edit-only" id="projInfoTargetWrap" hidden style="margin:0.5rem 0 0;max-width:220px;">
+                  <div style="display:flex;gap:0.5rem;">
+                    <input type="date" id="projInfoTargetInput" style="flex:1;">
+                    <button type="button" class="btn btn--primary btn--sm" onclick="saveDateField('target')">Save</button>
+                  </div>
+                </div>
               </div>
             </div>
             <!-- Kept hidden (not deleted) -- openCompletedProject(), an old
@@ -860,7 +897,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
       </div>
 
-      <div class="kpis">
+      <div class="kpis kpis--proj">
         <!-- Production-tracking KPIs -- client/factory/prodtech only. Owner
              and Client Manager see Pricing figures in this row instead (see
              proj-pricing-only / owner-only cards below): dollar figures
@@ -875,10 +912,10 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
              Populated by renderProjectPricingPanel(). -->
         <div class="kpi proj-pricing-only"><span class="mock__k">Project Price</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiClientPrice" style="font-size:1.15rem;">—</div><button type="button" class="owner-only" onclick="editProjectPrice()" title="Edit project price -- Carve Admin only" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
         <div class="kpi owner-only"><span class="mock__k">Vendor price</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiVendorPrice" style="font-size:1.15rem;">—</div><button type="button" onclick="editVendorPrice()" title="Edit vendor price" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
-        <div class="kpi owner-only"><span class="mock__k">Profit</span><div class="big" id="kpiProfit" style="font-size:1.15rem;">—</div></div>
         <div class="kpi proj-pricing-only" id="kpiShippingCard"><!-- Populated by renderShippingCostCard(): shows Estimated shipping cost
              until the Client Manager enters the actual figure at the packing/shipping stage,
              then relabels to Actual shipping cost. --></div>
+        <div class="kpi owner-only"><span class="mock__k">Profit</span><div class="big" id="kpiProfit" style="font-size:1.15rem;">—</div><div class="sub" id="kpiProfitPct"></div></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Scale</span><div class="big" id="kpiScale">—</div><div class="sub" id="kpiScaleSub"></div></div>
         <div class="kpi proj-invoice-only" style="cursor:pointer;" onclick="openProjectInvoicePanel()"><span class="mock__k">Invoice &amp; Payment</span><div class="big" id="kpiInvoice" style="font-size:1.15rem;">—</div><div class="sub" id="kpiInvoiceSub">Click to view →</div></div>
       </div>
@@ -983,7 +1020,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   </div>
                   <div class="proj-spec-edit-only" id="psUseCaseWrap" hidden style="margin-top:0.5rem;max-width:280px;">
                     <div style="display:flex;gap:0.5rem;">
-                      <input type="text" id="psUseCaseInput" style="flex:1;">
+                      <select id="psUseCaseInput" style="flex:1;"></select>
                       <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('useCase')">Save</button>
                     </div>
                   </div>
@@ -1002,34 +1039,15 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   </div>
                 </div>
                 <div>
-                  <span class="mock__k">Materials</span>
+                  <span class="mock__k">Materials &amp; presentation</span>
                   <div style="display:flex;align-items:center;gap:0.6rem;">
                     <div class="mock__v" id="projInfoMaterial" style="flex:1;">—</div>
                     <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psMaterialBtn" onclick="toggleProjectSpecFieldEdit('material')">Edit</button>
                   </div>
                   <div class="proj-spec-edit-only" id="psMaterialWrap" hidden style="margin-top:0.5rem;max-width:280px;">
                     <div style="display:flex;gap:0.5rem;">
-                      <input type="text" id="psMaterialInput" placeholder="e.g. ABS / resin" style="flex:1;">
+                      <select id="psMaterialInput" style="flex:1;"></select>
                       <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('material')">Save</button>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <span class="mock__k">Presentation method</span>
-                  <div style="display:flex;align-items:center;gap:0.6rem;">
-                    <div class="mock__v" id="projInfoPresentation" style="flex:1;">—</div>
-                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psPresentationBtn" onclick="toggleProjectSpecFieldEdit('presentationMethod')">Edit</button>
-                  </div>
-                  <div class="proj-spec-edit-only" id="psPresentationWrap" hidden style="margin-top:0.5rem;max-width:280px;">
-                    <div style="display:flex;gap:0.5rem;">
-                      <select id="psPresentationInput" style="flex:1;">
-                        <option value="">—</option>
-                        <option value="Monochrome">Monochrome</option>
-                        <option value="Full color / realistic visualization">Full color / realistic visualization</option>
-                        <option value="Mixed color">Mixed color</option>
-                        <option value="Other">Other</option>
-                      </select>
-                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('presentationMethod')">Save</button>
                     </div>
                   </div>
                 </div>
@@ -1039,11 +1057,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     <div class="mock__v" id="projInfoModelSize" style="flex:1;">—</div>
                     <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psModelSizeBtn" onclick="toggleProjectSpecFieldEdit('modelSize')">Edit</button>
                   </div>
-                  <div class="proj-spec-edit-only" id="psModelSizeWrap" hidden style="margin-top:0.5rem;max-width:280px;">
-                    <div style="display:flex;gap:0.5rem;">
-                      <input type="text" id="psModelSizeInput" placeholder="e.g. 8&quot; x 9.25&quot; x 2&quot;" style="flex:1;">
-                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('modelSize')">Save</button>
-                    </div>
+                  <div class="proj-spec-edit-only" id="psModelSizeWrap" hidden style="margin-top:0.5rem;max-width:320px;">
+                    <div style="display:grid;grid-template-columns:36px 1fr 1fr 1fr;gap:0.4rem;align-items:center;"><span></span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">L</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">W</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">H</span><span style="font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);">mm</span><input id="psModelSize-l-mm" type="number" placeholder="mm" oninput="projDimSync('psModelSize','l','mm')"><input id="psModelSize-w-mm" type="number" placeholder="mm" oninput="projDimSync('psModelSize','w','mm')"><input id="psModelSize-h-mm" type="number" placeholder="mm" oninput="projDimSync('psModelSize','h','mm')"><span style="font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);">in</span><input id="psModelSize-l-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psModelSize','l','in')"><input id="psModelSize-w-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psModelSize','w','in')"><input id="psModelSize-h-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psModelSize','h','in')"></div>
+                    <button type="button" class="btn btn--primary btn--sm" style="margin-top:0.5rem;" onclick="saveProjectSpecField('modelSize')">Save</button>
                   </div>
                 </div>
                 <div>
@@ -1052,11 +1068,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     <div class="mock__v" id="projInfoPackageSize" style="flex:1;">—</div>
                     <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psPackageSizeBtn" onclick="toggleProjectSpecFieldEdit('packageSize')">Edit</button>
                   </div>
-                  <div class="proj-spec-edit-only" id="psPackageSizeWrap" hidden style="margin-top:0.5rem;max-width:280px;">
-                    <div style="display:flex;gap:0.5rem;">
-                      <input type="text" id="psPackageSizeInput" placeholder="e.g. 12&quot; x 12&quot; x 8&quot;" style="flex:1;">
-                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('packageSize')">Save</button>
-                    </div>
+                  <div class="proj-spec-edit-only" id="psPackageSizeWrap" hidden style="margin-top:0.5rem;max-width:320px;">
+                    <div style="display:grid;grid-template-columns:36px 1fr 1fr 1fr;gap:0.4rem;align-items:center;"><span></span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">L</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">W</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">H</span><span style="font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);">mm</span><input id="psPackageSize-l-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','l','mm')"><input id="psPackageSize-w-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','w','mm')"><input id="psPackageSize-h-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','h','mm')"><span style="font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);">in</span><input id="psPackageSize-l-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','l','in')"><input id="psPackageSize-w-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','w','in')"><input id="psPackageSize-h-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','h','in')"></div>
+                    <button type="button" class="btn btn--primary btn--sm" style="margin-top:0.5rem;" onclick="saveProjectSpecField('packageSize')">Save</button>
                   </div>
                 </div>
                 <div>
@@ -2182,11 +2196,25 @@ function addDays(dateStr,days){
   d.setDate(d.getDate()+Number(days||0));
   return d.toISOString().slice(0,10);
 }
+// Same as addDays, but only counts Mon-Fri -- used for the delivery buffer
+// (packing & shipping), which is quoted in business days.
+function addBusinessDays(dateStr,days){
+  if(!dateStr)return null;
+  var d=new Date(dateStr+'T00:00:00');
+  if(isNaN(d.getTime()))return null;
+  var remaining=Number(days||0);
+  while(remaining>0){
+    d.setDate(d.getDate()+1);
+    var dow=d.getDay();
+    if(dow!==0&&dow!==6)remaining--;
+  }
+  return d.toISOString().slice(0,10);
+}
 // Target production completion defaults to start date + the production
 // time agreed with the client (b.productionDays), and target delivery
-// defaults to that completion date + 5 days (packing & shipping buffer) --
-// this keeps both in sync with the start date / production time by default
-// so they don't drift. Either can be directly overridden (see
+// defaults to that completion date + 5 BUSINESS days (packing & shipping
+// buffer) -- this keeps both in sync with the start date / production time
+// by default so they don't drift. Either can be directly overridden (see
 // setProductionCompletionOverride/setTargetDeliveryOverride, used by the
 // date inputs in Project information) for cases where the real date needs
 // to diverge from the formula -- the override always wins once set.
@@ -2199,7 +2227,7 @@ function productionCompletionDate(b){
 function targetDeliveryDate(b){
   if(b&&b.targetDeliveryOverride)return b.targetDeliveryOverride;
   var completion=productionCompletionDate(b);
-  return completion?addDays(completion,5):null;
+  return completion?addBusinessDays(completion,5):null;
 }
 function paymentStatusLabel(b){
   var inv=b.clientQuote&&b.clientQuote.invoice;
@@ -2329,7 +2357,6 @@ function projectSpecValue(b,field){
   if(field==='useCase')return b.useCaseOverride||(b.brief&&b.brief['Intended use'])||null;
   if(field==='scale')return b.scaleOverride||(b.clientQuote&&b.clientQuote.scale)||(wq&&wq.scale)||(b.brief&&b.brief['Scale'])||null;
   if(field==='material')return b.materialOverride||(b.clientQuote&&b.clientQuote.material)||(wq&&wq.material)||(b.brief&&b.brief['Model type'])||null;
-  if(field==='presentationMethod')return b.presentationMethod||null;
   if(field==='modelSize'){
     if(b.modelSizeOverride)return b.modelSizeOverride;
     return (b.clientQuote&&b.clientQuote.modelDims)||(wq&&wq.modelDims)||null;
@@ -2345,14 +2372,55 @@ function projectSpecValue(b,field){
   return null;
 }
 window.projectSpecValue=projectSpecValue;
+// Use case options match the client intake form's own "What does the model
+// need to support?" select (al-use) exactly, so editing here never invents
+// a value the intake form couldn't have produced.
+var USE_CASE_OPTIONS=['Government Review / Planning Approval','Investor / board meeting','Sales gallery / marketing','Internal design review','Film / production','Exhibition / public display','Gift / Award','Other'];
 var PROJECT_SPEC_FIELD_META={
-  useCase:{label:'Use case',display:'projInfoUse',wrap:'psUseCaseWrap',btn:'psUseCaseBtn',input:'psUseCaseInput',override:'useCaseOverride'},
-  scale:{label:'Scale',display:'projInfoScale',wrap:'psScaleWrap',btn:'psScaleBtn',input:'psScaleInput',override:'scaleOverride'},
-  material:{label:'Materials',display:'projInfoMaterial',wrap:'psMaterialWrap',btn:'psMaterialBtn',input:'psMaterialInput',override:'materialOverride'},
-  presentationMethod:{label:'Presentation method',display:'projInfoPresentation',wrap:'psPresentationWrap',btn:'psPresentationBtn',input:'psPresentationInput',override:'presentationMethod'},
-  modelSize:{label:'Model size',display:'projInfoModelSize',wrap:'psModelSizeWrap',btn:'psModelSizeBtn',input:'psModelSizeInput',override:'modelSizeOverride'},
-  packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',input:'psPackageSizeInput',override:'packageSizeOverride'}
+  useCase:{label:'Use case',display:'projInfoUse',wrap:'psUseCaseWrap',btn:'psUseCaseBtn',type:'select',input:'psUseCaseInput',override:'useCaseOverride',options:USE_CASE_OPTIONS},
+  scale:{label:'Scale',display:'projInfoScale',wrap:'psScaleWrap',btn:'psScaleBtn',type:'text',input:'psScaleInput',override:'scaleOverride'},
+  // Materials & presentation reuses the exact same option list the vendor
+  // quotation form uses (MODEL_MATERIALS, exposed on window) -- pulled live
+  // at edit-open time rather than duplicated here, so the two stay in sync.
+  material:{label:'Materials & presentation',display:'projInfoMaterial',wrap:'psMaterialWrap',btn:'psMaterialBtn',type:'select',input:'psMaterialInput',override:'materialOverride'},
+  modelSize:{label:'Model size',display:'projInfoModelSize',wrap:'psModelSizeWrap',btn:'psModelSizeBtn',type:'dims',prefix:'psModelSize',override:'modelSizeOverride'},
+  packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',type:'dims',prefix:'psPackageSize',override:'packageSizeOverride'}
 };
+// Live mm<->in sync for the Model size / Package size L/W/H editors --
+// mirrors the vendor quotation form's own SRC_syncDim, just without the
+// "-<bid>" id suffix since only one project's fields are ever on screen here.
+function projDimSync(prefix,dim,fromUnit){
+  var mmEl=document.getElementById(prefix+'-'+dim+'-mm'), inEl=document.getElementById(prefix+'-'+dim+'-in');
+  if(!mmEl||!inEl)return;
+  if(fromUnit==='mm'){
+    var v=parseFloat(mmEl.value);
+    inEl.value=isNaN(v)?'':(v/25.4).toFixed(1);
+  }else{
+    var v2=parseFloat(inEl.value);
+    mmEl.value=isNaN(v2)?'':Math.round(v2*25.4);
+  }
+}
+window.projDimSync=projDimSync;
+// Reads the L/W/H mm+in grid back into the same "L × W × H mm (L × W × H in)"
+// string format parseModelDimsString() expects, so it round-trips cleanly.
+function readProjDimTriplet(prefix){
+  var dims=['l','w','h'];
+  var mmVals=[],any=false;
+  dims.forEach(function(d){
+    var mmEl=document.getElementById(prefix+'-'+d+'-mm');
+    var inEl=document.getElementById(prefix+'-'+d+'-in');
+    var mm=mmEl?parseFloat(mmEl.value):NaN;
+    var inch=inEl?parseFloat(inEl.value):NaN;
+    if(isNaN(mm)&&!isNaN(inch))mm=inch*25.4;
+    if(!isNaN(mm))any=true;
+    mmVals.push(isNaN(mm)?null:Math.round(mm));
+  });
+  if(!any)return '';
+  var mmStr=mmVals.map(function(v){return v==null?'—':v;}).join(' × ');
+  var inStr=mmVals.map(function(v){return v==null?'—':+(v/25.4).toFixed(1);}).join(' × ');
+  return mmStr+' mm ('+inStr+' in)';
+}
+window.readProjDimTriplet=readProjDimTriplet;
 function toggleProjectSpecFieldEdit(field){
   var meta=PROJECT_SPEC_FIELD_META[field];if(!meta)return;
   var wrap=document.getElementById(meta.wrap);
@@ -2361,8 +2429,27 @@ function toggleProjectSpecFieldEdit(field){
   if(wrap.hidden){
     var id=document.getElementById('projSelect').value;
     var b=findBrief(id);
-    var input=document.getElementById(meta.input);
-    if(input)input.value=projectSpecValue(b,field)||'';
+    var current=projectSpecValue(b,field);
+    if(meta.type==='select'){
+      var sel=document.getElementById(meta.input);
+      if(sel){
+        var opts=(meta.options||window.MODEL_MATERIALS||[]).slice();
+        if(current&&opts.indexOf(current)===-1)opts.push(current);
+        sel.innerHTML='<option value="">Select one…</option>'+opts.map(function(o){return '<option value="'+esc(o)+'"'+(o===current?' selected':'')+'>'+esc(o)+'</option>';}).join('');
+      }
+    }else if(meta.type==='dims'){
+      var parsed=(typeof parseModelDimsString==='function')?parseModelDimsString(current):{l:null,w:null,h:null};
+      ['l','w','h'].forEach(function(d){
+        var mmEl=document.getElementById(meta.prefix+'-'+d+'-mm');
+        var inEl=document.getElementById(meta.prefix+'-'+d+'-in');
+        var v=parsed[d];
+        if(mmEl)mmEl.value=v!=null?v:'';
+        if(inEl)inEl.value=v!=null?(v/25.4).toFixed(1):'';
+      });
+    }else{
+      var input=document.getElementById(meta.input);
+      if(input)input.value=current||'';
+    }
   }
   wrap.hidden=!wrap.hidden;
   if(btn)btn.textContent=wrap.hidden?'Edit':'Cancel';
@@ -2373,8 +2460,13 @@ function saveProjectSpecField(field){
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
   if(!b)return;
-  var input=document.getElementById(meta.input);
-  var val=input?input.value.trim():'';
+  var val;
+  if(meta.type==='dims'){
+    val=readProjDimTriplet(meta.prefix);
+  }else{
+    var input=document.getElementById(meta.input);
+    val=input?input.value.trim():'';
+  }
   b[meta.override]=val||null;
   logProjectEvent(b,meta.label+' updated to '+(val||'—')+' on "'+b.title+'"');
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
@@ -2382,25 +2474,59 @@ function saveProjectSpecField(field){
   toggleProjectSpecFieldEdit(field);
 }
 window.saveProjectSpecField=saveProjectSpecField;
-// Same pencil-toggle pattern for Start/Target production completion/Target
-// delivery -- the value shows as plain text (everyone sees it, no more
-// permanently-visible date input) and a pencil (owner+sales only, see
-// proj-dates-edit-only) reveals the date input in place. The inputs
-// themselves keep auto-saving on change (setProjectStart/
-// setProductionCompletionOverride/setTargetDeliveryOverride), same as
-// before -- only the visibility toggle is new.
+// Same pencil-toggle pattern for Start/Agreed production time/Target
+// production completion/Target delivery -- the value shows as plain text
+// (everyone sees it) and a pencil (owner+sales only, see
+// proj-dates-edit-only) reveals the input in place. These used to auto-save
+// on the input's own `change` event, which fires the moment a date becomes
+// a complete valid value -- if the field already had a value (e.g. editing
+// just the day of an existing date), that can happen after a single
+// keystroke, instantly saving+closing the field before the rest of the
+// date was even entered. That made it look like the field couldn't be
+// typed into at all. Switched to the same explicit input+Save button
+// pattern already used for Client information/spec fields instead -- ties
+// the commit to a deliberate click, not a keystroke.
 var DATE_FIELD_META={
-  start:{wrap:'projInfoStartWrap',btn:'projInfoStartBtn'},
-  completion:{wrap:'projInfoCompletionWrap',btn:'projInfoCompletionBtn'},
-  target:{wrap:'projInfoTargetWrap',btn:'projInfoTargetBtn'}
+  start:{wrap:'projInfoStartWrap',btn:'projInfoStartBtn',input:'projInfoStartInput'},
+  prodDays:{wrap:'projInfoProdDaysWrap',btn:'projInfoProdDaysBtn',input:'projInfoProdDaysInput'},
+  completion:{wrap:'projInfoCompletionWrap',btn:'projInfoCompletionBtn',input:'projInfoCompletionInput'},
+  target:{wrap:'projInfoTargetWrap',btn:'projInfoTargetBtn',input:'projInfoTargetInput'}
 };
 function toggleDateFieldEdit(field){
   var meta=DATE_FIELD_META[field];if(!meta)return;
   var wrap=document.getElementById(meta.wrap);
+  var btn=document.getElementById(meta.btn);
   if(!wrap)return;
+  if(wrap.hidden){
+    var id=document.getElementById('projSelect').value;
+    var b=findBrief(id);
+    var input=document.getElementById(meta.input);
+    if(input&&b){
+      if(field==='start')input.value=b.startDate||'';
+      else if(field==='prodDays')input.value=b.productionDays!=null?b.productionDays:'';
+      else if(field==='completion')input.value=productionCompletionDate(b)||'';
+      else if(field==='target')input.value=targetDeliveryDate(b)||'';
+    }
+  }
   wrap.hidden=!wrap.hidden;
+  if(btn)btn.textContent=wrap.hidden?'Edit':'Cancel';
 }
 window.toggleDateFieldEdit=toggleDateFieldEdit;
+function saveDateField(field){
+  var meta=DATE_FIELD_META[field];if(!meta)return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);if(!b)return;
+  var input=document.getElementById(meta.input);
+  var val=input?input.value:'';
+  // Each setter already calls renderProjectOverview() internally, which
+  // repopulates the display text and closes every date wrap -- no need to
+  // separately toggle this one shut here.
+  if(field==='start')setProjectStart(id,val);
+  else if(field==='prodDays')setProductionDays(id,val);
+  else if(field==='completion')setProductionCompletionOverride(id,val);
+  else if(field==='target')setTargetDeliveryOverride(id,val);
+}
+window.saveDateField=saveDateField;
 // Saving one field here updates ONLY this project's own client record
 // (b.client) -- it deliberately does NOT touch or overwrite the existing
 // Clients-tab contact card for the old email. That old card is left alone
@@ -3001,6 +3127,7 @@ function renderProjectOverview(b){
   Object.keys(DATE_FIELD_META).forEach(function(field){
     var meta=DATE_FIELD_META[field];
     var w=document.getElementById(meta.wrap);if(w)w.hidden=true;
+    var bt=document.getElementById(meta.btn);if(bt)bt.textContent='Edit';
   });
   Object.keys(PROJECT_SPEC_FIELD_META).forEach(function(field){
     var meta=PROJECT_SPEC_FIELD_META[field];
@@ -3008,12 +3135,10 @@ function renderProjectOverview(b){
     var bt=document.getElementById(meta.btn);if(bt)bt.textContent='Edit';
   });
   setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
+  setText('projInfoProdDays',b.productionDays!=null?(b.productionDays+' day'+(b.productionDays==1?'':'s')):'—');
   setText('projInfoTarget',targetDelivery?fmtDateShort(targetDelivery):'—');
   var completionDate=productionCompletionDate(b);
   setText('projInfoCompletion',completionDate?fmtDateShort(completionDate):'—');
-  var startInput=document.getElementById('projInfoStartInput');if(startInput)startInput.value=b.startDate||'';
-  var completionInput=document.getElementById('projInfoCompletionInput');if(completionInput)completionInput.value=completionDate||'';
-  var targetInput=document.getElementById('projInfoTargetInput');if(targetInput)targetInput.value=targetDelivery||'';
   Object.keys(PROJECT_SPEC_FIELD_META).forEach(function(field){
     var meta=PROJECT_SPEC_FIELD_META[field];
     setText(meta.display,projectSpecValue(b,field)||'—');
@@ -3121,11 +3246,16 @@ function renderProjectPricingPanel(b){
   var clientPrice=(b.clientQuote&&b.clientQuote.price!=null)?b.clientQuote.price:null;
   var wq=(typeof winningQuote==='function')?winningQuote(b):null;
   var vendorPrice=(wq&&wq.price!=null)?wq.price:null;
-  var profit=(clientPrice!=null&&vendorPrice!=null)?(clientPrice-vendorPrice):null;
+  // Profit nets out whichever shipping figure is currently in play (Actual
+  // once the Client Manager has entered it, else the internal Estimated
+  // figure from quotation) -- shipping is a real cost against the margin,
+  // not just an internal planning number.
+  var shipCost=b.actualShippingCost!=null?b.actualShippingCost:((b.clientQuote&&b.clientQuote.estimatedShippingCost!=null)?b.clientQuote.estimatedShippingCost:0);
+  var profit=(clientPrice!=null&&vendorPrice!=null)?(clientPrice-vendorPrice-shipCost):null;
   setText('kpiClientPrice',clientPrice!=null?fmtUsd(clientPrice):'—');
   setText('kpiVendorPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
   setText('kpiProfit',profit!=null?fmtUsd(profit):'—');
-  var shipEst=(b.clientQuote&&b.clientQuote.estimatedShippingCost!=null)?b.clientQuote.estimatedShippingCost:null;
+  setText('kpiProfitPct',(profit!=null&&clientPrice)?(Math.round((profit/clientPrice)*1000)/10)+'% margin':'');
   renderShippingCostCard(b);
 }
 window.renderProjectPricingPanel=renderProjectPricingPanel;
@@ -5884,6 +6014,7 @@ function parseModelDimsString(s){
   var nums=mmPart.replace(/mm|in/gi,'').split(/[×xX]/).map(function(v){return parseFloat(v.trim());});
   return {l:isNaN(nums[0])?null:nums[0],w:isNaN(nums[1])?null:nums[1],h:isNaN(nums[2])?null:nums[2]};
 }
+window.parseModelDimsString=parseModelDimsString; // exposed so Project information (an earlier <script> block) can prefill its L/W/H editors from the stored dims string
 function selectWithCurrent(id,options,currentVal){
   var opts=options.slice();
   if(currentVal&&opts.indexOf(currentVal)===-1)opts=[currentVal].concat(opts);
