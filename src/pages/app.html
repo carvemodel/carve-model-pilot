@@ -364,10 +364,10 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .journey__pct{display:block;font-family:var(--font-display);font-weight:var(--w-black);font-size:clamp(1.8rem,3vw,2.6rem);line-height:1;letter-spacing:-0.03em;color:var(--cm-text-strong);}
 
 .track{position:relative;}
-.track__line{position:absolute;left:0;right:0;top:13px;height:2px;background:var(--cm-ink-600);border-radius:99px;overflow:hidden;}
+.track__line{position:absolute;left:0;right:0;top:39px;height:2px;background:var(--cm-ink-600);border-radius:99px;overflow:hidden;}
 .track__line i{display:block;height:100%;background:linear-gradient(90deg,var(--cm-silver),#fff);transition:width var(--dur-4) var(--ease-out);}
 .track__steps{list-style:none;margin:0;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0.4rem;position:relative;}
-.jstep{display:flex;flex-direction:column;align-items:center;text-align:center;gap:0.45rem;position:relative;padding-top:0;}
+.jstep{display:flex;flex-direction:column;align-items:center;text-align:center;gap:0.45rem;position:relative;padding-top:26px;}
 .jstep__dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.74rem;background:var(--cm-ink-850);border:1.5px solid var(--cm-ink-500);color:var(--cm-text-subtle);position:relative;z-index:2;transition:0.2s;}
 .jstep.done .jstep__dot{background:var(--cm-silver);border-color:var(--cm-silver);color:var(--cm-ink-900);font-weight:var(--w-bold);}
 .jstep.current .jstep__dot{background:var(--cm-white);border-color:var(--cm-white);color:var(--cm-ink-900);font-weight:var(--w-bold);box-shadow:0 0 0 5px rgba(255,255,255,0.12);}
@@ -376,7 +376,7 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .jstep__date{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.02em;color:var(--cm-text-subtle);}
 .jstep.current .jstep__date{color:var(--cm-silver);}
 .jstep__here{position:absolute;top:-22px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-ink-900);background:var(--cm-silver);padding:2px 7px;border-radius:99px;white-space:nowrap;}
-.jstep.current{padding-top:26px;}
+.jstep.current{}
 @media(prefers-reduced-motion:no-preference){.jstep.current .jstep__dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.5);animation:jpulse 2.4s var(--ease-out) infinite;}}
 @keyframes jpulse{0%{transform:scale(1);opacity:0.7;}70%{transform:scale(1.5);opacity:0;}100%{opacity:0;}}
 
@@ -1949,6 +1949,14 @@ var PROJECT_STAGES=[
   'Payment Received — 50% Remaining',      // 7
   'Packing & Shipping'                          // 8
 ];
+function paymentStatusLabel(b){
+  var inv=b.clientQuote&&b.clientQuote.invoice;
+  if(!inv)return 'Not invoiced';
+  if(inv.balanceStatus==='paid')return 'Paid in full';
+  if(inv.depositStatus==='paid')return 'Deposit paid';
+  if(inv.depositStatus==='reported'||inv.balanceStatus==='reported')return 'Payment reported';
+  return 'Payment due';
+}
 function projectStageIndex(b){
   var i=PROJECT_STAGES.indexOf(b.projectStage);
   return i<0?0:i;
@@ -2020,6 +2028,22 @@ function setBriefManager(id,email){
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   if(window.renderMyAssigned)window.renderMyAssigned();
 }
+function setProjectStart(id,val){
+  var b=findBrief(id);if(!b)return;
+  b.startDate=val||null;
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderAwardedProjects();
+  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+}
+window.setProjectStart=setProjectStart;
+function setProjectTarget(id,val){
+  var b=findBrief(id);if(!b)return;
+  b.targetDelivery=val||null;
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderAwardedProjects();
+  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+}
+window.setProjectTarget=setProjectTarget;
 function toggleProjectDelivered(id){
   var b=findBrief(id);if(!b)return;
   b.deliveredAt=b.deliveredAt?null:new Date().toISOString().slice(0,10);
@@ -2047,8 +2071,6 @@ window.toggleProjectArchived=toggleProjectArchived;
 function projectRowHtml(b){
   var c=b.client||{};
   var delivered=!!b.deliveredAt;
-  var chipClass=delivered?'chip done':(b.archived?'chip':'chip active');
-  var chipText=delivered?'Delivered':(b.archived?'Archived':'In Progress');
   var isOpen=expandedAwardedId===b.id;
   var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
   var expandBody='';
@@ -2064,11 +2086,19 @@ function projectRowHtml(b){
     }else{
       invoicePanel='<div class="projassign__invoice" style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
     }
-    expandBody='<div class="projassign__row projassign__contact">'+
+    expandBody='<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
+        '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
+      '<div class="projassign__row projassign__contact">'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
+      '</div>'+
+      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
+        '<div class="mfield" style="margin:0;max-width:200px;"><label>Start date</label>'+
+          '<input type="date" value="'+esc(b.startDate||'')+'" onchange="setProjectStart(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div class="mfield" style="margin:0;max-width:200px;"><label>Target delivery <span class="opt">(agreed with client)</span></label>'+
+          '<input type="date" value="'+esc(b.targetDelivery||'')+'" onchange="setProjectTarget(\''+esc(b.id)+'\',this.value)"></div>'+
       '</div>'+
       '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
         '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
@@ -2078,17 +2108,19 @@ function projectRowHtml(b){
       '</div>'+
       invoicePanel;
   }
+  var stageName=delivered?'Delivered':PROJECT_STAGES[projectStageIndex(b)];
+  var scale=(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—';
+  var metaBits=['Stage: '+esc(stageName)];
+  metaBits.push('Target delivery: '+(b.targetDelivery?fmtDateShort(b.targetDelivery):'—'));
+  metaBits.push('Scale: '+esc(scale));
+  metaBits.push('Payment: '+esc(paymentStatusLabel(b)));
   return '<div class="projrow projcard" style="flex-direction:column;align-items:stretch;">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'+
       '<div style="cursor:pointer;flex:1;min-width:180px;" onclick="openProject(\''+esc(b.id)+'\')">'+
         '<div class="projrow__name">'+esc(b.title)+'</div>'+
         '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(b.brief&&b.brief['Intended use']?(' · '+esc(b.brief['Intended use'])):'')+'</div>'+
+        '<div class="projcard__meta">'+metaBits.join(' · ')+'</div>'+
       '</div>'+
-      '<div class="mfield" style="margin:0;max-width:210px;"><label>Client Manager</label>'+
-        '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div>'+
-      '<span class="projrow__stat">'+
-        '<span class="'+chipClass+'">'+chipText+'</span>'+
-      '</span>'+
       '<button type="button" class="rowbtn" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;" onclick="toggleAwardedProject(\''+esc(b.id)+'\')">'+(isOpen?'Hide details ▲':'Details ▼')+'</button>'+
     '</div>'+
     expandBody+
@@ -2475,7 +2507,7 @@ function renderProjectOverview(b){
   setText('projInfoClientFactory',b.code?('Confidential · Ref '+b.code):'Confidential');
   setText('projInfoLead',teamMember?teamMember.name:'—');
   var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
-  var startDate=depositPaidAt||b.sentDate||b.leadReceivedAt;
+  var startDate=b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt;
   setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
   setText('projInfoTarget',b.targetDelivery?fmtDateShort(b.targetDelivery):'—');
   setText('projInfoUse',(b.brief&&b.brief['Intended use'])||'—');
