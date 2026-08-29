@@ -2038,14 +2038,7 @@ function renderAwardedProjects(){
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
       '</div>'+
-      '<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
-        '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
       '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
-        '<div class="mfield" style="margin:0;max-width:220px;"><label>Stage</label><select '+(b.deliveredAt?'disabled':'')+' onchange="setProjectStage(\''+esc(b.id)+'\',this.value)">'+
-          PROJECT_STAGES.map(function(s){return '<option value="'+esc(s)+'" '+(s===(b.projectStage||PROJECT_STAGES[0])?'selected':'')+'>'+esc(s)+'</option>';}).join('')+
-        '</select></div>'+
-        '<div class="mfield" style="margin:0;max-width:140px;"><label>% complete</label><input type="number" min="0" max="100" '+(b.deliveredAt?'disabled':'')+' value="'+(b.deliveredAt?100:(b.projectPct||0))+'" onchange="setProjectPct(\''+esc(b.id)+'\',this.value)"></div>'+
-        '<div class="mfield" style="margin:0;max-width:200px;"><label>Target delivery</label><input type="date" '+(b.deliveredAt?'disabled':'')+' value="'+esc(b.targetDelivery||'')+'" onchange="setProjectTarget(\''+esc(b.id)+'\',this.value)"></div>'+
         '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
           '<button class="btn '+(b.deliveredAt?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(b.deliveredAt?'Un-mark delivered':'Mark delivered')+'</button>'+
           '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
@@ -2066,28 +2059,6 @@ function setBriefManager(id,email){
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   if(window.renderMyAssigned)window.renderMyAssigned();
 }
-function setProjectStage(id,val){
-  var b=findBrief(id);if(!b)return;
-  b.projectStage=val;
-  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-  renderAwardedProjects();
-  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
-}
-function setProjectPct(id,val){
-  var b=findBrief(id);if(!b)return;
-  var n=parseInt(val,10);if(isNaN(n))n=0;
-  b.projectPct=Math.max(0,Math.min(100,n));
-  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-  renderAwardedProjects();
-  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
-}
-function setProjectTarget(id,val){
-  var b=findBrief(id);if(!b)return;
-  b.targetDelivery=val||null;
-  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-  renderAwardedProjects();
-  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
-}
 function toggleProjectDelivered(id){
   var b=findBrief(id);if(!b)return;
   b.deliveredAt=b.deliveredAt?null:new Date().toISOString().slice(0,10);
@@ -2102,9 +2073,6 @@ function toggleProjectArchived(id){
   renderAwardedProjects();
   if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
 }
-window.setProjectStage=setProjectStage;
-window.setProjectPct=setProjectPct;
-window.setProjectTarget=setProjectTarget;
 window.toggleProjectDelivered=toggleProjectDelivered;
 window.toggleProjectArchived=toggleProjectArchived;
 
@@ -2116,35 +2084,32 @@ window.toggleProjectArchived=toggleProjectArchived;
 function projectRowHtml(b){
   var c=b.client||{};
   var delivered=!!b.deliveredAt;
-  var stage=delivered?'Delivered':(b.projectStage||PROJECT_STAGES[0]);
-  var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
   var chipClass=delivered?'chip done':(b.archived?'chip':'chip active');
-  var chipText=delivered?'Delivered':(b.archived?'Archived':'In production');
-  var meta=esc(stage)+' · '+pct+'%'+(b.targetDelivery&&!delivered?(' · target delivery '+fmtDateShort(b.targetDelivery)):'')+(delivered?(' · delivered '+fmtDateShort(b.deliveredAt)):'');
-  return '<button class="projrow projcard" onclick="openProject(\''+esc(b.id)+'\')">'+
-    '<div>'+
+  var chipText=delivered?'Delivered':(b.archived?'Archived':'In Progress');
+  return '<div class="projrow projcard">'+
+    '<div style="cursor:pointer;flex:1;min-width:0;" onclick="openProject(\''+esc(b.id)+'\')">'+
       '<div class="projrow__name">'+esc(b.title)+'</div>'+
       '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(b.brief&&b.brief['Intended use']?(' · '+esc(b.brief['Intended use'])):'')+'</div>'+
-      '<div class="projcard__bar"><i style="width:'+pct+'%"></i></div>'+
-      '<div class="projcard__meta">'+meta+'</div>'+
     '</div>'+
+    '<div class="mfield" style="margin:0;max-width:210px;" onclick="event.stopPropagation()"><label>Client Manager</label>'+
+      '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div>'+
     '<span class="projrow__stat"><span class="'+chipClass+'">'+chipText+'</span></span>'+
-  '</button>';
+  '</div>';
 }
 function projectSectionHtml(label,list){
-  if(!list.length)return '';
+  var body=list.length?list.map(projectRowHtml).join(''):
+    '<div style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.3rem 0 0.1rem;">No '+label.toLowerCase()+' projects yet.</div>';
   return '<div class="myproj-section"><div class="myproj-label"><span class="mock__k">'+label+'</span><span class="myproj-count">'+list.length+'</span></div>'+
-    list.map(projectRowHtml).join('')+'</div>';
+    body+'</div>';
 }
 function renderProjectsList(){
   var wrap=document.getElementById('projectsListWrap');
   if(!wrap)return;
   var all=awardedBriefs();
   var active=all.filter(function(b){return !b.archived&&!b.deliveredAt;});
-  var archived=all.filter(function(b){return b.archived;});
   var completed=all.filter(function(b){return !b.archived&&b.deliveredAt;});
-  var html=projectSectionHtml('Active',active)+projectSectionHtml('Archived',archived)+projectSectionHtml('Completed',completed);
-  wrap.innerHTML=html||'<div class="panel"><div class="panel__body" style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects have been awarded to production yet.</div></div>';
+  var archived=all.filter(function(b){return b.archived;});
+  wrap.innerHTML=projectSectionHtml('In Progress',active)+projectSectionHtml('Completed',completed)+projectSectionHtml('Archived',archived);
 }
 window.renderProjectsList=renderProjectsList;
 function renderPickProjectList(){
@@ -2155,12 +2120,10 @@ function renderPickProjectList(){
   body.innerHTML=all.map(function(b){
     var c=b.client||{};
     var delivered=!!b.deliveredAt;
-    var stage=delivered?'Delivered':(b.projectStage||PROJECT_STAGES[0]);
-    var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
     var chipClass=delivered?'chip done':(b.archived?'chip':'chip active');
-    var chipText=delivered?'Delivered':(b.archived?'Archived':stage);
+    var chipText=delivered?'Delivered':(b.archived?'Archived':'In Progress');
     return '<button class="projrow" onclick="openProject(\''+esc(b.id)+'\')">'+
-      '<div><div class="projrow__name">'+esc(b.title)+'</div><div class="projrow__sub">'+esc(c.Company||'—')+' · '+esc(stage)+' '+pct+'%</div></div>'+
+      '<div><div class="projrow__name">'+esc(b.title)+'</div><div class="projrow__sub">'+esc(c.Company||'—')+'</div></div>'+
       '<span class="projrow__stat"><span class="'+chipClass+'">'+chipText+'</span></span>'+
     '</button>';
   }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.9rem;padding:0.5rem 0;">No projects have been awarded to production yet.</div>';
@@ -2202,15 +2165,12 @@ function renderMyAssigned(){
   wrap.innerHTML=mine.map(function(b){
     var c=b.client||{};
     var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
-    var delivered=!!b.deliveredAt;
-    var stage=delivered?'Delivered':(b.projectStage||PROJECT_STAGES[0]);
-    var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
     var invBtns=hasInvoice?(
       '<button class="btn btn--primary btn--sm" onclick="downloadInvoice(\''+esc(b.id)+'\',\'deposit\')">↓ Deposit invoice</button>'+
       (b.clientQuote.invoice.balanceId?' <button class="btn btn--ghost btn--sm" onclick="downloadInvoice(\''+esc(b.id)+'\',\'balance\')">↓ Balance invoice</button>':'')
     ):'<span style="color:var(--cm-text-subtle);font-size:0.86rem;">Invoice not issued yet.</span>';
     return '<div class="projassign">'+
-      '<div class="projassign__head" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><span class="projassign__name">'+esc(b.title)+'</span><span class="rowbtn">'+esc(stage)+' · '+pct+'% ▸</span></div>'+
+      '<div class="projassign__head" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><span class="projassign__name">'+esc(b.title)+'</span><span class="rowbtn">View project ▸</span></div>'+
       '<div class="projassign__row projassign__contact">'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
