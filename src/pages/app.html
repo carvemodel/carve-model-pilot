@@ -106,13 +106,16 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .panel{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);}
 .panel__head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.3rem;border-bottom:1px solid var(--cm-line-faint);}
 .panel__head h3{font-size:1.05rem;font-weight:var(--w-semibold);}
-/* Project Overview page: panel headers (Client information, Project
-   information, Recent activity, Invoice & Payment) default to
-   --cm-text-strong (white) same as the data underneath, so nothing reads as
-   more important than anything else. Dial the headers back to silver so the
-   actual project data is what pops. */
-#view-overview .panel__head h3{color:var(--cm-silver);font-weight:var(--w-medium);}
 .panel__head .mock__k{cursor:default;}
+/* Field label vs. value hierarchy: a label like "Company" and its actual
+   value "Uhaul" both default to --cm-text (near-white) with no rule of
+   their own, so they read as equally important. Labels go silver, values
+   stay white/strong, so the real data is what stands out -- e.g. Company
+   (silver) / Uhaul (white) in Client information, or any other
+   mock__k/mock__v pair anywhere in the app. More specific existing rules
+   (.leads-dash .mock__k etc.) still win over this base rule where set. */
+.mock__k{color:var(--cm-silver);}
+.mock__v{color:var(--cm-text-strong);}
 .panel__body{padding:1.3rem;}
 .cols{display:grid;grid-template-columns:1.6fr 1fr;gap:1.25rem;margin-top:1.25rem;}
 @media(max-width:900px){.cols{grid-template-columns:1fr;}.app{grid-template-columns:1fr;}.side{position:fixed;left:-280px;transition:left 0.25s;z-index:200;width:248px;}.side.open{left:0;}.menu-fab{display:flex !important;}}
