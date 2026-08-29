@@ -710,14 +710,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <p class="myproj-sub" id="projectsSub">Every project across the studio — open any one to see its full workspace.</p>
       </div>
 
-      <div class="panel" style="margin-bottom:2rem;">
-        <div class="panel__head"><h3>Client Manager assignments</h3></div>
-        <div class="panel__body">
-          <p class="modal__intro" style="margin-bottom:1rem;">Client Managers only see projects that are marked <b>Awarded to production</b> below and assigned to them by name — everything else (Leads, the full Clients roster, and Quotes &amp; estimates) stays Owner-only.</p>
-          <div id="projectAssignList"></div>
-        </div>
-      </div>
-
       <!-- Real data only: populated by renderProjectsList() from awardedBriefs(),
            grouped into Active / Archived / Completed. See renderProjectsList
            in the script block below -- this replaces what used to be four
@@ -2010,43 +2002,13 @@ function toggleAwardedProject(id){
 }
 window.toggleAwardedProject=toggleAwardedProject;
 function renderAwardedProjects(){
-  var wrap=document.getElementById('projectAssignList');
-  if(!wrap)return;
-  wrap.innerHTML=awardedBriefs().map(function(b){
-    var c=b.client||{};
-    var isOpen=expandedAwardedId===b.id;
-    var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
-    var invoicePanel='';
-    if(isOpen){
-      if(hasInvoice&&typeof window.invoiceLineAdmin==='function'){
-        var inv=b.clientQuote.invoice;
-        invoicePanel='<div class="projassign__invoice">'+
-          '<div class="mock__k" style="margin:0.9rem 0 0.5rem;">Invoice &amp; payment</div>'+
-          window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
-          window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
-        '</div>';
-      }else{
-        invoicePanel='<div class="projassign__invoice" style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
-      }
-    }
-    return '<div class="projassign">'+
-      '<div class="projassign__head" style="cursor:pointer;" onclick="toggleAwardedProject(\''+esc(b.id)+'\')"><span class="projassign__name">'+esc(b.title)+'</span>'+
-        '<span class="rowbtn">'+(isOpen?'Hide invoice & payment ▲':'Invoice & payment ▼')+'</span></div>'+
-      '<div class="projassign__row projassign__contact">'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
-      '</div>'+
-      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
-        '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
-          '<button class="btn '+(b.deliveredAt?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(b.deliveredAt?'Un-mark delivered':'Mark delivered')+'</button>'+
-          '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
-        '</div>'+
-      '</div>'+
-      invoicePanel+
-    '</div>';
-  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No projects have been awarded to production yet. Award a quote from Sourcing &amp; Quotes to see it here.</div>';
+  // The Client Manager assignment + contact/invoice detail that used to
+  // live in its own separate "Client Manager assignments" panel above the
+  // project list has been folded directly into each project row (see
+  // projectRowHtml) so there's a single list, not two redundant ones.
+  // This function is kept as the shared refresh entry point since it's
+  // called from many places (award, delivered/archive toggles, manager
+  // reassignment, etc).
   renderProjectsList();
   renderPickProjectList();
   syncProjectSelectOptions();
@@ -2086,14 +2048,49 @@ function projectRowHtml(b){
   var delivered=!!b.deliveredAt;
   var chipClass=delivered?'chip done':(b.archived?'chip':'chip active');
   var chipText=delivered?'Delivered':(b.archived?'Archived':'In Progress');
-  return '<div class="projrow projcard">'+
-    '<div style="cursor:pointer;flex:1;min-width:0;" onclick="openProject(\''+esc(b.id)+'\')">'+
-      '<div class="projrow__name">'+esc(b.title)+'</div>'+
-      '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(b.brief&&b.brief['Intended use']?(' · '+esc(b.brief['Intended use'])):'')+'</div>'+
+  var isOpen=expandedAwardedId===b.id;
+  var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
+  var expandBody='';
+  if(isOpen){
+    var invoicePanel='';
+    if(hasInvoice&&typeof window.invoiceLineAdmin==='function'){
+      var inv=b.clientQuote.invoice;
+      invoicePanel='<div class="projassign__invoice">'+
+        '<div class="mock__k" style="margin:0.9rem 0 0.5rem;">Invoice &amp; payment</div>'+
+        window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
+        window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
+      '</div>';
+    }else{
+      invoicePanel='<div class="projassign__invoice" style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
+    }
+    expandBody='<div class="projassign__row projassign__contact">'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
+      '</div>'+
+      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
+        '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
+          '<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
+          '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
+        '</div>'+
+      '</div>'+
+      invoicePanel;
+  }
+  return '<div class="projrow projcard" style="flex-direction:column;align-items:stretch;">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'+
+      '<div style="cursor:pointer;flex:1;min-width:180px;" onclick="openProject(\''+esc(b.id)+'\')">'+
+        '<div class="projrow__name">'+esc(b.title)+'</div>'+
+        '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(b.brief&&b.brief['Intended use']?(' · '+esc(b.brief['Intended use'])):'')+'</div>'+
+      '</div>'+
+      '<div class="mfield" style="margin:0;max-width:210px;"><label>Client Manager</label>'+
+        '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div>'+
+      '<span class="projrow__stat">'+
+        '<span class="'+chipClass+'">'+chipText+'</span>'+
+      '</span>'+
+      '<button type="button" class="rowbtn" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;" onclick="toggleAwardedProject(\''+esc(b.id)+'\')">'+(isOpen?'Hide details ▲':'Details ▼')+'</button>'+
     '</div>'+
-    '<div class="mfield" style="margin:0;max-width:210px;" onclick="event.stopPropagation()"><label>Client Manager</label>'+
-      '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div>'+
-    '<span class="projrow__stat"><span class="'+chipClass+'">'+chipText+'</span></span>'+
+    expandBody+
   '</div>';
 }
 function projectSectionHtml(label,list){
