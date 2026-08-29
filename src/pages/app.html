@@ -833,7 +833,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="kpi"><span class="mock__k">Status</span><div class="big" id="kpiStatus">Fabrication</div><div class="sub" id="kpiStage">Stage 4 of 6</div></div>
         <div class="kpi"><span class="mock__k">Progress</span><div class="big" id="kpiPct">68%</div><div class="mock__progress" style="margin-top:0.6rem;"><i id="kpiBar" style="width:68%"></i></div></div>
         <div class="kpi"><span class="mock__k">Next milestone</span><div class="big" id="kpiNext" style="font-size:1.15rem;">Finishing &amp; Paint</div><div class="sub" id="kpiNextSub">Due in 6 days</div></div>
-        <div class="kpi"><span class="mock__k">Scale</span><div class="big" id="kpiScale">—</div><div class="sub" id="kpiScaleSub"></div></div>
+        <div class="kpi kpi-scale-only"><span class="mock__k">Scale</span><div class="big" id="kpiScale">—</div><div class="sub" id="kpiScaleSub"></div></div>
+        <div class="kpi proj-invoice-only" style="cursor:pointer;" onclick="openProjectInvoicePanel()"><span class="mock__k">Invoice &amp; Payment</span><div class="big" id="kpiInvoice" style="font-size:1.15rem;">—</div><div class="sub" id="kpiInvoiceSub">Click to view →</div></div>
       </div>
       <div class="cols">
         <div class="panel">
@@ -882,9 +883,18 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
       </div>
 
+      <!-- Invoice & Payment: Owner + the assigned Client Manager. This is
+           the KPI row's "Invoice & Payment" card's scroll target -- see
+           openProjectInvoicePanel(). Populated by
+           renderProjectInvoicePanel(). -->
+      <div class="panel proj-invoice-only" id="projectInvoicePanelWrap" style="margin-top:1.5rem;">
+        <div class="panel__head"><h3>Invoice &amp; Payment</h3></div>
+        <div class="panel__body" id="projectInvoicePanel"></div>
+      </div>
+
       <!-- Owner-only project admin: Client Manager assignment, contact info,
            dates (read-only here -- editable by the assigned Client Manager
-           from My Projects), delivered/archive state, and Invoice & Payment.
+           from My Projects), and delivered/archive state.
            Populated by renderProjectAdminPanel(). -->
       <div class="panel cm-only" style="margin-top:1.5rem;">
         <div class="panel__head"><h3>Project admin</h3></div>
@@ -2579,6 +2589,9 @@ function renderProjectOverview(b){
   }
 
   renderProjectAdminPanel(b);
+  renderProjectInvoicePanel(b);
+  setText('kpiInvoice',paymentStatusLabel(b));
+  setText('kpiInvoiceSub','Click to view →');
 }
 window.renderProjectOverview=renderProjectOverview;
 // Owner-only admin controls for this one project -- Client Manager
@@ -2591,18 +2604,6 @@ function renderProjectAdminPanel(b){
   if(!wrap||!b)return;
   var c=b.client||{};
   var delivered=!!b.deliveredAt;
-  var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
-  var invoicePanel='';
-  if(hasInvoice&&typeof window.invoiceLineAdmin==='function'){
-    var inv=b.clientQuote.invoice;
-    invoicePanel='<div class="projassign__invoice">'+
-      '<div class="mock__k" style="margin:0.9rem 0 0.5rem;">Invoice &amp; payment</div>'+
-      window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
-      window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
-    '</div>';
-  }else{
-    invoicePanel='<div class="projassign__invoice" style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
-  }
   wrap.innerHTML='<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
       '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
     '<div class="projassign__row projassign__contact">'+
@@ -2623,10 +2624,31 @@ function renderProjectAdminPanel(b){
         '<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
         '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
       '</div>'+
-    '</div>'+
-    invoicePanel;
+    '</div>';
 }
 window.renderProjectAdminPanel=renderProjectAdminPanel;
+// Shared Invoice & Payment panel -- Owner + the assigned Client Manager
+// (see proj-invoice-only in PERM). Extracted out of Project admin so
+// Client Manager can see and act on it too, not just Owner.
+function renderProjectInvoicePanel(b){
+  var wrap=document.getElementById('projectInvoicePanel');
+  if(!wrap||!b)return;
+  var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
+  if(hasInvoice&&typeof window.invoiceLineAdmin==='function'){
+    var inv=b.clientQuote.invoice;
+    wrap.innerHTML=window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
+      window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery');
+  }else{
+    wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
+  }
+}
+window.renderProjectInvoicePanel=renderProjectInvoicePanel;
+// Clicking the KPI row's Invoice & Payment card jumps straight to this panel.
+function openProjectInvoicePanel(){
+  var el=document.getElementById('projectInvoicePanelWrap');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+window.openProjectInvoicePanel=openProjectInvoicePanel;
 // Milestones tab: a REAL activity timeline off the brief's own b.history
 // (quotes, awards, revisions), not a fabricated photo-approval workflow --
 // see the notice in view-milestones for why that structured workflow isn't
@@ -3376,7 +3398,9 @@ var PERM={
   'factory-only':['factory','prodtech'],        // production substitutes (anonymized client, internal notes)
   'sourcing-only':['owner','factory'],          // Sourcing & Quotes tab (Carve Admin + Production Admin)
   'prodadmin-only':['factory'],                 // Production Admin only (assign technicians)
-  'prodtech-only':['prodtech']                  // Production Technician only (My Assignments)
+  'prodtech-only':['prodtech'],                 // Production Technician only (My Assignments)
+  'proj-invoice-only':['owner','sales'],         // per-project Invoice & Payment panel on Overview -- Owner + the assigned Client Manager; never factory/prodtech (client pricing) or client (uses their own Invoices tab)
+  'kpi-scale-only':['client','factory','prodtech'] // 4th Overview KPI slot for everyone except owner/sales, who see Invoice & Payment there instead
 };
 var ROLE_INFO={
   client:{name:'Asher Liu',av:'AL',org:'Client'},
