@@ -1949,6 +1949,14 @@ var PROJECT_STAGES=[
   'Payment Received — 50% Remaining',      // 7
   'Packing & Shipping'                          // 8
 ];
+function paymentStatusLabel(b){
+  var inv=b.clientQuote&&b.clientQuote.invoice;
+  if(!inv)return 'Not invoiced';
+  if(inv.balanceStatus==='paid')return 'Paid in full';
+  if(inv.depositStatus==='paid')return 'Deposit paid';
+  if(inv.depositStatus==='reported'||inv.balanceStatus==='reported')return 'Payment reported';
+  return 'Payment due';
+}
 function projectStageIndex(b){
   var i=PROJECT_STAGES.indexOf(b.projectStage);
   return i<0?0:i;
@@ -2063,8 +2071,6 @@ window.toggleProjectArchived=toggleProjectArchived;
 function projectRowHtml(b){
   var c=b.client||{};
   var delivered=!!b.deliveredAt;
-  var chipClass=delivered?'chip done':(b.archived?'chip':'chip active');
-  var chipText=delivered?'Delivered':(b.archived?'Archived':'In Progress');
   var isOpen=expandedAwardedId===b.id;
   var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
   var expandBody='';
@@ -2080,7 +2086,9 @@ function projectRowHtml(b){
     }else{
       invoicePanel='<div class="projassign__invoice" style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
     }
-    expandBody='<div class="projassign__row projassign__contact">'+
+    expandBody='<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
+        '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
+      '<div class="projassign__row projassign__contact">'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
@@ -2100,18 +2108,19 @@ function projectRowHtml(b){
       '</div>'+
       invoicePanel;
   }
+  var stageName=delivered?'Delivered':PROJECT_STAGES[projectStageIndex(b)];
+  var scale=(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—';
+  var metaBits=['Stage: '+esc(stageName)];
+  metaBits.push('Target delivery: '+(b.targetDelivery?fmtDateShort(b.targetDelivery):'—'));
+  metaBits.push('Scale: '+esc(scale));
+  metaBits.push('Payment: '+esc(paymentStatusLabel(b)));
   return '<div class="projrow projcard" style="flex-direction:column;align-items:stretch;">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'+
       '<div style="cursor:pointer;flex:1;min-width:180px;" onclick="openProject(\''+esc(b.id)+'\')">'+
         '<div class="projrow__name">'+esc(b.title)+'</div>'+
         '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(b.brief&&b.brief['Intended use']?(' · '+esc(b.brief['Intended use'])):'')+'</div>'+
-        (b.targetDelivery&&!delivered?('<div class="projrow__sub" style="margin-top:2px;">Target delivery '+fmtDateShort(b.targetDelivery)+'</div>'):'')+
+        '<div class="projcard__meta">'+metaBits.join(' · ')+'</div>'+
       '</div>'+
-      '<div class="mfield" style="margin:0;max-width:210px;"><label>Client Manager</label>'+
-        '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div>'+
-      '<span class="projrow__stat">'+
-        '<span class="'+chipClass+'">'+chipText+'</span>'+
-      '</span>'+
       '<button type="button" class="rowbtn" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;" onclick="toggleAwardedProject(\''+esc(b.id)+'\')">'+(isOpen?'Hide details ▲':'Details ▼')+'</button>'+
     '</div>'+
     expandBody+
