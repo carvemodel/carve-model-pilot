@@ -5587,6 +5587,7 @@ function notifyShop(shopId,text){
   SDB.notifications[shopId].unshift({text:text,time:'just now',read:false});
   saveSRC();
 }
+window.showEmailToast=showEmailToast; // exposed -- called from Clients tab account-creation flow (an earlier <script> block)
 function showEmailToast(text){
   var host=document.getElementById('srcToastHost');
   if(!host){host=document.createElement('div');host.id='srcToastHost';host.style.cssText='position:fixed;bottom:1.2rem;right:1.2rem;z-index:400;display:flex;flex-direction:column;gap:0.5rem;';document.body.appendChild(host);}
@@ -5646,6 +5647,17 @@ function logProjectEvent(b,action,whenDateStr){
   var time=whenDateStr?new Date(whenDateStr+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):nowStamp();
   b.history.unshift({action:action,time:time,by:currentActorLabel()});
 }
+// logProjectEvent is defined inside this IIFE but called from EVERY other
+// <script> block on the page (Client info/spec field saves, date field
+// saves, price/shipping edits, the boundary map uploader, pause/delete,
+// etc.) -- without this, every one of those call sites throws "logProjectEvent
+// is not defined" the instant it runs, aborting before saveSRC() or
+// renderProjectOverview() ever executes. That's the actual cause behind
+// "Save does nothing" / "the number doesn't show up on the dashboard" /
+// "upload failed" reports -- the underlying action (set the field, upload
+// the file) succeeded, but logging the history entry right after it threw
+// and killed the rest of the function silently.
+window.logProjectEvent=logProjectEvent;
 function optKey(vi){return vi==null?'p':String(vi);}
 function getOption(b,shopId,vi){return vi==null?b.quotes[shopId]:((b.variations&&b.variations[shopId])||[])[vi];}
 window.SRC_openCommentForm=function(bid,shopId,vi){SRC_OPEN_COMMENT[bid+'|'+shopId+'|'+optKey(vi)]=true;SRC_render();};
@@ -6142,6 +6154,7 @@ window.SRC_boundaryFilePicked=function(prefix,bid,input){
     if(lbl3)lbl3.textContent=f.name+' · '+sizeStr+' — upload failed, try again';
   });
 };
+window.parseScaleString=parseScaleString; // exposed -- called from the Add Lead admin form's scale auto-fill (an earlier <script> block)
 function parseScaleString(s){
   s=s||'';
   var intl='',imp='';
