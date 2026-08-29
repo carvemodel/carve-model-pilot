@@ -1950,7 +1950,9 @@ var PROJECT_STAGES=[
   'Completion',                                 // 4
   'Final Client Approval',                      // 5
   'Permanently Fixed, Cleaned & Polished',      // 6
-  'Packing & Shipping'                          // 7
+  'Packing & Shipping',                         // 7
+  'Post Delivery Support',                      // 8
+  'Project Completed'                           // 9 -- final stage; corresponds to b.deliveredAt
 ];
 function getProjectStartDate(b){
   var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
@@ -2141,7 +2143,7 @@ function projectRowHtml(b){
       '</div>'+
       invoicePanel;
   }
-  var stageName=delivered?'Delivered':PROJECT_STAGES[projectStageIndex(b)];
+  var stageName=delivered?'Project Completed':PROJECT_STAGES[projectStageIndex(b)];
   var scale=(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—';
   var metaBits=['Stage: '+esc(stageName)];
   metaBits.push('Target delivery: '+(targetDeliveryDate(b)?fmtDateShort(targetDeliveryDate(b)):'—'));
@@ -2492,23 +2494,22 @@ function renderProjectOverview(b){
   if(!b)return;
   var delivered=!!b.deliveredAt;
   var idx=projectStageIndex(b);
-  var totalSteps=PROJECT_STAGES.length+1; // +1 for the final Delivered step
+  var totalSteps=PROJECT_STAGES.length;
   var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
-  var stageName=delivered?'Delivered':PROJECT_STAGES[idx];
+  var stageName=delivered?'Project Completed':PROJECT_STAGES[idx];
   var short=(b.title||'').split(' — ')[0];
   var startDate=getProjectStartDate(b);
   var targetDelivery=targetDeliveryDate(b);
 
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
 
-  setText('journeyTitle',delivered?('Delivered — Stage '+totalSteps+' of '+totalSteps):('In production — Stage '+(idx+1)+' of '+totalSteps+' · '+stageName));
+  setText('journeyTitle',delivered?('Project Completed — Stage '+totalSteps+' of '+totalSteps):('In production — Stage '+(idx+1)+' of '+totalSteps+' · '+stageName));
   setText('journeyPct',pct+'%');
   var tl=document.querySelector('#journeyTrack .track__line i');if(tl)tl.style.width=pct+'%';
 
   var stepsWrap=document.getElementById('journeySteps');
   if(stepsWrap){
-    var allSteps=PROJECT_STAGES.concat(['Delivered']);
-    stepsWrap.innerHTML=allSteps.map(function(name,i){
+    stepsWrap.innerHTML=PROJECT_STAGES.map(function(name,i){
       var done=delivered?true:(i<idx);
       var current=!delivered&&i===idx;
       var cls=done?'done':(current?'current':'');
@@ -2569,7 +2570,7 @@ window.renderProjectOverview=renderProjectOverview;
 // see the notice in view-milestones for why that structured workflow isn't
 // built yet.
 function renderMilestonesReal(b){
-  setText('msStageLabel',b?(b.deliveredAt?'Delivered':(b.projectStage||PROJECT_STAGES[0])):'');
+  setText('msStageLabel',b?(b.deliveredAt?'Project Completed':(b.projectStage||PROJECT_STAGES[0])):'');
   var body=document.getElementById('msTimelineBody');
   if(!body)return;
   if(!b){body.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">Select a project to see its timeline.</div>';return;}
