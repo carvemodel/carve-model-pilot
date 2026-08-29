@@ -1939,7 +1939,16 @@ window.renderVendors=renderVendors;
 // would just be new placeholder content wearing a real-looking UI. Delivery
 // is tracked separately via b.deliveredAt (its own field, not a 5th stage)
 // so "Completed" in the Projects tab has one unambiguous real signal.
-var PROJECT_STAGES=['Project Kick Off','Finishing & Paint','Quality Check','Packing & Shipping'];
+var PROJECT_STAGES=[
+  'Project Kick Off',                          // 1 -- triggered once deposit is marked received
+  'Confirmed Material Samples',                // 2
+  'Fabrication',                                // 3
+  'Completion',                                 // 4
+  'Permanently Fixed, Cleaned & Polished',      // 5
+  'Final Client Approval',                      // 6
+  'Payment Received — 50% Remaining',      // 7
+  'Packing & Shipping'                          // 8
+];
 function projectStageIndex(b){
   var i=PROJECT_STAGES.indexOf(b.projectStage);
   return i<0?0:i;
