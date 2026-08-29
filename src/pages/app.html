@@ -2515,20 +2515,22 @@ function currentStageScheduleStatus(b){
   return scheduleStatusLabel(r.start,r.end);
 }
 window.currentStageScheduleStatus=currentStageScheduleStatus;
-// % complete derived from the same Start/Target-delivery timeline instead
-// of a static field nothing ever set. Capped at 99 until the project is
-// actually marked delivered (see the delivered?100:... ternary at the call
-// site), so it never falsely claims 100% early.
+// % complete for the journey track's white progress line -- driven by the
+// CONFIRMED stage (projectStageIndex/b.projectStage), same source of truth
+// as "Current stage" itself, not by how much calendar time has elapsed.
+// A project sitting in Fabrication shows the line at Fabrication's dot
+// regardless of whether that's ahead of or behind the estimated calendar
+// dates -- those two things are allowed to disagree (see
+// currentStageScheduleStatus for the "N days ahead/behind" callout that
+// covers the calendar comparison instead). Stages are evenly spaced along
+// the line, same spacing the dots themselves use, so the fill always lines
+// up with the current stage's dot.
 function computeTimelinePct(b){
   if(!b)return 0;
-  var start=getProjectStartDate(b);
-  var delivery=targetDeliveryDate(b);
-  if(!start||!delivery)return 0;
-  var today=new Date().toISOString().slice(0,10);
-  var total=daysBetween(start,delivery);
-  if(total<=0)return 0;
-  var elapsed=daysBetween(start,today);
-  return Math.max(0,Math.min(99,Math.round((elapsed/total)*100)));
+  var idx=projectStageIndex(b);
+  var totalSteps=PROJECT_STAGES.length;
+  if(totalSteps<=1)return 0;
+  return Math.max(0,Math.min(99,Math.round((idx/(totalSteps-1))*100)));
 }
 window.computeTimelinePct=computeTimelinePct;
 function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
