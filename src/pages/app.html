@@ -389,7 +389,7 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .jstep__dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.74rem;background:var(--cm-ink-850);border:1.5px solid var(--cm-ink-500);color:var(--cm-text-subtle);position:relative;z-index:2;transition:0.2s;}
 .jstep.done .jstep__dot{background:var(--cm-silver);border-color:var(--cm-silver);color:var(--cm-ink-900);font-weight:var(--w-bold);}
 .jstep.current .jstep__dot{background:var(--cm-white);border-color:var(--cm-white);color:var(--cm-ink-900);font-weight:var(--w-bold);box-shadow:0 0 0 5px rgba(255,255,255,0.12);}
-.jstep__name{font-size:0.82rem;font-weight:var(--w-semibold);color:var(--cm-text-muted);line-height:1.2;}
+.jstep__name{font-size:0.82rem;font-weight:var(--w-semibold);color:var(--cm-text-muted);line-height:1.2;display:flex;align-items:flex-start;justify-content:center;min-height:2.4em;}
 .jstep.done .jstep__name,.jstep.current .jstep__name{color:var(--cm-text-strong);}
 .jstep__date{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.02em;color:var(--cm-text-subtle);white-space:nowrap;min-height:1.3em;}
 .jstep.current .jstep__date{color:var(--cm-silver);}
@@ -2308,7 +2308,7 @@ function paymentStatusLabel(b){
 // "Project Kick Off" (index 0) forever regardless of how far along it
 // actually was. Falls back to deriving the current stage straight from
 // today's date against the same timeline used for the % complete bar and
-// the stage-hover estimates (see journeyStageRange/timelineDerivedStageIndex
+// the stage estimates (see journeyStageRange/timelineDerivedStageIndex
 // below), so "Current stage" actually moves as time passes.
 function projectStageIndex(b){
   var i=PROJECT_STAGES.indexOf(b.projectStage);
@@ -2340,22 +2340,23 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
     var d2=daysBetween(rangeEnd,today);
     return d2+' day'+(d2===1?'':'s')+' behind original schedule';
   }
-  return '';
+  return 'On schedule';
 }
-// Indicative estimated date (or date range) for each journey stage, shown
-// as a hover tooltip on the timeline -- illustrative only, not a live
-// production schedule. Derived entirely from the project's own Start date
-// and Target production completion (start + agreed production time), using
-// a fixed, consistent allocation: Confirmed Material Samples always gets
-// the first 4 days after kickoff; the last 5 days before completion are
-// split 1 (Final Client Approval) + 2 (Permanently Fixed, Cleaned &
-// Polished) + 2 (Packing & Shipping); Fabrication absorbs whatever's left
-// in between. Project Delivered is the project's own Target delivery date
-// (completion + 5 business days -- see targetDeliveryDate()). Post
-// Delivery Support is open-ended (starts the day after delivery, no fixed
-// end), so it never shows an ahead/behind comparison. Project Kick Off and
-// Project Completed round out the two ends.
-function journeyStageEstimate(b,stageIndex){
+// Raw {start,end,openEnded} for a stage's estimated window -- shared by
+// stageDateLabelCompact() (the visible per-dot date label) and
+// currentStageScheduleStatus() (the visible ahead/behind line on the
+// journey card) so the two never drift apart. Derived entirely from the
+// project's own Start date and Target production completion (start +
+// agreed production time), using a fixed, consistent allocation: Confirmed
+// Material Samples always gets the first 4 days after kickoff; the last 5
+// days before completion are split 1 (Final Client Approval) + 2
+// (Permanently Fixed, Cleaned & Polished) + 2 (Packing & Shipping);
+// Fabrication absorbs whatever's left in between. Project Delivered is the
+// project's own Target delivery date (completion + 5 business days -- see
+// targetDeliveryDate()). Post Delivery Support is open-ended (starts the
+// day after delivery, no fixed end), so it never shows an ahead/behind
+// comparison. Project Kick Off and Project Completed round out the two ends.
+function journeyStageRange(b,stageIndex){
   var stageName=PROJECT_STAGES[stageIndex];
   var start=getProjectStartDate(b);
   var completion=productionCompletionDate(b);
@@ -2369,13 +2370,70 @@ function journeyStageEstimate(b,stageIndex){
   else if(stageName==='Packing & Shipping'&&completion){rs=addDays(completion,-1);re=completion;}
   else if(stageName==='Project Delivered'&&delivery){rs=delivery;re=delivery;}
   else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
-  if(!rs)return '';
-  if(re&&rs>re)return ''; // agreed production time too short for this breakdown to make sense -- skip rather than show a nonsensical inverted range
-  var dateLine='Est. '+(re&&re!==rs?(fmtDateShort(rs)+' – '+fmtDateShort(re)):fmtDateShort(rs))+(openEnded?' onward':'');
-  var status=re?scheduleStatusLabel(rs,re):'';
-  return status?(dateLine+' · '+status):dateLine;
+  if(rs&&re&&rs>re)return {start:null,end:null,openEnded:false}; // agreed production time too short for this breakdown to make sense
+  return {start:rs,end:re,openEnded:openEnded};
 }
-window.journeyStageEstimate=journeyStageEstimate;
+// Which PROJECT_STAGES index today's date falls into, purely from the
+// timeline model above -- used as the fallback in projectStageIndex() so
+// "Current stage" actually advances as time passes rather than sitting on
+// a manual field nothing ever sets.
+function timelineDerivedStageIndex(b){
+  var today=new Date().toISOString().slice(0,10);
+  var idx=0;
+  for(var i=0;i<PROJECT_STAGES.length-1;i++){
+    var r=journeyStageRange(b,i);
+    if(r.start&&today>=r.start)idx=i;
+  }
+  return idx;
+}
+window.timelineDerivedStageIndex=timelineDerivedStageIndex;
+// Compact "Aug 22–25" / "Sep 16" / "Sep 26+" label shown directly under
+// each stage dot on the timeline -- no hover needed, the actual estimated
+// date is always visible. Short month+day only, no year (all within the
+// same project year), and collapses to "Mon D–D" when a range stays within
+// one month.
+function fmtStageDateCompact(s){
+  if(!s)return '';
+  try{return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});}catch(e){return s;}
+}
+function stageDateLabelCompact(b,stageIndex){
+  var r=journeyStageRange(b,stageIndex);
+  if(!r.start)return '—';
+  if(!r.end||r.end===r.start)return fmtStageDateCompact(r.start)+(r.openEnded?'+':'');
+  var rsD=new Date(r.start+'T00:00:00'), reD=new Date(r.end+'T00:00:00');
+  if(rsD.getMonth()===reD.getMonth()){
+    return rsD.toLocaleDateString('en-US',{month:'short'})+' '+rsD.getDate()+'–'+reD.getDate();
+  }
+  return fmtStageDateCompact(r.start)+'–'+fmtStageDateCompact(r.end);
+}
+window.stageDateLabelCompact=stageDateLabelCompact;
+// "N days ahead/behind original schedule" for whichever stage the project
+// is CURRENTLY sitting at -- shown as its own visible line on the journey
+// card, right under "Current stage: <name>".
+function currentStageScheduleStatus(b){
+  if(!b||b.deliveredAt)return '';
+  var idx=projectStageIndex(b);
+  var r=journeyStageRange(b,idx);
+  if(!r.start||!r.end)return '';
+  return scheduleStatusLabel(r.start,r.end);
+}
+window.currentStageScheduleStatus=currentStageScheduleStatus;
+// % complete derived from the same Start/Target-delivery timeline instead
+// of a static field nothing ever set. Capped at 99 until the project is
+// actually marked delivered (see the delivered?100:... ternary at the call
+// site), so it never falsely claims 100% early.
+function computeTimelinePct(b){
+  if(!b)return 0;
+  var start=getProjectStartDate(b);
+  var delivery=targetDeliveryDate(b);
+  if(!start||!delivery)return 0;
+  var today=new Date().toISOString().slice(0,10);
+  var total=daysBetween(start,delivery);
+  if(total<=0)return 0;
+  var elapsed=daysBetween(start,today);
+  return Math.max(0,Math.min(99,Math.round((elapsed/total)*100)));
+}
+window.computeTimelinePct=computeTimelinePct;
 function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
 function awardedBriefs(){return (window.SDB.briefs||[]).filter(function(b){return b.status==='awarded';});}
 function findBrief(id){return (window.SDB.briefs||[]).filter(function(b){return b.id===id;})[0];}
@@ -3249,11 +3307,10 @@ function renderProjectOverview(b){
       var current=!delivered&&i===idx;
       var cls=done?'done':(current?'current':'');
       var dotTxt=done?'✓':String(i+1);
-      // Native title tooltip -- hovering any stage shows its indicative
-      // estimated date/range (and whether that puts it ahead/behind
-      // schedule against today), see journeyStageEstimate() above.
-      var estimate=(typeof journeyStageEstimate==='function')?journeyStageEstimate(b,i):'';
-      return '<li class="jstep '+cls+'"'+(estimate?(' title="'+esc(estimate)+'"'):'')+'>'+(current?'<span class="jstep__here">You\'re here</span>':'')+
+      // Each stage's indicative estimated date/range shows directly under
+      // its name -- no hover needed (see stageDateLabelCompact() above).
+      var dateLabel=delivered?'Done':((typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,i):'');
+      return '<li class="jstep '+cls+'">'+(current?'<span class="jstep__here">You\'re here</span>':'')+
         '<span class="jstep__dot">'+dotTxt+'</span><span class="jstep__name">'+esc(name)+'</span>'+
         '<span class="jstep__date">'+esc(dateLabel)+'</span></li>';
     }).join('');
@@ -3352,7 +3409,7 @@ function renderProjectOverview(b){
       // email address baked into "by" (e.g. "support@physical-model.com
       // (Carve Admin)") -- strip it here at render time so old activity
       // self-heals to just the role label without needing a data migration.
-      var byLabel=h.by?h.by.replace(/^\S+@\S+\.\S+\s*(?=\()/,''):'';
+      var byLabel=(typeof resolveActorDisplay==='function')?resolveActorDisplay(h.by,b):h.by;
       var meta=esc(h.time||'')+(byLabel?' · '+esc(byLabel):'');
       return '<div class="act"><span class="d"></span><div><p>'+line+'</p><div class="t">'+meta+'</div></div></div>';
     }).join(''):'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No activity recorded yet.</div>';
@@ -5723,9 +5780,16 @@ function logHistory(b,shopId,optData,action){
 // real session (e.g. local demo/dev use), and finally just the role label
 // if even that isn't available.
 var ROLE_DISPLAY_LABEL={owner:'Carve Admin',sales:'Client Manager',factory:'Vendor',prodtech:'Production Tech',client:'Client'};
-function currentActorLabel(){
+function currentActorLabel(b){
   var role=document.body.dataset.role;
   var roleLabel=ROLE_DISPLAY_LABEL[role]||'';
+  // Client actions should show THIS project's actual client contact name
+  // (b.client.Name) -- the client login is a single shared demo account,
+  // not one per project, so looking it up in SDB.team (staff only) would
+  // never find a name. Never show the client's email either.
+  if(role==='client'&&b&&b.client&&b.client.Name){
+    return roleLabel?(b.client.Name+' ('+roleLabel+')'):b.client.Name;
+  }
   var sess=(typeof currentSession==='function')?currentSession():null;
   if(sess&&sess.email){
     var member=((window.SDB&&window.SDB.team)||[]).filter(function(t){return t&&t.email&&t.email.toLowerCase()===sess.email.toLowerCase();})[0];
@@ -5740,6 +5804,33 @@ function currentActorLabel(){
   return roleLabel||null;
 }
 window.currentActorLabel=currentActorLabel;
+// Best-effort cleanup for Recent Activity "by" values logged before this
+// fix existed (or by any code path that slipped an email through). Given
+// the project brief (for resolving the client's actual name) and any raw
+// stored label, resolves it to: a named team member ("Charles Liu (Client
+// Manager)"), the Carve Admin account, this project's client by name, a
+// role label from ACCOUNTS, or -- failing all of that -- just strips the
+// email and keeps whatever text (if any) followed it.
+function resolveActorDisplay(raw,b){
+  if(!raw)return raw;
+  var m=/([^\s()]+@[^\s()]+\.[^\s()]+)/.exec(raw);
+  if(!m)return raw;
+  var email=m[1].toLowerCase();
+  var member=((window.SDB&&window.SDB.team)||[]).filter(function(t){return t&&t.email&&t.email.toLowerCase()===email;})[0];
+  if(member&&member.name){
+    var mRoleLabel=ROLE_DISPLAY_LABEL[member.role]||'';
+    return mRoleLabel?(member.name+' ('+mRoleLabel+')'):member.name;
+  }
+  var acctRole=(typeof ACCOUNTS!=='undefined'&&ACCOUNTS[email])||null;
+  if(acctRole==='owner')return ROLE_DISPLAY_LABEL.owner||'Carve Admin';
+  if(b&&b.client&&b.client.Email&&b.client.Email.toLowerCase()===email){
+    var cLabel=ROLE_DISPLAY_LABEL.client||'Client';
+    return b.client.Name?(b.client.Name+' ('+cLabel+')'):cLabel;
+  }
+  if(acctRole&&ROLE_DISPLAY_LABEL[acctRole])return ROLE_DISPLAY_LABEL[acctRole];
+  return raw.replace(/^\S+@\S+\.\S+\s*(?=\()/,'');
+}
+window.resolveActorDisplay=resolveActorDisplay;
 function logProjectEvent(b,action,whenDateStr){
   if(!b.history)b.history=[];
   // whenDateStr lets a caller back-date an entry to when something
@@ -5747,7 +5838,7 @@ function logProjectEvent(b,action,whenDateStr){
   // anyone got around to marking it in the system) instead of always
   // stamping the moment the button was clicked.
   var time=whenDateStr?new Date(whenDateStr+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):nowStamp();
-  b.history.unshift({action:action,time:time,by:currentActorLabel()});
+  b.history.unshift({action:action,time:time,by:currentActorLabel(b)});
 }
 // logProjectEvent is defined inside this IIFE but called from EVERY other
 // <script> block on the page (Client info/spec field saves, date field
