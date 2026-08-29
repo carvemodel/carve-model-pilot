@@ -1077,6 +1077,19 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   </div>
                 </div>
                 <div>
+                  <span class="mock__k">Delivery address</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoDeliveryAddress" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psDeliveryAddressBtn" onclick="toggleProjectSpecFieldEdit('deliveryAddress')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psDeliveryAddressWrap" hidden style="margin-top:0.5rem;max-width:320px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="psDeliveryAddressInput" placeholder="e.g. 123 Main St, Phoenix, AZ 85001" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('deliveryAddress')">Save</button>
+                    </div>
+                  </div>
+                </div>
+                <div>
                   <span class="mock__k">Boundary map</span>
                   <div class="mock__v" id="projInfoBoundaryWrap" style="margin-top:0.3rem;">—</div>
                 </div>
@@ -2372,6 +2385,7 @@ function projectSpecValue(b,field){
     }
     return pkgDims.length?pkgDims.map(function(d,i){return pkgDims.length>1?('#'+(i+1)+' '+d):d;}).join(', '):null;
   }
+  if(field==='deliveryAddress')return b.deliveryAddressOverride||(b.client&&b.client.Address)||(b.brief&&b.brief['Delivery location'])||null;
   return null;
 }
 window.projectSpecValue=projectSpecValue;
@@ -2387,7 +2401,8 @@ var PROJECT_SPEC_FIELD_META={
   // at edit-open time rather than duplicated here, so the two stay in sync.
   material:{label:'Materials & presentation',display:'projInfoMaterial',wrap:'psMaterialWrap',btn:'psMaterialBtn',type:'select',input:'psMaterialInput',override:'materialOverride'},
   modelSize:{label:'Model size',display:'projInfoModelSize',wrap:'psModelSizeWrap',btn:'psModelSizeBtn',type:'dims',prefix:'psModelSize',override:'modelSizeOverride'},
-  packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',type:'dims',prefix:'psPackageSize',override:'packageSizeOverride'}
+  packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',type:'dims',prefix:'psPackageSize',override:'packageSizeOverride'},
+  deliveryAddress:{label:'Delivery address',display:'projInfoDeliveryAddress',wrap:'psDeliveryAddressWrap',btn:'psDeliveryAddressBtn',type:'text',input:'psDeliveryAddressInput',override:'deliveryAddressOverride'}
 };
 // Live mm<->in sync for the Model size / Package size L/W/H editors --
 // mirrors the vendor quotation form's own SRC_syncDim, just without the
