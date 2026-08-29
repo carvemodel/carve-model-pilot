@@ -2060,8 +2060,10 @@ function setProjectStart(id,val){
   var b=findBrief(id);if(!b)return;
   b.startDate=val||null;
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-  renderAwardedProjects();
-  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
+  var sel=document.getElementById('projSelect');
+  if(sel&&sel.value===id)renderProjectOverview(b);
 }
 window.setProjectStart=setProjectStart;
 function setProductionDays(id,val){
@@ -2069,8 +2071,10 @@ function setProductionDays(id,val){
   var n=parseInt(val,10);
   b.productionDays=isNaN(n)?null:Math.max(0,n);
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-  renderAwardedProjects();
-  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
+  var sel=document.getElementById('projSelect');
+  if(sel&&sel.value===id)renderProjectOverview(b);
 }
 window.setProductionDays=setProductionDays;
 function toggleProjectDelivered(id){
@@ -2124,13 +2128,12 @@ function projectRowHtml(b){
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
       '</div>'+
       '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
-        '<div class="mfield" style="margin:0;max-width:200px;"><label>Start date</label>'+
-          '<input type="date" value="'+esc(b.startDate||'')+'" onchange="setProjectStart(\''+esc(b.id)+'\',this.value)"></div>'+
-        '<div class="mfield" style="margin:0;max-width:220px;"><label>Agreed production time <span class="opt">(days)</span></label>'+
-          '<input type="number" min="0" value="'+esc(b.productionDays||'')+'" onchange="setProductionDays(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Start date</div><div>'+(b.startDate?esc(fmtDateShort(b.startDate)):'<span style="color:var(--cm-text-subtle);">Not set yet</span>')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Agreed production time</div><div>'+(b.productionDays?esc(b.productionDays+' days'):'<span style="color:var(--cm-text-subtle);">Not set yet</span>')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target production completion</div><div>'+(productionCompletionDate(b)?esc(fmtDateShort(productionCompletionDate(b))):'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery <span class="opt">(+5 days)</span></div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
       '</div>'+
+      '<p style="color:var(--cm-text-subtle);font-size:0.8rem;margin:0 0 0.6rem;">Start date and production time are set by this project\'s assigned Client Manager from My Projects, not from here.</p>'+
       '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
         '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
           '<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
@@ -2237,6 +2240,14 @@ function renderMyAssigned(){
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+(c.Email?('<a href="mailto:'+esc(c.Email)+'">'+esc(c.Email)+'</a>'):'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
+      '</div>'+
+      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
+        '<div class="mfield" style="margin:0;max-width:200px;"><label>Start date</label>'+
+          '<input type="date" value="'+esc(b.startDate||'')+'" onchange="setProjectStart(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div class="mfield" style="margin:0;max-width:220px;"><label>Agreed production time <span class="opt">(days)</span></label>'+
+          '<input type="number" min="0" value="'+esc(b.productionDays||'')+'" onchange="setProductionDays(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target production completion</div><div>'+(productionCompletionDate(b)?esc(fmtDateShort(productionCompletionDate(b))):'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery <span class="opt">(+5 days)</span></div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
       '</div>'+
       '<div class="projassign__row">'+invBtns+'</div>'+
     '</div>';
@@ -2545,7 +2556,7 @@ function renderProjectOverview(b){
 
   var actWrap=document.getElementById('ovActivityList');
   if(actWrap){
-    var hist=(b.history||[]).slice(0,8);
+    var hist=(b.history||[]).filter(function(h){return !h.shop;}).slice(0,8);
     actWrap.innerHTML=hist.length?hist.map(function(h){
       var line=esc(h.action||'Update');
       if(h.price!=null)line+=' — $'+Number(h.price).toLocaleString('en-US')+(h.days?(', '+h.days+' days'):'');
@@ -2563,7 +2574,7 @@ function renderMilestonesReal(b){
   var body=document.getElementById('msTimelineBody');
   if(!body)return;
   if(!b){body.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">Select a project to see its timeline.</div>';return;}
-  var hist=b.history||[];
+  var hist=(b.history||[]).filter(function(h){return !h.shop;});
   if(!hist.length){body.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No activity recorded yet.</div>';return;}
   body.innerHTML='<div class="timeline">'+hist.map(function(h,i){
     var line=esc(h.action||'Update');
@@ -5641,7 +5652,7 @@ window.SRC_markInvoicePaid=function(bid,which){
   if(!b||!b.clientQuote||!b.clientQuote.invoice)return;
   var inv=b.clientQuote.invoice;
   var today=new Date().toISOString().slice(0,10);
-  if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=today;logProjectEvent(b,'Deposit received');}
+  if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=today;logProjectEvent(b,'Project Kick Off — deposit received');}
   else{inv.balanceStatus='paid';inv.balancePaidAt=today;logProjectEvent(b,'Balance received');}
   saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
