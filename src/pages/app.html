@@ -1952,6 +1952,31 @@ var PROJECT_STAGES=[
   'Permanently Fixed, Cleaned & Polished',      // 6
   'Packing & Shipping'                          // 7
 ];
+function getProjectStartDate(b){
+  var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
+  return b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt||null;
+}
+function addDays(dateStr,days){
+  if(!dateStr)return null;
+  var d=new Date(dateStr+'T00:00:00');
+  if(isNaN(d.getTime()))return null;
+  d.setDate(d.getDate()+Number(days||0));
+  return d.toISOString().slice(0,10);
+}
+// Target production completion = start date + the production time agreed
+// with the client (b.productionDays). Target delivery = that completion
+// date + 5 days (packing & shipping buffer). Both are derived, not
+// separately hand-entered, so they can't drift out of sync with the start
+// date or the agreed production time.
+function productionCompletionDate(b){
+  var start=getProjectStartDate(b);
+  if(!start||!b.productionDays)return null;
+  return addDays(start,b.productionDays);
+}
+function targetDeliveryDate(b){
+  var completion=productionCompletionDate(b);
+  return completion?addDays(completion,5):null;
+}
 function paymentStatusLabel(b){
   var inv=b.clientQuote&&b.clientQuote.invoice;
   if(!inv)return 'Not invoiced';
@@ -2039,14 +2064,15 @@ function setProjectStart(id,val){
   if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
 }
 window.setProjectStart=setProjectStart;
-function setProjectTarget(id,val){
+function setProductionDays(id,val){
   var b=findBrief(id);if(!b)return;
-  b.targetDelivery=val||null;
+  var n=parseInt(val,10);
+  b.productionDays=isNaN(n)?null:Math.max(0,n);
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   renderAwardedProjects();
   if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
 }
-window.setProjectTarget=setProjectTarget;
+window.setProductionDays=setProductionDays;
 function toggleProjectDelivered(id){
   var b=findBrief(id);if(!b)return;
   b.deliveredAt=b.deliveredAt?null:new Date().toISOString().slice(0,10);
@@ -2100,8 +2126,10 @@ function projectRowHtml(b){
       '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
         '<div class="mfield" style="margin:0;max-width:200px;"><label>Start date</label>'+
           '<input type="date" value="'+esc(b.startDate||'')+'" onchange="setProjectStart(\''+esc(b.id)+'\',this.value)"></div>'+
-        '<div class="mfield" style="margin:0;max-width:200px;"><label>Target delivery <span class="opt">(agreed with client)</span></label>'+
-          '<input type="date" value="'+esc(b.targetDelivery||'')+'" onchange="setProjectTarget(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div class="mfield" style="margin:0;max-width:220px;"><label>Agreed production time <span class="opt">(days)</span></label>'+
+          '<input type="number" min="0" value="'+esc(b.productionDays||'')+'" onchange="setProductionDays(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target production completion</div><div>'+(productionCompletionDate(b)?esc(fmtDateShort(productionCompletionDate(b))):'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery <span class="opt">(+5 days)</span></div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
       '</div>'+
       '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
         '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
@@ -2114,7 +2142,7 @@ function projectRowHtml(b){
   var stageName=delivered?'Delivered':PROJECT_STAGES[projectStageIndex(b)];
   var scale=(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—';
   var metaBits=['Stage: '+esc(stageName)];
-  metaBits.push('Target delivery: '+(b.targetDelivery?fmtDateShort(b.targetDelivery):'—'));
+  metaBits.push('Target delivery: '+(targetDeliveryDate(b)?fmtDateShort(targetDeliveryDate(b)):'—'));
   metaBits.push('Scale: '+esc(scale));
   metaBits.push('Payment: '+esc(paymentStatusLabel(b)));
   return '<div class="projrow projcard" style="flex-direction:column;align-items:stretch;">'+
@@ -2449,7 +2477,7 @@ function openProject(id){
 // brief -- replaces what used to be a single hardcoded demo dashboard
 // (Aria Tower, 68%, Mar 20/Apr 2 dates) that never reflected any actual
 // project. See PROJECT_STAGES above for the honest, admin-set stage list
-// this reads from (b.projectStage/b.projectPct/b.targetDelivery/b.deliveredAt).
+// this reads from (b.projectStage/b.projectPct/b.startDate/b.productionDays/b.deliveredAt).
 function renderProjectOverview(b){
   if(!b)return;
   var delivered=!!b.deliveredAt;
@@ -2458,6 +2486,8 @@ function renderProjectOverview(b){
   var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
   var stageName=delivered?'Delivered':PROJECT_STAGES[idx];
   var short=(b.title||'').split(' — ')[0];
+  var startDate=getProjectStartDate(b);
+  var targetDelivery=targetDeliveryDate(b);
 
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
 
@@ -2495,24 +2525,22 @@ function renderProjectOverview(b){
   setText('kpiPct',pct+'%');
   var kpiBar=document.getElementById('kpiBar');if(kpiBar)kpiBar.style.width=pct+'%';
   setText('kpiNext',nextStage||'Complete');
-  setText('kpiNextSub',b.targetDelivery?('Target '+fmtDateShort(b.targetDelivery)):'—');
+  setText('kpiNextSub',targetDelivery?('Target '+fmtDateShort(targetDelivery)):'—');
   setText('kpiScale',(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—');
   setText('kpiScaleSub',(b.clientQuote&&b.clientQuote.material)||(b.brief&&b.brief['Model type'])||'');
 
   var notice=document.getElementById('ovNotice');
   if(notice)notice.innerHTML=delivered?
     ('Your model <b><span class="pname">'+esc(short)+'</span></b> is complete'+(b.deliveredAt?(' and was delivered on '+fmtDateShort(b.deliveredAt)):'')+'. Thank you for working with Carve Model.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>'):
-    ('Welcome back. Your model <b><span class="pname">'+esc(short)+'</span></b> is in '+esc(stageName)+' — '+pct+'% complete'+(b.targetDelivery?(', on track for delivery '+fmtDateShort(b.targetDelivery)):'')+'.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>');
+    ('Welcome back. Your model <b><span class="pname">'+esc(short)+'</span></b> is in '+esc(stageName)+' — '+pct+'% complete'+(targetDelivery?(', on track for delivery '+fmtDateShort(targetDelivery)):'')+'.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>');
 
   var c=b.client||{};
   var teamMember=(window.SDB.team||[]).filter(function(t){return t&&t.email&&b.assignedManager&&t.email.toLowerCase()===b.assignedManager.toLowerCase();})[0];
   setText('projInfoClientCM',c.Company||'—');
   setText('projInfoClientFactory',b.code?('Confidential · Ref '+b.code):'Confidential');
   setText('projInfoLead',teamMember?teamMember.name:'—');
-  var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
-  var startDate=b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt;
   setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
-  setText('projInfoTarget',b.targetDelivery?fmtDateShort(b.targetDelivery):'—');
+  setText('projInfoTarget',targetDelivery?fmtDateShort(targetDelivery):'—');
   setText('projInfoUse',(b.brief&&b.brief['Intended use'])||'—');
 
   var actWrap=document.getElementById('ovActivityList');
