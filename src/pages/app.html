@@ -2014,6 +2014,7 @@ function setBriefManager(id,email){
 function toggleProjectDelivered(id){
   var b=findBrief(id);if(!b)return;
   b.deliveredAt=b.deliveredAt?null:new Date().toISOString().slice(0,10);
+  logProjectEvent(b,b.deliveredAt?'Marked delivered':'Un-marked delivered');
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   renderAwardedProjects();
   if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
@@ -2021,6 +2022,7 @@ function toggleProjectDelivered(id){
 function toggleProjectArchived(id){
   var b=findBrief(id);if(!b)return;
   b.archived=!b.archived;
+  logProjectEvent(b,b.archived?'Archived':'Unarchived');
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   renderAwardedProjects();
   if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
@@ -2495,7 +2497,7 @@ function renderMilestonesReal(b){
     var line=esc(h.action||'Update');
     if(h.price!=null)line+=' — $'+Number(h.price).toLocaleString('en-US')+(h.days?(', '+h.days+' days'):'');
     return '<div class="ms '+(i===0?'active':'done')+'">'+
-      '<div class="ms__dot">'+(i===0?(hist.length-i):'✓')+'</div>'+
+      '<div class="ms__dot">'+(i===0?'1':'✓')+'</div>'+
       '<div class="ms__body"><h4>'+line+'</h4><div class="meta">'+esc((h.time||'').toUpperCase())+'</div></div>'+
       '<div class="ms__status"><span class="chip '+(i===0?'active':'done')+'">'+(i===0?'Latest':'Done')+'</span></div>'+
     '</div>';
@@ -4550,9 +4552,24 @@ window.SRC_dismissNotifications=function(){
   if(SDB.notifications&&SDB.notifications[OUR_SHOP])SDB.notifications[OUR_SHOP].forEach(function(n){n.read=true;});
   saveSRC();SRC_render();
 };
+function nowStamp(){
+  return new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+}
 function logHistory(b,shopId,optData,action){
   if(!b.history)b.history=[];
-  b.history.unshift({shop:shopId,label:optData.label||null,price:optData.price,priceRMB:optData.priceRMB,days:optData.days,action:action,time:'just now'});
+  // Real timestamp captured at the moment of the event, not the literal
+  // string 'just now' -- that was frozen forever and made every activity
+  // entry look identical/fake no matter how old it actually was.
+  b.history.unshift({shop:shopId,label:optData.label||null,price:optData.price,priceRMB:optData.priceRMB,days:optData.days,action:action,time:nowStamp()});
+}
+// General-purpose activity log for client/admin-facing lifecycle events
+// (award, deposit received, delivered, archived) that aren't tied to a
+// specific vendor quote -- these are what actually show up in a project's
+// Recent activity / timeline, which previously only ever logged vendor
+// quote submissions.
+function logProjectEvent(b,action){
+  if(!b.history)b.history=[];
+  b.history.unshift({action:action,time:nowStamp()});
 }
 function optKey(vi){return vi==null?'p':String(vi);}
 function getOption(b,shopId,vi){return vi==null?b.quotes[shopId]:((b.variations&&b.variations[shopId])||[])[vi];}
@@ -5552,8 +5569,8 @@ window.SRC_markInvoicePaid=function(bid,which){
   if(!b||!b.clientQuote||!b.clientQuote.invoice)return;
   var inv=b.clientQuote.invoice;
   var today=new Date().toISOString().slice(0,10);
-  if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=today;}
-  else{inv.balanceStatus='paid';inv.balancePaidAt=today;}
+  if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=today;logProjectEvent(b,'Deposit received');}
+  else{inv.balanceStatus='paid';inv.balancePaidAt=today;logProjectEvent(b,'Balance received');}
   saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
@@ -5850,6 +5867,7 @@ window.SRC_award=function(id,shopId,variantIndex){
   if(!confirm((already?'Switch confirmed production to ':'Confirm ')+b.title+' with '+label+'? '+(already?'The previous shop will be told they are no longer awarded. ':'')+'They\u2019ll be notified the job is theirs; other quoted shops are told they weren\u2019t selected. Client identity stays private.'))return;
   b.status='awarded';b.awarded=shopId;b.awardedVariantIndex=vi;b.picked=shopId;b.pickedVariantIndex=vi;
   b.awardedAt=new Date().toISOString().slice(0,10); // for the "Avg. days to award" dashboard metric
+  logProjectEvent(b,'Awarded to production — '+label);
   if(!sameBasis)b.clientQuote=null; // basis changed — the finalized client price no longer matches, needs re-review
   // The invoice number is issued the moment production is confirmed — not before,
   // since a quote alone doesn't guarantee the project moves forward. Stays fixed
