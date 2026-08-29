@@ -707,7 +707,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <div class="myproj-hero">
         <span class="mock__k">Studio workspace</span>
         <h2 class="myproj-title" id="projectsHeading">All projects</h2>
-        <p class="myproj-sub" id="projectsSub">Every project across the studio — open any one to see its full workspace.</p>
       </div>
 
       <!-- Real data only: populated by renderProjectsList() from awardedBriefs(),
@@ -854,12 +853,23 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
               <div><span class="mock__k">Start</span><div class="mock__v" id="projInfoStart">—</div></div>
               <div><span class="mock__k">Target delivery</span><div class="mock__v" id="projInfoTarget">—</div></div>
               <div><span class="mock__k">Use case</span><div class="mock__v" id="projInfoUse">—</div></div>
+              <div><span class="mock__k">Agreed model size</span><div class="mock__v" id="projInfoModelSize">—</div></div>
+              <div><span class="mock__k">Package size <span class="opt">(per vendor)</span></span><div class="mock__v" id="projInfoPackageSize">—</div></div>
             </div>
             <div class="proj-cancel client-only" id="projCancelWrap">
               <button class="linkbtn-danger" onclick="cancelProject()">Need to cancel this project?</button>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Owner-only project admin: Client Manager assignment, contact info,
+           dates (read-only here -- editable by the assigned Client Manager
+           from My Projects), delivered/archive state, and Invoice & Payment.
+           Populated by renderProjectAdminPanel(). -->
+      <div class="panel cm-only" style="margin-top:1.5rem;">
+        <div class="panel__head"><h3>Project admin</h3></div>
+        <div class="panel__body" id="projectAdminPanel"></div>
       </div>
     </section>
 
@@ -1950,15 +1960,41 @@ var PROJECT_STAGES=[
   'Completion',                                 // 4
   'Final Client Approval',                      // 5
   'Permanently Fixed, Cleaned & Polished',      // 6
-  'Packing & Shipping'                          // 7
+  'Packing & Shipping',                         // 7
+  'Post Delivery Support',                      // 8
+  'Project Completed'                           // 9 -- final stage; corresponds to b.deliveredAt
 ];
+function getProjectStartDate(b){
+  var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
+  return b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt||null;
+}
+function addDays(dateStr,days){
+  if(!dateStr)return null;
+  var d=new Date(dateStr+'T00:00:00');
+  if(isNaN(d.getTime()))return null;
+  d.setDate(d.getDate()+Number(days||0));
+  return d.toISOString().slice(0,10);
+}
+// Target production completion = start date + the production time agreed
+// with the client (b.productionDays). Target delivery = that completion
+// date + 5 days (packing & shipping buffer). Both are derived, not
+// separately hand-entered, so they can't drift out of sync with the start
+// date or the agreed production time.
+function productionCompletionDate(b){
+  var start=getProjectStartDate(b);
+  if(!start||!b.productionDays)return null;
+  return addDays(start,b.productionDays);
+}
+function targetDeliveryDate(b){
+  var completion=productionCompletionDate(b);
+  return completion?addDays(completion,5):null;
+}
 function paymentStatusLabel(b){
   var inv=b.clientQuote&&b.clientQuote.invoice;
   if(!inv)return 'Not invoiced';
-  if(inv.balanceStatus==='paid')return 'Paid in full';
-  if(inv.depositStatus==='paid')return 'Deposit paid';
-  if(inv.depositStatus==='reported'||inv.balanceStatus==='reported')return 'Payment reported';
-  return 'Payment due';
+  if(inv.balanceStatus==='paid')return 'Payment 100% Received';
+  if(inv.depositStatus==='paid')return '50% Deposit Received, 50% Final Due';
+  return '50% Deposit Due';
 }
 function projectStageIndex(b){
   var i=PROJECT_STAGES.indexOf(b.projectStage);
@@ -2001,16 +2037,11 @@ function submitAssignManager(){
 }
 window.submitAssignManager=submitAssignManager;
 
-/* ---- Projects tab (owner): every awarded brief, its assigned Client
-   Manager, client contact, and — click a project to expand it — its
-   Invoice & Payment panel. Invoices deliberately aren't a top-level nav tab
-   anymore; they live under the specific project they belong to. ---- */
-var expandedAwardedId=null;
-function toggleAwardedProject(id){
-  expandedAwardedId=(expandedAwardedId===id)?null:id;
-  renderAwardedProjects();
-}
-window.toggleAwardedProject=toggleAwardedProject;
+/* ---- Projects tab (owner): every awarded brief, at a glance -- clicking
+   a project opens its own detail (Overview) page, which is where the
+   assigned Client Manager, client contact, dates, and Invoice & Payment
+   panel actually live (see renderProjectAdminPanel). The list itself
+   never expands in place. ---- */
 function renderAwardedProjects(){
   // The Client Manager assignment + contact/invoice detail that used to
   // live in its own separate "Client Manager assignments" panel above the
@@ -2030,23 +2061,29 @@ function setBriefManager(id,email){
   b.assignedManager=email||null;
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   if(window.renderMyAssigned)window.renderMyAssigned();
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
 }
 function setProjectStart(id,val){
   var b=findBrief(id);if(!b)return;
   b.startDate=val||null;
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-  renderAwardedProjects();
-  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
+  var sel=document.getElementById('projSelect');
+  if(sel&&sel.value===id)renderProjectOverview(b);
 }
 window.setProjectStart=setProjectStart;
-function setProjectTarget(id,val){
+function setProductionDays(id,val){
   var b=findBrief(id);if(!b)return;
-  b.targetDelivery=val||null;
+  var n=parseInt(val,10);
+  b.productionDays=isNaN(n)?null:Math.max(0,n);
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-  renderAwardedProjects();
-  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
+  var sel=document.getElementById('projSelect');
+  if(sel&&sel.value===id)renderProjectOverview(b);
 }
-window.setProjectTarget=setProjectTarget;
+window.setProductionDays=setProductionDays;
 function toggleProjectDelivered(id){
   var b=findBrief(id);if(!b)return;
   b.deliveredAt=b.deliveredAt?null:new Date().toISOString().slice(0,10);
@@ -2074,59 +2111,18 @@ window.toggleProjectArchived=toggleProjectArchived;
 function projectRowHtml(b){
   var c=b.client||{};
   var delivered=!!b.deliveredAt;
-  var isOpen=expandedAwardedId===b.id;
-  var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
-  var expandBody='';
-  if(isOpen){
-    var invoicePanel='';
-    if(hasInvoice&&typeof window.invoiceLineAdmin==='function'){
-      var inv=b.clientQuote.invoice;
-      invoicePanel='<div class="projassign__invoice">'+
-        '<div class="mock__k" style="margin:0.9rem 0 0.5rem;">Invoice &amp; payment</div>'+
-        window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
-        window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
-      '</div>';
-    }else{
-      invoicePanel='<div class="projassign__invoice" style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
-    }
-    expandBody='<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
-        '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
-      '<div class="projassign__row projassign__contact">'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
-      '</div>'+
-      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
-        '<div class="mfield" style="margin:0;max-width:200px;"><label>Start date</label>'+
-          '<input type="date" value="'+esc(b.startDate||'')+'" onchange="setProjectStart(\''+esc(b.id)+'\',this.value)"></div>'+
-        '<div class="mfield" style="margin:0;max-width:200px;"><label>Target delivery <span class="opt">(agreed with client)</span></label>'+
-          '<input type="date" value="'+esc(b.targetDelivery||'')+'" onchange="setProjectTarget(\''+esc(b.id)+'\',this.value)"></div>'+
-      '</div>'+
-      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
-        '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
-          '<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
-          '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
-        '</div>'+
-      '</div>'+
-      invoicePanel;
-  }
-  var stageName=delivered?'Delivered':PROJECT_STAGES[projectStageIndex(b)];
+  var stageName=delivered?'Project Completed':PROJECT_STAGES[projectStageIndex(b)];
   var scale=(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—';
   var metaBits=['Stage: '+esc(stageName)];
-  metaBits.push('Target delivery: '+(b.targetDelivery?fmtDateShort(b.targetDelivery):'—'));
+  metaBits.push('Target delivery: '+(targetDeliveryDate(b)?fmtDateShort(targetDeliveryDate(b)):'—'));
   metaBits.push('Scale: '+esc(scale));
   metaBits.push('Payment: '+esc(paymentStatusLabel(b)));
-  return '<div class="projrow projcard" style="flex-direction:column;align-items:stretch;">'+
-    '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'+
-      '<div style="cursor:pointer;flex:1;min-width:180px;" onclick="openProject(\''+esc(b.id)+'\')">'+
+  return '<div class="projrow projcard" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')">'+
+    '<div>'+
         '<div class="projrow__name">'+esc(b.title)+'</div>'+
-        '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(b.brief&&b.brief['Intended use']?(' · '+esc(b.brief['Intended use'])):'')+'</div>'+
+        '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(c.Name?(' · '+esc(c.Name)):'')+(c.Phone?(' · '+esc(c.Phone)):'')+(c.Email?(' · '+esc(c.Email)):'')+'</div>'+
         '<div class="projcard__meta">'+metaBits.join(' · ')+'</div>'+
-      '</div>'+
-      '<button type="button" class="rowbtn" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;" onclick="toggleAwardedProject(\''+esc(b.id)+'\')">'+(isOpen?'Hide details ▲':'Details ▼')+'</button>'+
     '</div>'+
-    expandBody+
   '</div>';
 }
 function projectSectionHtml(label,list){
@@ -2209,6 +2205,14 @@ function renderMyAssigned(){
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+(c.Email?('<a href="mailto:'+esc(c.Email)+'">'+esc(c.Email)+'</a>'):'—')+'</div></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
+      '</div>'+
+      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
+        '<div class="mfield" style="margin:0;max-width:200px;"><label>Start date</label>'+
+          '<input type="date" value="'+esc(b.startDate||'')+'" onchange="setProjectStart(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div class="mfield" style="margin:0;max-width:220px;"><label>Agreed production time <span class="opt">(days)</span></label>'+
+          '<input type="number" min="0" value="'+esc(b.productionDays||'')+'" onchange="setProductionDays(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target production completion</div><div>'+(productionCompletionDate(b)?esc(fmtDateShort(productionCompletionDate(b))):'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery <span class="opt">(+5 days)</span></div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
       '</div>'+
       '<div class="projassign__row">'+invBtns+'</div>'+
     '</div>';
@@ -2449,26 +2453,27 @@ function openProject(id){
 // brief -- replaces what used to be a single hardcoded demo dashboard
 // (Aria Tower, 68%, Mar 20/Apr 2 dates) that never reflected any actual
 // project. See PROJECT_STAGES above for the honest, admin-set stage list
-// this reads from (b.projectStage/b.projectPct/b.targetDelivery/b.deliveredAt).
+// this reads from (b.projectStage/b.projectPct/b.startDate/b.productionDays/b.deliveredAt).
 function renderProjectOverview(b){
   if(!b)return;
   var delivered=!!b.deliveredAt;
   var idx=projectStageIndex(b);
-  var totalSteps=PROJECT_STAGES.length+1; // +1 for the final Delivered step
+  var totalSteps=PROJECT_STAGES.length;
   var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
-  var stageName=delivered?'Delivered':PROJECT_STAGES[idx];
+  var stageName=delivered?'Project Completed':PROJECT_STAGES[idx];
   var short=(b.title||'').split(' — ')[0];
+  var startDate=getProjectStartDate(b);
+  var targetDelivery=targetDeliveryDate(b);
 
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
 
-  setText('journeyTitle',delivered?('Delivered — Stage '+totalSteps+' of '+totalSteps):('In production — Stage '+(idx+1)+' of '+totalSteps+' · '+stageName));
+  setText('journeyTitle',delivered?('Project Completed — Stage '+totalSteps+' of '+totalSteps):('In production — Stage '+(idx+1)+' of '+totalSteps+' · '+stageName));
   setText('journeyPct',pct+'%');
   var tl=document.querySelector('#journeyTrack .track__line i');if(tl)tl.style.width=pct+'%';
 
   var stepsWrap=document.getElementById('journeySteps');
   if(stepsWrap){
-    var allSteps=PROJECT_STAGES.concat(['Delivered']);
-    stepsWrap.innerHTML=allSteps.map(function(name,i){
+    stepsWrap.innerHTML=PROJECT_STAGES.map(function(name,i){
       var done=delivered?true:(i<idx);
       var current=!delivered&&i===idx;
       var cls=done?'done':(current?'current':'');
@@ -2495,47 +2500,101 @@ function renderProjectOverview(b){
   setText('kpiPct',pct+'%');
   var kpiBar=document.getElementById('kpiBar');if(kpiBar)kpiBar.style.width=pct+'%';
   setText('kpiNext',nextStage||'Complete');
-  setText('kpiNextSub',b.targetDelivery?('Target '+fmtDateShort(b.targetDelivery)):'—');
+  setText('kpiNextSub',targetDelivery?('Target '+fmtDateShort(targetDelivery)):'—');
   setText('kpiScale',(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—');
   setText('kpiScaleSub',(b.clientQuote&&b.clientQuote.material)||(b.brief&&b.brief['Model type'])||'');
 
   var notice=document.getElementById('ovNotice');
   if(notice)notice.innerHTML=delivered?
     ('Your model <b><span class="pname">'+esc(short)+'</span></b> is complete'+(b.deliveredAt?(' and was delivered on '+fmtDateShort(b.deliveredAt)):'')+'. Thank you for working with Carve Model.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>'):
-    ('Welcome back. Your model <b><span class="pname">'+esc(short)+'</span></b> is in '+esc(stageName)+' — '+pct+'% complete'+(b.targetDelivery?(', on track for delivery '+fmtDateShort(b.targetDelivery)):'')+'.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>');
+    ('Welcome back. Your model <b><span class="pname">'+esc(short)+'</span></b> is in '+esc(stageName)+' — '+pct+'% complete'+(targetDelivery?(', on track for delivery '+fmtDateShort(targetDelivery)):'')+'.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>');
 
   var c=b.client||{};
   var teamMember=(window.SDB.team||[]).filter(function(t){return t&&t.email&&b.assignedManager&&t.email.toLowerCase()===b.assignedManager.toLowerCase();})[0];
   setText('projInfoClientCM',c.Company||'—');
   setText('projInfoClientFactory',b.code?('Confidential · Ref '+b.code):'Confidential');
   setText('projInfoLead',teamMember?teamMember.name:'—');
-  var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
-  var startDate=b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt;
   setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
-  setText('projInfoTarget',b.targetDelivery?fmtDateShort(b.targetDelivery):'—');
+  setText('projInfoTarget',targetDelivery?fmtDateShort(targetDelivery):'—');
   setText('projInfoUse',(b.brief&&b.brief['Intended use'])||'—');
+  var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+  var modelSize=(b.clientQuote&&b.clientQuote.modelDims)||(wq&&wq.modelDims)||null;
+  setText('projInfoModelSize',modelSize?modelSize:'—');
+  var pkgDims=(wq&&wq.packageDimsList&&wq.packageDimsList.length)?wq.packageDimsList:(wq&&wq.packageDims?[wq.packageDims]:[]);
+  if(!pkgDims.length&&b.clientQuote){
+    pkgDims=(b.clientQuote.packageDimsList&&b.clientQuote.packageDimsList.length)?b.clientQuote.packageDimsList:(b.clientQuote.packageDims?[b.clientQuote.packageDims]:[]);
+  }
+  setText('projInfoPackageSize',pkgDims.length?pkgDims.map(function(d,i){return pkgDims.length>1?('#'+(i+1)+' '+d):d;}).join(', '):'—');
 
   var actWrap=document.getElementById('ovActivityList');
   if(actWrap){
-    var hist=(b.history||[]).slice(0,8);
+    var hist=(b.history||[]).filter(function(h){return !h.shop;}).slice(0,8);
     actWrap.innerHTML=hist.length?hist.map(function(h){
       var line=esc(h.action||'Update');
       if(h.price!=null)line+=' — $'+Number(h.price).toLocaleString('en-US')+(h.days?(', '+h.days+' days'):'');
       return '<div class="act"><span class="d"></span><div><p>'+line+'</p><div class="t">'+esc(h.time||'')+'</div></div></div>';
     }).join(''):'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No activity recorded yet.</div>';
   }
+
+  renderProjectAdminPanel(b);
 }
 window.renderProjectOverview=renderProjectOverview;
+// Owner-only admin controls for this one project -- Client Manager
+// assignment, contact info, dates (read-only; the assigned Client Manager
+// edits these from My Projects), delivered/archive toggles, and Invoice &
+// Payment. Lives on the project's own detail page now, not as an
+// in-place expand on the Projects tab list.
+function renderProjectAdminPanel(b){
+  var wrap=document.getElementById('projectAdminPanel');
+  if(!wrap||!b)return;
+  var c=b.client||{};
+  var delivered=!!b.deliveredAt;
+  var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
+  var invoicePanel='';
+  if(hasInvoice&&typeof window.invoiceLineAdmin==='function'){
+    var inv=b.clientQuote.invoice;
+    invoicePanel='<div class="projassign__invoice">'+
+      '<div class="mock__k" style="margin:0.9rem 0 0.5rem;">Invoice &amp; payment</div>'+
+      window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
+      window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
+    '</div>';
+  }else{
+    invoicePanel='<div class="projassign__invoice" style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
+  }
+  wrap.innerHTML='<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
+      '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
+    '<div class="projassign__row projassign__contact">'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
+    '</div>'+
+    '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Start date</div><div>'+(b.startDate?esc(fmtDateShort(b.startDate)):'<span style="color:var(--cm-text-subtle);">Not set yet</span>')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Agreed production time</div><div>'+(b.productionDays?esc(b.productionDays+' days'):'<span style="color:var(--cm-text-subtle);">Not set yet</span>')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target production completion</div><div>'+(productionCompletionDate(b)?esc(fmtDateShort(productionCompletionDate(b))):'—')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery <span class="opt">(+5 days)</span></div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
+    '</div>'+
+    '<p style="color:var(--cm-text-subtle);font-size:0.8rem;margin:0 0 0.6rem;">Start date and production time are set by this project\'s assigned Client Manager from My Projects, not from here.</p>'+
+    '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
+      '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
+        '<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
+        '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
+      '</div>'+
+    '</div>'+
+    invoicePanel;
+}
+window.renderProjectAdminPanel=renderProjectAdminPanel;
 // Milestones tab: a REAL activity timeline off the brief's own b.history
 // (quotes, awards, revisions), not a fabricated photo-approval workflow --
 // see the notice in view-milestones for why that structured workflow isn't
 // built yet.
 function renderMilestonesReal(b){
-  setText('msStageLabel',b?(b.deliveredAt?'Delivered':(b.projectStage||PROJECT_STAGES[0])):'');
+  setText('msStageLabel',b?(b.deliveredAt?'Project Completed':(b.projectStage||PROJECT_STAGES[0])):'');
   var body=document.getElementById('msTimelineBody');
   if(!body)return;
   if(!b){body.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">Select a project to see its timeline.</div>';return;}
-  var hist=b.history||[];
+  var hist=(b.history||[]).filter(function(h){return !h.shop;});
   if(!hist.length){body.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No activity recorded yet.</div>';return;}
   body.innerHTML='<div class="timeline">'+hist.map(function(h,i){
     var line=esc(h.action||'Update');
@@ -3297,7 +3356,7 @@ function applyPerms(role){
   var curView=document.querySelector('.view:not([hidden])');
   if(curView){
     var navForView=document.querySelector('.navbtn[data-view="'+(curView.id.replace('view-',''))+'"]');
-    var fallbackView=role==='owner'?'leads':(role==='sales'?'myassigned':'overview');
+    var fallbackView=role==='owner'?'projects':(role==='sales'?'myassigned':'overview');
     if(navForView && navForView.classList.contains('perm-off')) go(fallbackView);
     if(curView.classList.contains('perm-off')) go(fallbackView);
   }
@@ -3669,12 +3728,12 @@ function setRole(r){
   document.getElementById('whoAv').textContent=info.av;
   document.getElementById('whoRole').textContent=info.org;
   applyPerms(r);
-  // Owner's home is studio-wide oversight, with no project pre-selected.
-  // Others land on their project workspace.
+  // Owner's home is the Projects list (every project across the studio),
+  // with no project pre-selected. Others land on their project workspace.
   var sel=document.getElementById('projSelect');
   if(r==='owner'){
     sel.value='';
-    go('leads');
+    go('projects');
   }else if(r==='client'){
     if(!sel.value)sel.value='aria';
     onProjChange();
@@ -4611,9 +4670,14 @@ function logHistory(b,shopId,optData,action){
 // specific vendor quote -- these are what actually show up in a project's
 // Recent activity / timeline, which previously only ever logged vendor
 // quote submissions.
-function logProjectEvent(b,action){
+function logProjectEvent(b,action,whenDateStr){
   if(!b.history)b.history=[];
-  b.history.unshift({action:action,time:nowStamp()});
+  // whenDateStr lets a caller back-date an entry to when something
+  // actually happened (e.g. a payment that landed a couple days before
+  // anyone got around to marking it in the system) instead of always
+  // stamping the moment the button was clicked.
+  var time=whenDateStr?new Date(whenDateStr+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):nowStamp();
+  b.history.unshift({action:action,time:time});
 }
 function optKey(vi){return vi==null?'p':String(vi);}
 function getOption(b,shopId,vi){return vi==null?b.quotes[shopId]:((b.variations&&b.variations[shopId])||[])[vi];}
@@ -5613,8 +5677,15 @@ window.SRC_markInvoicePaid=function(bid,which){
   if(!b||!b.clientQuote||!b.clientQuote.invoice)return;
   var inv=b.clientQuote.invoice;
   var today=new Date().toISOString().slice(0,10);
-  if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=today;logProjectEvent(b,'Deposit received');}
-  else{inv.balanceStatus='paid';inv.balancePaidAt=today;logProjectEvent(b,'Balance received');}
+  // Recent activity should reflect when Carve actually received the money,
+  // not whatever moment someone happened to click this button -- those can
+  // be days apart (e.g. a wire lands over the weekend, gets marked Monday).
+  var received=prompt('What date was this payment actually received by Carve? (YYYY-MM-DD)',today);
+  if(received==null)return;
+  received=received.trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(received)){alert('Please enter the date as YYYY-MM-DD.');return;}
+  if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=received;logProjectEvent(b,'Project Kick Off — deposit received',received);}
+  else{inv.balanceStatus='paid';inv.balancePaidAt=received;logProjectEvent(b,'Balance received',received);}
   saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
