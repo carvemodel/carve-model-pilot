@@ -843,21 +843,31 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <div class="act-list" id="ovActivityList"></div>
           </div>
         </div>
-        <div class="panel">
-          <div class="panel__head"><h3>Project</h3></div>
-          <div class="panel__body">
-            <div style="display:flex;flex-direction:column;gap:0.9rem;">
-              <div class="cm-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientCM">—</div></div>
-              <div class="factory-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientFactory">—</div></div>
-              <div><span class="mock__k">Carve Lead</span><div class="mock__v" id="projInfoLead">—</div></div>
-              <div><span class="mock__k">Start</span><div class="mock__v" id="projInfoStart">—</div></div>
-              <div><span class="mock__k">Target delivery</span><div class="mock__v" id="projInfoTarget">—</div></div>
-              <div><span class="mock__k">Use case</span><div class="mock__v" id="projInfoUse">—</div></div>
-              <div><span class="mock__k">Agreed model size</span><div class="mock__v" id="projInfoModelSize">—</div></div>
-              <div><span class="mock__k">Package size <span class="opt">(per vendor)</span></span><div class="mock__v" id="projInfoPackageSize">—</div></div>
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+          <div class="panel">
+            <div class="panel__head"><h3>Client information</h3></div>
+            <div class="panel__body">
+              <div style="display:flex;flex-direction:column;gap:0.9rem;">
+                <div class="cm-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientCM">—</div></div>
+                <div class="factory-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientFactory">—</div></div>
+              </div>
+              <div class="proj-cancel client-only" id="projCancelWrap">
+                <button class="linkbtn-danger" onclick="cancelProject()">Need to cancel this project?</button>
+              </div>
             </div>
-            <div class="proj-cancel client-only" id="projCancelWrap">
-              <button class="linkbtn-danger" onclick="cancelProject()">Need to cancel this project?</button>
+          </div>
+          <div class="panel">
+            <div class="panel__head"><h3>Project information</h3></div>
+            <div class="panel__body">
+              <div style="display:flex;flex-direction:column;gap:0.9rem;">
+                <div><span class="mock__k">Carve Lead</span><div class="mock__v" id="projInfoLead">—</div></div>
+                <div><span class="mock__k">Start</span><div class="mock__v" id="projInfoStart">—</div></div>
+                <div><span class="mock__k">Target production completion</span><div class="mock__v" id="projInfoCompletion">—</div></div>
+                <div><span class="mock__k">Target delivery</span><div class="mock__v" id="projInfoTarget">—</div></div>
+                <div><span class="mock__k">Use case</span><div class="mock__v" id="projInfoUse">—</div></div>
+                <div><span class="mock__k">Model size</span><div class="mock__v" id="projInfoModelSize">—</div></div>
+                <div><span class="mock__k">Package size</span><div class="mock__v" id="projInfoPackageSize">—</div></div>
+              </div>
             </div>
           </div>
         </div>
@@ -2114,6 +2124,8 @@ function projectRowHtml(b){
   var stageName=delivered?'Project Completed':PROJECT_STAGES[projectStageIndex(b)];
   var scale=(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—';
   var metaBits=['Stage: '+esc(stageName)];
+  metaBits.push('Start: '+(b.startDate?fmtDateShort(b.startDate):'—'));
+  metaBits.push('Target completion: '+(productionCompletionDate(b)?fmtDateShort(productionCompletionDate(b)):'—'));
   metaBits.push('Target delivery: '+(targetDeliveryDate(b)?fmtDateShort(targetDeliveryDate(b)):'—'));
   metaBits.push('Scale: '+esc(scale));
   metaBits.push('Payment: '+esc(paymentStatusLabel(b)));
@@ -2516,6 +2528,8 @@ function renderProjectOverview(b){
   setText('projInfoLead',teamMember?teamMember.name:'—');
   setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
   setText('projInfoTarget',targetDelivery?fmtDateShort(targetDelivery):'—');
+  var completionDate=productionCompletionDate(b);
+  setText('projInfoCompletion',completionDate?fmtDateShort(completionDate):'—');
   setText('projInfoUse',(b.brief&&b.brief['Intended use'])||'—');
   var wq=(typeof winningQuote==='function')?winningQuote(b):null;
   var modelSize=(b.clientQuote&&b.clientQuote.modelDims)||(wq&&wq.modelDims)||null;
