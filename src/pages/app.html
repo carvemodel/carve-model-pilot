@@ -366,7 +366,7 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .track{position:relative;}
 .track__line{position:absolute;left:0;right:0;top:13px;height:2px;background:var(--cm-ink-600);border-radius:99px;overflow:hidden;}
 .track__line i{display:block;height:100%;background:linear-gradient(90deg,var(--cm-silver),#fff);transition:width var(--dur-4) var(--ease-out);}
-.track__steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,1fr);gap:0.4rem;position:relative;}
+.track__steps{list-style:none;margin:0;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0.4rem;position:relative;}
 .jstep{display:flex;flex-direction:column;align-items:center;text-align:center;gap:0.45rem;position:relative;padding-top:0;}
 .jstep__dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.74rem;background:var(--cm-ink-850);border:1.5px solid var(--cm-ink-500);color:var(--cm-text-subtle);position:relative;z-index:2;transition:0.2s;}
 .jstep.done .jstep__dot{background:var(--cm-silver);border-color:var(--cm-silver);color:var(--cm-ink-900);font-weight:var(--w-bold);}
@@ -1944,8 +1944,8 @@ var PROJECT_STAGES=[
   'Confirmed Material Samples',                // 2
   'Fabrication',                                // 3
   'Completion',                                 // 4
-  'Permanently Fixed, Cleaned & Polished',      // 5
-  'Final Client Approval',                      // 6
+  'Final Client Approval',                      // 5
+  'Permanently Fixed, Cleaned & Polished',      // 6
   'Payment Received — 50% Remaining',      // 7
   'Packing & Shipping'                          // 8
 ];
