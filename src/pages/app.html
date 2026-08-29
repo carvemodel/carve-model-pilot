@@ -838,6 +838,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <p id="journeyNow">Digital fabrication and hand-finishing of the tower massing. QC photos are posted to <b>Files</b> as each section completes.</p>
           </div>
           <div class="journey__next" id="journeyNextWrap">
+            <span class="mock__k">Current stage: <span id="journeyCurrentStageText" style="color:var(--cm-text-strong);">—</span></span>
+            <div class="sub" id="journeyScheduleStatus" style="margin:0.15rem 0 0.6rem;"></div>
             <span class="mock__k">Next Stage: <span id="journeyNextStageText">—</span></span>
             <div style="display:flex;flex-direction:column;gap:0.7rem;margin-top:0.7rem;">
               <div>
@@ -2287,9 +2289,18 @@ function paymentStatusLabel(b){
   if(inv.depositStatus==='paid')return '50% Deposit Received, 50% Final Due';
   return '50% Deposit Due';
 }
+// b.projectStage (an explicit stage name) always wins if it's ever set, but
+// there's no admin control anywhere that actually sets it -- it's always
+// undefined in practice, which used to just leave every project pinned at
+// "Project Kick Off" (index 0) forever regardless of how far along it
+// actually was. Falls back to deriving the current stage straight from
+// today's date against the same timeline used for the % complete bar and
+// the stage-hover estimates (see journeyStageRange/timelineDerivedStageIndex
+// below), so "Current stage" actually moves as time passes.
 function projectStageIndex(b){
   var i=PROJECT_STAGES.indexOf(b.projectStage);
-  return i<0?0:i;
+  if(i>=0)return i;
+  return (typeof timelineDerivedStageIndex==='function')?timelineDerivedStageIndex(b):0;
 }
 function fmtDateShort(s){
   if(!s)return '';
@@ -2331,7 +2342,11 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // Delivery Support is open-ended (starts the day after delivery, no fixed
 // end), so it never shows an ahead/behind comparison. Project Kick Off and
 // Project Completed round out the two ends.
-function journeyStageEstimate(b,stageIndex){
+// Raw {start,end,openEnded} for a stage's estimated window -- shared by
+// journeyStageEstimate() (hover tooltip text) and
+// currentStageScheduleStatus() (the visible ahead/behind line on the
+// journey card) so the two never drift apart.
+function journeyStageRange(b,stageIndex){
   var stageName=PROJECT_STAGES[stageIndex];
   var start=getProjectStartDate(b);
   var completion=productionCompletionDate(b);
@@ -2345,13 +2360,63 @@ function journeyStageEstimate(b,stageIndex){
   else if(stageName==='Packing & Shipping'&&completion){rs=addDays(completion,-1);re=completion;}
   else if(stageName==='Project Delivered'&&delivery){rs=delivery;re=delivery;}
   else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
-  if(!rs)return '';
-  if(re&&rs>re)return ''; // agreed production time too short for this breakdown to make sense -- skip rather than show a nonsensical inverted range
-  var dateLine='Est. '+(re&&re!==rs?(fmtDateShort(rs)+' – '+fmtDateShort(re)):fmtDateShort(rs))+(openEnded?' onward':'');
-  var status=re?scheduleStatusLabel(rs,re):'';
+  if(rs&&re&&rs>re)return {start:null,end:null,openEnded:false}; // agreed production time too short for this breakdown to make sense
+  return {start:rs,end:re,openEnded:openEnded};
+}
+// The current stage is whichever stage's estimated window today has
+// reached -- the last one (in order) whose start date is on or before
+// today. "Project Completed" (the final entry) is excluded here since it's
+// never date-derived -- it's only ever reached via b.deliveredAt, see
+// autoMarkDeliveredIfComplete(). Defaults to 0 (Project Kick Off) when
+// there's no start date to work from yet.
+function timelineDerivedStageIndex(b){
+  var today=new Date().toISOString().slice(0,10);
+  var idx=0;
+  for(var i=0;i<PROJECT_STAGES.length-1;i++){
+    var r=journeyStageRange(b,i);
+    if(r.start&&today>=r.start)idx=i;
+  }
+  return idx;
+}
+window.timelineDerivedStageIndex=timelineDerivedStageIndex;
+function journeyStageEstimate(b,stageIndex){
+  var r=journeyStageRange(b,stageIndex);
+  if(!r.start)return '';
+  var dateLine='Est. '+(r.end&&r.end!==r.start?(fmtDateShort(r.start)+' – '+fmtDateShort(r.end)):fmtDateShort(r.start))+(r.openEnded?' onward':'');
+  var status=r.end?scheduleStatusLabel(r.start,r.end):'';
   return status?(dateLine+' · '+status):dateLine;
 }
 window.journeyStageEstimate=journeyStageEstimate;
+// Just the "N days ahead/behind original schedule" phrase (no date range)
+// for whichever stage the project is CURRENTLY sitting at -- shown as its
+// own line on the journey card, right under "Current stage: <name>".
+function currentStageScheduleStatus(b){
+  if(!b||b.deliveredAt)return '';
+  var idx=projectStageIndex(b);
+  var r=journeyStageRange(b,idx);
+  if(!r.start||!r.end)return '';
+  return scheduleStatusLabel(r.start,r.end);
+}
+window.currentStageScheduleStatus=currentStageScheduleStatus;
+// Overall % complete is derived straight from the same timeline as the
+// journey stage estimates above -- how far today sits between the
+// project's Start date and its Target delivery date -- rather than a
+// separate, manually-tracked number (there was never any UI to set
+// b.projectPct anyway, so it always silently sat at 0). Clamped to 99
+// until the project is actually marked delivered, so the bar never claims
+// "100% complete" ahead of the real thing.
+function computeTimelinePct(b){
+  if(!b)return 0;
+  var start=getProjectStartDate(b);
+  var delivery=targetDeliveryDate(b);
+  if(!start||!delivery)return 0;
+  var today=new Date().toISOString().slice(0,10);
+  var total=daysBetween(start,delivery);
+  if(total<=0)return 0;
+  var elapsed=daysBetween(start,today);
+  return Math.max(0,Math.min(99,Math.round((elapsed/total)*100)));
+}
+window.computeTimelinePct=computeTimelinePct;
 function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
 function awardedBriefs(){return (window.SDB.briefs||[]).filter(function(b){return b.status==='awarded';});}
 function findBrief(id){return (window.SDB.briefs||[]).filter(function(b){return b.id===id;})[0];}
@@ -3199,7 +3264,7 @@ function renderProjectOverview(b){
   var paused=!delivered&&!!b.paused;
   var idx=projectStageIndex(b);
   var totalSteps=PROJECT_STAGES.length;
-  var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
+  var pct=delivered?100:computeTimelinePct(b);
   var stageName=delivered?'Project Completed':PROJECT_STAGES[idx];
   var short=(b.title||'').split(' — ')[0];
   var startDate=getProjectStartDate(b);
@@ -3236,6 +3301,8 @@ function renderProjectOverview(b){
   // legacy elements stay in the DOM (hidden) only because an old,
   // apparently-unreachable demo path (openCompletedProject) still touches
   // them directly without null checks.
+  setText('journeyCurrentStageText',delivered?'Project Completed':stageName);
+  setText('journeyScheduleStatus',(typeof currentStageScheduleStatus==='function')?currentStageScheduleStatus(b):'');
   setText('journeyNextStageText',delivered?'Complete':(nextStage||'Complete'));
   var jNow=document.getElementById('journeyNow');
   if(jNow)jNow.innerHTML=delivered?'Project complete. Final files are available under Files.':esc(b.projectUpdateNote||('Currently in '+stageName+'.'));
