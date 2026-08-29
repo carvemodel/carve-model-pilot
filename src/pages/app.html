@@ -838,7 +838,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <p id="journeyNow">Digital fabrication and hand-finishing of the tower massing. QC photos are posted to <b>Files</b> as each section completes.</p>
           </div>
           <div class="journey__next" id="journeyNextWrap">
-            <span class="mock__k">Current stage: <span id="journeyCurrentStageText" style="color:var(--cm-text-strong);">—</span><span class="sub" id="journeyScheduleStatus" style="margin-left:0.35rem;"></span></span>
+            <span class="mock__k">Current stage: <span id="journeyCurrentStageText" style="color:var(--cm-text-strong);">—</span><span class="sub" id="journeyScheduleStatus" style="margin-left:0.35rem;color:var(--cm-text-strong);"></span></span>
             <span class="mock__k" style="display:block;margin-top:0.6rem;">Next Stage: <span id="journeyNextStageText">—</span></span>
             <div style="display:flex;flex-direction:column;gap:0.7rem;margin-top:0.7rem;">
               <div>
@@ -2347,10 +2347,11 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // journey card) so the two never drift apart. Derived entirely from the
 // project's own Start date and Target production completion (start +
 // agreed production time), using a fixed, consistent allocation: Confirmed
-// Material Samples always gets the first 4 days after kickoff; the last 5
+// Material Samples always gets the first 7 days after kickoff; the last 5
 // days before completion are split 1 (Final Client Approval) + 2
 // (Permanently Fixed, Cleaned & Polished) + 2 (Packing & Shipping);
-// Fabrication absorbs whatever's left in between. Project Delivered is the
+// Fabrication absorbs whatever's left in between (starting the day after
+// material confirmation wraps, day 8). Project Delivered is the
 // project's own Target delivery date (completion + 5 business days -- see
 // targetDeliveryDate()). Post Delivery Support is open-ended (starts the
 // day after delivery, no fixed end), so it never shows an ahead/behind
@@ -2362,8 +2363,8 @@ function journeyStageRange(b,stageIndex){
   var delivery=targetDeliveryDate(b);
   var rs=null,re=null,openEnded=false;
   if(stageName==='Project Kick Off'&&start){rs=start;re=start;}
-  else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,4);}
-  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,5);re=addDays(completion,-5);}
+  else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,7);}
+  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,8);re=addDays(completion,-5);}
   else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-4);re=rs;}
   else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-3);re=addDays(completion,-2);}
   else if(stageName==='Packing & Shipping'&&completion){rs=addDays(completion,-1);re=completion;}
