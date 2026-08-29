@@ -1648,6 +1648,18 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
+<!-- Image lightbox -- reusable full-screen preview for any uploaded image
+     (currently just the boundary map thumbnail; click-to-close on the
+     overlay itself, not just the X, since that's the expected pattern for
+     a viewer like this). -->
+<div class="modal-overlay" id="imgLightbox" hidden onclick="if(event.target===this)closeImageLightbox();" style="z-index:400;">
+  <div style="position:relative;max-width:min(92vw,1100px);max-height:92vh;">
+    <button type="button" onclick="closeImageLightbox()" aria-label="Close" style="position:absolute;top:-2.2rem;right:0;background:none;border:none;color:var(--cm-text);font-size:1.6rem;line-height:1;cursor:pointer;">×</button>
+    <img id="imgLightboxImg" src="" alt="" style="display:block;max-width:100%;max-height:92vh;border-radius:var(--r-sm);box-shadow:var(--shadow-float);">
+    <div id="imgLightboxCaption" style="margin-top:0.6rem;text-align:center;color:var(--cm-text-subtle);font-size:0.8rem;"></div>
+  </div>
+</div>
+
 <!-- Account settings (every role) -->
 <div class="modal-overlay" id="accountModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Account settings">
@@ -2538,7 +2550,7 @@ function uploadProjectBoundaryFile(input){
     ? window.__blobUpload('boundary/'+b.id+'/'+Date.now()+'-'+f.name,f,{access:'public',handleUploadUrl:'/api/upload',multipart:true}).then(function(blob){return blob.url;})
     : fetch('/api/upload?path=boundary/'+encodeURIComponent(b.id),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},body:f}).then(function(r){if(!r.ok)throw new Error('Upload failed: '+r.status);return r.json();}).then(function(data){return data.url;});
   uploadPromise.then(function(url){
-    b.boundaryFileOverride={name:f.name,size:f.size,url:url};
+    b.boundaryFileOverride={name:f.name,size:f.size,url:url,type:f.type};
     logProjectEvent(b,'Boundary map uploaded ('+f.name+') on "'+b.title+'"');
     if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
     renderProjectOverview(b);
@@ -2853,6 +2865,16 @@ function restrictProjSelectForSales(){
     opt.hidden=isSales;
   });
 }
+// Matches Carve Admin's own Projects tab exactly (same sectioned
+// In Progress/Paused/Completed/Archived list, same projectRowHtml summary
+// row that opens the same shared project detail page) -- just scoped down
+// to this Client Manager's own assigned projects instead of every awarded
+// project studio-wide. The old version duplicated a smaller set of fields
+// (contact card + inline Start/Agreed production time editors) directly in
+// the list; those are all real, live-editable fields on the project detail
+// page now (see PROJECT_SPEC_FIELD_META/DATE_FIELD_META), so keeping a
+// second, divergent copy of them here just meant two places that could
+// drift out of sync.
 function renderMyAssigned(){
   var wrap=document.getElementById('myAssignedList');
   if(!wrap)return;
@@ -2861,32 +2883,16 @@ function renderMyAssigned(){
   restrictProjSelectForSales();
   var mine=awardedBriefs().filter(function(b){return b.assignedManager&&email&&b.assignedManager.toLowerCase()===email;});
   syncProjectSelectOptions();
-  wrap.innerHTML=mine.map(function(b){
-    var c=b.client||{};
-    var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
-    var invBtns=hasInvoice?(
-      '<button class="btn btn--primary btn--sm" onclick="downloadInvoice(\''+esc(b.id)+'\',\'deposit\')">↓ Deposit invoice</button>'+
-      (b.clientQuote.invoice.balanceId?' <button class="btn btn--ghost btn--sm" onclick="downloadInvoice(\''+esc(b.id)+'\',\'balance\')">↓ Balance invoice</button>':'')
-    ):'<span style="color:var(--cm-text-subtle);font-size:0.86rem;">Invoice not issued yet.</span>';
-    return '<div class="projassign">'+
-      '<div class="projassign__head" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><span class="projassign__name">'+esc(b.title)+'</span><span class="rowbtn">View project ▸</span></div>'+
-      '<div class="projassign__row projassign__contact">'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+(c.Email?('<a href="mailto:'+esc(c.Email)+'">'+esc(c.Email)+'</a>'):'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
-      '</div>'+
-      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
-        '<div class="mfield" style="margin:0;max-width:200px;"><label>Start date</label>'+
-          '<input type="date" value="'+esc(b.startDate||'')+'" onchange="setProjectStart(\''+esc(b.id)+'\',this.value)"></div>'+
-        '<div class="mfield" style="margin:0;max-width:220px;"><label>Agreed production time <span class="opt">(days)</span></label>'+
-          '<input type="number" min="0" value="'+esc(agreedProductionDays(b)||'')+'" onchange="setProductionDays(\''+esc(b.id)+'\',this.value)"></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target production completion</div><div>'+(productionCompletionDate(b)?esc(fmtDateShort(productionCompletionDate(b))):'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery</div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
-      '</div>'+
-      '<div class="projassign__row">'+invBtns+'</div>'+
-    '</div>';
-  }).join('')||'<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No projects are currently assigned to you. Once Carve Admin awards a project to production and assigns it to you, it will appear here.</div>';
+  mine.forEach(autoMarkDeliveredIfComplete);
+  var active=mine.filter(function(b){return !b.archived&&!b.deliveredAt&&!b.paused;});
+  var paused=mine.filter(function(b){return !b.archived&&!b.deliveredAt&&b.paused;});
+  var completed=mine.filter(function(b){return !b.archived&&b.deliveredAt;});
+  var archived=mine.filter(function(b){return b.archived;});
+  if(!mine.length){
+    wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No projects are currently assigned to you. Once Carve Admin awards a project to production and assigns it to you, it will appear here.</div>';
+    return;
+  }
+  wrap.innerHTML=projectSectionHtml('In Progress',active)+projectSectionHtml('Paused',paused)+projectSectionHtml('Completed',completed)+projectSectionHtml('Archived',archived);
 }
 window.renderMyAssigned=renderMyAssigned;
 
@@ -5581,6 +5587,7 @@ function notifyShop(shopId,text){
   SDB.notifications[shopId].unshift({text:text,time:'just now',read:false});
   saveSRC();
 }
+window.showEmailToast=showEmailToast; // exposed -- called from Clients tab account-creation flow (an earlier <script> block)
 function showEmailToast(text){
   var host=document.getElementById('srcToastHost');
   if(!host){host=document.createElement('div');host.id='srcToastHost';host.style.cssText='position:fixed;bottom:1.2rem;right:1.2rem;z-index:400;display:flex;flex-direction:column;gap:0.5rem;';document.body.appendChild(host);}
@@ -5640,6 +5647,17 @@ function logProjectEvent(b,action,whenDateStr){
   var time=whenDateStr?new Date(whenDateStr+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):nowStamp();
   b.history.unshift({action:action,time:time,by:currentActorLabel()});
 }
+// logProjectEvent is defined inside this IIFE but called from EVERY other
+// <script> block on the page (Client info/spec field saves, date field
+// saves, price/shipping edits, the boundary map uploader, pause/delete,
+// etc.) -- without this, every one of those call sites throws "logProjectEvent
+// is not defined" the instant it runs, aborting before saveSRC() or
+// renderProjectOverview() ever executes. That's the actual cause behind
+// "Save does nothing" / "the number doesn't show up on the dashboard" /
+// "upload failed" reports -- the underlying action (set the field, upload
+// the file) succeeded, but logging the history entry right after it threw
+// and killed the rest of the function silently.
+window.logProjectEvent=logProjectEvent;
 function optKey(vi){return vi==null?'p':String(vi);}
 function getOption(b,shopId,vi){return vi==null?b.quotes[shopId]:((b.variations&&b.variations[shopId])||[])[vi];}
 window.SRC_openCommentForm=function(bid,shopId,vi){SRC_OPEN_COMMENT[bid+'|'+shopId+'|'+optKey(vi)]=true;SRC_render();};
@@ -5963,11 +5981,40 @@ function extrasLine(q){
   if(!q.extras||!q.extras.length)return '';
   return '<div class="qf-extras"><div class="qf-extras__label">Special requirements</div><div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.02em;color:var(--cm-gray-100);">'+q.extras.map(function(x){return esc(x);}).join(' · ')+'</div></div>';
 }
+// Whether a boundary file should render as an inline image thumbnail rather
+// than just a filename chip -- prefers the stored MIME type (set at upload
+// time by both SRC_boundaryFilePicked and uploadProjectBoundaryFile), and
+// falls back to sniffing the file extension for files uploaded before
+// "type" was captured, so old boundary maps still get a preview.
+function isImageBoundaryFile(bf){
+  if(!bf)return false;
+  if(bf.type)return bf.type.indexOf('image/')===0;
+  return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(bf.name||'');
+}
+function openImageLightbox(url,name){
+  var img=document.getElementById('imgLightboxImg');
+  var cap=document.getElementById('imgLightboxCaption');
+  if(img)img.src=url;
+  if(img)img.alt=name||'';
+  if(cap)cap.textContent=name||'';
+  var lb=document.getElementById('imgLightbox');
+  if(lb)lb.hidden=false;
+}
+window.openImageLightbox=openImageLightbox;
+function closeImageLightbox(){
+  var lb=document.getElementById('imgLightbox');
+  if(lb)lb.hidden=true;
+  var img=document.getElementById('imgLightboxImg');
+  if(img)img.src='';
+}
+window.closeImageLightbox=closeImageLightbox;
 function boundaryFileLine(q){
   if(!q.boundaryFile)return '';
   var sizeStr=q.boundaryFile.size?(q.boundaryFile.size/1024/1024>=1?(q.boundaryFile.size/1024/1024).toFixed(1)+' MB':Math.round(q.boundaryFile.size/1024)+' KB'):'';
+  var isImg=isImageBoundaryFile(q.boundaryFile)&&q.boundaryFile.url;
+  var thumb=isImg?('<img src="'+esc(q.boundaryFile.url)+'" alt="'+esc(q.boundaryFile.name)+'" onclick="openImageLightbox(\''+esc(q.boundaryFile.url)+'\',\''+esc(q.boundaryFile.name)+'\')" style="display:block;max-width:220px;max-height:160px;border-radius:var(--r-sm);border:1px solid var(--cm-border);cursor:zoom-in;margin-top:0.5rem;object-fit:cover;">'):'';
   if(q.boundaryFile.url){
-    return '<a class="filechip filechip--link" href="'+esc(q.boundaryFile.url)+'" target="_blank" rel="noopener" download="'+esc(q.boundaryFile.name)+'" style="margin-top:0.5rem;">📎 '+esc(q.boundaryFile.name)+' <span class="filechip__sz">'+sizeStr+'</span> ↓</a>';
+    return thumb+'<a class="filechip filechip--link" href="'+esc(q.boundaryFile.url)+'" target="_blank" rel="noopener" download="'+esc(q.boundaryFile.name)+'" style="margin-top:0.5rem;">📎 '+esc(q.boundaryFile.name)+' <span class="filechip__sz">'+sizeStr+'</span> ↓</a>';
   }
   return '<div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;font-size:0.8rem;color:var(--cm-text-muted);"><span style="font-family:var(--font-mono);">📎</span>'+esc(q.boundaryFile.name)+'<span style="color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.72rem;">'+sizeStr+'</span></div>';
 }
@@ -6095,18 +6142,19 @@ window.SRC_boundaryFilePicked=function(prefix,bid,input){
     ? window.__blobUpload('quotes/'+key+'/'+Date.now()+'-'+f.name,f,{access:'public',handleUploadUrl:'/api/upload',multipart:true}).then(function(blob){return blob.url;})
     : fetch('/api/upload?path=quotes/'+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},body:f}).then(function(r){if(!r.ok)throw new Error('Upload failed: '+r.status);return r.json();}).then(function(data){return data.url;});
   uploadPromise.then(function(url){
-    SRC_PENDING_BFILE[key]={name:f.name,size:f.size,url:url};
+    SRC_PENDING_BFILE[key]={name:f.name,size:f.size,url:url,type:f.type};
     delete SRC_BFILE_UPLOADING[key];
     var lbl2=document.getElementById(prefix+'-bfile-label-'+bid);
     if(lbl2)lbl2.textContent=f.name+' · '+sizeStr;
   }).catch(function(err){
     console.error('Boundary file upload failed',f.name,err);
-    SRC_PENDING_BFILE[key]={name:f.name,size:f.size,url:null};
+    SRC_PENDING_BFILE[key]={name:f.name,size:f.size,url:null,type:f.type};
     delete SRC_BFILE_UPLOADING[key];
     var lbl3=document.getElementById(prefix+'-bfile-label-'+bid);
     if(lbl3)lbl3.textContent=f.name+' · '+sizeStr+' — upload failed, try again';
   });
 };
+window.parseScaleString=parseScaleString; // exposed -- called from the Add Lead admin form's scale auto-fill (an earlier <script> block)
 function parseScaleString(s){
   s=s||'';
   var intl='',imp='';
