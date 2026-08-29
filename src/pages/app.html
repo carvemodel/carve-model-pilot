@@ -915,7 +915,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <p class="client-only" id="journeyNextClient" hidden>Approve <b>Finishing &amp; Paint</b> to release the model into its final stage.</p>
             <p class="studio-only" id="journeyNextStudio" hidden>Awaiting client approval on <b>Finishing &amp; Paint</b>.</p>
             <button class="btn btn--primary btn--sm client-only" id="journeyNextBtnClient" onclick="go('milestones')" style="margin-top:0.7rem;" hidden>Review &amp; approve →</button>
-            <button class="btn btn--ghost btn--sm studio-only" id="journeyNextBtnStudio" onclick="go('milestones')" style="margin-top:0.7rem;" hidden>Open milestones →</button>
           </div>
         </div>
       </div>
@@ -4227,7 +4226,7 @@ function openCompletedProject(title){
   document.getElementById('journeyNextClient').innerHTML='Nothing further needed — this project is closed.';
   document.getElementById('journeyNextStudio').innerHTML='Delivered &amp; closed.';
   document.getElementById('journeyNextBtnClient').style.display='none';
-  document.getElementById('journeyNextBtnStudio').style.display='none';
+  var jnbs=document.getElementById('journeyNextBtnStudio');if(jnbs)jnbs.style.display='none';
   go('overview');
 }
 function openProjectAt(val,view){
