@@ -2326,7 +2326,7 @@ function daysBetween(a,z){
 }
 // "3 days ahead of original schedule" / "2 days behind original schedule" --
 // compares today against a stage's estimated date range (see
-// journeyStageRange below). Only meaningful when the range has both a
+// journeyStageEstimate below). Only meaningful when the range has both a
 // start and end (an open-ended range like Post Delivery Support's, or a
 // stage with no computable dates yet, just skips this).
 function scheduleStatusLabel(rangeStart,rangeEnd){
@@ -2343,7 +2343,7 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
   return '';
 }
 // Indicative estimated date (or date range) for each journey stage, shown
-// directly under its dot on the timeline -- illustrative only, not a live
+// as a hover tooltip on the timeline -- illustrative only, not a live
 // production schedule. Derived entirely from the project's own Start date
 // and Target production completion (start + agreed production time), using
 // a fixed, consistent allocation: Confirmed Material Samples always gets
@@ -2355,11 +2355,7 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // Delivery Support is open-ended (starts the day after delivery, no fixed
 // end), so it never shows an ahead/behind comparison. Project Kick Off and
 // Project Completed round out the two ends.
-// Raw {start,end,openEnded} for a stage's estimated window -- shared by
-// stageDateLabelCompact() (the visible per-dot date label) and
-// currentStageScheduleStatus() (the visible ahead/behind line on the
-// journey card) so the two never drift apart.
-function journeyStageRange(b,stageIndex){
+function journeyStageEstimate(b,stageIndex){
   var stageName=PROJECT_STAGES[stageIndex];
   var start=getProjectStartDate(b);
   var completion=productionCompletionDate(b);
@@ -2373,75 +2369,13 @@ function journeyStageRange(b,stageIndex){
   else if(stageName==='Packing & Shipping'&&completion){rs=addDays(completion,-1);re=completion;}
   else if(stageName==='Project Delivered'&&delivery){rs=delivery;re=delivery;}
   else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
-  if(rs&&re&&rs>re)return {start:null,end:null,openEnded:false}; // agreed production time too short for this breakdown to make sense
-  return {start:rs,end:re,openEnded:openEnded};
+  if(!rs)return '';
+  if(re&&rs>re)return ''; // agreed production time too short for this breakdown to make sense -- skip rather than show a nonsensical inverted range
+  var dateLine='Est. '+(re&&re!==rs?(fmtDateShort(rs)+' – '+fmtDateShort(re)):fmtDateShort(rs))+(openEnded?' onward':'');
+  var status=re?scheduleStatusLabel(rs,re):'';
+  return status?(dateLine+' · '+status):dateLine;
 }
-// The current stage is whichever stage's estimated window today has
-// reached -- the last one (in order) whose start date is on or before
-// today. "Project Completed" (the final entry) is excluded here since it's
-// never date-derived -- it's only ever reached via b.deliveredAt, see
-// autoMarkDeliveredIfComplete(). Defaults to 0 (Project Kick Off) when
-// there's no start date to work from yet.
-function timelineDerivedStageIndex(b){
-  var today=new Date().toISOString().slice(0,10);
-  var idx=0;
-  for(var i=0;i<PROJECT_STAGES.length-1;i++){
-    var r=journeyStageRange(b,i);
-    if(r.start&&today>=r.start)idx=i;
-  }
-  return idx;
-}
-window.timelineDerivedStageIndex=timelineDerivedStageIndex;
-// Compact "Aug 22–25" / "Sep 16" / "Sep 26+" label shown directly under
-// each stage dot on the timeline (replaces the old generic "Done"/"Next
-// up"/pct% caption -- no hover needed, the actual estimated date is always
-// visible). Short month+day only, no year (all within the same project
-// year), and collapses to "Mon D–D" when a range stays within one month.
-function fmtStageDateCompact(s){
-  if(!s)return '';
-  try{return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});}catch(e){return s;}
-}
-function stageDateLabelCompact(b,stageIndex){
-  var r=journeyStageRange(b,stageIndex);
-  if(!r.start)return '—';
-  if(!r.end||r.end===r.start)return fmtStageDateCompact(r.start)+(r.openEnded?'+':'');
-  var rsD=new Date(r.start+'T00:00:00'), reD=new Date(r.end+'T00:00:00');
-  if(rsD.getMonth()===reD.getMonth()){
-    return rsD.toLocaleDateString('en-US',{month:'short'})+' '+rsD.getDate()+'–'+reD.getDate();
-  }
-  return fmtStageDateCompact(r.start)+'–'+fmtStageDateCompact(r.end);
-}
-window.stageDateLabelCompact=stageDateLabelCompact;
-// Just the "N days ahead/behind original schedule" phrase (no date range)
-// for whichever stage the project is CURRENTLY sitting at -- shown as its
-// own line on the journey card, right under "Current stage: <name>".
-function currentStageScheduleStatus(b){
-  if(!b||b.deliveredAt)return '';
-  var idx=projectStageIndex(b);
-  var r=journeyStageRange(b,idx);
-  if(!r.start||!r.end)return '';
-  return scheduleStatusLabel(r.start,r.end);
-}
-window.currentStageScheduleStatus=currentStageScheduleStatus;
-// Overall % complete is derived straight from the same timeline as the
-// journey stage estimates above -- how far today sits between the
-// project's Start date and its Target delivery date -- rather than a
-// separate, manually-tracked number (there was never any UI to set
-// b.projectPct anyway, so it always silently sat at 0). Clamped to 99
-// until the project is actually marked delivered, so the bar never claims
-// "100% complete" ahead of the real thing.
-function computeTimelinePct(b){
-  if(!b)return 0;
-  var start=getProjectStartDate(b);
-  var delivery=targetDeliveryDate(b);
-  if(!start||!delivery)return 0;
-  var today=new Date().toISOString().slice(0,10);
-  var total=daysBetween(start,delivery);
-  if(total<=0)return 0;
-  var elapsed=daysBetween(start,today);
-  return Math.max(0,Math.min(99,Math.round((elapsed/total)*100)));
-}
-window.computeTimelinePct=computeTimelinePct;
+window.journeyStageEstimate=journeyStageEstimate;
 function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
 function awardedBriefs(){return (window.SDB.briefs||[]).filter(function(b){return b.status==='awarded';});}
 function findBrief(id){return (window.SDB.briefs||[]).filter(function(b){return b.id===id;})[0];}
@@ -3315,10 +3249,11 @@ function renderProjectOverview(b){
       var current=!delivered&&i===idx;
       var cls=done?'done':(current?'current':'');
       var dotTxt=done?'✓':String(i+1);
-      // Each stage's indicative estimated date/range shows directly under
-      // its name -- no hover needed (see stageDateLabelCompact() above).
-      var dateLabel=delivered?'Done':((typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,i):'');
-      return '<li class="jstep '+cls+'">'+(current?'<span class="jstep__here">You\'re here</span>':'')+
+      // Native title tooltip -- hovering any stage shows its indicative
+      // estimated date/range (and whether that puts it ahead/behind
+      // schedule against today), see journeyStageEstimate() above.
+      var estimate=(typeof journeyStageEstimate==='function')?journeyStageEstimate(b,i):'';
+      return '<li class="jstep '+cls+'"'+(estimate?(' title="'+esc(estimate)+'"'):'')+'>'+(current?'<span class="jstep__here">You\'re here</span>':'')+
         '<span class="jstep__dot">'+dotTxt+'</span><span class="jstep__name">'+esc(name)+'</span>'+
         '<span class="jstep__date">'+esc(dateLabel)+'</span></li>';
     }).join('');
