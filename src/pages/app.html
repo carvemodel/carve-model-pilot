@@ -795,16 +795,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <div class="notice client-only" id="ovNotice">Welcome back. Your model <b><span class="pname">Aria Tower</span></b> is in fabrication — 68% complete, on track for delivery in 6 days.
         <button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>
       </div>
-      <div class="overdue-banner" id="overdueBanner" hidden>
-        <span class="overdue-banner__dot"></span>
-        <div>
-          <b>Project paused — payment overdue.</b>
-          <span class="client-only"> Balance invoice <b id="overdueInv">CM-1044</b> is past due. Work is on hold and the project won't advance to the next stage until payment is received and confirmed.</span>
-          <span class="studio-only"> Balance is overdue. This project is paused and will not advance until the client's payment clears.</span>
-          <a class="btn btn--primary btn--sm client-only" href="#" onclick="go('invoices');return false;" style="margin-top:0.8rem;">Pay balance now →</a>
-        </div>
-      </div>
-      <div class="notice studio-only"><b>Studio view.</b> <span class="pname">Aria Tower</span> awaits client approval on <b>Finishing &amp; Paint</b>. 2 unread client messages.</div>
 
       <!-- Customer journey — the heart of the portal -->
       <div class="journey">
@@ -2467,16 +2457,6 @@ function renderProjectOverview(b){
   if(notice)notice.innerHTML=delivered?
     ('Your model <b><span class="pname">'+esc(short)+'</span></b> is complete'+(b.deliveredAt?(' and was delivered on '+fmtDateShort(b.deliveredAt)):'')+'. Thank you for working with Carve Model.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>'):
     ('Welcome back. Your model <b><span class="pname">'+esc(short)+'</span></b> is in '+esc(stageName)+' — '+pct+'% complete'+(b.targetDelivery?(', on track for delivery '+fmtDateShort(b.targetDelivery)):'')+'.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>');
-  var studioNotice=document.querySelector('#view-overview .notice.studio-only');
-  if(studioNotice)studioNotice.innerHTML='<b>Studio view.</b> <span class="pname">'+esc(short)+'</span> is in '+esc(stageName)+(delivered?'.':(' — '+pct+'% complete.'));
-
-  var inv=b.clientQuote&&b.clientQuote.invoice;
-  var overdue=!!(inv&&(inv.depositStatus==='overdue'||inv.balanceStatus==='overdue'));
-  var ob=document.getElementById('overdueBanner');
-  if(ob){
-    ob.hidden=!overdue;
-    if(overdue)setText('overdueInv',inv.balanceStatus==='overdue'?inv.balanceId:inv.depositId);
-  }
 
   var c=b.client||{};
   var teamMember=(window.SDB.team||[]).filter(function(t){return t&&t.email&&b.assignedManager&&t.email.toLowerCase()===b.assignedManager.toLowerCase();})[0];
@@ -2778,7 +2758,9 @@ function cancelProject(){
 }
 function setOverdue(on){
   // Demo helper: when a balance goes unpaid, the project pauses and won't advance.
-  document.getElementById('overdueBanner').hidden=!on;
+  // (#overdueBanner was removed from the Overview page; guarded in case anything
+  // still calls this.)
+  var el=document.getElementById('overdueBanner');if(el)el.hidden=!on;
   if(on){
     document.getElementById('kpiStatus').textContent='Paused';
     document.getElementById('kpiStage').textContent='Payment overdue';
