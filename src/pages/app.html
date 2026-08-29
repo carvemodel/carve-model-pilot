@@ -975,9 +975,90 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     <select id="projInfoLeadSelect" onchange="setBriefManager(document.getElementById('projSelect').value,this.value)"></select>
                   </div>
                 </div>
-                <div><span class="mock__k">Use case</span><div class="mock__v" id="projInfoUse">—</div></div>
-                <div><span class="mock__k">Model size</span><div class="mock__v" id="projInfoModelSize">—</div></div>
-                <div><span class="mock__k">Package size</span><div class="mock__v" id="projInfoPackageSize">—</div></div>
+                <div>
+                  <span class="mock__k">Use case</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoUse" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psUseCaseBtn" onclick="toggleProjectSpecFieldEdit('useCase')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psUseCaseWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="psUseCaseInput" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('useCase')">Save</button>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span class="mock__k">Scale</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoScale" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psScaleBtn" onclick="toggleProjectSpecFieldEdit('scale')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psScaleWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="psScaleInput" placeholder="e.g. 1:96" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('scale')">Save</button>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span class="mock__k">Materials</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoMaterial" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psMaterialBtn" onclick="toggleProjectSpecFieldEdit('material')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psMaterialWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="psMaterialInput" placeholder="e.g. ABS / resin" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('material')">Save</button>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span class="mock__k">Presentation method</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoPresentation" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psPresentationBtn" onclick="toggleProjectSpecFieldEdit('presentationMethod')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psPresentationWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <select id="psPresentationInput" style="flex:1;">
+                        <option value="">—</option>
+                        <option value="Monochrome">Monochrome</option>
+                        <option value="Full color / realistic visualization">Full color / realistic visualization</option>
+                        <option value="Mixed color">Mixed color</option>
+                        <option value="Other">Other</option>
+                      </select>
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('presentationMethod')">Save</button>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span class="mock__k">Model size</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoModelSize" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psModelSizeBtn" onclick="toggleProjectSpecFieldEdit('modelSize')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psModelSizeWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="psModelSizeInput" placeholder="e.g. 8&quot; x 9.25&quot; x 2&quot;" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('modelSize')">Save</button>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span class="mock__k">Package size</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoPackageSize" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psPackageSizeBtn" onclick="toggleProjectSpecFieldEdit('packageSize')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psPackageSizeWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="psPackageSizeInput" placeholder="e.g. 12&quot; x 12&quot; x 8&quot;" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('packageSize')">Save</button>
+                    </div>
+                  </div>
+                </div>
                 <div class="proj-actions-only" id="projInfoActionsWrap" style="display:flex;gap:0.5rem;padding-top:0.2rem;"></div>
               </div>
             </div>
@@ -2231,6 +2312,72 @@ function toggleClientFieldEdit(field){
   if(btn)btn.textContent=wrap.hidden?'Edit':'Cancel';
 }
 window.toggleClientFieldEdit=toggleClientFieldEdit;
+// Project information's spec fields (Use case/Scale/Materials/Presentation
+// method/Model size/Package size) -- same inline pencil-toggle pattern as
+// Client information above, owner+sales only (see proj-spec-edit-only).
+// Saving writes a per-project override field on the brief itself
+// (b.useCaseOverride etc.) which projectSpecValue() always prefers over the
+// value derived from the brief intake form or the winning vendor quote --
+// same override-wins precedence already used for the date fields.
+function projectSpecValue(b,field){
+  if(!b)return null;
+  var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+  if(field==='useCase')return b.useCaseOverride||(b.brief&&b.brief['Intended use'])||null;
+  if(field==='scale')return b.scaleOverride||(b.clientQuote&&b.clientQuote.scale)||(wq&&wq.scale)||(b.brief&&b.brief['Scale'])||null;
+  if(field==='material')return b.materialOverride||(b.clientQuote&&b.clientQuote.material)||(wq&&wq.material)||(b.brief&&b.brief['Model type'])||null;
+  if(field==='presentationMethod')return b.presentationMethod||null;
+  if(field==='modelSize'){
+    if(b.modelSizeOverride)return b.modelSizeOverride;
+    return (b.clientQuote&&b.clientQuote.modelDims)||(wq&&wq.modelDims)||null;
+  }
+  if(field==='packageSize'){
+    if(b.packageSizeOverride)return b.packageSizeOverride;
+    var pkgDims=(wq&&wq.packageDimsList&&wq.packageDimsList.length)?wq.packageDimsList:(wq&&wq.packageDims?[wq.packageDims]:[]);
+    if(!pkgDims.length&&b.clientQuote){
+      pkgDims=(b.clientQuote.packageDimsList&&b.clientQuote.packageDimsList.length)?b.clientQuote.packageDimsList:(b.clientQuote.packageDims?[b.clientQuote.packageDims]:[]);
+    }
+    return pkgDims.length?pkgDims.map(function(d,i){return pkgDims.length>1?('#'+(i+1)+' '+d):d;}).join(', '):null;
+  }
+  return null;
+}
+window.projectSpecValue=projectSpecValue;
+var PROJECT_SPEC_FIELD_META={
+  useCase:{label:'Use case',display:'projInfoUse',wrap:'psUseCaseWrap',btn:'psUseCaseBtn',input:'psUseCaseInput',override:'useCaseOverride'},
+  scale:{label:'Scale',display:'projInfoScale',wrap:'psScaleWrap',btn:'psScaleBtn',input:'psScaleInput',override:'scaleOverride'},
+  material:{label:'Materials',display:'projInfoMaterial',wrap:'psMaterialWrap',btn:'psMaterialBtn',input:'psMaterialInput',override:'materialOverride'},
+  presentationMethod:{label:'Presentation method',display:'projInfoPresentation',wrap:'psPresentationWrap',btn:'psPresentationBtn',input:'psPresentationInput',override:'presentationMethod'},
+  modelSize:{label:'Model size',display:'projInfoModelSize',wrap:'psModelSizeWrap',btn:'psModelSizeBtn',input:'psModelSizeInput',override:'modelSizeOverride'},
+  packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',input:'psPackageSizeInput',override:'packageSizeOverride'}
+};
+function toggleProjectSpecFieldEdit(field){
+  var meta=PROJECT_SPEC_FIELD_META[field];if(!meta)return;
+  var wrap=document.getElementById(meta.wrap);
+  var btn=document.getElementById(meta.btn);
+  if(!wrap)return;
+  if(wrap.hidden){
+    var id=document.getElementById('projSelect').value;
+    var b=findBrief(id);
+    var input=document.getElementById(meta.input);
+    if(input)input.value=projectSpecValue(b,field)||'';
+  }
+  wrap.hidden=!wrap.hidden;
+  if(btn)btn.textContent=wrap.hidden?'Edit':'Cancel';
+}
+window.toggleProjectSpecFieldEdit=toggleProjectSpecFieldEdit;
+function saveProjectSpecField(field){
+  var meta=PROJECT_SPEC_FIELD_META[field];if(!meta)return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var input=document.getElementById(meta.input);
+  var val=input?input.value.trim():'';
+  b[meta.override]=val||null;
+  logProjectEvent(b,meta.label+' updated to '+(val||'—')+' on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+  toggleProjectSpecFieldEdit(field);
+}
+window.saveProjectSpecField=saveProjectSpecField;
 // Same pencil-toggle pattern for Start/Target production completion/Target
 // delivery -- the value shows as plain text (everyone sees it, no more
 // permanently-visible date input) and a pencil (owner+sales only, see
@@ -2846,6 +2993,11 @@ function renderProjectOverview(b){
     var meta=DATE_FIELD_META[field];
     var w=document.getElementById(meta.wrap);if(w)w.hidden=true;
   });
+  Object.keys(PROJECT_SPEC_FIELD_META).forEach(function(field){
+    var meta=PROJECT_SPEC_FIELD_META[field];
+    var w=document.getElementById(meta.wrap);if(w)w.hidden=true;
+    var bt=document.getElementById(meta.btn);if(bt)bt.textContent='Edit';
+  });
   setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
   setText('projInfoTarget',targetDelivery?fmtDateShort(targetDelivery):'—');
   var completionDate=productionCompletionDate(b);
@@ -2853,15 +3005,10 @@ function renderProjectOverview(b){
   var startInput=document.getElementById('projInfoStartInput');if(startInput)startInput.value=b.startDate||'';
   var completionInput=document.getElementById('projInfoCompletionInput');if(completionInput)completionInput.value=completionDate||'';
   var targetInput=document.getElementById('projInfoTargetInput');if(targetInput)targetInput.value=targetDelivery||'';
-  setText('projInfoUse',(b.brief&&b.brief['Intended use'])||'—');
-  var wq=(typeof winningQuote==='function')?winningQuote(b):null;
-  var modelSize=(b.clientQuote&&b.clientQuote.modelDims)||(wq&&wq.modelDims)||null;
-  setText('projInfoModelSize',modelSize?modelSize:'—');
-  var pkgDims=(wq&&wq.packageDimsList&&wq.packageDimsList.length)?wq.packageDimsList:(wq&&wq.packageDims?[wq.packageDims]:[]);
-  if(!pkgDims.length&&b.clientQuote){
-    pkgDims=(b.clientQuote.packageDimsList&&b.clientQuote.packageDimsList.length)?b.clientQuote.packageDimsList:(b.clientQuote.packageDims?[b.clientQuote.packageDims]:[]);
-  }
-  setText('projInfoPackageSize',pkgDims.length?pkgDims.map(function(d,i){return pkgDims.length>1?('#'+(i+1)+' '+d):d;}).join(', '):'—');
+  Object.keys(PROJECT_SPEC_FIELD_META).forEach(function(field){
+    var meta=PROJECT_SPEC_FIELD_META[field];
+    setText(meta.display,projectSpecValue(b,field)||'—');
+  });
 
   var actWrap=document.getElementById('ovActivityList');
   if(actWrap){
@@ -2974,14 +3121,23 @@ function renderShippingCostCard(b){
   var role=document.body.dataset.role;
   var hasActual=b.actualShippingCost!=null;
   var shipEst=(b.clientQuote&&b.clientQuote.estimatedShippingCost!=null)?b.clientQuote.estimatedShippingCost:null;
-  var label=hasActual?'Actual shipping cost':'Estimated shipping cost';
   var val=hasActual?b.actualShippingCost:shipEst;
   var valText=val!=null?fmtUsd(val):'—';
-  var canEdit=hasActual?(role==='sales'):(role==='owner'||role==='sales');
-  var onclick=hasActual?'editActualShipping()':'editEstimatedShipping()';
-  var title=hasActual?'Edit actual shipping cost -- Carve Client Manager only':'Edit estimated shipping cost -- internal only';
+  // The card label is always just "Shipping cost" -- which figure is behind
+  // it (and whether it's the Estimated or Actual one) is called out in the
+  // sub-line instead. Carve Admin enters the number during quotation, which
+  // is automatically treated as the Estimated figure (editEstimatedShipping,
+  // stored on b.clientQuote.estimatedShippingCost); the Client Manager
+  // enters the real number later once packing & shipping is underway
+  // (editActualShipping, b.actualShippingCost), which then takes over the
+  // display. Both roles get the same pencil; which function it calls
+  // depends on which of them is looking at it.
+  var subLabel=hasActual?'Actual shipping cost':(shipEst!=null?'Estimated shipping cost':'');
+  var canEdit=role==='owner'||role==='sales';
+  var onclick=role==='sales'?'editActualShipping()':'editEstimatedShipping()';
+  var title=role==='sales'?'Enter actual shipping cost -- Carve Client Manager':'Enter estimated shipping cost during quotation -- Carve Admin';
   var pencil=canEdit?('<button type="button" onclick="'+onclick+'" title="'+esc(title)+'" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>'):'';
-  wrap.innerHTML='<span class="mock__k">'+esc(label)+'</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" style="font-size:1.15rem;">'+esc(valText)+'</div>'+pencil+'</div>';
+  wrap.innerHTML='<span class="mock__k">Shipping cost</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" style="font-size:1.15rem;">'+esc(valText)+'</div>'+pencil+'</div>'+(subLabel?'<div class="sub">'+esc(subLabel)+'</div>':'');
 }
 window.renderShippingCostCard=renderShippingCostCard;
 // Owner-only price overrides, reached via the pencil icons on the Project
@@ -3876,7 +4032,8 @@ var PERM={
   'proj-pricing-only':['owner','sales'],         // Project Price KPI card on Overview -- same audience as proj-invoice-only. Vendor price + profit cards are further gated owner-only so Client Manager sees only the project (client-facing) price.
   'proj-dates-edit-only':['owner','sales'],       // Start/Target production completion/Target delivery become editable date inputs for Owner + assigned Client Manager; everyone else (kpi-scale-only audience) just sees the computed read-only text
   'client-edit-only':['owner','sales'],           // Edit control on Client information (Company/Contact name/Email/Phone) -- Owner + assigned Client Manager only, never the client themselves or production
-  'proj-actions-only':['owner','sales']           // Wrapper for Project information's Pause/Delete row -- Pause is Client Manager only and Delete is Owner only (see renderProjectAdminPanel's own role check), but the wrapper itself needs to be visible to both so each role's one allowed action can show
+  'proj-actions-only':['owner','sales'],          // Wrapper for Project information's Pause/Delete row -- Pause is Client Manager only and Delete is Owner only (see renderProjectAdminPanel's own role check), but the wrapper itself needs to be visible to both so each role's one allowed action can show
+  'proj-spec-edit-only':['owner','sales']         // Edit control on Project information's spec fields (Use case/Scale/Materials/Presentation method/Model size/Package size) -- Owner + assigned Client Manager only; everyone (incl. client/factory/prodtech) still sees the read-only value
 };
 var ROLE_INFO={
   client:{name:'Asher Liu',av:'AL',org:'Client'},
