@@ -883,6 +883,21 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
       </div>
 
+      <!-- Pricing: Owner + the assigned Client Manager. Agreed price with
+           vendor and Profit rows are further restricted to Owner only --
+           Client Manager must only ever see the agreed price with client.
+           Populated by renderProjectPricingPanel(). -->
+      <div class="panel proj-pricing-only" style="margin-top:1.5rem;">
+        <div class="panel__head"><h3>Pricing</h3></div>
+        <div class="panel__body">
+          <div style="display:flex;flex-direction:column;gap:0.9rem;">
+            <div><span class="mock__k">Agreed price with client</span><div class="mock__v" id="projInfoClientPrice">—</div></div>
+            <div class="owner-only"><span class="mock__k">Agreed price with vendor</span><div class="mock__v" id="projInfoVendorPrice">—</div></div>
+            <div class="owner-only"><span class="mock__k">Profit</span><div class="mock__v" id="projInfoProfit">—</div></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Invoice & Payment: Owner + the assigned Client Manager. This is
            the KPI row's "Invoice & Payment" card's scroll target -- see
            openProjectInvoicePanel(). Populated by
@@ -2590,6 +2605,7 @@ function renderProjectOverview(b){
 
   renderProjectAdminPanel(b);
   renderProjectInvoicePanel(b);
+  renderProjectPricingPanel(b);
   setText('kpiInvoice',paymentStatusLabel(b));
   setText('kpiInvoiceSub','Click to view →');
 }
@@ -2649,6 +2665,21 @@ function openProjectInvoicePanel(){
   if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 window.openProjectInvoicePanel=openProjectInvoicePanel;
+// Pricing panel -- Owner + the assigned Client Manager (see proj-pricing-only
+// in PERM). Client price is shown to both; vendor price and profit are
+// further hidden from Client Manager via the owner-only class on those two
+// rows, since margin/vendor cost must never be visible outside Owner.
+function renderProjectPricingPanel(b){
+  if(!b)return;
+  var clientPrice=(b.clientQuote&&b.clientQuote.price!=null)?b.clientQuote.price:null;
+  var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+  var vendorPrice=(wq&&wq.price!=null)?wq.price:null;
+  setText('projInfoClientPrice',clientPrice!=null?fmtUsd(clientPrice):'—');
+  setText('projInfoVendorPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
+  var profit=(clientPrice!=null&&vendorPrice!=null)?(clientPrice-vendorPrice):null;
+  setText('projInfoProfit',profit!=null?fmtUsd(profit):'—');
+}
+window.renderProjectPricingPanel=renderProjectPricingPanel;
 // Milestones tab: a REAL activity timeline off the brief's own b.history
 // (quotes, awards, revisions), not a fabricated photo-approval workflow --
 // see the notice in view-milestones for why that structured workflow isn't
@@ -3400,7 +3431,8 @@ var PERM={
   'prodadmin-only':['factory'],                 // Production Admin only (assign technicians)
   'prodtech-only':['prodtech'],                 // Production Technician only (My Assignments)
   'proj-invoice-only':['owner','sales'],         // per-project Invoice & Payment panel on Overview -- Owner + the assigned Client Manager; never factory/prodtech (client pricing) or client (uses their own Invoices tab)
-  'kpi-scale-only':['client','factory','prodtech'] // 4th Overview KPI slot for everyone except owner/sales, who see Invoice & Payment there instead
+  'kpi-scale-only':['client','factory','prodtech'], // 4th Overview KPI slot for everyone except owner/sales, who see Invoice & Payment there instead
+  'proj-pricing-only':['owner','sales']          // per-project Pricing panel on Overview -- same audience as proj-invoice-only. Agreed price with vendor + profit rows inside are further gated owner-only (see 'owner-only') so Client Manager sees only Agreed price with client.
 };
 var ROLE_INFO={
   client:{name:'Asher Liu',av:'AL',org:'Client'},
