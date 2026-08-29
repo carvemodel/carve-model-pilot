@@ -409,6 +409,8 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .stagecheck.done .stagecheck__label{color:var(--cm-text-strong);text-decoration:line-through;text-decoration-color:var(--cm-border-strong);}
 .stagecheck[onclick]{cursor:pointer;}
 .stagecheck[onclick]:hover .stagecheck__box{border-color:var(--cm-silver);}
+.stagecheck.stagecheck--na .stagecheck__box{font-size:0.5rem;font-weight:var(--w-semibold);background:var(--cm-ink-800);color:var(--cm-text-muted);}
+.stagecheck.stagecheck--na .stagecheck__label{color:var(--cm-text-muted);}
 .journey__now b,.journey__next b{color:var(--cm-text);}
 .journey__next{border-left:1px solid var(--cm-line-faint);padding-left:1rem;}
 
@@ -913,7 +915,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <p class="client-only" id="journeyNextClient" hidden>Approve <b>Finishing &amp; Paint</b> to release the model into its final stage.</p>
             <p class="studio-only" id="journeyNextStudio" hidden>Awaiting client approval on <b>Finishing &amp; Paint</b>.</p>
             <button class="btn btn--primary btn--sm client-only" id="journeyNextBtnClient" onclick="go('milestones')" style="margin-top:0.7rem;" hidden>Review &amp; approve →</button>
-            <button class="btn btn--ghost btn--sm studio-only" id="journeyNextBtnStudio" onclick="go('milestones')" style="margin-top:0.7rem;" hidden>Open milestones →</button>
           </div>
         </div>
       </div>
@@ -1673,6 +1674,56 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
+<!-- Project scale & boundary -- dedicated working page for the "Project
+     scale and boundary confirmed" Project Kick Off checklist item. Owner/
+     Client Manager set the values here (same data shown in Project
+     information -- b.scaleOverride / b.boundaryFileOverride, see
+     saveScaleBoundaryScale/uploadProjectBoundaryFile); the client sees the
+     same info and has to explicitly confirm it themselves before the
+     checklist item can read done -- see confirmScaleBoundary() /
+     checklistItemDone(). -->
+<div class="modal-overlay" id="scaleBoundaryModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Project scale and boundary">
+    <div class="modal__head"><h3>Project scale &amp; boundary</h3><button class="modal__x" onclick="closeScaleBoundaryModal()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <div class="mfield">
+        <label>Scale</label>
+        <div class="mock__v" id="sbScaleDisplay" style="margin:0.3rem 0 0.6rem;">—</div>
+        <div class="proj-spec-edit-only" style="display:flex;gap:0.5rem;">
+          <input type="text" id="sbScaleInput" placeholder="e.g. 1:96" style="flex:1;">
+          <button type="button" class="btn btn--primary btn--sm" onclick="saveScaleBoundaryScale()">Save</button>
+        </div>
+      </div>
+      <div class="mfield">
+        <label>Boundary map</label>
+        <div id="sbBoundaryDisplay" style="margin:0.3rem 0 0.6rem;">—</div>
+        <div class="proj-spec-edit-only">
+          <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('sbBoundaryFileInput').click()">Upload</button>
+          <input type="file" id="sbBoundaryFileInput" style="display:none;" onchange="uploadProjectBoundaryFile(this)">
+        </div>
+      </div>
+      <div id="sbConfirmSection" style="margin-top:0.8rem;padding-top:0.9rem;border-top:1px solid var(--cm-line-faint);"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Design files checklist -- what "Design files complete — nothing
+     missing" (Project Kick Off item #3) is actually checking. Each file
+     type is cleared by the assigned production vendor as it comes in and
+     gets checked (or marked not applicable for the situational ones);
+     Owner, Client Manager and the client are read-only here, same as the
+     rest of Project information -- they just get full visibility into
+     exactly what's still outstanding. See toggleDesignFileItem(). -->
+<div class="modal-overlay" id="designFilesModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Design files checklist">
+    <div class="modal__head"><h3>Design files</h3><button class="modal__x" onclick="closeDesignFilesModal()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <p class="modal__intro">Cleared by the production vendor as each file is received and checked.</p>
+      <div id="designFilesList"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Image lightbox -- reusable full-screen preview for any uploaded image
      (currently just the boundary map thumbnail; click-to-close on the
      overlay itself, not just the X, since that's the expected pattern for
@@ -2267,6 +2318,31 @@ var STAGE_CHECKLISTS={
     'Branding/logo asset confirmed'
   ]
 };
+// The individual file types that make up "Design files complete — nothing
+// missing" (Project Kick Off item #2) -- cleared one at a time by the
+// assigned production vendor as files come in, not a single manual toggle.
+// The last four are situational, so they can also be marked not
+// applicable instead of cleared -- see toggleDesignFileItem/
+// designFilesChecklistDone. Owner/Client Manager/client never toggle these
+// themselves, only the vendor (factory role) does.
+var DESIGN_FILE_ITEMS=[
+  {label:'Overall dimensioned site plan'},
+  {label:'Dimensioned floor plan'},
+  {label:'Dimensioned elevations'},
+  {label:'Color elevations / rendering / photos of the facade',optional:true},
+  {label:'Landscape plan',optional:true},
+  {label:'Interior design package',optional:true},
+  {label:'Logo & branding assets',optional:true}
+];
+window.DESIGN_FILE_ITEMS=DESIGN_FILE_ITEMS;
+// true = cleared by the vendor, 'na' = marked not applicable (optional
+// items only), falsy = still pending. Every item has to be one of those
+// two settled states for the overall Project Kick Off item to read done.
+function designFilesChecklistDone(b){
+  var state=(b&&b.designFilesChecklist)||[];
+  return DESIGN_FILE_ITEMS.every(function(it,i){return state[i]===true||(it.optional&&state[i]==='na');});
+}
+window.designFilesChecklistDone=designFilesChecklistDone;
 function getProjectStartDate(b){
   var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
   return b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt||null;
@@ -2439,20 +2515,22 @@ function currentStageScheduleStatus(b){
   return scheduleStatusLabel(r.start,r.end);
 }
 window.currentStageScheduleStatus=currentStageScheduleStatus;
-// % complete derived from the same Start/Target-delivery timeline instead
-// of a static field nothing ever set. Capped at 99 until the project is
-// actually marked delivered (see the delivered?100:... ternary at the call
-// site), so it never falsely claims 100% early.
+// % complete for the journey track's white progress line -- driven by the
+// CONFIRMED stage (projectStageIndex/b.projectStage), same source of truth
+// as "Current stage" itself, not by how much calendar time has elapsed.
+// A project sitting in Fabrication shows the line at Fabrication's dot
+// regardless of whether that's ahead of or behind the estimated calendar
+// dates -- those two things are allowed to disagree (see
+// currentStageScheduleStatus for the "N days ahead/behind" callout that
+// covers the calendar comparison instead). Stages are evenly spaced along
+// the line, same spacing the dots themselves use, so the fill always lines
+// up with the current stage's dot.
 function computeTimelinePct(b){
   if(!b)return 0;
-  var start=getProjectStartDate(b);
-  var delivery=targetDeliveryDate(b);
-  if(!start||!delivery)return 0;
-  var today=new Date().toISOString().slice(0,10);
-  var total=daysBetween(start,delivery);
-  if(total<=0)return 0;
-  var elapsed=daysBetween(start,today);
-  return Math.max(0,Math.min(99,Math.round((elapsed/total)*100)));
+  var idx=projectStageIndex(b);
+  var totalSteps=PROJECT_STAGES.length;
+  if(totalSteps<=1)return 0;
+  return Math.max(0,Math.min(99,Math.round((idx/(totalSteps-1))*100)));
 }
 window.computeTimelinePct=computeTimelinePct;
 function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
@@ -2718,6 +2796,9 @@ function uploadProjectBoundaryFile(input){
     : fetch('/api/upload?path=boundary/'+encodeURIComponent(b.id),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},body:f}).then(function(r){if(!r.ok)throw new Error('Upload failed: '+r.status);return r.json();}).then(function(data){return data.url;});
   uploadPromise.then(function(url){
     b.boundaryFileOverride={name:f.name,size:f.size,url:url,type:f.type};
+    // A new file invalidates whatever the client previously confirmed --
+    // see confirmScaleBoundary()/checklistItemDone().
+    b.scaleBoundaryConfirmedAt=null;
     logProjectEvent(b,'Boundary map uploaded ('+f.name+') on "'+b.title+'"');
     if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
     renderProjectOverview(b);
@@ -3364,11 +3445,11 @@ function renderProjectOverview(b){
     if(jNow)jNow.hidden=true;
     if(jChecklist){
       jChecklist.hidden=false;
-      var checklistState=(b.stageChecklist&&b.stageChecklist[stageName])||[];
-      var canEditChecklist=document.body.dataset.role==='owner'||document.body.dataset.role==='sales';
+      var curChecklistRole=document.body.dataset.role;
       jChecklist.innerHTML=checklistItems.map(function(label,i){
-        var done=!!checklistState[i];
-        return '<div class="stagecheck'+(done?' done':'')+'"'+(canEditChecklist?(' onclick="toggleStageChecklistItem('+i+')"'):'')+'>'+
+        var done=checklistItemDone(b,stageName,i);
+        var action=checklistItemAction(stageName,i,curChecklistRole);
+        return '<div class="stagecheck'+(done?' done':'')+'"'+(action?(' onclick="'+action+'"'):'')+'>'+
           '<span class="stagecheck__box">'+(done?'✓':'')+'</span>'+
           '<span class="stagecheck__label">'+esc(label)+'</span>'+
         '</div>';
@@ -3391,12 +3472,14 @@ function renderProjectOverview(b){
   // source of truth here).
   var advanceBtn=document.getElementById('advanceStageBtn');
   if(advanceBtn){
-    var canAdvance=!delivered&&idx<PROJECT_STAGES.length-2;
+    // Only the assigned Client Manager decides a stage is genuinely done --
+    // Carve Admin (owner) can see/edit the underlying project data but does
+    // not get to advance the stage themselves. See advanceProjectStage().
+    var canAdvance=!delivered&&idx<PROJECT_STAGES.length-2&&document.body.dataset.role==='sales';
     var gateItems=checklistItems;
     var gateComplete=true;
     if(gateItems&&gateItems.length){
-      var gateState=(b.stageChecklist&&b.stageChecklist[stageName])||[];
-      gateComplete=gateItems.every(function(_,i){return !!gateState[i];});
+      gateComplete=gateItems.every(function(_,i){return checklistItemDone(b,stageName,i);});
     }
     advanceBtn.hidden=!canAdvance;
     if(canAdvance){
@@ -3496,19 +3579,64 @@ function renderProjectOverview(b){
   renderProjectPricingPanel(b);
   setText('kpiInvoice',paymentStatusLabel(b));
   setText('kpiInvoiceSub','Click to view →');
+  // Keep the scale/boundary and design-files modals in sync with whatever
+  // just changed, in case either is currently open over this render.
+  if(typeof renderScaleBoundaryModal==='function')renderScaleBoundaryModal(b);
+  if(typeof renderDesignFilesModal==='function')renderDesignFilesModal(b);
 }
 window.renderProjectOverview=renderProjectOverview;
+// Whether a stage's checklist item currently reads "done". A few items are
+// driven by real, already-tracked data (Project Kick Off's scale/boundary,
+// deposit, and design files -- see checklistItemAction just below) instead
+// of a free-standing manual toggle; everything else falls back to the
+// plain b.stageChecklist boolean set by toggleStageChecklistItem. Both the
+// render loop and advanceProjectStage()'s gate call this so they can never
+// disagree about what's actually complete.
+function checklistItemDone(b,stageName,itemIndex){
+  if(stageName==='Project Kick Off'){
+    if(itemIndex===0){
+      var scale=(typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null;
+      var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
+      var boundary=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
+      return !!scale&&!!boundary&&!!b.scaleBoundaryConfirmedAt;
+    }
+    if(itemIndex===1)return !!(b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositStatus==='paid');
+    if(itemIndex===2)return (typeof designFilesChecklistDone==='function')?designFilesChecklistDone(b):false;
+  }
+  var state=(b.stageChecklist&&b.stageChecklist[stageName])||[];
+  return !!state[itemIndex];
+}
+window.checklistItemDone=checklistItemDone;
+// The onclick JS for a checklist item row, or null for a non-interactive
+// row. Project Kick Off's three items each route to their own dedicated
+// place instead of the generic toggle (see checklistItemDone for how each
+// one's "done" state is actually computed). Everywhere else, checking off
+// an item is the assigned Client Manager's call only -- not even Carve
+// Admin gets to do it (see toggleStageChecklistItem).
+function checklistItemAction(stageName,itemIndex,role){
+  if(stageName==='Project Kick Off'){
+    if(itemIndex===0)return (role==='owner'||role==='sales'||role==='client')?'openScaleBoundaryModal()':null;
+    if(itemIndex===1)return (role==='owner'||role==='sales')?'openProjectInvoicePanel()':null;
+    if(itemIndex===2)return 'openDesignFilesModal()';
+  }
+  return role==='sales'?('toggleStageChecklistItem('+itemIndex+')'):null;
+}
+window.checklistItemAction=checklistItemAction;
 // Toggles one item in the CURRENT stage's checklist (see STAGE_CHECKLISTS
-// above) for the currently-open project. Owner/Client Manager only -- the
-// client-facing view never calls this (no click handler is rendered for
-// them), so this is a defense-in-depth check, not the only gate.
+// above) for the currently-open project. Client Manager only -- not even
+// Carve Admin, per instruction; the client-facing view never calls this
+// either (no click handler is rendered for them), so this is
+// defense-in-depth, not the only gate. Every Project Kick Off item is
+// special-cased elsewhere (checklistItemDone/checklistItemAction) so this
+// generic toggle is a no-op for that stage.
 function toggleStageChecklistItem(itemIndex){
   var role=document.body.dataset.role;
-  if(role!=='owner'&&role!=='sales')return;
+  if(role!=='sales')return;
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
   if(!b||b.deliveredAt)return;
   var stageName=PROJECT_STAGES[projectStageIndex(b)];
+  if(stageName==='Project Kick Off')return;
   var items=(typeof STAGE_CHECKLISTS!=='undefined')?STAGE_CHECKLISTS[stageName]:null;
   if(!items||!items[itemIndex])return;
   if(!b.stageChecklist)b.stageChecklist={};
@@ -3523,12 +3651,15 @@ window.toggleStageChecklistItem=toggleStageChecklistItem;
 // Confirms the CURRENT stage is genuinely done and moves the project to
 // the next one -- the only thing that ever changes b.projectStage (see
 // projectStageIndex's doc comment). Gated on that stage's checklist being
-// fully checked off where STAGE_CHECKLISTS defines one; stages without an
-// item list yet advance freely. Owner/Client Manager only -- re-checked
-// here as defense-in-depth even though the client never sees this button.
+// fully checked off where STAGE_CHECKLISTS defines one (see
+// checklistItemDone); stages without an item list yet advance freely.
+// Client Manager only, per instruction -- Carve Admin does not get to
+// advance a stage even though they can edit the underlying project data.
+// Re-checked here as defense-in-depth even though the button is hidden
+// for every other role.
 function advanceProjectStage(){
   var role=document.body.dataset.role;
-  if(role!=='owner'&&role!=='sales')return;
+  if(role!=='sales')return;
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
   if(!b||b.deliveredAt)return;
@@ -3537,8 +3668,7 @@ function advanceProjectStage(){
   var stageName=PROJECT_STAGES[idx];
   var items=(typeof STAGE_CHECKLISTS!=='undefined')?STAGE_CHECKLISTS[stageName]:null;
   if(items&&items.length){
-    var state=(b.stageChecklist&&b.stageChecklist[stageName])||[];
-    var complete=items.every(function(_,i){return !!state[i];});
+    var complete=items.every(function(_,i){return checklistItemDone(b,stageName,i);});
     if(!complete)return;
   }
   var nextStageName=PROJECT_STAGES[idx+1];
@@ -3548,6 +3678,149 @@ function advanceProjectStage(){
   renderProjectOverview(b);
 }
 window.advanceProjectStage=advanceProjectStage;
+// ---- Project scale & boundary modal (Project Kick Off checklist item #1) ----
+function renderScaleBoundaryModal(b){
+  var modal=document.getElementById('scaleBoundaryModal');
+  if(!modal||modal.hidden||!b)return;
+  var scale=(typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null;
+  var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
+  var boundary=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
+  var scaleDisp=document.getElementById('sbScaleDisplay');
+  if(scaleDisp)scaleDisp.textContent=scale||'Not set yet';
+  var scaleInput=document.getElementById('sbScaleInput');
+  if(scaleInput)scaleInput.value=scale||'';
+  var boundaryDisp=document.getElementById('sbBoundaryDisplay');
+  if(boundaryDisp)boundaryDisp.innerHTML=boundary&&typeof boundaryFileLine==='function'?(boundaryFileLine({boundaryFile:boundary})||'Not uploaded yet'):'Not uploaded yet';
+  var confirmWrap=document.getElementById('sbConfirmSection');
+  if(!confirmWrap)return;
+  var role=document.body.dataset.role;
+  var ready=!!scale&&!!boundary;
+  var confirmedAt=b.scaleBoundaryConfirmedAt;
+  if(role==='client'){
+    if(!ready){
+      confirmWrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.85rem;">Carve will fill in the scale and boundary map above before you can confirm them.</div>';
+    }else if(confirmedAt){
+      confirmWrap.innerHTML='<div style="color:var(--cm-text-strong);font-size:0.88rem;">✓ Confirmed on '+esc(confirmedAt)+'</div>';
+    }else{
+      confirmWrap.innerHTML='<label class="taxcheck" style="padding:0;"><input type="checkbox" onclick="confirmScaleBoundary()"><span class="ck"></span><span>I\'ve reviewed and confirm the scale and boundary map are correct</span></label>';
+    }
+  }else{
+    confirmWrap.innerHTML=confirmedAt?('<div style="color:var(--cm-text-strong);font-size:0.88rem;">✓ Client confirmed on '+esc(confirmedAt)+'</div>'):('<div style="color:var(--cm-text-subtle);font-size:0.85rem;">Awaiting client confirmation'+(ready?'':' — scale and boundary map still needed')+'.</div>');
+  }
+}
+window.renderScaleBoundaryModal=renderScaleBoundaryModal;
+function openScaleBoundaryModal(){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var modal=document.getElementById('scaleBoundaryModal');
+  if(!modal)return;
+  modal.hidden=false;
+  renderScaleBoundaryModal(b);
+}
+window.openScaleBoundaryModal=openScaleBoundaryModal;
+function closeScaleBoundaryModal(){
+  var modal=document.getElementById('scaleBoundaryModal');
+  if(modal)modal.hidden=true;
+}
+window.closeScaleBoundaryModal=closeScaleBoundaryModal;
+// Owner/Client Manager entering the scale value -- same override field
+// (b.scaleOverride) Project information's own Scale field reads/writes, so
+// the two always agree. Changing it clears any existing client
+// confirmation, since what the client signed off on no longer matches.
+function saveScaleBoundaryScale(){
+  var role=document.body.dataset.role;
+  if(role!=='owner'&&role!=='sales')return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var input=document.getElementById('sbScaleInput');
+  var val=input?input.value.trim():'';
+  b.scaleOverride=val||null;
+  b.scaleBoundaryConfirmedAt=null;
+  logProjectEvent(b,'Scale updated to '+(val||'—')+' on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+}
+window.saveScaleBoundaryScale=saveScaleBoundaryScale;
+// The client's own confirmation that the scale & boundary map Carve
+// entered are correct -- separate from Owner/Client Manager just entering
+// the data. checklistItemDone() won't read this item as complete until
+// both the data is present AND the client has explicitly confirmed it.
+function confirmScaleBoundary(){
+  if(document.body.dataset.role!=='client')return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var scale=(typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null;
+  var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
+  var boundary=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
+  if(!scale||!boundary)return;
+  b.scaleBoundaryConfirmedAt=new Date().toISOString().slice(0,10);
+  logProjectEvent(b,'Confirmed scale and boundary map on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+}
+window.confirmScaleBoundary=confirmScaleBoundary;
+// ---- Design files checklist modal (Project Kick Off checklist item #2) ----
+function renderDesignFilesModal(b){
+  var modal=document.getElementById('designFilesModal');
+  if(!modal||modal.hidden||!b)return;
+  var list=document.getElementById('designFilesList');
+  if(!list)return;
+  var canToggle=document.body.dataset.role==='factory';
+  var state=b.designFilesChecklist||[];
+  list.innerHTML=DESIGN_FILE_ITEMS.map(function(it,i){
+    var val=state[i];
+    var done=val===true,na=val==='na';
+    var box=done?'✓':(na?'N/A':'');
+    var cls='stagecheck'+(done?' done':'')+(na?' stagecheck--na':'');
+    var label=esc(it.label)+(it.optional?' <span style="color:var(--cm-text-subtle);">(if necessary)</span>':'');
+    return '<div class="'+cls+'"'+(canToggle?(' onclick="toggleDesignFileItem('+i+')"'):'')+'>'+
+      '<span class="stagecheck__box">'+box+'</span>'+
+      '<span class="stagecheck__label">'+label+'</span>'+
+    '</div>';
+  }).join('');
+}
+window.renderDesignFilesModal=renderDesignFilesModal;
+function openDesignFilesModal(){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var modal=document.getElementById('designFilesModal');
+  if(!modal)return;
+  modal.hidden=false;
+  renderDesignFilesModal(b);
+}
+window.openDesignFilesModal=openDesignFilesModal;
+function closeDesignFilesModal(){
+  var modal=document.getElementById('designFilesModal');
+  if(modal)modal.hidden=true;
+}
+window.closeDesignFilesModal=closeDesignFilesModal;
+// Cycles one design-file item's state -- required items toggle pending <->
+// cleared; optional ("if necessary") ones cycle pending -> cleared -> not
+// applicable -> pending. Vendor (factory) only; Carve Admin, Client
+// Manager and the client are read-only on this list by design.
+function toggleDesignFileItem(i){
+  if(document.body.dataset.role!=='factory')return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b||b.deliveredAt)return;
+  var it=DESIGN_FILE_ITEMS[i];
+  if(!it)return;
+  if(!b.designFilesChecklist)b.designFilesChecklist=[];
+  var cur=b.designFilesChecklist[i];
+  var next;
+  if(it.optional)next=(cur===true)?'na':((cur==='na')?undefined:true);
+  else next=(cur===true)?undefined:true;
+  b.designFilesChecklist[i]=next;
+  var verb=next===true?'Cleared':(next==='na'?'Marked not applicable':'Reset to pending');
+  logProjectEvent(b,verb+' "'+it.label+'" on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+}
+window.toggleDesignFileItem=toggleDesignFileItem;
 // Owner-only admin controls for this one project -- Client Manager
 // assignment, contact info, dates (read-only; the assigned Client Manager
 // edits these from My Projects), delivered/archive toggles, and Invoice &
@@ -3955,7 +4228,7 @@ function openCompletedProject(title){
   document.getElementById('journeyNextClient').innerHTML='Nothing further needed — this project is closed.';
   document.getElementById('journeyNextStudio').innerHTML='Delivered &amp; closed.';
   document.getElementById('journeyNextBtnClient').style.display='none';
-  document.getElementById('journeyNextBtnStudio').style.display='none';
+  var jnbs=document.getElementById('journeyNextBtnStudio');if(jnbs)jnbs.style.display='none';
   go('overview');
 }
 function openProjectAt(val,view){
