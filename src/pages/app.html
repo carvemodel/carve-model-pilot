@@ -400,6 +400,14 @@ body.impersonating .impersonate-bar{display:flex !important;}
 
 .journey__foot{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.8rem;padding-top:1.4rem;border-top:1px solid var(--cm-line-faint);}
 .journey__now p,.journey__next p{font-size:0.9rem;color:var(--cm-text-muted);margin-top:0.5rem;line-height:1.5;}
+#journeyChecklist{margin-top:0.6rem;display:flex;flex-direction:column;gap:0.55rem;}
+.stagecheck{display:flex;align-items:flex-start;gap:0.6rem;}
+.stagecheck__box{flex:none;width:18px;height:18px;border-radius:4px;border:1.5px solid var(--cm-border-strong);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--cm-ink-900);margin-top:0.1rem;}
+.stagecheck.done .stagecheck__box{background:var(--cm-silver);border-color:var(--cm-silver);}
+.stagecheck__label{font-size:0.9rem;color:var(--cm-text-muted);line-height:1.4;}
+.stagecheck.done .stagecheck__label{color:var(--cm-text-strong);text-decoration:line-through;text-decoration-color:var(--cm-border-strong);}
+.stagecheck[onclick]{cursor:pointer;}
+.stagecheck[onclick]:hover .stagecheck__box{border-color:var(--cm-silver);}
 .journey__now b,.journey__next b{color:var(--cm-text);}
 .journey__next{border-left:1px solid var(--cm-line-faint);padding-left:1rem;}
 
@@ -834,8 +842,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 
         <div class="journey__foot">
           <div class="journey__now">
-            <span class="mock__k">Happening now</span>
+            <span class="mock__k" id="journeyNowLabel">Happening now</span>
             <p id="journeyNow">Digital fabrication and hand-finishing of the tower massing. QC photos are posted to <b>Files</b> as each section completes.</p>
+            <div id="journeyChecklist" hidden></div>
           </div>
           <div class="journey__next" id="journeyNextWrap">
             <span class="mock__k">Current stage: <span id="journeyCurrentStageText" style="color:var(--cm-text-strong);">—</span><span class="sub" id="journeyScheduleStatus" style="margin-left:0.35rem;color:var(--cm-text-strong);"></span></span>
@@ -2237,6 +2246,20 @@ var PROJECT_STAGES=[
   'Post Delivery Support',                      // 8
   'Project Completed'                           // 9 -- final stage; corresponds to b.deliveredAt
 ];
+// What has to be true before a project can move on to the NEXT stage,
+// shown to everyone (including the client) as a checklist in place of the
+// old free-text "Happening now" note. Client Manager/Owner tick items off
+// as they're confirmed; the client sees the same list read-only, so they
+// always know exactly what's still outstanding. Only stages with an entry
+// here get the checklist treatment -- stages not yet listed keep the old
+// free-text note (b.projectUpdateNote) until their own items are defined.
+var STAGE_CHECKLISTS={
+  'Project Kick Off':[
+    'Project scale and boundary confirmed',
+    "50% deposit received (Carve's side)",
+    'Design files complete — nothing missing'
+  ]
+};
 function getProjectStartDate(b){
   var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
   return b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt||null;
@@ -3328,8 +3351,39 @@ function renderProjectOverview(b){
   var scheduleStatusTxt=(typeof currentStageScheduleStatus==='function')?currentStageScheduleStatus(b):'';
   setText('journeyScheduleStatus',scheduleStatusTxt?(' | '+scheduleStatusTxt):'');
   setText('journeyNextStageText',delivered?'Complete':(nextStage||'Complete'));
+  // Stages with a defined STAGE_CHECKLISTS entry show that checklist
+  // instead of the free-text note -- everyone (including the client) sees
+  // the same items; only Owner/Client Manager can tick them off (see
+  // toggleStageChecklistItem). #journeyNow is left in the DOM (just
+  // hidden) rather than removed, since a couple of legacy/dead code paths
+  // (openCompletedProject, setOverdue) still poke its innerHTML directly.
   var jNow=document.getElementById('journeyNow');
-  if(jNow)jNow.innerHTML=delivered?'Project complete. Final files are available under Files.':esc(b.projectUpdateNote||('Currently in '+stageName+'.'));
+  var jChecklist=document.getElementById('journeyChecklist');
+  var jNowLabel=document.getElementById('journeyNowLabel');
+  var checklistItems=(!delivered&&typeof STAGE_CHECKLISTS!=='undefined')?STAGE_CHECKLISTS[stageName]:null;
+  if(checklistItems&&checklistItems.length){
+    if(jNowLabel)jNowLabel.textContent='To move to next stage';
+    if(jNow)jNow.hidden=true;
+    if(jChecklist){
+      jChecklist.hidden=false;
+      var checklistState=(b.stageChecklist&&b.stageChecklist[stageName])||[];
+      var canEditChecklist=document.body.dataset.role==='owner'||document.body.dataset.role==='sales';
+      jChecklist.innerHTML=checklistItems.map(function(label,i){
+        var done=!!checklistState[i];
+        return '<div class="stagecheck'+(done?' done':'')+'"'+(canEditChecklist?(' onclick="toggleStageChecklistItem('+i+')"'):'')+'>'+
+          '<span class="stagecheck__box">'+(done?'✓':'')+'</span>'+
+          '<span class="stagecheck__label">'+esc(label)+'</span>'+
+        '</div>';
+      }).join('');
+    }
+  }else{
+    if(jNowLabel)jNowLabel.textContent='Happening now';
+    if(jChecklist){jChecklist.hidden=true;jChecklist.innerHTML='';}
+    if(jNow){
+      jNow.hidden=false;
+      jNow.innerHTML=delivered?'Project complete. Final files are available under Files.':esc(b.projectUpdateNote||('Currently in '+stageName+'.'));
+    }
+  }
 
   setText('kpiStatus',paused?'Paused':stageName);
   setText('kpiStage','Stage '+(delivered?totalSteps:(idx+1))+' of '+totalSteps);
@@ -3423,6 +3477,28 @@ function renderProjectOverview(b){
   setText('kpiInvoiceSub','Click to view →');
 }
 window.renderProjectOverview=renderProjectOverview;
+// Toggles one item in the CURRENT stage's checklist (see STAGE_CHECKLISTS
+// above) for the currently-open project. Owner/Client Manager only -- the
+// client-facing view never calls this (no click handler is rendered for
+// them), so this is a defense-in-depth check, not the only gate.
+function toggleStageChecklistItem(itemIndex){
+  var role=document.body.dataset.role;
+  if(role!=='owner'&&role!=='sales')return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b||b.deliveredAt)return;
+  var stageName=PROJECT_STAGES[projectStageIndex(b)];
+  var items=(typeof STAGE_CHECKLISTS!=='undefined')?STAGE_CHECKLISTS[stageName]:null;
+  if(!items||!items[itemIndex])return;
+  if(!b.stageChecklist)b.stageChecklist={};
+  var state=b.stageChecklist[stageName]||[];
+  state[itemIndex]=!state[itemIndex];
+  b.stageChecklist[stageName]=state;
+  logProjectEvent(b,(state[itemIndex]?'Checked off "':'Un-checked "')+items[itemIndex]+'" on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+}
+window.toggleStageChecklistItem=toggleStageChecklistItem;
 // Owner-only admin controls for this one project -- Client Manager
 // assignment, contact info, dates (read-only; the assigned Client Manager
 // edits these from My Projects), delivered/archive toggles, and Invoice &
