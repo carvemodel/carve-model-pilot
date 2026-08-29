@@ -2151,7 +2151,7 @@ function projectRowHtml(b){
     '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'+
       '<div style="cursor:pointer;flex:1;min-width:180px;" onclick="openProject(\''+esc(b.id)+'\')">'+
         '<div class="projrow__name">'+esc(b.title)+'</div>'+
-        '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(b.brief&&b.brief['Intended use']?(' · '+esc(b.brief['Intended use'])):'')+'</div>'+
+        '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(c.Name?(' · '+esc(c.Name)):'')+(c.Phone?(' · '+esc(c.Phone)):'')+(c.Email?(' · '+esc(c.Email)):'')+'</div>'+
         '<div class="projcard__meta">'+metaBits.join(' · ')+'</div>'+
       '</div>'+
       '<button type="button" class="rowbtn" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;" onclick="toggleAwardedProject(\''+esc(b.id)+'\')">'+(isOpen?'Hide details ▲':'Details ▼')+'</button>'+
