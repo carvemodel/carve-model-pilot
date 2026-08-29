@@ -842,8 +842,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
              + Client Manager. Client price visible to both; vendor price and
              profit are Owner-only, same rule as the Pricing panel below.
              Populated by renderProjectPricingPanel(). -->
-        <div class="kpi proj-pricing-only"><span class="mock__k">Client price</span><div class="big" id="kpiClientPrice" style="font-size:1.15rem;">—</div><div class="sub">Agreed with client</div></div>
-        <div class="kpi owner-only"><span class="mock__k">Vendor price</span><div class="big" id="kpiVendorPrice" style="font-size:1.15rem;">—</div><div class="sub">Agreed with vendor</div></div>
+        <div class="kpi proj-pricing-only"><span class="mock__k">Project Price</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiClientPrice" style="font-size:1.15rem;">—</div><button type="button" class="owner-only" onclick="editProjectPrice()" title="Edit project price -- Carve Admin only" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
+        <div class="kpi owner-only"><span class="mock__k">Vendor price</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiVendorPrice" style="font-size:1.15rem;">—</div><button type="button" onclick="editVendorPrice()" title="Edit vendor price" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
         <div class="kpi owner-only"><span class="mock__k">Profit</span><div class="big" id="kpiProfit" style="font-size:1.15rem;">—</div><div class="sub">Client − vendor</div></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Scale</span><div class="big" id="kpiScale">—</div><div class="sub" id="kpiScaleSub"></div></div>
         <div class="kpi proj-invoice-only" style="cursor:pointer;" onclick="openProjectInvoicePanel()"><span class="mock__k">Invoice &amp; Payment</span><div class="big" id="kpiInvoice" style="font-size:1.15rem;">—</div><div class="sub" id="kpiInvoiceSub">Click to view →</div></div>
@@ -858,7 +858,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
         <div style="display:flex;flex-direction:column;gap:1.25rem;">
           <div class="panel">
-            <div class="panel__head"><h3>Client information</h3></div>
+            <div class="panel__head"><h3>Client information</h3><button type="button" class="btn btn--ghost btn--sm client-edit-only" id="projInfoClientEditBtn" onclick="toggleClientEdit()">Edit</button></div>
             <div class="panel__body">
               <div style="display:flex;flex-direction:column;gap:0.9rem;">
                 <div class="cm-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientCM">—</div></div>
@@ -866,6 +866,21 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 <div class="cid-only"><span class="mock__k">Contact name</span><div class="mock__v" id="projInfoContactName">—</div></div>
                 <div class="cid-only"><span class="mock__k">Email</span><div class="mock__v" id="projInfoContactEmail">—</div></div>
                 <div class="cid-only"><span class="mock__k">Phone</span><div class="mock__v" id="projInfoContactPhone">—</div></div>
+              </div>
+              <!-- Editing here updates ONLY this project's client record going
+                   forward -- the previous contact stays on record in the
+                   Clients tab (as history) until Carve Admin deletes it; the
+                   new info is tracked there as a separate, new entry. See
+                   saveClientEdit(). -->
+              <div class="client-edit-only" id="projInfoClientEditWrap" hidden style="margin-top:0.9rem;display:flex;flex-direction:column;gap:0.6rem;max-width:320px;">
+                <div class="mfield" style="margin:0;"><label>Company</label><input type="text" id="ceCompany"></div>
+                <div class="mfield" style="margin:0;"><label>Contact name</label><input type="text" id="ceName"></div>
+                <div class="mfield" style="margin:0;"><label>Email</label><input type="email" id="ceEmail"></div>
+                <div class="mfield" style="margin:0;"><label>Phone</label><input type="text" id="cePhone"></div>
+                <div style="display:flex;gap:0.5rem;">
+                  <button type="button" class="btn btn--primary btn--sm" onclick="saveClientEdit()">Save as new contact</button>
+                  <button type="button" class="btn btn--ghost btn--sm" onclick="toggleClientEdit()">Cancel</button>
+                </div>
               </div>
               <div class="proj-cancel client-only" id="projCancelWrap">
                 <button class="linkbtn-danger" onclick="cancelProject()">Need to cancel this project?</button>
@@ -886,30 +901,21 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     <select id="projInfoLeadSelect" onchange="setBriefManager(document.getElementById('projSelect').value,this.value)"></select>
                   </div>
                 </div>
-                <div><span class="mock__k">Start</span><div class="mock__v" id="projInfoStart">—</div></div>
-                <div><span class="mock__k">Target production completion</span><div class="mock__v" id="projInfoCompletion">—</div></div>
-                <div><span class="mock__k">Target delivery</span><div class="mock__v" id="projInfoTarget">—</div></div>
+                <div><span class="mock__k">Start</span><div class="mock__v kpi-scale-only" id="projInfoStart">—</div>
+                  <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoStartInput" onchange="setProjectStart(document.getElementById('projSelect').value,this.value)"></div>
+                </div>
+                <div><span class="mock__k">Target production completion</span><div class="mock__v kpi-scale-only" id="projInfoCompletion">—</div>
+                  <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoCompletionInput" onchange="setProductionCompletionOverride(document.getElementById('projSelect').value,this.value)"></div>
+                </div>
+                <div><span class="mock__k">Target delivery</span><div class="mock__v kpi-scale-only" id="projInfoTarget">—</div>
+                  <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoTargetInput" onchange="setTargetDeliveryOverride(document.getElementById('projSelect').value,this.value)"></div>
+                </div>
                 <div><span class="mock__k">Use case</span><div class="mock__v" id="projInfoUse">—</div></div>
                 <div><span class="mock__k">Model size</span><div class="mock__v" id="projInfoModelSize">—</div></div>
                 <div><span class="mock__k">Package size</span><div class="mock__v" id="projInfoPackageSize">—</div></div>
                 <div class="cm-only" id="projInfoActionsWrap" style="display:flex;gap:0.5rem;padding-top:0.2rem;"></div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pricing: Owner + the assigned Client Manager. Agreed price with
-           vendor and Profit rows are further restricted to Owner only --
-           Client Manager must only ever see the agreed price with client.
-           Populated by renderProjectPricingPanel(). -->
-      <div class="panel proj-pricing-only" style="margin-top:1.5rem;">
-        <div class="panel__head"><h3>Pricing</h3></div>
-        <div class="panel__body">
-          <div style="display:flex;flex-direction:column;gap:0.9rem;">
-            <div><span class="mock__k">Agreed price with client</span><div class="mock__v" id="projInfoClientPrice">—</div></div>
-            <div class="owner-only"><span class="mock__k">Agreed price with vendor</span><div class="mock__v" id="projInfoVendorPrice">—</div></div>
-            <div class="owner-only"><span class="mock__k">Profit</span><div class="mock__v" id="projInfoProfit">—</div></div>
           </div>
         </div>
       </div>
@@ -2026,17 +2032,22 @@ function addDays(dateStr,days){
   d.setDate(d.getDate()+Number(days||0));
   return d.toISOString().slice(0,10);
 }
-// Target production completion = start date + the production time agreed
-// with the client (b.productionDays). Target delivery = that completion
-// date + 5 days (packing & shipping buffer). Both are derived, not
-// separately hand-entered, so they can't drift out of sync with the start
-// date or the agreed production time.
+// Target production completion defaults to start date + the production
+// time agreed with the client (b.productionDays), and target delivery
+// defaults to that completion date + 5 days (packing & shipping buffer) --
+// this keeps both in sync with the start date / production time by default
+// so they don't drift. Either can be directly overridden (see
+// setProductionCompletionOverride/setTargetDeliveryOverride, used by the
+// date inputs in Project information) for cases where the real date needs
+// to diverge from the formula -- the override always wins once set.
 function productionCompletionDate(b){
+  if(b&&b.productionCompletionOverride)return b.productionCompletionOverride;
   var start=getProjectStartDate(b);
   if(!start||!b.productionDays)return null;
   return addDays(start,b.productionDays);
 }
 function targetDeliveryDate(b){
+  if(b&&b.targetDeliveryOverride)return b.targetDeliveryOverride;
   var completion=productionCompletionDate(b);
   return completion?addDays(completion,5):null;
 }
@@ -2127,6 +2138,65 @@ function toggleLeadEdit(){
   if(btn)btn.textContent=wrap.hidden?'Edit':'Cancel';
 }
 window.toggleLeadEdit=toggleLeadEdit;
+// Inline "Edit" affordance next to Client information (Company/Contact
+// name/Email/Phone), same open/close pattern as the Carve Lead editor
+// above. Owner and the assigned Client Manager both get this (see
+// client-edit-only in PERM) -- see saveClientEdit() for what happens on
+// save.
+function toggleClientEdit(){
+  var wrap=document.getElementById('projInfoClientEditWrap');
+  var btn=document.getElementById('projInfoClientEditBtn');
+  if(!wrap)return;
+  if(wrap.hidden){
+    var id=document.getElementById('projSelect').value;
+    var b=findBrief(id);
+    var c=(b&&b.client)||{};
+    var ceCompany=document.getElementById('ceCompany');if(ceCompany)ceCompany.value=c.Company||'';
+    var ceName=document.getElementById('ceName');if(ceName)ceName.value=c.Name||'';
+    var ceEmail=document.getElementById('ceEmail');if(ceEmail)ceEmail.value=c.Email||'';
+    var cePhone=document.getElementById('cePhone');if(cePhone)cePhone.value=c.Phone||'';
+  }
+  wrap.hidden=!wrap.hidden;
+  if(btn)btn.textContent=wrap.hidden?'Edit':'Cancel';
+}
+window.toggleClientEdit=toggleClientEdit;
+// Saving here updates ONLY this project's own client record
+// (b.client) -- it deliberately does NOT touch or overwrite the existing
+// Clients-tab contact card for the old email. That old card is left alone
+// as history until Carve Admin removes it (see deleteClientContact in the
+// Clients tab). Re-running syncClientsFromLeads() afterward naturally
+// creates/updates a separate, new contact entry for the changed info (since
+// ensureClientContact matches by email) and moves this project's live
+// value/status tracking there going forward.
+function saveClientEdit(){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var company=document.getElementById('ceCompany').value.trim();
+  var name=document.getElementById('ceName').value.trim();
+  var email=document.getElementById('ceEmail').value.trim();
+  var phone=document.getElementById('cePhone').value.trim();
+  if(!company||!name||!email){alert('Company, contact name, and email are required.');return;}
+  var old=b.client||{};
+  var changed=(old.Company||'')!==company||(old.Name||'')!==name||(old.Email||'').toLowerCase()!==email.toLowerCase()||(old.Phone||'')!==phone;
+  if(!changed){toggleClientEdit();return;}
+  b.client=b.client||{};
+  b.client.Company=company;
+  b.client.Name=name;
+  b.client.Email=email;
+  b.client.Phone=phone;
+  logProjectEvent(b,'Client contact updated to '+name+' ('+email+')');
+  var role=document.body.dataset.role;
+  if(role==='sales'&&typeof notifyOwner==='function'){
+    notifyOwner('Client Manager updated the client contact on "'+b.title+'" from '+(old.Name||'—')+' to '+name+' ('+email+').');
+  }
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  if(window.syncClientsFromLeads)window.syncClientsFromLeads();
+  renderProjectOverview(b);
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  toggleClientEdit();
+}
+window.saveClientEdit=saveClientEdit;
 function setProjectStart(id,val){
   var b=findBrief(id);if(!b)return;
   b.startDate=val||null;
@@ -2148,24 +2218,88 @@ function setProductionDays(id,val){
   if(sel&&sel.value===id)renderProjectOverview(b);
 }
 window.setProductionDays=setProductionDays;
-function toggleProjectDelivered(id){
+function setProductionCompletionOverride(id,val){
   var b=findBrief(id);if(!b)return;
-  b.deliveredAt=b.deliveredAt?null:new Date().toISOString().slice(0,10);
-  logProjectEvent(b,b.deliveredAt?'Marked delivered':'Un-marked delivered');
+  b.productionCompletionOverride=val||null;
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
+  var sel=document.getElementById('projSelect');
+  if(sel&&sel.value===id)renderProjectOverview(b);
+}
+window.setProductionCompletionOverride=setProductionCompletionOverride;
+function setTargetDeliveryOverride(id,val){
+  var b=findBrief(id);if(!b)return;
+  b.targetDeliveryOverride=val||null;
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
+  var sel=document.getElementById('projSelect');
+  if(sel&&sel.value===id)renderProjectOverview(b);
+}
+window.setTargetDeliveryOverride=setTargetDeliveryOverride;
+// Delivered is no longer a manual toggle (there used to be a "Mark
+// delivered" button in Project information) -- it should only ever become
+// true once the project's own stage progression genuinely reaches the
+// final PROJECT_STAGES entry ("Project Completed"). This runs wherever a
+// brief's stage might have moved forward (Overview render, Projects list
+// render) and stamps deliveredAt automatically the first time that happens,
+// rather than trusting an admin to remember to click a button.
+function autoMarkDeliveredIfComplete(b){
+  if(!b||b.deliveredAt)return;
+  if(projectStageIndex(b)>=PROJECT_STAGES.length-1){
+    b.deliveredAt=new Date().toISOString().slice(0,10);
+    logProjectEvent(b,'Project Completed — marked delivered automatically');
+    if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+    if(window.syncClientsFromLeads)window.syncClientsFromLeads();
+  }
+}
+window.autoMarkDeliveredIfComplete=autoMarkDeliveredIfComplete;
+// Pause replaces Archive in Project information's actions row -- "temporarily
+// on hold" is a distinct, reversible state from "tidied away" (archived is
+// still used for filtering/reporting elsewhere, but is no longer manually
+// toggled from this panel).
+function toggleProjectPaused(id){
+  var b=findBrief(id);if(!b)return;
+  b.paused=!b.paused;
+  logProjectEvent(b,b.paused?'Project paused':'Project resumed');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  if(window.syncClientsFromLeads)window.syncClientsFromLeads();
   renderAwardedProjects();
   if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
 }
+window.toggleProjectPaused=toggleProjectPaused;
 function toggleProjectArchived(id){
   var b=findBrief(id);if(!b)return;
   b.archived=!b.archived;
   logProjectEvent(b,b.archived?'Archived':'Unarchived');
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  if(window.syncClientsFromLeads)window.syncClientsFromLeads();
   renderAwardedProjects();
   if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
 }
-window.toggleProjectDelivered=toggleProjectDelivered;
 window.toggleProjectArchived=toggleProjectArchived;
+// Real, permanent delete for an AWARDED/in-production project -- reachable
+// only from its own detail page (Project information's actions row).
+// SRC_deleteBrief() (Sourcing & Quotes) intentionally refuses this for
+// awarded briefs and points admins at Archive instead; that option isn't
+// offered on this page anymore (Pause covers "temporarily out of the way"),
+// so this mirrors SRC_deleteBrief's actual delete mechanics -- including
+// srcPendingDeleteBriefIds, so the deletion sticks through the next server
+// poll instead of the brief silently reappearing -- without that guard.
+function deleteAwardedProject(id){
+  var b=findBrief(id);if(!b)return;
+  if(!confirm('Permanently delete "'+b.title+'"? This removes the project, its quotes, and its invoice/payment history for good -- it cannot be recovered. If you just want it out of the way, use Pause instead.'))return;
+  if(!confirm('Are you sure? This is the last step — the project will be permanently deleted.'))return;
+  SDB.briefs=(SDB.briefs||[]).filter(function(x){return x.id!==id;});
+  if(typeof srcPendingDeleteBriefIds!=='undefined')srcPendingDeleteBriefIds.push(id);
+  saveSRC({deletedBriefIds:[id]});
+  if(window.syncClientsFromLeads)window.syncClientsFromLeads();
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  if(window.SRC_render)SRC_render();
+  go('projects');
+}
+window.deleteAwardedProject=deleteAwardedProject;
 
 /* ---- Real Projects tab list (Active / Archived / Completed) -- replaces
    what used to be four permanently-hardcoded demo project cards. A project
@@ -2201,12 +2335,41 @@ function renderProjectsList(){
   var wrap=document.getElementById('projectsListWrap');
   if(!wrap)return;
   var all=awardedBriefs();
-  var active=all.filter(function(b){return !b.archived&&!b.deliveredAt;});
+  all.forEach(autoMarkDeliveredIfComplete);
+  var active=all.filter(function(b){return !b.archived&&!b.deliveredAt&&!b.paused;});
+  var paused=all.filter(function(b){return !b.archived&&!b.deliveredAt&&b.paused;});
   var completed=all.filter(function(b){return !b.archived&&b.deliveredAt;});
   var archived=all.filter(function(b){return b.archived;});
-  wrap.innerHTML=projectSectionHtml('In Progress',active)+projectSectionHtml('Completed',completed)+projectSectionHtml('Archived',archived);
+  wrap.innerHTML=renderOwnerNotifBanner()+projectSectionHtml('In Progress',active)+projectSectionHtml('Paused',paused)+projectSectionHtml('Completed',completed)+projectSectionHtml('Archived',archived);
 }
 window.renderProjectsList=renderProjectsList;
+// Owner-only heads-up when a Client Manager changes a client's contact
+// info (see saveClientEdit/notifyOwner) -- same {text,time,read} shape and
+// "mark all read" pattern as the vendor Quotes tab's notification banner,
+// just scoped to the 'owner' key instead of a shop id. Injected dynamically
+// (not part of the static page skeleton), so it checks the role directly
+// rather than relying on a PERM class.
+function renderOwnerNotifBanner(){
+  if(document.body.dataset.role!=='owner')return '';
+  var unread=((SDB.notifications&&SDB.notifications.owner)||[]).filter(function(n){return !n.read;});
+  if(!unread.length)return '';
+  return '<div style="border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);background:rgba(182,182,182,0.05);border-radius:var(--r-sm);padding:0.9rem 1.1rem;margin-bottom:1.2rem;">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:0.8rem;margin-bottom:0.5rem;"><span style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-silver);">✉ '+unread.length+' new update'+(unread.length==1?'':'s')+'</span><button class="btn btn--ghost btn--sm" onclick="ownerDismissNotifications()">Mark all read</button></div>'+
+    unread.map(function(n){return '<div style="font-size:0.84rem;color:var(--cm-text);padding:0.3rem 0;">'+esc(n.text)+' <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">· '+esc(n.time)+'</span></div>';}).join('')+
+  '</div>';
+}
+window.ownerDismissNotifications=function(){
+  if(SDB.notifications&&SDB.notifications.owner)SDB.notifications.owner.forEach(function(n){n.read=true;});
+  saveSRC();
+  renderProjectsList();
+};
+function notifyOwner(text){
+  if(!SDB.notifications)SDB.notifications={};
+  if(!SDB.notifications.owner)SDB.notifications.owner=[];
+  SDB.notifications.owner.unshift({text:text,time:'just now',read:false});
+  saveSRC();
+}
+window.notifyOwner=notifyOwner;
 function renderPickProjectList(){
   var body=document.getElementById('pickProjectBody');
   if(!body)return;
@@ -2522,6 +2685,7 @@ function openProject(id){
 // this reads from (b.projectStage/b.projectPct/b.startDate/b.productionDays/b.deliveredAt).
 function renderProjectOverview(b){
   if(!b)return;
+  autoMarkDeliveredIfComplete(b);
   var delivered=!!b.deliveredAt;
   var idx=projectStageIndex(b);
   var totalSteps=PROJECT_STAGES.length;
@@ -2590,6 +2754,9 @@ function renderProjectOverview(b){
   setText('projInfoTarget',targetDelivery?fmtDateShort(targetDelivery):'—');
   var completionDate=productionCompletionDate(b);
   setText('projInfoCompletion',completionDate?fmtDateShort(completionDate):'—');
+  var startInput=document.getElementById('projInfoStartInput');if(startInput)startInput.value=b.startDate||'';
+  var completionInput=document.getElementById('projInfoCompletionInput');if(completionInput)completionInput.value=completionDate||'';
+  var targetInput=document.getElementById('projInfoTargetInput');if(targetInput)targetInput.value=targetDelivery||'';
   setText('projInfoUse',(b.brief&&b.brief['Intended use'])||'—');
   var wq=(typeof winningQuote==='function')?winningQuote(b):null;
   var modelSize=(b.clientQuote&&b.clientQuote.modelDims)||(wq&&wq.modelDims)||null;
@@ -2637,9 +2804,12 @@ function renderProjectAdminPanel(b){
   setText('projInfoContactPhone',c.Phone||'—');
   var wrap=document.getElementById('projInfoActionsWrap');
   if(wrap){
-    var delivered=!!b.deliveredAt;
-    wrap.innerHTML='<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
-      '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>';
+    if(b.deliveredAt){
+      wrap.innerHTML='<span style="color:var(--cm-text-subtle);font-size:0.82rem;">Delivered '+esc(fmtDateShort(b.deliveredAt))+' — project is complete.</span>';
+    }else{
+      wrap.innerHTML='<button class="btn btn--ghost btn--sm" onclick="toggleProjectPaused(\''+esc(b.id)+'\')">'+(b.paused?'Resume project':'Pause project')+'</button>'+
+        '<button class="btn btn--ghost btn--sm btn--danger" onclick="deleteAwardedProject(\''+esc(b.id)+'\')">Delete</button>';
+    }
   }
 }
 window.renderProjectAdminPanel=renderProjectAdminPanel;
@@ -2675,14 +2845,57 @@ function renderProjectPricingPanel(b){
   var wq=(typeof winningQuote==='function')?winningQuote(b):null;
   var vendorPrice=(wq&&wq.price!=null)?wq.price:null;
   var profit=(clientPrice!=null&&vendorPrice!=null)?(clientPrice-vendorPrice):null;
-  setText('projInfoClientPrice',clientPrice!=null?fmtUsd(clientPrice):'—');
-  setText('projInfoVendorPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
-  setText('projInfoProfit',profit!=null?fmtUsd(profit):'—');
   setText('kpiClientPrice',clientPrice!=null?fmtUsd(clientPrice):'—');
   setText('kpiVendorPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
   setText('kpiProfit',profit!=null?fmtUsd(profit):'—');
 }
 window.renderProjectPricingPanel=renderProjectPricingPanel;
+// Owner-only price overrides, reached via the pencil icons on the Project
+// Price / Vendor price KPI cards. Client Manager never gets this -- once a
+// project is underway the agreed price is Carve Admin's call only. Project
+// Price edits the client-facing clientQuote.price (what actually drives
+// invoice generation -- see ensureClientInvoice); Vendor price edits the
+// awarded vendor's own quote object in place (winningQuote(b) returns a
+// direct reference into b.quotes/b.variations, so this mutates the same
+// record the vendor submitted -- used to correct cases like a project's
+// invoice having been generated at vendor cost instead of the real
+// client-agreed price).
+function editProjectPrice(){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  if(!b.clientQuote){alert('This project doesn\'t have a client quote yet -- send one from Sourcing & Quotes first.');return;}
+  var current=b.clientQuote.price;
+  var next=prompt('Project price -- agreed with client (USD) -- for "'+b.title+'":',current!=null?current:'');
+  if(next==null)return;
+  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  if(!next||next<=0){alert('Enter a valid price greater than 0.');return;}
+  b.clientQuote.price=next;
+  logProjectEvent(b,'Project price updated to $'+next.toLocaleString('en-US'));
+  saveSRC({changedBriefIds:[b.id]});
+  if(window.syncClientsFromLeads)window.syncClientsFromLeads();
+  renderProjectOverview(b);
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+}
+window.editProjectPrice=editProjectPrice;
+function editVendorPrice(){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+  if(!wq){alert('This project doesn\'t have an awarded vendor quote yet.');return;}
+  var current=wq.price;
+  var next=prompt('Vendor price -- agreed with vendor (USD) -- for "'+b.title+'":',current!=null?current:'');
+  if(next==null)return;
+  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  if(!next||next<=0){alert('Enter a valid price greater than 0.');return;}
+  wq.price=next;
+  logProjectEvent(b,'Vendor price updated to $'+next.toLocaleString('en-US'));
+  saveSRC({changedBriefIds:[b.id]});
+  if(window.syncClientsFromLeads)window.syncClientsFromLeads();
+  renderProjectOverview(b);
+}
+window.editVendorPrice=editVendorPrice;
 // Milestones tab: a REAL activity timeline off the brief's own b.history
 // (quotes, awards, revisions), not a fabricated photo-approval workflow --
 // see the notice in view-milestones for why that structured workflow isn't
@@ -3213,6 +3426,22 @@ function createClientAccount(e){
   if(document.getElementById('view-clients')&&!document.getElementById('view-clients').hidden&&window.scopeClients)window.scopeClients(role);
   return false;
 }
+// Owner-only: permanently remove an old/superseded contact card from the
+// Clients tab (e.g. after a client's contact person changed via
+// saveClientEdit and the old record is no longer needed). This is a real,
+// permanent removal, not an archive -- confirm before calling.
+function deleteClientContact(coId,contactId){
+  var co=COMPANIES.filter(function(c){return c.id===coId;})[0];
+  if(!co)return;
+  var contact=co.contacts.filter(function(c){return c.id===contactId;})[0];
+  if(!contact)return;
+  if(!confirm('Permanently delete the contact record for '+contact.name+' ('+contact.email+')? This cannot be undone.'))return;
+  co.contacts=co.contacts.filter(function(c){return c.id!==contactId;});
+  if(!co.contacts.length)COMPANIES=COMPANIES.filter(function(c){return c!==co;});
+  if(typeof saveSRC==='function')saveSRC();
+  if(typeof renderClients==='function')renderClients(document.body.dataset.role);
+}
+window.deleteClientContact=deleteClientContact;
 /* Auto-list a submitted brief's contact under Clients — no portal account yet,
    just a record so Carve Admin can find them and click "+ Assign account". */
 function ensureClientContact(l){
@@ -3260,8 +3489,44 @@ function syncClientsFromLeads(){
     // while it was still a lead, instead of double-counting it as a second
     // quote request now that it's a brief.
     ensureClientContact({id:b.originalLeadId||('brief:'+b.id),client:b.client});
-
+    syncClientProjectFromBrief(b);
   });
+}
+// contact.projects[] (Clients tab "Project value"/"Paid"/"Balance" and the
+// per-contact project list) was created empty by ensureClientContact and
+// never actually populated anywhere -- Project value has always shown $0
+// for every client, not just one project going stale. This upserts one
+// entry per awarded brief (keyed by briefId so repeat syncs update in place
+// instead of duplicating), so it reflects whatever the project's real
+// agreed price and payment status are right now -- including edits made via
+// editProjectPrice or invoice mark-paid/amount corrections. Runs from
+// syncClientsFromLeads(), which fires on load and on the periodic
+// live-sync poll, so this stays current without any extra wiring.
+function syncClientProjectFromBrief(b){
+  if(!b||!b.client||!b.client.Email||b.status!=='awarded')return;
+  var email=b.client.Email.toLowerCase();
+  var co=COMPANIES.filter(function(c){return c.contacts.some(function(ct){return ct.email&&ct.email.toLowerCase()===email;});})[0];
+  if(!co)return;
+  var contact=co.contacts.filter(function(ct){return ct.email&&ct.email.toLowerCase()===email;})[0];
+  if(!contact)return;
+  var inv=b.clientQuote&&b.clientQuote.invoice;
+  var value=(b.clientQuote&&b.clientQuote.price!=null)?b.clientQuote.price:0;
+  var paid=0;
+  if(inv){
+    if((inv.depositStatus||'due')==='paid')paid+=inv.depositAmt||0;
+    if((inv.balanceStatus||'due')==='paid')paid+=inv.balanceAmt||0;
+  }
+  var delivered=!!b.deliveredAt;
+  var statusLabel=delivered?'Delivered':(b.archived?'Archived':(b.paused?'Paused':'In Progress'));
+  var statusClass=delivered?'chip done':(b.archived?'chip':(b.paused?'chip await':'chip active'));
+  contact.projects=contact.projects||[];
+  var proj=contact.projects.filter(function(p){return p.briefId===b.id;})[0];
+  if(!proj){proj={briefId:b.id};contact.projects.push(proj);}
+  proj.name=b.title;
+  proj.value=value;
+  proj.paid=paid;
+  proj.statusLabel=statusLabel;
+  proj.statusClass=statusClass;
 }
 /* "Last activity" should reflect the client actually using the portal (signing in),
    not just the moment their brief was received — call this whenever a client
@@ -3435,7 +3700,9 @@ var PERM={
   'prodtech-only':['prodtech'],                 // Production Technician only (My Assignments)
   'proj-invoice-only':['owner','sales'],         // per-project Invoice & Payment panel on Overview -- Owner + the assigned Client Manager; never factory/prodtech (client pricing) or client (uses their own Invoices tab)
   'kpi-scale-only':['client','factory','prodtech'], // 4th Overview KPI slot for everyone except owner/sales, who see Invoice & Payment there instead
-  'proj-pricing-only':['owner','sales']          // per-project Pricing panel on Overview -- same audience as proj-invoice-only. Agreed price with vendor + profit rows inside are further gated owner-only (see 'owner-only') so Client Manager sees only Agreed price with client.
+  'proj-pricing-only':['owner','sales'],         // Project Price KPI card on Overview -- same audience as proj-invoice-only. Vendor price + profit cards are further gated owner-only so Client Manager sees only the project (client-facing) price.
+  'proj-dates-edit-only':['owner','sales'],       // Start/Target production completion/Target delivery become editable date inputs for Owner + assigned Client Manager; everyone else (kpi-scale-only audience) just sees the computed read-only text
+  'client-edit-only':['owner','sales']            // Edit control on Client information (Company/Contact name/Email/Phone) -- Owner + assigned Client Manager only, never the client themselves or production
 };
 var ROLE_INFO={
   client:{name:'Asher Liu',av:'AL',org:'Client'},
@@ -3654,6 +3921,7 @@ function contactSubtotals(co){
 function renderCompanyCard(co,repName){
   var sub=contactSubtotals(co);
   var expanded=!!expandedCompanies[co.id];
+  var isOwnerView=document.body.dataset.role==='owner';
   var contactsHtml=co.contacts.map(function(c){
     var projHtml=c.projects.map(function(p){
       return '<div class="cc-projrow"><span>'+esc(p.name)+'</span><span class="chip '+esc(p.statusClass)+'">'+esc(p.statusLabel)+'</span></div>';
@@ -3664,7 +3932,9 @@ function renderCompanyCard(co,repName){
       '<div class="cc-contact__top"><div><div class="cc-v">'+esc(c.name)+(c.title?(', '+esc(c.title)):'')+'</div><div class="cc-m">'+esc(c.email)+(c.phone?(' · '+esc(c.phone)):'')+'</div></div>'+
       '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'+
       (c.hasAccount===false?'<button class="btn btn--primary btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">+ Assign account</button>':'')+
-      '<button class="btn btn--ghost btn--sm" onclick="openLinkContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Link to another company</button></div></div>'+
+      '<button class="btn btn--ghost btn--sm" onclick="openLinkContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Link to another company</button>'+
+      (isOwnerView?('<button class="btn btn--ghost btn--sm btn--danger" onclick="deleteClientContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Delete</button>'):'')+
+      '</div></div>'+
       '<div class="cc-contact__grid">'+
         '<div><span class="mock__k">Quote requests</span><div class="cc-v">'+(c.quoteRequests||0)+'</div></div>'+
         '<div><span class="mock__k">Projects delivered</span><div class="cc-v">'+delivered+'</div></div>'+
@@ -5788,6 +6058,7 @@ window.SRC_markInvoicePaid=function(bid,which){
   if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=received;logProjectEvent(b,'Project Kick Off — deposit received',received);}
   else{inv.balanceStatus='paid';inv.balancePaidAt=received;logProjectEvent(b,'Balance received',received);}
   saveSRC({changedBriefIds:[b.id]});
+  if(window.syncClientsFromLeads)window.syncClientsFromLeads();
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
@@ -5816,6 +6087,7 @@ window.SRC_reopenInvoicePayment=function(bid,which){
   if(which==='deposit'){inv.depositStatus='due';delete inv.depositPaidAt;delete inv.depositReportedAt;delete inv.depositReportedMethod;}
   else{inv.balanceStatus='due';delete inv.balancePaidAt;delete inv.balanceReportedAt;delete inv.balanceReportedMethod;}
   saveSRC({changedBriefIds:[b.id]});
+  if(window.syncClientsFromLeads)window.syncClientsFromLeads();
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
@@ -5839,6 +6111,32 @@ window.SRC_editInvoiceId=function(bid,which){
   if(window.renderAwardedProjects)window.renderAwardedProjects();
   if(window.renderMyAssigned)window.renderMyAssigned();
 };
+// Owner-only: correct an already-issued invoice's dollar amount. Normal flow
+// never touches inv.depositAmt/balanceAmt after issuance (see
+// ensureClientInvoice's "never reassign invoice numbers/amounts" comment) --
+// this exists specifically for cases like an invoice having been generated
+// from the vendor's cost instead of the real agreed client price, which
+// needs a one-time correction rather than a new invoice number.
+window.SRC_editInvoiceAmount=function(bid,which){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b||!b.clientQuote||!b.clientQuote.invoice)return;
+  var inv=b.clientQuote.invoice;
+  var current=which==='deposit'?inv.depositAmt:inv.balanceAmt;
+  var next=prompt('Correct the '+(which==='deposit'?'deposit':'balance')+' amount (USD) on "'+b.title+'" -- this should be the price agreed with the client, not the vendor:',current!=null?current:'');
+  if(next==null)return;
+  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  if(!next||next<=0){alert('Enter a valid amount greater than 0.');return;}
+  if(which==='deposit')inv.depositAmt=next; else inv.balanceAmt=next;
+  logProjectEvent(b,(which==='deposit'?'Deposit':'Balance')+' invoice amount corrected to $'+next.toLocaleString('en-US'));
+  saveSRC({changedBriefIds:[b.id]});
+  if(window.syncClientsFromLeads)window.syncClientsFromLeads();
+  if(window.SRC_render)SRC_render();
+  if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
+  if(window.renderAwardedProjects)window.renderAwardedProjects();
+  if(window.renderMyAssigned)window.renderMyAssigned();
+  var selEl3=document.getElementById('projSelect');
+  if(selEl3&&selEl3.value===bid&&typeof renderProjectInvoicePanel==='function')renderProjectInvoicePanel(b);
+};
 function invoiceStatusChip(status){
   if(status==='paid')return '<span class="chip done">Paid</span>';
   if(status==='reported')return '<span class="chip await">Payment reported</span>';
@@ -5855,9 +6153,16 @@ function invoiceLineAdmin(b,which,id,amt,status,paidAt,reportedAt,reportedMethod
     actions='<button class="btn btn--primary btn--sm" onclick="SRC_markInvoicePaid(\''+b.id+'\',\''+which+'\')">Mark paid</button>';
   }
   var subline=status==='paid'&&paidAt?(' · paid '+esc(paidAt)):(status==='reported'&&reportedAt?(' · reported '+esc(reportedAt)+(reportedMethod?' via '+esc(reportedMethod):'')):'');
+  // This markup is injected via innerHTML at render time (not present when
+  // applyPerms() runs at load/role-switch), so class-based perm-off hiding
+  // never reaches it -- check the role directly instead. Only Owner may
+  // correct an issued invoice's dollar amount (see SRC_editInvoiceAmount);
+  // Client Manager can view but not edit it.
+  var isOwner=document.body.dataset.role==='owner';
+  var amtHtml=isOwner?('<span style="cursor:pointer;" onclick="SRC_editInvoiceAmount(\''+b.id+'\',\''+which+'\')" title="Correct this amount -- should be the price agreed with the client, not the vendor">'+money(amt)+' ✎</span>'):money(amt);
   return '<div class="qline2" style="grid-template-columns:1fr auto auto;border-bottom:1px solid var(--cm-line-faint);align-items:center;">'+
     '<div><div class="id" style="cursor:pointer;" onclick="SRC_editInvoiceId(\''+b.id+'\',\''+which+'\')" title="Click to edit the invoice number">'+esc(id)+' ✎</div><div class="lc" style="font-family:var(--font-mono);">'+esc(desc)+subline+'</div></div>'+
-    '<div class="qf-price">'+money(amt)+'</div>'+
+    '<div class="qf-price">'+amtHtml+'</div>'+
     '<div style="text-align:right;">'+invoiceStatusChip(status)+' <button class="btn btn--ghost btn--sm" style="margin-left:0.5rem;" onclick="downloadInvoice(\''+b.id+'\',\''+which+'\')">Download PDF</button> '+actions+'</div>'+
   '</div>';
 }
