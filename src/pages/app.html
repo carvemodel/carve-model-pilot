@@ -3413,7 +3413,12 @@ function renderProjectOverview(b){
       if(h.price!=null)line+=' — $'+Number(h.price).toLocaleString('en-US')+(h.days?(', '+h.days+' days'):'');
       // Older entries logged before "by" existed won't have it -- fall back
       // to just the timestamp rather than showing a blank/undefined actor.
-      var meta=esc(h.time||'')+(h.by?' · '+esc(h.by):'');
+      // Entries logged before the currentActorLabel() fix may still have an
+      // email address baked into "by" (e.g. "support@physical-model.com
+      // (Carve Admin)") -- strip it here at render time so old activity
+      // self-heals to just the role label without needing a data migration.
+      var byLabel=h.by?h.by.replace(/^\S+@\S+\.\S+\s*(?=\()/,''):'';
+      var meta=esc(h.time||'')+(byLabel?' · '+esc(byLabel):'');
       return '<div class="act"><span class="d"></span><div><p>'+line+'</p><div class="t">'+meta+'</div></div></div>';
     }).join(''):'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No activity recorded yet.</div>';
   }
