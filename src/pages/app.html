@@ -830,9 +830,21 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       </div>
 
       <div class="kpis">
-        <div class="kpi"><span class="mock__k">Status</span><div class="big" id="kpiStatus">Fabrication</div><div class="sub" id="kpiStage">Stage 4 of 6</div></div>
-        <div class="kpi"><span class="mock__k">Progress</span><div class="big" id="kpiPct">68%</div><div class="mock__progress" style="margin-top:0.6rem;"><i id="kpiBar" style="width:68%"></i></div></div>
-        <div class="kpi"><span class="mock__k">Next milestone</span><div class="big" id="kpiNext" style="font-size:1.15rem;">Finishing &amp; Paint</div><div class="sub" id="kpiNextSub">Due in 6 days</div></div>
+        <!-- Production-tracking KPIs -- client/factory/prodtech only. Owner
+             and Client Manager see Pricing figures in this row instead (see
+             proj-pricing-only / owner-only cards below): dollar figures
+             matter more than fabrication status for those roles here, and
+             they already get full production detail from Milestones. -->
+        <div class="kpi kpi-scale-only"><span class="mock__k">Status</span><div class="big" id="kpiStatus">Fabrication</div><div class="sub" id="kpiStage">Stage 4 of 6</div></div>
+        <div class="kpi kpi-scale-only"><span class="mock__k">Progress</span><div class="big" id="kpiPct">68%</div><div class="mock__progress" style="margin-top:0.6rem;"><i id="kpiBar" style="width:68%"></i></div></div>
+        <div class="kpi kpi-scale-only"><span class="mock__k">Next milestone</span><div class="big" id="kpiNext" style="font-size:1.15rem;">Finishing &amp; Paint</div><div class="sub" id="kpiNextSub">Due in 6 days</div></div>
+        <!-- Pricing KPIs -- replace Status/Progress/Next milestone for Owner
+             + Client Manager. Client price visible to both; vendor price and
+             profit are Owner-only, same rule as the Pricing panel below.
+             Populated by renderProjectPricingPanel(). -->
+        <div class="kpi proj-pricing-only"><span class="mock__k">Client price</span><div class="big" id="kpiClientPrice" style="font-size:1.15rem;">—</div><div class="sub">Agreed with client</div></div>
+        <div class="kpi owner-only"><span class="mock__k">Vendor price</span><div class="big" id="kpiVendorPrice" style="font-size:1.15rem;">—</div><div class="sub">Agreed with vendor</div></div>
+        <div class="kpi owner-only"><span class="mock__k">Profit</span><div class="big" id="kpiProfit" style="font-size:1.15rem;">—</div><div class="sub">Client − vendor</div></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Scale</span><div class="big" id="kpiScale">—</div><div class="sub" id="kpiScaleSub"></div></div>
         <div class="kpi proj-invoice-only" style="cursor:pointer;" onclick="openProjectInvoicePanel()"><span class="mock__k">Invoice &amp; Payment</span><div class="big" id="kpiInvoice" style="font-size:1.15rem;">—</div><div class="sub" id="kpiInvoiceSub">Click to view →</div></div>
       </div>
@@ -851,6 +863,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
               <div style="display:flex;flex-direction:column;gap:0.9rem;">
                 <div class="cm-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientCM">—</div></div>
                 <div class="factory-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientFactory">—</div></div>
+                <div class="cid-only"><span class="mock__k">Contact name</span><div class="mock__v" id="projInfoContactName">—</div></div>
+                <div class="cid-only"><span class="mock__k">Email</span><div class="mock__v" id="projInfoContactEmail">—</div></div>
+                <div class="cid-only"><span class="mock__k">Phone</span><div class="mock__v" id="projInfoContactPhone">—</div></div>
               </div>
               <div class="proj-cancel client-only" id="projCancelWrap">
                 <button class="linkbtn-danger" onclick="cancelProject()">Need to cancel this project?</button>
@@ -877,6 +892,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 <div><span class="mock__k">Use case</span><div class="mock__v" id="projInfoUse">—</div></div>
                 <div><span class="mock__k">Model size</span><div class="mock__v" id="projInfoModelSize">—</div></div>
                 <div><span class="mock__k">Package size</span><div class="mock__v" id="projInfoPackageSize">—</div></div>
+                <div class="cm-only" id="projInfoActionsWrap" style="display:flex;gap:0.5rem;padding-top:0.2rem;"></div>
               </div>
             </div>
           </div>
@@ -905,15 +921,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <div class="panel proj-invoice-only" id="projectInvoicePanelWrap" style="margin-top:1.5rem;">
         <div class="panel__head"><h3>Invoice &amp; Payment</h3></div>
         <div class="panel__body" id="projectInvoicePanel"></div>
-      </div>
-
-      <!-- Owner-only project admin: Client Manager assignment, contact info,
-           dates (read-only here -- editable by the assigned Client Manager
-           from My Projects), and delivered/archive state.
-           Populated by renderProjectAdminPanel(). -->
-      <div class="panel cm-only" style="margin-top:1.5rem;">
-        <div class="panel__head"><h3>Project admin</h3></div>
-        <div class="panel__body" id="projectAdminPanel"></div>
       </div>
     </section>
 
@@ -2615,32 +2622,25 @@ window.renderProjectOverview=renderProjectOverview;
 // edits these from My Projects), delivered/archive toggles, and Invoice &
 // Payment. Lives on the project's own detail page now, not as an
 // in-place expand on the Projects tab list.
+// Owner-only project contact + delivered/archive controls. The old
+// standalone "Project admin" panel was removed -- Client/Contact/Email/Phone
+// now live in Client information (cid-only, so Owner+Client Manager+Client
+// see it, not factory/prodtech), Assigned Client Manager reassignment is
+// handled inline via the Carve Lead Edit button in Project information, and
+// dates are already shown there too. Only Mark delivered/Archive still need
+// a home -- they get a small cm-only actions row inside Project information.
 function renderProjectAdminPanel(b){
-  var wrap=document.getElementById('projectAdminPanel');
-  if(!wrap||!b)return;
+  if(!b)return;
   var c=b.client||{};
-  var delivered=!!b.deliveredAt;
-  wrap.innerHTML='<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
-      '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
-    '<div class="projassign__row projassign__contact">'+
-      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
-      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
-      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
-      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
-    '</div>'+
-    '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
-      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Start date</div><div>'+(b.startDate?esc(fmtDateShort(b.startDate)):'<span style="color:var(--cm-text-subtle);">Not set yet</span>')+'</div></div>'+
-      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Agreed production time</div><div>'+(b.productionDays?esc(b.productionDays+' days'):'<span style="color:var(--cm-text-subtle);">Not set yet</span>')+'</div></div>'+
-      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target production completion</div><div>'+(productionCompletionDate(b)?esc(fmtDateShort(productionCompletionDate(b))):'—')+'</div></div>'+
-      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery <span class="opt">(+5 days)</span></div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
-    '</div>'+
-    '<p style="color:var(--cm-text-subtle);font-size:0.8rem;margin:0 0 0.6rem;">Start date and production time are set by this project\'s assigned Client Manager from My Projects, not from here.</p>'+
-    '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
-      '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
-        '<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
-        '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
-      '</div>'+
-    '</div>';
+  setText('projInfoContactName',c.Name||'—');
+  setText('projInfoContactEmail',c.Email||'—');
+  setText('projInfoContactPhone',c.Phone||'—');
+  var wrap=document.getElementById('projInfoActionsWrap');
+  if(wrap){
+    var delivered=!!b.deliveredAt;
+    wrap.innerHTML='<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
+      '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>';
+  }
 }
 window.renderProjectAdminPanel=renderProjectAdminPanel;
 // Shared Invoice & Payment panel -- Owner + the assigned Client Manager
@@ -2674,10 +2674,13 @@ function renderProjectPricingPanel(b){
   var clientPrice=(b.clientQuote&&b.clientQuote.price!=null)?b.clientQuote.price:null;
   var wq=(typeof winningQuote==='function')?winningQuote(b):null;
   var vendorPrice=(wq&&wq.price!=null)?wq.price:null;
+  var profit=(clientPrice!=null&&vendorPrice!=null)?(clientPrice-vendorPrice):null;
   setText('projInfoClientPrice',clientPrice!=null?fmtUsd(clientPrice):'—');
   setText('projInfoVendorPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
-  var profit=(clientPrice!=null&&vendorPrice!=null)?(clientPrice-vendorPrice):null;
   setText('projInfoProfit',profit!=null?fmtUsd(profit):'—');
+  setText('kpiClientPrice',clientPrice!=null?fmtUsd(clientPrice):'—');
+  setText('kpiVendorPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
+  setText('kpiProfit',profit!=null?fmtUsd(profit):'—');
 }
 window.renderProjectPricingPanel=renderProjectPricingPanel;
 // Milestones tab: a REAL activity timeline off the brief's own b.history
