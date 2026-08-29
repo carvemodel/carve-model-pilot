@@ -2380,11 +2380,13 @@ function timelineDerivedStageIndex(b){
 }
 window.timelineDerivedStageIndex=timelineDerivedStageIndex;
 function journeyStageEstimate(b,stageIndex){
+  // Hover tooltip shows the date range only -- the ahead/behind schedule
+  // comparison lives as its own visible line on the journey card instead
+  // (between "Current stage" and "Next Stage", see currentStageScheduleStatus
+  // and journeyScheduleStatus below), not tucked inside a hover-only tooltip.
   var r=journeyStageRange(b,stageIndex);
   if(!r.start)return '';
-  var dateLine='Est. '+(r.end&&r.end!==r.start?(fmtDateShort(r.start)+' – '+fmtDateShort(r.end)):fmtDateShort(r.start))+(r.openEnded?' onward':'');
-  var status=r.end?scheduleStatusLabel(r.start,r.end):'';
-  return status?(dateLine+' · '+status):dateLine;
+  return 'Est. '+(r.end&&r.end!==r.start?(fmtDateShort(r.start)+' – '+fmtDateShort(r.end)):fmtDateShort(r.start))+(r.openEnded?' onward':'');
 }
 window.journeyStageEstimate=journeyStageEstimate;
 // Just the "N days ahead/behind original schedule" phrase (no date range)
