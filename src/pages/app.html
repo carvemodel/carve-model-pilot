@@ -2285,8 +2285,8 @@ window.renderVendors=renderVendors;
 // is tracked separately via b.deliveredAt (its own field, not a 5th stage)
 // so "Completed" in the Projects tab has one unambiguous real signal.
 // 'Payment Received — 50% Remaining' is deliberately NOT a stage here --
-// it's a gate/prerequisite that must clear before Packing & Shipping can
-// start (tracked separately via clientQuote.invoice.balanceStatus, see
+// it's a gate/prerequisite that must clear before Packing can start
+// (tracked separately via clientQuote.invoice.balanceStatus, see
 // paymentStatusLabel()), not a milestone shown on the journey timeline.
 var PROJECT_STAGES=[
   'Project Kick Off',                          // 1 -- triggered once deposit is marked received
@@ -2294,10 +2294,11 @@ var PROJECT_STAGES=[
   'Fabrication',                                // 3
   'Final Client Approval',                      // 4
   'Permanently Fixed, Cleaned & Polished',      // 5
-  'Packing & Shipping',                         // 6
-  'Project Delivered',                          // 7 -- the model has physically arrived with the client
-  'Post Delivery Support',                      // 8
-  'Project Completed'                           // 9 -- final stage; corresponds to b.deliveredAt
+  'Packing',                                     // 6 -- was combined with Shipping into one stage; now split
+  'Shipping',                                    // 7
+  'Project Delivered',                          // 8 -- the model has physically arrived with the client
+  'Post Delivery Support',                      // 9
+  'Project Completed'                           // 10 -- final stage; corresponds to b.deliveredAt
 ];
 // What has to be true before a project can move on to the NEXT stage,
 // shown to everyone (including the client) as a checklist in place of the
@@ -2456,7 +2457,7 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // agreed production time), using a fixed, consistent allocation: Confirmed
 // Material Samples always gets the first 7 days after kickoff; the last 5
 // days before completion are split 1 (Final Client Approval) + 2
-// (Permanently Fixed, Cleaned & Polished) + 2 (Packing & Shipping);
+// (Permanently Fixed, Cleaned & Polished) + 1 (Packing) + 1 (Shipping);
 // Fabrication absorbs whatever's left in between (starting the day after
 // material confirmation wraps, day 8). Project Delivered is the
 // project's own Target delivery date (completion + 5 business days -- see
@@ -2474,7 +2475,8 @@ function journeyStageRange(b,stageIndex){
   else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,8);re=addDays(completion,-5);}
   else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-4);re=rs;}
   else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-3);re=addDays(completion,-2);}
-  else if(stageName==='Packing & Shipping'&&completion){rs=addDays(completion,-1);re=completion;}
+  else if(stageName==='Packing'&&completion){rs=addDays(completion,-1);re=rs;}
+  else if(stageName==='Shipping'&&completion){rs=completion;re=completion;}
   else if(stageName==='Project Delivered'&&delivery){rs=delivery;re=delivery;}
   else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
   if(rs&&re&&rs>re)return {start:null,end:null,openEnded:false}; // agreed production time too short for this breakdown to make sense
@@ -3991,7 +3993,7 @@ window.editVendorPrice=editVendorPrice;
 // shipping cost field, read into b.clientQuote.estimatedShippingCost by
 // SRC_saveClientQuote) -- this pencil is for correcting it afterward.
 // Actual shipping cost has no dedicated form; the Client Manager enters it
-// here directly once the project reaches Packing & Shipping and the real
+// here directly once the project reaches Packing/Shipping and the real
 // carrier cost is known.
 function editEstimatedShipping(){
   var id=document.getElementById('projSelect').value;
