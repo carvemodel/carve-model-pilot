@@ -88,8 +88,8 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .view[hidden]{display:none;}
 
 /* Cards & grid */
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
-.kpi{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:1.2rem;}
+.kpis{display:flex;flex-wrap:nowrap;gap:1rem;overflow-x:auto;}
+.kpi{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:1.2rem;flex:1 1 200px;min-width:200px;}
 .kpi .mock__k{display:block;}
 /* Some KPI rows (e.g. the Clients tab, which has 6 tiles) have labels long enough to
    wrap onto a second line in a narrow column while shorter labels next to them stay
@@ -98,7 +98,7 @@ body.impersonating .impersonate-bar{display:flex !important;}
 #clientsKpis .kpi .mock__k{min-height:2.3em;line-height:1.15;}
 .kpi .big{font-family:var(--font-display);font-weight:var(--w-bold);font-size:1.7rem;color:var(--cm-text-strong);letter-spacing:-0.02em;margin-top:0.5rem;}
 .kpi .sub{font-size:0.78rem;color:var(--cm-text-muted);margin-top:0.2rem;}
-@media(max-width:760px){.kpis{grid-template-columns:1fr 1fr;}}
+@media(max-width:760px){.kpis{overflow-x:auto;}.kpi{min-width:160px;}}
 
 .panel{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);}
 .panel__head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.3rem;border-bottom:1px solid var(--cm-line-faint);}
@@ -1058,6 +1058,10 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                       <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('packageSize')">Save</button>
                     </div>
                   </div>
+                </div>
+                <div>
+                  <span class="mock__k">Boundary map</span>
+                  <div class="mock__v" id="projInfoBoundaryWrap" style="margin-top:0.3rem;">—</div>
                 </div>
                 <div class="proj-actions-only" id="projInfoActionsWrap" style="display:flex;gap:0.5rem;padding-top:0.2rem;"></div>
               </div>
@@ -2874,7 +2878,12 @@ function go(v){
   // Oversight / portfolio views aren't tied to one project; project views are.
   var projScoped=(v!=='clients'&&v!=='team'&&v!=='leads'&&v!=='myprojects'&&v!=='myassigned'&&v!=='projects'&&v!=='sourcing')&&!skipProjectGate;
   var oversightPrefix=(document.body.dataset.role==='client')?'':'Studio · ';
-  document.getElementById('crumb').textContent=(projScoped?currentProjTitle+' · ':oversightPrefix)+titles[v];
+  // The project-scoped Overview page's own header already tells you it's
+  // the overview (journey card etc.), so the breadcrumb just shows the
+  // project name+location with no trailing " · Overview" -- other project
+  // views (Quote/Milestones/Files/...) keep the " · <View>" suffix since
+  // it's the only cue there for which sub-page you're on.
+  document.getElementById('crumb').textContent=projScoped?(v==='overview'?currentProjTitle:(currentProjTitle+' · '+titles[v])):(oversightPrefix+titles[v]);
   document.body.classList.toggle('at-portfolio',v==='myprojects'||v==='projects'||v==='myassigned');
   if(v==='myprojects'||v==='projects'||v==='myassigned')document.body.classList.remove('quote-stage');
   if(v==='quote')applyQuoteState();
@@ -3009,6 +3018,18 @@ function renderProjectOverview(b){
     var meta=PROJECT_SPEC_FIELD_META[field];
     setText(meta.display,projectSpecValue(b,field)||'—');
   });
+  // Boundary map: the reference image the AWARDED vendor uploaded with their
+  // quote (SRC_boundaryFilePicked), showing the fabrication limits the model
+  // was quoted/built to. Same source already shown to the client on the
+  // invoice PDF (see downloadInvoice's boundaryUrl), so it's not
+  // vendor-confidential -- read-only here since it's the vendor's own
+  // upload, not something Owner/Client Manager type in.
+  var boundaryWrap=document.getElementById('projInfoBoundaryWrap');
+  if(boundaryWrap){
+    var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
+    var bLine=(wqb&&wqb.boundaryFile&&typeof boundaryFileLine==='function')?boundaryFileLine(wqb):'';
+    boundaryWrap.innerHTML=bLine||'—';
+  }
 
   var actWrap=document.getElementById('ovActivityList');
   if(actWrap){
@@ -5712,6 +5733,7 @@ function boundaryFileLine(q){
   }
   return '<div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;font-size:0.8rem;color:var(--cm-text-muted);"><span style="font-family:var(--font-mono);">📎</span>'+esc(q.boundaryFile.name)+'<span style="color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.72rem;">'+sizeStr+'</span></div>';
 }
+window.boundaryFileLine=boundaryFileLine; // exposed so Project information (an earlier <script> block) can show the vendor's uploaded boundary map
 function specBits(b){return Object.keys(b.brief).map(function(k){return '<div><b>'+k+'</b>'+esc(b.brief[k])+'</div>';}).join('');}
 
 /* Full production brief — everything the client submitted, minus identity. No redaction bars. */
