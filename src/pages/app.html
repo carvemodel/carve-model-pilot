@@ -861,7 +861,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 </div>
               </div>
               <div>
-                <span class="mock__k">Target production completion<span class="opt"> (auto: start + production time)</span></span>
+                <span class="mock__k">Target production completion</span>
                 <div style="display:flex;align-items:center;gap:0.6rem;">
                   <div class="mock__v" id="projInfoCompletion" style="flex:1;">—</div>
                   <button type="button" class="proj-dates-edit-only" id="projInfoCompletionBtn" onclick="toggleDateFieldEdit('completion')" title="Edit target production completion" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
@@ -874,7 +874,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 </div>
               </div>
               <div>
-                <span class="mock__k">Target delivery<span class="opt"> (auto: completion + 5 business days)</span></span>
+                <span class="mock__k">Target delivery</span>
                 <div style="display:flex;align-items:center;gap:0.6rem;">
                   <div class="mock__v" id="projInfoTarget" style="flex:1;">—</div>
                   <button type="button" class="proj-dates-edit-only" id="projInfoTargetBtn" onclick="toggleDateFieldEdit('target')" title="Edit target delivery" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
@@ -2205,6 +2205,18 @@ function getProjectStartDate(b){
   var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
   return b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt||null;
 }
+// The production time actually agreed with the client is whatever was
+// quoted in the "Finalize quote for client" form (b.clientQuote.days) --
+// that number is what the client saw and accepted, so it should show up
+// here automatically rather than needing to be typed in again by hand
+// (which could drift out of sync with what was actually promised). A
+// manual edit here (setProductionDays) still wins once made, for cases
+// where the agreed time genuinely changes after the fact.
+function agreedProductionDays(b){
+  if(!b)return null;
+  if(b.productionDays!=null)return b.productionDays;
+  return (b.clientQuote&&b.clientQuote.days!=null)?b.clientQuote.days:null;
+}
 function addDays(dateStr,days){
   if(!dateStr)return null;
   var d=new Date(dateStr+'T00:00:00');
@@ -2237,8 +2249,9 @@ function addBusinessDays(dateStr,days){
 function productionCompletionDate(b){
   if(b&&b.productionCompletionOverride)return b.productionCompletionOverride;
   var start=getProjectStartDate(b);
-  if(!start||!b.productionDays)return null;
-  return addDays(start,b.productionDays);
+  var days=agreedProductionDays(b);
+  if(!start||!days)return null;
+  return addDays(start,days);
 }
 function targetDeliveryDate(b){
   if(b&&b.targetDeliveryOverride)return b.targetDeliveryOverride;
@@ -2521,7 +2534,7 @@ function toggleDateFieldEdit(field){
     var input=document.getElementById(meta.input);
     if(input&&b){
       if(field==='start')input.value=b.startDate||'';
-      else if(field==='prodDays')input.value=b.productionDays!=null?b.productionDays:'';
+      else if(field==='prodDays')input.value=agreedProductionDays(b)!=null?agreedProductionDays(b):'';
       else if(field==='completion')input.value=productionCompletionDate(b)||'';
       else if(field==='target')input.value=targetDeliveryDate(b)||'';
     }
@@ -2819,9 +2832,9 @@ function renderMyAssigned(){
         '<div class="mfield" style="margin:0;max-width:200px;"><label>Start date</label>'+
           '<input type="date" value="'+esc(b.startDate||'')+'" onchange="setProjectStart(\''+esc(b.id)+'\',this.value)"></div>'+
         '<div class="mfield" style="margin:0;max-width:220px;"><label>Agreed production time <span class="opt">(days)</span></label>'+
-          '<input type="number" min="0" value="'+esc(b.productionDays||'')+'" onchange="setProductionDays(\''+esc(b.id)+'\',this.value)"></div>'+
+          '<input type="number" min="0" value="'+esc(agreedProductionDays(b)||'')+'" onchange="setProductionDays(\''+esc(b.id)+'\',this.value)"></div>'+
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target production completion</div><div>'+(productionCompletionDate(b)?esc(fmtDateShort(productionCompletionDate(b))):'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery <span class="opt">(+5 days)</span></div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
+        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery</div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
       '</div>'+
       '<div class="projassign__row">'+invBtns+'</div>'+
     '</div>';
@@ -3153,7 +3166,8 @@ function renderProjectOverview(b){
     var bt=document.getElementById(meta.btn);if(bt)bt.textContent='Edit';
   });
   setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
-  setText('projInfoProdDays',b.productionDays!=null?(b.productionDays+' day'+(b.productionDays==1?'':'s')):'—');
+  var agreedDays=agreedProductionDays(b);
+  setText('projInfoProdDays',agreedDays!=null?(agreedDays+' day'+(agreedDays==1?'':'s')):'—');
   setText('projInfoTarget',targetDelivery?fmtDateShort(targetDelivery):'—');
   var completionDate=productionCompletionDate(b);
   setText('projInfoCompletion',completionDate?fmtDateShort(completionDate):'—');
