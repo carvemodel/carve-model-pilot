@@ -106,12 +106,6 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .panel{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);}
 .panel__head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.3rem;border-bottom:1px solid var(--cm-line-faint);}
 .panel__head h3{font-size:1.05rem;font-weight:var(--w-semibold);}
-/* Project Overview page: panel headers (Client information, Project
-   information, Recent activity, Invoice & Payment) default to
-   --cm-text-strong (white) same as the data underneath, so nothing reads as
-   more important than anything else. Dial the headers back to silver so the
-   actual project data is what pops. */
-#view-overview .panel__head h3{color:var(--cm-silver);font-weight:var(--w-medium);}
 .panel__head .mock__k{cursor:default;}
 /* Field label vs. value hierarchy: a label like "Company" and its actual
    value "Uhaul" both default to --cm-text (near-white) with no rule of
@@ -122,6 +116,12 @@ body.impersonating .impersonate-bar{display:flex !important;}
    (.leads-dash .mock__k etc.) still win over this base rule where set. */
 .mock__k{color:var(--cm-silver);}
 .mock__v{color:var(--cm-text-strong);}
+/* "Next Stage: <name>" packs the actual stage name inside the same
+   <span class="mock__k"> as the "Next Stage:" label (so they sit on one
+   line) -- without this override the stage name inherits mock__k's new
+   silver color too, when it's real data and should read white like any
+   other value. */
+#journeyNextStageText{color:var(--cm-text-strong);}
 .panel__body{padding:1.3rem;}
 .cols{display:grid;grid-template-columns:1.6fr 1fr;gap:1.25rem;margin-top:1.25rem;}
 @media(max-width:900px){.cols{grid-template-columns:1fr;}.app{grid-template-columns:1fr;}.side{position:fixed;left:-280px;transition:left 0.25s;z-index:200;width:248px;}.side.open{left:0;}.menu-fab{display:flex !important;}}
@@ -867,7 +867,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 </div>
               </div>
               <div>
-                <span class="mock__k">Target production completion<span class="opt"> (auto: start + production time)</span></span>
+                <span class="mock__k">Target production completion</span>
                 <div style="display:flex;align-items:center;gap:0.6rem;">
                   <div class="mock__v" id="projInfoCompletion" style="flex:1;">—</div>
                   <button type="button" class="proj-dates-edit-only" id="projInfoCompletionBtn" onclick="toggleDateFieldEdit('completion')" title="Edit target production completion" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
@@ -880,7 +880,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 </div>
               </div>
               <div>
-                <span class="mock__k">Target delivery<span class="opt"> (auto: completion + 5 business days)</span></span>
+                <span class="mock__k">Target delivery</span>
                 <div style="display:flex;align-items:center;gap:0.6rem;">
                   <div class="mock__v" id="projInfoTarget" style="flex:1;">—</div>
                   <button type="button" class="proj-dates-edit-only" id="projInfoTargetBtn" onclick="toggleDateFieldEdit('target')" title="Edit target delivery" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
@@ -1097,7 +1097,11 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 </div>
                 <div>
                   <span class="mock__k">Boundary map</span>
-                  <div class="mock__v" id="projInfoBoundaryWrap" style="margin-top:0.3rem;">—</div>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoBoundaryWrap" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" onclick="document.getElementById('projInfoBoundaryFileInput').click()">Upload</button>
+                  </div>
+                  <input type="file" id="projInfoBoundaryFileInput" style="display:none;" onchange="uploadProjectBoundaryFile(this)">
                 </div>
                 <div class="proj-actions-only" id="projInfoActionsWrap" style="display:flex;gap:0.5rem;padding-top:0.2rem;"></div>
               </div>
@@ -2200,10 +2204,10 @@ var PROJECT_STAGES=[
   'Project Kick Off',                          // 1 -- triggered once deposit is marked received
   'Confirmed Material Samples',                // 2
   'Fabrication',                                // 3
-  'Completion',                                 // 4
-  'Final Client Approval',                      // 5
-  'Permanently Fixed, Cleaned & Polished',      // 6
-  'Packing & Shipping',                         // 7
+  'Final Client Approval',                      // 4
+  'Permanently Fixed, Cleaned & Polished',      // 5
+  'Packing & Shipping',                         // 6
+  'Project Delivered',                          // 7 -- the model has physically arrived with the client
   'Post Delivery Support',                      // 8
   'Project Completed'                           // 9 -- final stage; corresponds to b.deliveredAt
 ];
@@ -2507,10 +2511,45 @@ function saveProjectSpecField(field){
   b[meta.override]=val||null;
   logProjectEvent(b,meta.label+' updated to '+(val||'—')+' on "'+b.title+'"');
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  // renderProjectOverview() already closes every spec-field wrap itself (see
+  // the blanket reset loop near the top of that function, same as
+  // Client info/date fields) -- toggling this one again here would just
+  // immediately reopen it right after render just closed it, so Save
+  // looked like it silently did nothing.
   renderProjectOverview(b);
-  toggleProjectSpecFieldEdit(field);
 }
 window.saveProjectSpecField=saveProjectSpecField;
+// Manual Boundary map upload -- Owner/Client Manager only (proj-spec-edit-only).
+// Normally the boundary map is whatever the awarded vendor attached to their
+// quote (see the boundaryFileOverride precedence note in renderProjectOverview),
+// but some projects never got one attached, or it needs replacing -- this
+// lets Carve set/replace it directly from the project page rather than only
+// ever coming from the vendor's own quotation upload.
+function uploadProjectBoundaryFile(input){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var f=input.files&&input.files[0];
+  if(!f)return;
+  var wrap=document.getElementById('projInfoBoundaryWrap');
+  var sizeStr=f.size/1024/1024>=1?(f.size/1024/1024).toFixed(1)+' MB':Math.round(f.size/1024)+' KB';
+  if(wrap)wrap.textContent='Uploading '+f.name+' ('+sizeStr+')…';
+  var uploadPromise=window.__blobUpload
+    ? window.__blobUpload('boundary/'+b.id+'/'+Date.now()+'-'+f.name,f,{access:'public',handleUploadUrl:'/api/upload',multipart:true}).then(function(blob){return blob.url;})
+    : fetch('/api/upload?path=boundary/'+encodeURIComponent(b.id),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},body:f}).then(function(r){if(!r.ok)throw new Error('Upload failed: '+r.status);return r.json();}).then(function(data){return data.url;});
+  uploadPromise.then(function(url){
+    b.boundaryFileOverride={name:f.name,size:f.size,url:url};
+    logProjectEvent(b,'Boundary map uploaded ('+f.name+') on "'+b.title+'"');
+    if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+    renderProjectOverview(b);
+  }).catch(function(err){
+    console.error('Boundary map upload failed',f.name,err);
+    alert('Upload failed. Please try again.');
+    renderProjectOverview(b);
+  });
+  input.value='';
+}
+window.uploadProjectBoundaryFile=uploadProjectBoundaryFile;
 // Same pencil-toggle pattern for Start/Agreed production time/Target
 // production completion/Target delivery -- the value shows as plain text
 // (everyone sees it) and a pencil (owner+sales only, see
@@ -2591,9 +2630,12 @@ function saveClientField(field){
   }
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   if(window.syncClientsFromLeads)window.syncClientsFromLeads();
+  // renderProjectOverview() already closes every client-field wrap itself
+  // (blanket reset loop near the top) -- calling toggleClientFieldEdit()
+  // again here would just reopen the box right back up, making Save look
+  // like it silently did nothing (same bug just fixed on the spec fields).
   renderProjectOverview(b);
   if(typeof renderAwardedProjects==='function')renderAwardedProjects();
-  toggleClientFieldEdit(field);
 }
 window.saveClientField=saveClientField;
 function setProjectStart(id,val){
@@ -3181,16 +3223,20 @@ function renderProjectOverview(b){
     var meta=PROJECT_SPEC_FIELD_META[field];
     setText(meta.display,projectSpecValue(b,field)||'—');
   });
-  // Boundary map: the reference image the AWARDED vendor uploaded with their
-  // quote (SRC_boundaryFilePicked), showing the fabrication limits the model
-  // was quoted/built to. Same source already shown to the client on the
-  // invoice PDF (see downloadInvoice's boundaryUrl), so it's not
-  // vendor-confidential -- read-only here since it's the vendor's own
-  // upload, not something Owner/Client Manager type in.
+  // Boundary map: normally the reference image the AWARDED vendor uploaded
+  // with their quote (SRC_boundaryFilePicked), showing the fabrication
+  // limits the model was quoted/built to -- same source already shown to
+  // the client on the invoice PDF (see downloadInvoice's boundaryUrl), so
+  // it's not vendor-confidential. Some projects never got one attached to
+  // their winning quote (or it needs replacing), so b.boundaryFileOverride
+  // (set via uploadProjectBoundaryFile, Owner/Client Manager only) always
+  // wins when present, same override-wins precedence as the rest of
+  // Project information.
   var boundaryWrap=document.getElementById('projInfoBoundaryWrap');
   if(boundaryWrap){
     var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
-    var bLine=(wqb&&wqb.boundaryFile&&typeof boundaryFileLine==='function')?boundaryFileLine(wqb):'';
+    var boundaryFile=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
+    var bLine=(boundaryFile&&typeof boundaryFileLine==='function')?boundaryFileLine({boundaryFile:boundaryFile}):'';
     boundaryWrap.innerHTML=bLine||'—';
   }
 
@@ -3200,7 +3246,10 @@ function renderProjectOverview(b){
     actWrap.innerHTML=hist.length?hist.map(function(h){
       var line=esc(h.action||'Update');
       if(h.price!=null)line+=' — $'+Number(h.price).toLocaleString('en-US')+(h.days?(', '+h.days+' days'):'');
-      return '<div class="act"><span class="d"></span><div><p>'+line+'</p><div class="t">'+esc(h.time||'')+'</div></div></div>';
+      // Older entries logged before "by" existed won't have it -- fall back
+      // to just the timestamp rather than showing a blank/undefined actor.
+      var meta=esc(h.time||'')+(h.by?' · '+esc(h.by):'');
+      return '<div class="act"><span class="d"></span><div><p>'+line+'</p><div class="t">'+meta+'</div></div></div>';
     }).join(''):'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No activity recorded yet.</div>';
   }
 
@@ -5561,6 +5610,27 @@ function logHistory(b,shopId,optData,action){
 // specific vendor quote -- these are what actually show up in a project's
 // Recent activity / timeline, which previously only ever logged vendor
 // quote submissions.
+// Human-readable "who did this" for Recent Activity entries -- prefers the
+// real logged-in team member (currentSession().email matched against
+// SDB.team) so it reads e.g. "Jordan Ellis (Client Manager)"; falls back to
+// the demo role-switcher's placeholder identity (ROLE_INFO) when there's no
+// real session (e.g. local demo/dev use), and finally just the role label
+// if even that isn't available.
+var ROLE_DISPLAY_LABEL={owner:'Carve Admin',sales:'Client Manager',factory:'Vendor',prodtech:'Production Tech',client:'Client'};
+function currentActorLabel(){
+  var role=document.body.dataset.role;
+  var roleLabel=ROLE_DISPLAY_LABEL[role]||'';
+  var sess=(typeof currentSession==='function')?currentSession():null;
+  if(sess&&sess.email){
+    var member=((window.SDB&&window.SDB.team)||[]).filter(function(t){return t&&t.email&&t.email.toLowerCase()===sess.email.toLowerCase();})[0];
+    var name=member?member.name:sess.email;
+    return roleLabel?(name+' ('+roleLabel+')'):name;
+  }
+  var info=(typeof ROLE_INFO!=='undefined'&&ROLE_INFO[role])?ROLE_INFO[role]:null;
+  if(info)return roleLabel?(info.name+' ('+roleLabel+')'):info.name;
+  return roleLabel||null;
+}
+window.currentActorLabel=currentActorLabel;
 function logProjectEvent(b,action,whenDateStr){
   if(!b.history)b.history=[];
   // whenDateStr lets a caller back-date an entry to when something
@@ -5568,7 +5638,7 @@ function logProjectEvent(b,action,whenDateStr){
   // anyone got around to marking it in the system) instead of always
   // stamping the moment the button was clicked.
   var time=whenDateStr?new Date(whenDateStr+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):nowStamp();
-  b.history.unshift({action:action,time:time});
+  b.history.unshift({action:action,time:time,by:currentActorLabel()});
 }
 function optKey(vi){return vi==null?'p':String(vi);}
 function getOption(b,shopId,vi){return vi==null?b.quotes[shopId]:((b.variations&&b.variations[shopId])||[])[vi];}
@@ -6527,18 +6597,28 @@ function renderCarveAdminBriefDetail(b){
 
 /* ---- Invoice numbering: date-based, not random — CM-20260814-01, CM-20260814-02, ...
    The date is today's, the sequence resets to 01 each new day and is derived from the
-   highest existing sequence number already used for that same date across all briefs
-   (rather than a separately-tracked counter), so two admins awarding around the same
-   time can't collide, and a manually-renumbered invoice doesn't throw off anyone else's
-   sequence. Always overridable by hand afterward. ---- */
+   highest existing sequence number already used for that same date across ALL invoice
+   documents already issued that day -- not just one per brief. A project's deposit and
+   balance invoices are two separate documents (issued at two different points in the
+   project) and each gets its own number in the shared sequence, e.g. deposit
+   CM-D20260828-01 and balance CM-B20260828-02, rather than both sharing "-01" just
+   because they belong to the same project. Scanning b.code AND both existing
+   depositId/balanceId values (not a separately-tracked counter) means two admins
+   awarding/invoicing around the same time can't collide, and a manually-renumbered
+   invoice doesn't throw off anyone else's sequence. Always overridable by hand
+   afterward. ---- */
 function nextInvoiceNumber(){
   var today=new Date().toISOString().slice(0,10).replace(/-/g,'');
   var maxSeq=0;
-  var re=new RegExp('^CM-'+today+'-(\\d+)$');
+  var re=new RegExp('^CM-[DB]?'+today+'-(\\d+)$');
   (SDB.briefs||[]).forEach(function(b){
-    if(!b.code)return;
-    var m=re.exec(b.code);
-    if(m){var n=parseInt(m[1],10); if(n>maxSeq)maxSeq=n;}
+    var candidates=[b.code];
+    if(b.clientQuote&&b.clientQuote.invoice){candidates.push(b.clientQuote.invoice.depositId,b.clientQuote.invoice.balanceId);}
+    candidates.forEach(function(code){
+      if(!code)return;
+      var m=re.exec(code);
+      if(m){var n=parseInt(m[1],10); if(n>maxSeq)maxSeq=n;}
+    });
   });
   var seq=maxSeq+1;
   return 'CM-'+today+'-'+(seq<10?('0'+seq):seq);
@@ -6555,10 +6635,16 @@ function ensureClientInvoice(b){
   var total=b.clientQuote.price;
   var dep=Math.round(total/2), bal=total-dep;
   var today=new Date().toISOString().slice(0,10);
+  // b.code stays the project's own general reference number (used elsewhere,
+  // e.g. "Confidential · Ref <code>" in Project information) and doubles as
+  // the deposit invoice's number. The balance invoice is a separate document
+  // issued later, so it gets its own, later number in the same sequence --
+  // see nextInvoiceNumber(), which now scans deposit/balance ids too so this
+  // never collides with b.code or any other invoice issued that day.
   if(!b.code)b.code=nextInvoiceNumber();
   b.clientQuote.invoice={
     depositId:b.code.replace('CM-','CM-D'),
-    balanceId:b.code.replace('CM-','CM-B'),
+    balanceId:nextInvoiceNumber().replace('CM-','CM-B'),
     depositAmt:dep,balanceAmt:bal,
     issuedDate:today,
     depositStatus:'due',balanceStatus:'due'
