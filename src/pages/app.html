@@ -1939,7 +1939,7 @@ window.renderVendors=renderVendors;
 // would just be new placeholder content wearing a real-looking UI. Delivery
 // is tracked separately via b.deliveredAt (its own field, not a 5th stage)
 // so "Completed" in the Projects tab has one unambiguous real signal.
-var PROJECT_STAGES=['Fabrication','Finishing & Paint','Quality Check','Packing & Shipping'];
+var PROJECT_STAGES=['Project Kick Off','Finishing & Paint','Quality Check','Packing & Shipping'];
 function projectStageIndex(b){
   var i=PROJECT_STAGES.indexOf(b.projectStage);
   return i<0?0:i;
@@ -2463,7 +2463,9 @@ function renderProjectOverview(b){
   setText('projInfoClientCM',c.Company||'—');
   setText('projInfoClientFactory',b.code?('Confidential · Ref '+b.code):'Confidential');
   setText('projInfoLead',teamMember?teamMember.name:'—');
-  setText('projInfoStart',b.sentDate?fmtDateShort(b.sentDate):(b.leadReceivedAt?fmtDateShort(b.leadReceivedAt):'—'));
+  var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
+  var startDate=depositPaidAt||b.sentDate||b.leadReceivedAt;
+  setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
   setText('projInfoTarget',b.targetDelivery?fmtDateShort(b.targetDelivery):'—');
   setText('projInfoUse',(b.brief&&b.brief['Intended use'])||'—');
 
@@ -5557,6 +5559,9 @@ window.SRC_markInvoicePaid=function(bid,which){
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
   if(window.renderMyAssigned)window.renderMyAssigned();
+  // Deposit-received date now drives the project's Start date on Overview.
+  var selEl=document.getElementById('projSelect');
+  if(which==='deposit'&&selEl&&selEl.value===bid&&typeof renderProjectOverview==='function')renderProjectOverview(b);
 };
 window.SRC_reportInvoicePayment=function(bid,which,method){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
@@ -5582,6 +5587,8 @@ window.SRC_reopenInvoicePayment=function(bid,which){
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
   if(window.renderAwardedProjects)window.renderAwardedProjects();
   if(window.renderMyAssigned)window.renderMyAssigned();
+  var selEl2=document.getElementById('projSelect');
+  if(which==='deposit'&&selEl2&&selEl2.value===bid&&typeof renderProjectOverview==='function')renderProjectOverview(b);
 };
 window.SRC_editInvoiceId=function(bid,which){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
