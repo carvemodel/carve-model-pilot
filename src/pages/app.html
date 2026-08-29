@@ -401,6 +401,7 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .journey__foot{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.8rem;padding-top:1.4rem;border-top:1px solid var(--cm-line-faint);}
 .journey__now p,.journey__next p{font-size:0.9rem;color:var(--cm-text-muted);margin-top:0.5rem;line-height:1.5;}
 #journeyChecklist{margin-top:0.6rem;display:flex;flex-direction:column;gap:0.55rem;}
+#advanceStageBtn:disabled{opacity:0.4;cursor:not-allowed;}
 .stagecheck{display:flex;align-items:flex-start;gap:0.6rem;}
 .stagecheck__box{flex:none;width:18px;height:18px;border-radius:4px;border:1.5px solid var(--cm-border-strong);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--cm-ink-900);margin-top:0.1rem;}
 .stagecheck.done .stagecheck__box{background:var(--cm-silver);border-color:var(--cm-silver);}
@@ -845,6 +846,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <span class="mock__k" id="journeyNowLabel">Happening now</span>
             <p id="journeyNow">Digital fabrication and hand-finishing of the tower massing. QC photos are posted to <b>Files</b> as each section completes.</p>
             <div id="journeyChecklist" hidden></div>
+            <button type="button" class="btn btn--primary btn--sm proj-actions-only" id="advanceStageBtn" onclick="advanceProjectStage()" style="margin-top:0.9rem;" hidden></button>
           </div>
           <div class="journey__next" id="journeyNextWrap">
             <span class="mock__k">Current stage: <span id="journeyCurrentStageText" style="color:var(--cm-text-strong);">—</span><span class="sub" id="journeyScheduleStatus" style="margin-left:0.35rem;color:var(--cm-text-strong);"></span></span>
@@ -2258,6 +2260,11 @@ var STAGE_CHECKLISTS={
     'Project scale and boundary confirmed',
     "50% deposit received (Carve's side)",
     'Design files complete — nothing missing'
+  ],
+  'Confirmed Material Samples':[
+    'Facade material confirmed',
+    'Landscape material confirmed',
+    'Branding/logo asset confirmed'
   ]
 };
 function getProjectStartDate(b){
@@ -2324,18 +2331,19 @@ function paymentStatusLabel(b){
   if(inv.depositStatus==='paid')return '50% Deposit Received, 50% Final Due';
   return '50% Deposit Due';
 }
-// b.projectStage (an explicit stage name) always wins if it's ever set, but
-// there's no admin control anywhere that actually sets it -- it's always
-// undefined in practice, which used to just leave every project pinned at
-// "Project Kick Off" (index 0) forever regardless of how far along it
-// actually was. Falls back to deriving the current stage straight from
-// today's date against the same timeline used for the % complete bar and
-// the stage estimates (see journeyStageRange/timelineDerivedStageIndex
-// below), so "Current stage" actually moves as time passes.
+// The stage a project is genuinely AT is confirmed by a person (Owner or
+// the assigned Client Manager), never assumed from the calendar alone --
+// real production can run ahead or behind the estimated timeline, and only
+// someone confirming "we actually finished X" (via advanceProjectStage(),
+// gated on that stage's STAGE_CHECKLISTS items being complete where
+// defined) should move the needle. b.projectStage holds that confirmed
+// stage name; a project that hasn't been advanced yet starts at Project
+// Kick Off (index 0) regardless of how much calendar time has passed --
+// existing in-flight projects will need one manual advance-through on
+// rollout to reflect where they actually are.
 function projectStageIndex(b){
   var i=PROJECT_STAGES.indexOf(b.projectStage);
-  if(i>=0)return i;
-  return (typeof timelineDerivedStageIndex==='function')?timelineDerivedStageIndex(b):0;
+  return i>=0?i:0;
 }
 function fmtDateShort(s){
   if(!s)return '';
@@ -2400,16 +2408,6 @@ function journeyStageRange(b,stageIndex){
 // timeline model above -- used as the fallback in projectStageIndex() so
 // "Current stage" actually advances as time passes rather than sitting on
 // a manual field nothing ever sets.
-function timelineDerivedStageIndex(b){
-  var today=new Date().toISOString().slice(0,10);
-  var idx=0;
-  for(var i=0;i<PROJECT_STAGES.length-1;i++){
-    var r=journeyStageRange(b,i);
-    if(r.start&&today>=r.start)idx=i;
-  }
-  return idx;
-}
-window.timelineDerivedStageIndex=timelineDerivedStageIndex;
 // Compact "Aug 22–25" / "Sep 16" / "Sep 26+" label shown directly under
 // each stage dot on the timeline -- no hover needed, the actual estimated
 // date is always visible. Short month+day only, no year (all within the
@@ -3384,6 +3382,29 @@ function renderProjectOverview(b){
       jNow.innerHTML=delivered?'Project complete. Final files are available under Files.':esc(b.projectUpdateNote||('Currently in '+stageName+'.'));
     }
   }
+  // Advancing to the next stage is a person's call (Owner/Client Manager),
+  // never automatic -- gated on the CURRENT stage's checklist being fully
+  // checked off where one's defined (STAGE_CHECKLISTS); stages without one
+  // yet advance freely. Hidden entirely once there's nothing left to
+  // manually advance into (Post Delivery Support onward -- see
+  // projectStageIndex's own doc comment on why b.projectStage is the only
+  // source of truth here).
+  var advanceBtn=document.getElementById('advanceStageBtn');
+  if(advanceBtn){
+    var canAdvance=!delivered&&idx<PROJECT_STAGES.length-2;
+    var gateItems=checklistItems;
+    var gateComplete=true;
+    if(gateItems&&gateItems.length){
+      var gateState=(b.stageChecklist&&b.stageChecklist[stageName])||[];
+      gateComplete=gateItems.every(function(_,i){return !!gateState[i];});
+    }
+    advanceBtn.hidden=!canAdvance;
+    if(canAdvance){
+      advanceBtn.disabled=!gateComplete;
+      advanceBtn.textContent='Advance to '+(PROJECT_STAGES[idx+1]||'next stage')+' →';
+      advanceBtn.title=gateComplete?'':'Complete the checklist above before advancing';
+    }
+  }
 
   setText('kpiStatus',paused?'Paused':stageName);
   setText('kpiStage','Stage '+(delivered?totalSteps:(idx+1))+' of '+totalSteps);
@@ -3499,6 +3520,34 @@ function toggleStageChecklistItem(itemIndex){
   renderProjectOverview(b);
 }
 window.toggleStageChecklistItem=toggleStageChecklistItem;
+// Confirms the CURRENT stage is genuinely done and moves the project to
+// the next one -- the only thing that ever changes b.projectStage (see
+// projectStageIndex's doc comment). Gated on that stage's checklist being
+// fully checked off where STAGE_CHECKLISTS defines one; stages without an
+// item list yet advance freely. Owner/Client Manager only -- re-checked
+// here as defense-in-depth even though the client never sees this button.
+function advanceProjectStage(){
+  var role=document.body.dataset.role;
+  if(role!=='owner'&&role!=='sales')return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b||b.deliveredAt)return;
+  var idx=projectStageIndex(b);
+  if(idx>=PROJECT_STAGES.length-2)return; // nothing left to manually advance into
+  var stageName=PROJECT_STAGES[idx];
+  var items=(typeof STAGE_CHECKLISTS!=='undefined')?STAGE_CHECKLISTS[stageName]:null;
+  if(items&&items.length){
+    var state=(b.stageChecklist&&b.stageChecklist[stageName])||[];
+    var complete=items.every(function(_,i){return !!state[i];});
+    if(!complete)return;
+  }
+  var nextStageName=PROJECT_STAGES[idx+1];
+  b.projectStage=nextStageName;
+  logProjectEvent(b,'Advanced to "'+nextStageName+'" on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+}
+window.advanceProjectStage=advanceProjectStage;
 // Owner-only admin controls for this one project -- Client Manager
 // assignment, contact info, dates (read-only; the assigned Client Manager
 // edits these from My Projects), delivered/archive toggles, and Invoice &
