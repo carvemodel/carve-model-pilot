@@ -822,14 +822,29 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="journey__next" id="journeyNextWrap">
             <span class="mock__k">Next Stage: <span id="journeyNextStageText">—</span></span>
             <div style="display:flex;flex-direction:column;gap:0.7rem;margin-top:0.7rem;">
-              <div><span class="mock__k">Start</span><div class="mock__v kpi-scale-only" id="projInfoStart">—</div>
-                <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoStartInput" onchange="setProjectStart(document.getElementById('projSelect').value,this.value)"></div>
+              <div>
+                <span class="mock__k">Start</span>
+                <div style="display:flex;align-items:center;gap:0.6rem;">
+                  <div class="mock__v" id="projInfoStart" style="flex:1;">—</div>
+                  <button type="button" class="proj-dates-edit-only" id="projInfoStartBtn" onclick="toggleDateFieldEdit('start')" title="Edit start date" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
+                </div>
+                <div class="mfield proj-dates-edit-only" id="projInfoStartWrap" hidden style="margin:0.5rem 0 0;max-width:220px;"><input type="date" id="projInfoStartInput" onchange="setProjectStart(document.getElementById('projSelect').value,this.value)"></div>
               </div>
-              <div><span class="mock__k">Target production completion</span><div class="mock__v kpi-scale-only" id="projInfoCompletion">—</div>
-                <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoCompletionInput" onchange="setProductionCompletionOverride(document.getElementById('projSelect').value,this.value)"></div>
+              <div>
+                <span class="mock__k">Target production completion</span>
+                <div style="display:flex;align-items:center;gap:0.6rem;">
+                  <div class="mock__v" id="projInfoCompletion" style="flex:1;">—</div>
+                  <button type="button" class="proj-dates-edit-only" id="projInfoCompletionBtn" onclick="toggleDateFieldEdit('completion')" title="Edit target production completion" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
+                </div>
+                <div class="mfield proj-dates-edit-only" id="projInfoCompletionWrap" hidden style="margin:0.5rem 0 0;max-width:220px;"><input type="date" id="projInfoCompletionInput" onchange="setProductionCompletionOverride(document.getElementById('projSelect').value,this.value)"></div>
               </div>
-              <div><span class="mock__k">Target delivery</span><div class="mock__v kpi-scale-only" id="projInfoTarget">—</div>
-                <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoTargetInput" onchange="setTargetDeliveryOverride(document.getElementById('projSelect').value,this.value)"></div>
+              <div>
+                <span class="mock__k">Target delivery</span>
+                <div style="display:flex;align-items:center;gap:0.6rem;">
+                  <div class="mock__v" id="projInfoTarget" style="flex:1;">—</div>
+                  <button type="button" class="proj-dates-edit-only" id="projInfoTargetBtn" onclick="toggleDateFieldEdit('target')" title="Edit target delivery" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
+                </div>
+                <div class="mfield proj-dates-edit-only" id="projInfoTargetWrap" hidden style="margin:0.5rem 0 0;max-width:220px;"><input type="date" id="projInfoTargetInput" onchange="setTargetDeliveryOverride(document.getElementById('projSelect').value,this.value)"></div>
               </div>
             </div>
             <!-- Kept hidden (not deleted) -- openCompletedProject(), an old
@@ -860,7 +875,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
              Populated by renderProjectPricingPanel(). -->
         <div class="kpi proj-pricing-only"><span class="mock__k">Project Price</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiClientPrice" style="font-size:1.15rem;">—</div><button type="button" class="owner-only" onclick="editProjectPrice()" title="Edit project price -- Carve Admin only" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
         <div class="kpi owner-only"><span class="mock__k">Vendor price</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiVendorPrice" style="font-size:1.15rem;">—</div><button type="button" onclick="editVendorPrice()" title="Edit vendor price" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
-        <div class="kpi owner-only"><span class="mock__k">Profit</span><div class="big" id="kpiProfit" style="font-size:1.15rem;">—</div><div class="sub">Client − vendor</div></div>
+        <div class="kpi owner-only"><span class="mock__k">Profit</span><div class="big" id="kpiProfit" style="font-size:1.15rem;">—</div></div>
+        <div class="kpi proj-pricing-only"><span class="mock__k">Est. shipping cost</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiShipEst" style="font-size:1.15rem;">—</div><button type="button" onclick="editEstimatedShipping()" title="Edit estimated shipping cost -- internal only" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
+        <div class="kpi proj-pricing-only"><span class="mock__k">Actual shipping cost</span><div style="display:flex;align-items:baseline;gap:0.5rem;"><div class="big" id="kpiShipActual" style="font-size:1.15rem;">—</div><button type="button" onclick="editActualShipping()" title="Enter actual shipping cost -- set at packing & shipping" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button></div></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Scale</span><div class="big" id="kpiScale">—</div><div class="sub" id="kpiScaleSub"></div></div>
         <div class="kpi proj-invoice-only" style="cursor:pointer;" onclick="openProjectInvoicePanel()"><span class="mock__k">Invoice &amp; Payment</span><div class="big" id="kpiInvoice" style="font-size:1.15rem;">—</div><div class="sub" id="kpiInvoiceSub">Click to view →</div></div>
       </div>
@@ -876,12 +893,59 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="panel">
             <div class="panel__head"><h3>Client information</h3><button type="button" class="btn btn--ghost btn--sm client-edit-only" id="projInfoClientEditBtn" onclick="toggleClientEdit()">Edit</button></div>
             <div class="panel__body">
+              <!-- Editing any field here updates ONLY this project's own
+                   client record going forward -- the previous contact stays
+                   on record in the Clients tab (as history) until Carve
+                   Admin deletes it (deleteClientContact); the changed info
+                   naturally becomes a new, separate contact entry on next
+                   sync. Same inline Edit-button-next-to-the-value pattern as
+                   Carve Lead above. See saveClientField(). -->
               <div style="display:flex;flex-direction:column;gap:0.9rem;">
-                <div class="cm-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientCM">—</div></div>
                 <div class="factory-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientFactory">—</div></div>
-                <div class="cid-only"><span class="mock__k">Contact name</span><div class="mock__v" id="projInfoContactName">—</div></div>
-                <div class="cid-only"><span class="mock__k">Email</span><div class="mock__v" id="projInfoContactEmail">—</div></div>
-                <div class="cid-only"><span class="mock__k">Phone</span><div class="mock__v" id="projInfoContactPhone">—</div></div>
+                <div class="cid-only">
+                  <span class="mock__k">Company</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoClientCM" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm client-edit-only" id="ceCompanyBtn" onclick="toggleClientFieldEdit('company')">Edit</button>
+                  </div>
+                  <div class="client-edit-only" id="ceCompanyWrap" hidden style="margin-top:0.5rem;max-width:280px;display:flex;gap:0.5rem;">
+                    <input type="text" id="ceCompanyInput" style="flex:1;">
+                    <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('company')">Save</button>
+                  </div>
+                </div>
+                <div class="cid-only">
+                  <span class="mock__k">Contact name</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoContactName" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm client-edit-only" id="ceNameBtn" onclick="toggleClientFieldEdit('name')">Edit</button>
+                  </div>
+                  <div class="client-edit-only" id="ceNameWrap" hidden style="margin-top:0.5rem;max-width:280px;display:flex;gap:0.5rem;">
+                    <input type="text" id="ceNameInput" style="flex:1;">
+                    <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('name')">Save</button>
+                  </div>
+                </div>
+                <div class="cid-only">
+                  <span class="mock__k">Email</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoContactEmail" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm client-edit-only" id="ceEmailBtn" onclick="toggleClientFieldEdit('email')">Edit</button>
+                  </div>
+                  <div class="client-edit-only" id="ceEmailWrap" hidden style="margin-top:0.5rem;max-width:280px;display:flex;gap:0.5rem;">
+                    <input type="email" id="ceEmailInput" style="flex:1;">
+                    <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('email')">Save</button>
+                  </div>
+                </div>
+                <div class="cid-only">
+                  <span class="mock__k">Phone</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoContactPhone" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm client-edit-only" id="cePhoneBtn" onclick="toggleClientFieldEdit('phone')">Edit</button>
+                  </div>
+                  <div class="client-edit-only" id="cePhoneWrap" hidden style="margin-top:0.5rem;max-width:280px;display:flex;gap:0.5rem;">
+                    <input type="text" id="cePhoneInput" style="flex:1;">
+                    <button type="button" class="btn btn--primary btn--sm" onclick="saveClientField('phone')">Save</button>
+                  </div>
+                </div>
               </div>
               <!-- Editing here updates ONLY this project's client record going
                    forward -- the previous contact stays on record in the
@@ -920,7 +984,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 <div><span class="mock__k">Use case</span><div class="mock__v" id="projInfoUse">—</div></div>
                 <div><span class="mock__k">Model size</span><div class="mock__v" id="projInfoModelSize">—</div></div>
                 <div><span class="mock__k">Package size</span><div class="mock__v" id="projInfoPackageSize">—</div></div>
-                <div class="cm-only" id="projInfoActionsWrap" style="display:flex;gap:0.5rem;padding-top:0.2rem;"></div>
+                <div class="proj-actions-only" id="projInfoActionsWrap" style="display:flex;gap:0.5rem;padding-top:0.2rem;"></div>
               </div>
             </div>
           </div>
@@ -2145,29 +2209,54 @@ function toggleLeadEdit(){
   if(btn)btn.textContent=wrap.hidden?'Edit':'Cancel';
 }
 window.toggleLeadEdit=toggleLeadEdit;
-// Inline "Edit" affordance next to Client information (Company/Contact
-// name/Email/Phone), same open/close pattern as the Carve Lead editor
-// above. Owner and the assigned Client Manager both get this (see
-// client-edit-only in PERM) -- see saveClientEdit() for what happens on
-// save.
-function toggleClientEdit(){
-  var wrap=document.getElementById('projInfoClientEditWrap');
-  var btn=document.getElementById('projInfoClientEditBtn');
+// Inline "Edit" affordance next to each Client information field (Company/
+// Contact name/Email/Phone) -- one independent Edit button per field, same
+// open/close pattern as the Carve Lead editor above, rather than one big
+// form for all four at once. Owner and the assigned Client Manager both
+// get this (see client-edit-only in PERM) -- see saveClientField() for
+// what happens on save.
+var CLIENT_FIELD_META={
+  company:{prop:'Company',wrap:'ceCompanyWrap',btn:'ceCompanyBtn',input:'ceCompanyInput',required:true},
+  name:{prop:'Name',wrap:'ceNameWrap',btn:'ceNameBtn',input:'ceNameInput',required:true},
+  email:{prop:'Email',wrap:'ceEmailWrap',btn:'ceEmailBtn',input:'ceEmailInput',required:true},
+  phone:{prop:'Phone',wrap:'cePhoneWrap',btn:'cePhoneBtn',input:'cePhoneInput',required:false}
+};
+function toggleClientFieldEdit(field){
+  var meta=CLIENT_FIELD_META[field];if(!meta)return;
+  var wrap=document.getElementById(meta.wrap);
+  var btn=document.getElementById(meta.btn);
   if(!wrap)return;
   if(wrap.hidden){
     var id=document.getElementById('projSelect').value;
     var b=findBrief(id);
     var c=(b&&b.client)||{};
-    var ceCompany=document.getElementById('ceCompany');if(ceCompany)ceCompany.value=c.Company||'';
-    var ceName=document.getElementById('ceName');if(ceName)ceName.value=c.Name||'';
-    var ceEmail=document.getElementById('ceEmail');if(ceEmail)ceEmail.value=c.Email||'';
-    var cePhone=document.getElementById('cePhone');if(cePhone)cePhone.value=c.Phone||'';
+    var input=document.getElementById(meta.input);
+    if(input)input.value=c[meta.prop]||'';
   }
   wrap.hidden=!wrap.hidden;
   if(btn)btn.textContent=wrap.hidden?'Edit':'Cancel';
 }
-window.toggleClientEdit=toggleClientEdit;
-// Saving here updates ONLY this project's own client record
+window.toggleClientFieldEdit=toggleClientFieldEdit;
+// Same pencil-toggle pattern for Start/Target production completion/Target
+// delivery -- the value shows as plain text (everyone sees it, no more
+// permanently-visible date input) and a pencil (owner+sales only, see
+// proj-dates-edit-only) reveals the date input in place. The inputs
+// themselves keep auto-saving on change (setProjectStart/
+// setProductionCompletionOverride/setTargetDeliveryOverride), same as
+// before -- only the visibility toggle is new.
+var DATE_FIELD_META={
+  start:{wrap:'projInfoStartWrap',btn:'projInfoStartBtn'},
+  completion:{wrap:'projInfoCompletionWrap',btn:'projInfoCompletionBtn'},
+  target:{wrap:'projInfoTargetWrap',btn:'projInfoTargetBtn'}
+};
+function toggleDateFieldEdit(field){
+  var meta=DATE_FIELD_META[field];if(!meta)return;
+  var wrap=document.getElementById(meta.wrap);
+  if(!wrap)return;
+  wrap.hidden=!wrap.hidden;
+}
+window.toggleDateFieldEdit=toggleDateFieldEdit;
+// Saving one field here updates ONLY this project's own client record
 // (b.client) -- it deliberately does NOT touch or overwrite the existing
 // Clients-tab contact card for the old email. That old card is left alone
 // as history until Carve Admin removes it (see deleteClientContact in the
@@ -2175,35 +2264,30 @@ window.toggleClientEdit=toggleClientEdit;
 // creates/updates a separate, new contact entry for the changed info (since
 // ensureClientContact matches by email) and moves this project's live
 // value/status tracking there going forward.
-function saveClientEdit(){
+function saveClientField(field){
+  var meta=CLIENT_FIELD_META[field];if(!meta)return;
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
   if(!b)return;
-  var company=document.getElementById('ceCompany').value.trim();
-  var name=document.getElementById('ceName').value.trim();
-  var email=document.getElementById('ceEmail').value.trim();
-  var phone=document.getElementById('cePhone').value.trim();
-  if(!company||!name||!email){alert('Company, contact name, and email are required.');return;}
+  var input=document.getElementById(meta.input);
+  var val=input?input.value.trim():'';
+  if(meta.required&&!val){alert('This field can\'t be empty.');return;}
   var old=b.client||{};
-  var changed=(old.Company||'')!==company||(old.Name||'')!==name||(old.Email||'').toLowerCase()!==email.toLowerCase()||(old.Phone||'')!==phone;
-  if(!changed){toggleClientEdit();return;}
+  if((old[meta.prop]||'')===val){toggleClientFieldEdit(field);return;}
   b.client=b.client||{};
-  b.client.Company=company;
-  b.client.Name=name;
-  b.client.Email=email;
-  b.client.Phone=phone;
-  logProjectEvent(b,'Client contact updated to '+name+' ('+email+')');
+  b.client[meta.prop]=val;
+  logProjectEvent(b,meta.prop+' updated to '+val+' on "'+b.title+'"');
   var role=document.body.dataset.role;
   if(role==='sales'&&typeof notifyOwner==='function'){
-    notifyOwner('Client Manager updated the client contact on "'+b.title+'" from '+(old.Name||'—')+' to '+name+' ('+email+').');
+    notifyOwner('Client Manager updated '+meta.prop+' on "'+b.title+'" to '+val+'.');
   }
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   if(window.syncClientsFromLeads)window.syncClientsFromLeads();
   renderProjectOverview(b);
   if(typeof renderAwardedProjects==='function')renderAwardedProjects();
-  toggleClientEdit();
+  toggleClientFieldEdit(field);
 }
-window.saveClientEdit=saveClientEdit;
+window.saveClientField=saveClientField;
 function setProjectStart(id,val){
   var b=findBrief(id);if(!b)return;
   b.startDate=val||null;
@@ -2694,6 +2778,7 @@ function renderProjectOverview(b){
   if(!b)return;
   autoMarkDeliveredIfComplete(b);
   var delivered=!!b.deliveredAt;
+  var paused=!delivered&&!!b.paused;
   var idx=projectStageIndex(b);
   var totalSteps=PROJECT_STAGES.length;
   var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
@@ -2704,7 +2789,7 @@ function renderProjectOverview(b){
 
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
 
-  setText('journeyTitle',delivered?('Project Completed — Stage '+totalSteps+' of '+totalSteps):('In production — Stage '+(idx+1)+' of '+totalSteps+' · '+stageName));
+  setText('journeyTitle',delivered?('Project Completed — Stage '+totalSteps+' of '+totalSteps):(paused?('Project Paused — Stage '+(idx+1)+' of '+totalSteps+' · '+stageName):('In production — Stage '+(idx+1)+' of '+totalSteps+' · '+stageName)));
   setText('journeyPct',pct+'%');
   var tl=document.querySelector('#journeyTrack .track__line i');if(tl)tl.style.width=pct+'%';
 
@@ -2733,7 +2818,7 @@ function renderProjectOverview(b){
   var jNow=document.getElementById('journeyNow');
   if(jNow)jNow.innerHTML=delivered?'Project complete. Final files are available under Files.':esc(b.projectUpdateNote||('Currently in '+stageName+'.'));
 
-  setText('kpiStatus',stageName);
+  setText('kpiStatus',paused?'Paused':stageName);
   setText('kpiStage','Stage '+(delivered?totalSteps:(idx+1))+' of '+totalSteps);
   setText('kpiPct',pct+'%');
   var kpiBar=document.getElementById('kpiBar');if(kpiBar)kpiBar.style.width=pct+'%';
@@ -2758,6 +2843,15 @@ function renderProjectOverview(b){
   if(leadEditWrap)leadEditWrap.hidden=true;
   var leadEditBtn=document.getElementById('projInfoLeadEditBtn');
   if(leadEditBtn)leadEditBtn.textContent='Edit';
+  Object.keys(CLIENT_FIELD_META).forEach(function(field){
+    var meta=CLIENT_FIELD_META[field];
+    var w=document.getElementById(meta.wrap);if(w)w.hidden=true;
+    var bt=document.getElementById(meta.btn);if(bt)bt.textContent='Edit';
+  });
+  Object.keys(DATE_FIELD_META).forEach(function(field){
+    var meta=DATE_FIELD_META[field];
+    var w=document.getElementById(meta.wrap);if(w)w.hidden=true;
+  });
   setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
   setText('projInfoTarget',targetDelivery?fmtDateShort(targetDelivery):'—');
   var completionDate=productionCompletionDate(b);
@@ -2815,8 +2909,21 @@ function renderProjectAdminPanel(b){
     if(b.deliveredAt){
       wrap.innerHTML='<span style="color:var(--cm-text-subtle);font-size:0.82rem;">Delivered '+esc(fmtDateShort(b.deliveredAt))+' — project is complete.</span>';
     }else{
-      wrap.innerHTML='<button class="btn btn--ghost btn--sm" onclick="toggleProjectPaused(\''+esc(b.id)+'\')">'+(b.paused?'Resume project':'Pause project')+'</button>'+
-        '<button class="btn btn--ghost btn--sm btn--danger" onclick="deleteAwardedProject(\''+esc(b.id)+'\')">Delete</button>';
+      // Injected via innerHTML, so applyPerms()'s class-based hiding never
+      // reaches these buttons (see the isOwner pattern already used in
+      // invoiceLineAdmin/renderCompanyCard) -- check role directly. Pause is
+      // Client Manager's call (they're the one running the account
+      // day-to-day); Delete is Owner-only, since it's a permanent, whole-
+      // project action.
+      var role=document.body.dataset.role;
+      var html='';
+      if(role==='sales'){
+        html+='<button class="btn btn--ghost btn--sm" onclick="toggleProjectPaused(\''+esc(b.id)+'\')">'+(b.paused?'Resume project':'Pause project')+'</button>';
+      }
+      if(role==='owner'){
+        html+='<button class="btn btn--ghost btn--sm btn--danger" onclick="deleteAwardedProject(\''+esc(b.id)+'\')">Delete</button>';
+      }
+      wrap.innerHTML=html;
     }
   }
 }
@@ -2856,6 +2963,9 @@ function renderProjectPricingPanel(b){
   setText('kpiClientPrice',clientPrice!=null?fmtUsd(clientPrice):'—');
   setText('kpiVendorPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
   setText('kpiProfit',profit!=null?fmtUsd(profit):'—');
+  var shipEst=(b.clientQuote&&b.clientQuote.estimatedShippingCost!=null)?b.clientQuote.estimatedShippingCost:null;
+  setText('kpiShipEst',shipEst!=null?fmtUsd(shipEst):'—');
+  setText('kpiShipActual',b.actualShippingCost!=null?fmtUsd(b.actualShippingCost):'—');
 }
 window.renderProjectPricingPanel=renderProjectPricingPanel;
 // Owner-only price overrides, reached via the pencil icons on the Project
@@ -2904,6 +3014,45 @@ function editVendorPrice(){
   renderProjectOverview(b);
 }
 window.editVendorPrice=editVendorPrice;
+// Shipping cost -- internal only (Owner + Client Manager, never the client
+// or production). Estimated shipping cost is normally set when the quote
+// goes to the client (see the "Finalize quote for client" form's Est.
+// shipping cost field, read into b.clientQuote.estimatedShippingCost by
+// SRC_saveClientQuote) -- this pencil is for correcting it afterward.
+// Actual shipping cost has no dedicated form; the Client Manager enters it
+// here directly once the project reaches Packing & Shipping and the real
+// carrier cost is known.
+function editEstimatedShipping(){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  if(!b.clientQuote){alert('This project doesn\'t have a client quote yet -- send one from Sourcing & Quotes first.');return;}
+  var current=b.clientQuote.estimatedShippingCost;
+  var next=prompt('Estimated shipping cost (USD, internal only) for "'+b.title+'":',current!=null?current:'');
+  if(next==null)return;
+  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  if(isNaN(next)||next<0){alert('Enter a valid amount, 0 or more.');return;}
+  b.clientQuote.estimatedShippingCost=next;
+  logProjectEvent(b,'Estimated shipping cost set to $'+next.toLocaleString('en-US'));
+  saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+}
+window.editEstimatedShipping=editEstimatedShipping;
+function editActualShipping(){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var current=b.actualShippingCost;
+  var next=prompt('Actual shipping cost (USD, internal only) for "'+b.title+'":',current!=null?current:'');
+  if(next==null)return;
+  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  if(isNaN(next)||next<0){alert('Enter a valid amount, 0 or more.');return;}
+  b.actualShippingCost=next;
+  logProjectEvent(b,'Actual shipping cost set to $'+next.toLocaleString('en-US'));
+  saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+}
+window.editActualShipping=editActualShipping;
 // Milestones tab: a REAL activity timeline off the brief's own b.history
 // (quotes, awards, revisions), not a fabricated photo-approval workflow --
 // see the notice in view-milestones for why that structured workflow isn't
@@ -3710,7 +3859,8 @@ var PERM={
   'kpi-scale-only':['client','factory','prodtech'], // 4th Overview KPI slot for everyone except owner/sales, who see Invoice & Payment there instead
   'proj-pricing-only':['owner','sales'],         // Project Price KPI card on Overview -- same audience as proj-invoice-only. Vendor price + profit cards are further gated owner-only so Client Manager sees only the project (client-facing) price.
   'proj-dates-edit-only':['owner','sales'],       // Start/Target production completion/Target delivery become editable date inputs for Owner + assigned Client Manager; everyone else (kpi-scale-only audience) just sees the computed read-only text
-  'client-edit-only':['owner','sales']            // Edit control on Client information (Company/Contact name/Email/Phone) -- Owner + assigned Client Manager only, never the client themselves or production
+  'client-edit-only':['owner','sales'],           // Edit control on Client information (Company/Contact name/Email/Phone) -- Owner + assigned Client Manager only, never the client themselves or production
+  'proj-actions-only':['owner','sales']           // Wrapper for Project information's Pause/Delete row -- Pause is Client Manager only and Delete is Owner only (see renderProjectAdminPanel's own role check), but the wrapper itself needs to be visible to both so each role's one allowed action can show
 };
 var ROLE_INFO={
   client:{name:'Asher Liu',av:'AL',org:'Client'},
@@ -6231,6 +6381,7 @@ function clientQuoteSection(b){
   if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Not yet awarded to production — '+esc(shop(basisShop(b)).name)+' has not been notified. You can still finalize and send this price to the client now.</div>';
   html+='<div class="qform2">';
   html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" placeholder="e.g. 3200" value="'+(base.price!=null?base.price:'')+'"></div>';
+  html+='<div><label>Est. shipping cost (USD) <span class="opt">internal only</span></label><input id="cq-shipest-'+b.id+'" type="number" placeholder="e.g. 350" value="'+(base.estimatedShippingCost!=null?base.estimatedShippingCost:'')+'"></div>';
   html+='<div><label>Production time (days)</label><input id="cq-days-'+b.id+'" type="number" placeholder="18" value="'+esc(base.days!=null?base.days:'')+'"></div>';
   html+='<div><label>Work scope</label><input id="cq-cat-'+b.id+'" type="text" value="'+esc(base.category||'')+'"></div>';
   var scaleParsed=parseScaleString(base.scale);
@@ -6285,6 +6436,8 @@ function clientQuoteSummary(b,cq){
 window.SRC_saveClientQuote=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
   var price=parseInt(document.getElementById('cq-price-'+id).value,10);
+  var shipEstEl=document.getElementById('cq-shipest-'+id);
+  var estimatedShippingCost=shipEstEl&&shipEstEl.value!==''?parseInt(shipEstEl.value,10):null;
   var days=parseInt(document.getElementById('cq-days-'+id).value,10);
   var category=document.getElementById('cq-cat-'+id).value.trim();
   var scaleIntlEl=document.getElementById('cq-scale-intl-'+id), scaleImpEl=document.getElementById('cq-scale-imp-'+id);
@@ -6310,7 +6463,7 @@ window.SRC_saveClientQuote=function(id){
   // awarded (see SRC_award), since a fee proposal alone doesn't guarantee the
   // project moves forward.
   var prevInvoice=(b.clientQuote&&b.clientQuote.invoice)||null;
-  b.clientQuote={price:price,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true,clientComments:prevComments};
+  b.clientQuote={price:price,estimatedShippingCost:isNaN(estimatedShippingCost)?null:estimatedShippingCost,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true,clientComments:prevComments};
   if(prevInvoice)b.clientQuote.invoice=prevInvoice; // price edited after invoicing — keep the already-issued invoice as-is
   var invoiceCreated=(b.status==='awarded')&&ensureClientInvoice(b);
   saveSRC({changedBriefIds:[b.id]});SRC_render();
