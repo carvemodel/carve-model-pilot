@@ -4650,9 +4650,14 @@ function logHistory(b,shopId,optData,action){
 // specific vendor quote -- these are what actually show up in a project's
 // Recent activity / timeline, which previously only ever logged vendor
 // quote submissions.
-function logProjectEvent(b,action){
+function logProjectEvent(b,action,whenDateStr){
   if(!b.history)b.history=[];
-  b.history.unshift({action:action,time:nowStamp()});
+  // whenDateStr lets a caller back-date an entry to when something
+  // actually happened (e.g. a payment that landed a couple days before
+  // anyone got around to marking it in the system) instead of always
+  // stamping the moment the button was clicked.
+  var time=whenDateStr?new Date(whenDateStr+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):nowStamp();
+  b.history.unshift({action:action,time:time});
 }
 function optKey(vi){return vi==null?'p':String(vi);}
 function getOption(b,shopId,vi){return vi==null?b.quotes[shopId]:((b.variations&&b.variations[shopId])||[])[vi];}
@@ -5652,8 +5657,15 @@ window.SRC_markInvoicePaid=function(bid,which){
   if(!b||!b.clientQuote||!b.clientQuote.invoice)return;
   var inv=b.clientQuote.invoice;
   var today=new Date().toISOString().slice(0,10);
-  if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=today;logProjectEvent(b,'Project Kick Off — deposit received');}
-  else{inv.balanceStatus='paid';inv.balancePaidAt=today;logProjectEvent(b,'Balance received');}
+  // Recent activity should reflect when Carve actually received the money,
+  // not whatever moment someone happened to click this button -- those can
+  // be days apart (e.g. a wire lands over the weekend, gets marked Monday).
+  var received=prompt('What date was this payment actually received by Carve? (YYYY-MM-DD)',today);
+  if(received==null)return;
+  received=received.trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(received)){alert('Please enter the date as YYYY-MM-DD.');return;}
+  if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=received;logProjectEvent(b,'Project Kick Off — deposit received',received);}
+  else{inv.balanceStatus='paid';inv.balancePaidAt=received;logProjectEvent(b,'Balance received',received);}
   saveSRC({changedBriefIds:[b.id]});
   if(window.SRC_render)SRC_render();
   if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
