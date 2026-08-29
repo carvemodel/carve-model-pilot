@@ -2020,6 +2020,22 @@ function setBriefManager(id,email){
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   if(window.renderMyAssigned)window.renderMyAssigned();
 }
+function setProjectStart(id,val){
+  var b=findBrief(id);if(!b)return;
+  b.startDate=val||null;
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderAwardedProjects();
+  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+}
+window.setProjectStart=setProjectStart;
+function setProjectTarget(id,val){
+  var b=findBrief(id);if(!b)return;
+  b.targetDelivery=val||null;
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderAwardedProjects();
+  if(document.getElementById('projSelect').value===id)renderProjectOverview(b);
+}
+window.setProjectTarget=setProjectTarget;
 function toggleProjectDelivered(id){
   var b=findBrief(id);if(!b)return;
   b.deliveredAt=b.deliveredAt?null:new Date().toISOString().slice(0,10);
@@ -2071,6 +2087,12 @@ function projectRowHtml(b){
         '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
       '</div>'+
       '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
+        '<div class="mfield" style="margin:0;max-width:200px;"><label>Start date</label>'+
+          '<input type="date" value="'+esc(b.startDate||'')+'" onchange="setProjectStart(\''+esc(b.id)+'\',this.value)"></div>'+
+        '<div class="mfield" style="margin:0;max-width:200px;"><label>Target delivery <span class="opt">(agreed with client)</span></label>'+
+          '<input type="date" value="'+esc(b.targetDelivery||'')+'" onchange="setProjectTarget(\''+esc(b.id)+'\',this.value)"></div>'+
+      '</div>'+
+      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
         '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
           '<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
           '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
@@ -2083,6 +2105,7 @@ function projectRowHtml(b){
       '<div style="cursor:pointer;flex:1;min-width:180px;" onclick="openProject(\''+esc(b.id)+'\')">'+
         '<div class="projrow__name">'+esc(b.title)+'</div>'+
         '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(b.brief&&b.brief['Intended use']?(' · '+esc(b.brief['Intended use'])):'')+'</div>'+
+        (b.targetDelivery&&!delivered?('<div class="projrow__sub" style="margin-top:2px;">Target delivery '+fmtDateShort(b.targetDelivery)+'</div>'):'')+
       '</div>'+
       '<div class="mfield" style="margin:0;max-width:210px;"><label>Client Manager</label>'+
         '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div>'+
@@ -2475,7 +2498,7 @@ function renderProjectOverview(b){
   setText('projInfoClientFactory',b.code?('Confidential · Ref '+b.code):'Confidential');
   setText('projInfoLead',teamMember?teamMember.name:'—');
   var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
-  var startDate=depositPaidAt||b.sentDate||b.leadReceivedAt;
+  var startDate=b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt;
   setText('projInfoStart',startDate?fmtDateShort(startDate):'—');
   setText('projInfoTarget',b.targetDelivery?fmtDateShort(b.targetDelivery):'—');
   setText('projInfoUse',(b.brief&&b.brief['Intended use'])||'—');
