@@ -2295,6 +2295,63 @@ function fmtDateShort(s){
   if(!s)return '';
   try{return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch(e){return s;}
 }
+// Whole calendar days between two YYYY-MM-DD date strings (z minus a).
+function daysBetween(a,z){
+  var da=new Date(a+'T00:00:00'), dz=new Date(z+'T00:00:00');
+  return Math.round((dz.getTime()-da.getTime())/86400000);
+}
+// "3 days ahead of original schedule" / "2 days behind original schedule" --
+// compares today against a stage's estimated date range (see
+// journeyStageEstimate below). Only meaningful when the range has both a
+// start and end (an open-ended range like Post Delivery Support's, or a
+// stage with no computable dates yet, just skips this).
+function scheduleStatusLabel(rangeStart,rangeEnd){
+  if(!rangeStart||!rangeEnd)return '';
+  var today=new Date().toISOString().slice(0,10);
+  if(today<rangeStart){
+    var d=daysBetween(today,rangeStart);
+    return d+' day'+(d===1?'':'s')+' ahead of original schedule';
+  }
+  if(today>rangeEnd){
+    var d2=daysBetween(rangeEnd,today);
+    return d2+' day'+(d2===1?'':'s')+' behind original schedule';
+  }
+  return '';
+}
+// Indicative estimated date (or date range) for each journey stage, shown
+// as a hover tooltip on the timeline -- illustrative only, not a live
+// production schedule. Derived entirely from the project's own Start date
+// and Target production completion (start + agreed production time), using
+// a fixed, consistent allocation: Confirmed Material Samples always gets
+// the first 4 days after kickoff; the last 5 days before completion are
+// split 1 (Final Client Approval) + 2 (Permanently Fixed, Cleaned &
+// Polished) + 2 (Packing & Shipping); Fabrication absorbs whatever's left
+// in between. Project Delivered is the project's own Target delivery date
+// (completion + 5 business days -- see targetDeliveryDate()). Post
+// Delivery Support is open-ended (starts the day after delivery, no fixed
+// end), so it never shows an ahead/behind comparison. Project Kick Off and
+// Project Completed round out the two ends.
+function journeyStageEstimate(b,stageIndex){
+  var stageName=PROJECT_STAGES[stageIndex];
+  var start=getProjectStartDate(b);
+  var completion=productionCompletionDate(b);
+  var delivery=targetDeliveryDate(b);
+  var rs=null,re=null,openEnded=false;
+  if(stageName==='Project Kick Off'&&start){rs=start;re=start;}
+  else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,4);}
+  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,5);re=addDays(completion,-5);}
+  else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-4);re=rs;}
+  else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-3);re=addDays(completion,-2);}
+  else if(stageName==='Packing & Shipping'&&completion){rs=addDays(completion,-1);re=completion;}
+  else if(stageName==='Project Delivered'&&delivery){rs=delivery;re=delivery;}
+  else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
+  if(!rs)return '';
+  if(re&&rs>re)return ''; // agreed production time too short for this breakdown to make sense -- skip rather than show a nonsensical inverted range
+  var dateLine='Est. '+(re&&re!==rs?(fmtDateShort(rs)+' – '+fmtDateShort(re)):fmtDateShort(rs))+(openEnded?' onward':'');
+  var status=re?scheduleStatusLabel(rs,re):'';
+  return status?(dateLine+' · '+status):dateLine;
+}
+window.journeyStageEstimate=journeyStageEstimate;
 function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
 function awardedBriefs(){return (window.SDB.briefs||[]).filter(function(b){return b.status==='awarded';});}
 function findBrief(id){return (window.SDB.briefs||[]).filter(function(b){return b.id===id;})[0];}
@@ -3161,7 +3218,11 @@ function renderProjectOverview(b){
       var current=!delivered&&i===idx;
       var cls=done?'done':(current?'current':'');
       var dotTxt=done?'✓':String(i+1);
-      return '<li class="jstep '+cls+'">'+(current?'<span class="jstep__here">You\'re here</span>':'')+
+      // Native title tooltip -- hovering any stage shows its indicative
+      // estimated date/range (and whether that puts it ahead/behind
+      // schedule against today), see journeyStageEstimate() above.
+      var estimate=(typeof journeyStageEstimate==='function')?journeyStageEstimate(b,i):'';
+      return '<li class="jstep '+cls+'"'+(estimate?(' title="'+esc(estimate)+'"'):'')+'>'+(current?'<span class="jstep__here">You\'re here</span>':'')+
         '<span class="jstep__dot">'+dotTxt+'</span><span class="jstep__name">'+esc(name)+'</span>'+
         '<span class="jstep__date">'+(current?(pct+'%'):(done?'Done':'Next up'))+'</span></li>';
     }).join('');
