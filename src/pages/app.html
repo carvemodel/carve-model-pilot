@@ -707,7 +707,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <div class="myproj-hero">
         <span class="mock__k">Studio workspace</span>
         <h2 class="myproj-title" id="projectsHeading">All projects</h2>
-        <p class="myproj-sub" id="projectsSub">Every project across the studio — open any one to see its full workspace.</p>
       </div>
 
       <!-- Real data only: populated by renderProjectsList() from awardedBriefs(),
@@ -860,6 +859,15 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Owner-only project admin: Client Manager assignment, contact info,
+           dates (read-only here -- editable by the assigned Client Manager
+           from My Projects), delivered/archive state, and Invoice & Payment.
+           Populated by renderProjectAdminPanel(). -->
+      <div class="panel cm-only" style="margin-top:1.5rem;">
+        <div class="panel__head"><h3>Project admin</h3></div>
+        <div class="panel__body" id="projectAdminPanel"></div>
       </div>
     </section>
 
@@ -2027,16 +2035,11 @@ function submitAssignManager(){
 }
 window.submitAssignManager=submitAssignManager;
 
-/* ---- Projects tab (owner): every awarded brief, its assigned Client
-   Manager, client contact, and — click a project to expand it — its
-   Invoice & Payment panel. Invoices deliberately aren't a top-level nav tab
-   anymore; they live under the specific project they belong to. ---- */
-var expandedAwardedId=null;
-function toggleAwardedProject(id){
-  expandedAwardedId=(expandedAwardedId===id)?null:id;
-  renderAwardedProjects();
-}
-window.toggleAwardedProject=toggleAwardedProject;
+/* ---- Projects tab (owner): every awarded brief, at a glance -- clicking
+   a project opens its own detail (Overview) page, which is where the
+   assigned Client Manager, client contact, dates, and Invoice & Payment
+   panel actually live (see renderProjectAdminPanel). The list itself
+   never expands in place. ---- */
 function renderAwardedProjects(){
   // The Client Manager assignment + contact/invoice detail that used to
   // live in its own separate "Client Manager assignments" panel above the
@@ -2056,6 +2059,7 @@ function setBriefManager(id,email){
   b.assignedManager=email||null;
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   if(window.renderMyAssigned)window.renderMyAssigned();
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
 }
 function setProjectStart(id,val){
   var b=findBrief(id);if(!b)return;
@@ -2105,60 +2109,18 @@ window.toggleProjectArchived=toggleProjectArchived;
 function projectRowHtml(b){
   var c=b.client||{};
   var delivered=!!b.deliveredAt;
-  var isOpen=expandedAwardedId===b.id;
-  var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
-  var expandBody='';
-  if(isOpen){
-    var invoicePanel='';
-    if(hasInvoice&&typeof window.invoiceLineAdmin==='function'){
-      var inv=b.clientQuote.invoice;
-      invoicePanel='<div class="projassign__invoice">'+
-        '<div class="mock__k" style="margin:0.9rem 0 0.5rem;">Invoice &amp; payment</div>'+
-        window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
-        window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
-      '</div>';
-    }else{
-      invoicePanel='<div class="projassign__invoice" style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
-    }
-    expandBody='<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
-        '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
-      '<div class="projassign__row projassign__contact">'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
-      '</div>'+
-      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Start date</div><div>'+(b.startDate?esc(fmtDateShort(b.startDate)):'<span style="color:var(--cm-text-subtle);">Not set yet</span>')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Agreed production time</div><div>'+(b.productionDays?esc(b.productionDays+' days'):'<span style="color:var(--cm-text-subtle);">Not set yet</span>')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target production completion</div><div>'+(productionCompletionDate(b)?esc(fmtDateShort(productionCompletionDate(b))):'—')+'</div></div>'+
-        '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery <span class="opt">(+5 days)</span></div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
-      '</div>'+
-      '<p style="color:var(--cm-text-subtle);font-size:0.8rem;margin:0 0 0.6rem;">Start date and production time are set by this project\'s assigned Client Manager from My Projects, not from here.</p>'+
-      '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
-        '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
-          '<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
-          '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
-        '</div>'+
-      '</div>'+
-      invoicePanel;
-  }
   var stageName=delivered?'Project Completed':PROJECT_STAGES[projectStageIndex(b)];
   var scale=(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—';
   var metaBits=['Stage: '+esc(stageName)];
   metaBits.push('Target delivery: '+(targetDeliveryDate(b)?fmtDateShort(targetDeliveryDate(b)):'—'));
   metaBits.push('Scale: '+esc(scale));
   metaBits.push('Payment: '+esc(paymentStatusLabel(b)));
-  return '<div class="projrow projcard" style="flex-direction:column;align-items:stretch;">'+
-    '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'+
-      '<div style="cursor:pointer;flex:1;min-width:180px;" onclick="openProject(\''+esc(b.id)+'\')">'+
+  return '<div class="projrow projcard" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')">'+
+    '<div>'+
         '<div class="projrow__name">'+esc(b.title)+'</div>'+
         '<div class="projrow__sub cid-only">'+esc(c.Company||'—')+(c.Name?(' · '+esc(c.Name)):'')+(c.Phone?(' · '+esc(c.Phone)):'')+(c.Email?(' · '+esc(c.Email)):'')+'</div>'+
         '<div class="projcard__meta">'+metaBits.join(' · ')+'</div>'+
-      '</div>'+
-      '<button type="button" class="rowbtn" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;" onclick="toggleAwardedProject(\''+esc(b.id)+'\')">'+(isOpen?'Hide details ▲':'Details ▼')+'</button>'+
     '</div>'+
-    expandBody+
   '</div>';
 }
 function projectSectionHtml(label,list){
@@ -2563,8 +2525,56 @@ function renderProjectOverview(b){
       return '<div class="act"><span class="d"></span><div><p>'+line+'</p><div class="t">'+esc(h.time||'')+'</div></div></div>';
     }).join(''):'<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No activity recorded yet.</div>';
   }
+
+  renderProjectAdminPanel(b);
 }
 window.renderProjectOverview=renderProjectOverview;
+// Owner-only admin controls for this one project -- Client Manager
+// assignment, contact info, dates (read-only; the assigned Client Manager
+// edits these from My Projects), delivered/archive toggles, and Invoice &
+// Payment. Lives on the project's own detail page now, not as an
+// in-place expand on the Projects tab list.
+function renderProjectAdminPanel(b){
+  var wrap=document.getElementById('projectAdminPanel');
+  if(!wrap||!b)return;
+  var c=b.client||{};
+  var delivered=!!b.deliveredAt;
+  var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
+  var invoicePanel='';
+  if(hasInvoice&&typeof window.invoiceLineAdmin==='function'){
+    var inv=b.clientQuote.invoice;
+    invoicePanel='<div class="projassign__invoice">'+
+      '<div class="mock__k" style="margin:0.9rem 0 0.5rem;">Invoice &amp; payment</div>'+
+      window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
+      window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
+    '</div>';
+  }else{
+    invoicePanel='<div class="projassign__invoice" style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
+  }
+  wrap.innerHTML='<div class="projassign__row"><div class="mfield" style="margin:0;max-width:280px;"><label>Assigned Client Manager</label>'+
+      '<select onchange="setBriefManager(\''+esc(b.id)+'\',this.value)">'+assignManagerOptions(b.assignedManager)+'</select></div></div>'+
+    '<div class="projassign__row projassign__contact">'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Client</div><div>'+esc(c.Company||'—')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Contact</div><div>'+esc(c.Name||'—')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Email</div><div>'+esc(c.Email||'—')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Phone</div><div>'+esc(c.Phone||'—')+'</div></div>'+
+    '</div>'+
+    '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Start date</div><div>'+(b.startDate?esc(fmtDateShort(b.startDate)):'<span style="color:var(--cm-text-subtle);">Not set yet</span>')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Agreed production time</div><div>'+(b.productionDays?esc(b.productionDays+' days'):'<span style="color:var(--cm-text-subtle);">Not set yet</span>')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target production completion</div><div>'+(productionCompletionDate(b)?esc(fmtDateShort(productionCompletionDate(b))):'—')+'</div></div>'+
+      '<div><div class="mock__k" style="margin-bottom:0.3rem;">Target delivery <span class="opt">(+5 days)</span></div><div>'+(targetDeliveryDate(b)?esc(fmtDateShort(targetDeliveryDate(b))):'—')+'</div></div>'+
+    '</div>'+
+    '<p style="color:var(--cm-text-subtle);font-size:0.8rem;margin:0 0 0.6rem;">Start date and production time are set by this project\'s assigned Client Manager from My Projects, not from here.</p>'+
+    '<div class="projassign__row" style="flex-wrap:wrap;gap:1rem;">'+
+      '<div class="mfield" style="margin:0;display:flex;align-items:flex-end;gap:0.5rem;">'+
+        '<button class="btn '+(delivered?'btn--ghost':'btn--primary')+' btn--sm" onclick="toggleProjectDelivered(\''+esc(b.id)+'\')">'+(delivered?'Un-mark delivered':'Mark delivered')+'</button>'+
+        '<button class="btn btn--ghost btn--sm" onclick="toggleProjectArchived(\''+esc(b.id)+'\')">'+(b.archived?'Unarchive':'Archive')+'</button>'+
+      '</div>'+
+    '</div>'+
+    invoicePanel;
+}
+window.renderProjectAdminPanel=renderProjectAdminPanel;
 // Milestones tab: a REAL activity timeline off the brief's own b.history
 // (quotes, awards, revisions), not a fabricated photo-approval workflow --
 // see the notice in view-milestones for why that structured workflow isn't
@@ -3336,7 +3346,7 @@ function applyPerms(role){
   var curView=document.querySelector('.view:not([hidden])');
   if(curView){
     var navForView=document.querySelector('.navbtn[data-view="'+(curView.id.replace('view-',''))+'"]');
-    var fallbackView=role==='owner'?'leads':(role==='sales'?'myassigned':'overview');
+    var fallbackView=role==='owner'?'projects':(role==='sales'?'myassigned':'overview');
     if(navForView && navForView.classList.contains('perm-off')) go(fallbackView);
     if(curView.classList.contains('perm-off')) go(fallbackView);
   }
@@ -3708,12 +3718,12 @@ function setRole(r){
   document.getElementById('whoAv').textContent=info.av;
   document.getElementById('whoRole').textContent=info.org;
   applyPerms(r);
-  // Owner's home is studio-wide oversight, with no project pre-selected.
-  // Others land on their project workspace.
+  // Owner's home is the Projects list (every project across the studio),
+  // with no project pre-selected. Others land on their project workspace.
   var sel=document.getElementById('projSelect');
   if(r==='owner'){
     sel.value='';
-    go('leads');
+    go('projects');
   }else if(r==='client'){
     if(!sel.value)sel.value='aria';
     onProjChange();
