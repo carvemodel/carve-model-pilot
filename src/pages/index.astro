@@ -177,15 +177,14 @@ if (process.env.REDIS_URL) {
 
 .statement{padding-top:clamp(2rem,1rem + 4vw,5rem);padding-bottom:clamp(2rem,1rem + 4vw,5rem);}
 .statement .why-physical__p{font-size:0.96rem;line-height:1.6;letter-spacing:normal;font-family:var(--font-sans);font-weight:var(--w-regular);color:var(--cm-text-muted);}
-.why-physical__grid{display:grid;grid-template-columns:0.62fr 1.38fr;gap:clamp(2rem,4vw,4rem);align-items:start;margin-top:1.5rem;}
-.why-physical__grid .why-physical__p{max-width:38ch;}
-.why-physical__visual{position:relative;margin-top:clamp(2rem,6vw,4.5rem);}
+.why-physical__stack{display:flex;flex-direction:column;gap:clamp(1.75rem,3vw,2.5rem);margin-top:1.5rem;}
+.why-physical__visual{position:relative;}
 .why-physical__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:1;}
 .why-physical__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .why-physical__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
 .why-physical__placeholder{width:100%;aspect-ratio:16/9;border:1px dashed var(--cm-border-strong);border-radius:var(--r-sm);background:var(--cm-ink-850);display:flex;align-items:center;justify-content:center;text-align:center;padding:1.5rem;}
 .why-physical__placeholder span{font-family:var(--font-mono);font-size:0.78rem;letter-spacing:0.02em;line-height:1.6;color:var(--cm-text-subtle);max-width:24ch;}
-@media(max-width:820px){.why-physical__grid{grid-template-columns:1fr;}}
+
 
 /* clients strip */
 .clients{border-block:1px solid var(--cm-line-faint);padding-block:1.6rem;}
@@ -200,6 +199,8 @@ if (process.env.REDIS_URL) {
 .logo-cell img.on-light{max-height:62%;filter:invert(1);}
 .logo-cell img.logo-populous{max-width:100%;max-height:100%;mix-blend-mode:screen;transform:scale(2.1);}
 .logo-cell img.logo-mackenzie{filter:invert(1);mix-blend-mode:screen;}
+.logo-cell img.logo-uhaul{max-width:80%;}
+.logo-cell img.logo-shea{max-width:100%;max-height:100%;}
 @keyframes marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 @media(prefers-reduced-motion:reduce){.marquee__track{animation:none;}}
 @media(max-width:640px){.logo-cell{width:128px;height:54px;}}
@@ -360,16 +361,22 @@ if (process.env.REDIS_URL) {
         <div class="logo-cell"><img src="/assets/client-fentress.svg" alt="Fentress Architects"></div>
         <div class="logo-cell"><img src="/assets/client-FC.png" alt="Chicago Fire FC"></div>
         <div class="logo-cell"><img src="/assets/client-Mackenzie.png" alt="Mackenzie" class="logo-mackenzie"></div>
-        <div class="logo-cell"><img src="/assets/client-saltz.png" alt="Saltz"></div>
+        <div class="logo-cell"><img src="/assets/client-saltz-white.png" alt="Saltz Michelson"></div>
         <div class="logo-cell"><img src="/assets/client-mortenson.png" alt="Mortenson" class="on-light"></div>
+        <div class="logo-cell"><img src="/assets/client-Uhaul-white.png" alt="U-Haul" class="logo-uhaul"></div>
+        <div class="logo-cell"><img src="/assets/client-shea-transparent.png" alt="Shea Homes" class="logo-shea"></div>
+        <div class="logo-cell"><img src="/assets/client-AM-transparent.png" alt="Applied Materials"></div>
         <div class="logo-cell"><img src="/assets/client-gensler.png" alt="Gensler" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-populous.jpeg" alt="" class="logo-populous" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-turner.png" alt="" class="on-light" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-fentress.svg" alt="" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-FC.png" alt="" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-Mackenzie.png" alt="" class="logo-mackenzie" aria-hidden="true"></div>
-        <div class="logo-cell"><img src="/assets/client-saltz.png" alt="" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-saltz-white.png" alt="" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-mortenson.png" alt="" class="on-light" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-Uhaul-white.png" alt="" class="logo-uhaul" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-shea-transparent.png" alt="" class="logo-shea" aria-hidden="true"></div>
+        <div class="logo-cell"><img src="/assets/client-AM-transparent.png" alt="" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-gensler.png" alt="" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-populous.jpeg" alt="" class="logo-populous" aria-hidden="true"></div>
         <div class="logo-cell"><img src="/assets/client-turner.png" alt="" class="on-light" aria-hidden="true"></div>
@@ -385,16 +392,16 @@ if (process.env.REDIS_URL) {
     <span class="eyebrow reveal">Why physical verification matters</span>
     <h2 class="display-md reveal mt-3">More design possibilities create<br>a greater need for physical evidence.</h2>
   </div>
-  <div class="container why-physical__grid">
-    <div>
-      <p class="measure reveal why-physical__p">AI and digital design tools are making it faster to generate, visualize, and revise ideas. But producing more options does not necessarily make the right decision clearer.</p>
-      <p class="measure reveal mt-3 why-physical__p">Before a design moves into approval, fabrication, construction, or production, teams still need to understand how it works in physical space—its scale, proportion, relationships, materials, assembly, and effect on the people who experience it.</p>
-      <p class="measure reveal mt-3 why-physical__p">A physical model gives teams something tangible to examine together. It helps make complex ideas easier to understand, reveals questions that may be missed on a screen, and builds confidence before committing to the next stage.</p>
-    </div>
+  <div class="container why-physical__stack">
     <div class="why-physical__visual reveal">
       <span class="corner tl"></span><span class="corner br"></span>
       <img class="why-physical__photo" src="/assets/home-why-verification.png" alt="Side-by-side comparison of a digital rendering and the matching physical scale model of a mixed-use courtyard and pool" style="width:100%;height:auto;aspect-ratio:1020/316;object-fit:cover;border-radius:var(--r-sm);display:block;">
       <span class="slot-label">Luxury Apartment Complex · 1:150 · ABS</span>
+    </div>
+    <div>
+      <p class="reveal why-physical__p">AI and digital design tools are making it faster to generate, visualize, and revise ideas. But producing more options does not necessarily make the right decision clearer.</p>
+      <p class="reveal mt-3 why-physical__p">Before a design moves into approval, fabrication, construction, or production, teams still need to understand how it works in physical space—its scale, proportion, relationships, materials, assembly, and effect on the people who experience it.</p>
+      <p class="reveal mt-3 why-physical__p">A physical model gives teams something tangible to examine together. It helps make complex ideas easier to understand, reveals questions that may be missed on a screen, and builds confidence before committing to the next stage.</p>
     </div>
   </div>
 </section>

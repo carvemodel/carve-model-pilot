@@ -391,7 +391,7 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .jstep.current .jstep__dot{background:var(--cm-white);border-color:var(--cm-white);color:var(--cm-ink-900);font-weight:var(--w-bold);box-shadow:0 0 0 5px rgba(255,255,255,0.12);}
 .jstep__name{font-size:0.82rem;font-weight:var(--w-semibold);color:var(--cm-text-muted);line-height:1.2;}
 .jstep.done .jstep__name,.jstep.current .jstep__name{color:var(--cm-text-strong);}
-.jstep__date{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.02em;color:var(--cm-text-subtle);}
+.jstep__date{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.02em;color:var(--cm-text-subtle);white-space:nowrap;min-height:1.3em;}
 .jstep.current .jstep__date{color:var(--cm-silver);}
 .jstep__here{position:absolute;top:-22px;font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cm-ink-900);background:var(--cm-silver);padding:2px 7px;border-radius:99px;white-space:nowrap;}
 .jstep.current{}
@@ -838,6 +838,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <p id="journeyNow">Digital fabrication and hand-finishing of the tower massing. QC photos are posted to <b>Files</b> as each section completes.</p>
           </div>
           <div class="journey__next" id="journeyNextWrap">
+            <span class="mock__k">Current stage: <span id="journeyCurrentStageText" style="color:var(--cm-text-strong);">—</span></span>
+            <div class="sub" id="journeyScheduleStatus" style="margin:0.15rem 0 0.6rem;"></div>
             <span class="mock__k">Next Stage: <span id="journeyNextStageText">—</span></span>
             <div style="display:flex;flex-direction:column;gap:0.7rem;margin-top:0.7rem;">
               <div>
@@ -1080,6 +1082,19 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   <div class="proj-spec-edit-only" id="psPackageSizeWrap" hidden style="margin-top:0.5rem;max-width:320px;">
                     <div style="display:grid;grid-template-columns:36px 1fr 1fr 1fr;gap:0.4rem;align-items:center;"><span></span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">L</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">W</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">H</span><span style="font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);">mm</span><input id="psPackageSize-l-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','l','mm')"><input id="psPackageSize-w-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','w','mm')"><input id="psPackageSize-h-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','h','mm')"><span style="font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);">in</span><input id="psPackageSize-l-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','l','in')"><input id="psPackageSize-w-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','w','in')"><input id="psPackageSize-h-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','h','in')"></div>
                     <button type="button" class="btn btn--primary btn--sm" style="margin-top:0.5rem;" onclick="saveProjectSpecField('packageSize')">Save</button>
+                  </div>
+                </div>
+                <div>
+                  <span class="mock__k">Project address</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoProjectAddress" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psProjectAddressBtn" onclick="toggleProjectSpecFieldEdit('projectAddress')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psProjectAddressWrap" hidden style="margin-top:0.5rem;max-width:320px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="text" id="psProjectAddressInput" placeholder="e.g. Phoenix, Arizona, United States" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('projectAddress')">Save</button>
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -2287,9 +2302,18 @@ function paymentStatusLabel(b){
   if(inv.depositStatus==='paid')return '50% Deposit Received, 50% Final Due';
   return '50% Deposit Due';
 }
+// b.projectStage (an explicit stage name) always wins if it's ever set, but
+// there's no admin control anywhere that actually sets it -- it's always
+// undefined in practice, which used to just leave every project pinned at
+// "Project Kick Off" (index 0) forever regardless of how far along it
+// actually was. Falls back to deriving the current stage straight from
+// today's date against the same timeline used for the % complete bar and
+// the stage-hover estimates (see journeyStageRange/timelineDerivedStageIndex
+// below), so "Current stage" actually moves as time passes.
 function projectStageIndex(b){
   var i=PROJECT_STAGES.indexOf(b.projectStage);
-  return i<0?0:i;
+  if(i>=0)return i;
+  return (typeof timelineDerivedStageIndex==='function')?timelineDerivedStageIndex(b):0;
 }
 function fmtDateShort(s){
   if(!s)return '';
@@ -2477,6 +2501,7 @@ function projectSpecValue(b,field){
     }
     return pkgDims.length?pkgDims.map(function(d,i){return pkgDims.length>1?('#'+(i+1)+' '+d):d;}).join(', '):null;
   }
+  if(field==='projectAddress')return b.projectAddressOverride||(b.brief&&b.brief['Project location'])||null;
   if(field==='deliveryAddress')return b.deliveryAddressOverride||(b.client&&b.client.Address)||(b.brief&&b.brief['Delivery location'])||null;
   return null;
 }
@@ -2494,6 +2519,12 @@ var PROJECT_SPEC_FIELD_META={
   material:{label:'Materials & presentation',display:'projInfoMaterial',wrap:'psMaterialWrap',btn:'psMaterialBtn',type:'select',input:'psMaterialInput',override:'materialOverride'},
   modelSize:{label:'Model size',display:'projInfoModelSize',wrap:'psModelSizeWrap',btn:'psModelSizeBtn',type:'dims',prefix:'psModelSize',override:'modelSizeOverride'},
   packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',type:'dims',prefix:'psPackageSize',override:'packageSizeOverride'},
+  // The project's own site/building address -- distinct from Delivery
+  // address below (where the finished model physically ships to, which can
+  // be a different office entirely). Defaults from the location parsed out
+  // of the client's original brief (b.brief['Project location'], set at
+  // lead intake -- see alSplitLoc()/projLoc in SRC_award).
+  projectAddress:{label:'Project address',display:'projInfoProjectAddress',wrap:'psProjectAddressWrap',btn:'psProjectAddressBtn',type:'text',input:'psProjectAddressInput',override:'projectAddressOverride'},
   deliveryAddress:{label:'Delivery address',display:'projInfoDeliveryAddress',wrap:'psDeliveryAddressWrap',btn:'psDeliveryAddressBtn',type:'text',input:'psDeliveryAddressInput',override:'deliveryAddressOverride'}
 };
 // Live mm<->in sync for the Model size / Package size L/W/H editors --
@@ -3199,7 +3230,7 @@ function renderProjectOverview(b){
   var paused=!delivered&&!!b.paused;
   var idx=projectStageIndex(b);
   var totalSteps=PROJECT_STAGES.length;
-  var pct=delivered?100:Math.max(0,Math.min(100,b.projectPct||0));
+  var pct=delivered?100:computeTimelinePct(b);
   var stageName=delivered?'Project Completed':PROJECT_STAGES[idx];
   var short=(b.title||'').split(' — ')[0];
   var startDate=getProjectStartDate(b);
@@ -3224,7 +3255,7 @@ function renderProjectOverview(b){
       var estimate=(typeof journeyStageEstimate==='function')?journeyStageEstimate(b,i):'';
       return '<li class="jstep '+cls+'"'+(estimate?(' title="'+esc(estimate)+'"'):'')+'>'+(current?'<span class="jstep__here">You\'re here</span>':'')+
         '<span class="jstep__dot">'+dotTxt+'</span><span class="jstep__name">'+esc(name)+'</span>'+
-        '<span class="jstep__date">'+(current?(pct+'%'):(done?'Done':'Next up'))+'</span></li>';
+        '<span class="jstep__date">'+esc(dateLabel)+'</span></li>';
     }).join('');
   }
 
@@ -3236,6 +3267,8 @@ function renderProjectOverview(b){
   // legacy elements stay in the DOM (hidden) only because an old,
   // apparently-unreachable demo path (openCompletedProject) still touches
   // them directly without null checks.
+  setText('journeyCurrentStageText',delivered?'Project Completed':stageName);
+  setText('journeyScheduleStatus',(typeof currentStageScheduleStatus==='function')?currentStageScheduleStatus(b):'');
   setText('journeyNextStageText',delivered?'Complete':(nextStage||'Complete'));
   var jNow=document.getElementById('journeyNow');
   if(jNow)jNow.innerHTML=delivered?'Project complete. Final files are available under Files.':esc(b.projectUpdateNote||('Currently in '+stageName+'.'));
@@ -5691,8 +5724,11 @@ function currentActorLabel(){
   var sess=(typeof currentSession==='function')?currentSession():null;
   if(sess&&sess.email){
     var member=((window.SDB&&window.SDB.team)||[]).filter(function(t){return t&&t.email&&t.email.toLowerCase()===sess.email.toLowerCase();})[0];
-    var name=member?member.name:sess.email;
-    return roleLabel?(name+' ('+roleLabel+')'):name;
+    // Only ever show a person's name if we actually have one on file (e.g.
+    // a named team member). Otherwise fall back to just the role label
+    // (e.g. "Carve Admin") rather than exposing the login email address.
+    if(member&&member.name)return roleLabel?(member.name+' ('+roleLabel+')'):member.name;
+    return roleLabel||sess.email;
   }
   var info=(typeof ROLE_INFO!=='undefined'&&ROLE_INFO[role])?ROLE_INFO[role]:null;
   if(info)return roleLabel?(info.name+' ('+roleLabel+')'):info.name;
