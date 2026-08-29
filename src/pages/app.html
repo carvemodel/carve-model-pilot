@@ -2340,7 +2340,7 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
     var d2=daysBetween(rangeEnd,today);
     return d2+' day'+(d2===1?'':'s')+' behind original schedule';
   }
-  return '';
+  return 'On schedule';
 }
 // Raw {start,end,openEnded} for a stage's estimated window -- shared by
 // stageDateLabelCompact() (the visible per-dot date label) and
