@@ -1939,6 +1939,10 @@ window.renderVendors=renderVendors;
 // would just be new placeholder content wearing a real-looking UI. Delivery
 // is tracked separately via b.deliveredAt (its own field, not a 5th stage)
 // so "Completed" in the Projects tab has one unambiguous real signal.
+// 'Payment Received — 50% Remaining' is deliberately NOT a stage here --
+// it's a gate/prerequisite that must clear before Packing & Shipping can
+// start (tracked separately via clientQuote.invoice.balanceStatus, see
+// paymentStatusLabel()), not a milestone shown on the journey timeline.
 var PROJECT_STAGES=[
   'Project Kick Off',                          // 1 -- triggered once deposit is marked received
   'Confirmed Material Samples',                // 2
@@ -1946,8 +1950,7 @@ var PROJECT_STAGES=[
   'Completion',                                 // 4
   'Final Client Approval',                      // 5
   'Permanently Fixed, Cleaned & Polished',      // 6
-  'Payment Received — 50% Remaining',      // 7
-  'Packing & Shipping'                          // 8
+  'Packing & Shipping'                          // 7
 ];
 function paymentStatusLabel(b){
   var inv=b.clientQuote&&b.clientQuote.invoice;
