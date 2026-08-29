@@ -820,11 +820,27 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <p id="journeyNow">Digital fabrication and hand-finishing of the tower massing. QC photos are posted to <b>Files</b> as each section completes.</p>
           </div>
           <div class="journey__next" id="journeyNextWrap">
-            <span class="mock__k" id="journeyNextLabel">What's next — your action</span>
-            <p class="client-only" id="journeyNextClient">Approve <b>Finishing &amp; Paint</b> to release the model into its final stage.</p>
-            <p class="studio-only" id="journeyNextStudio">Awaiting client approval on <b>Finishing &amp; Paint</b>.</p>
-            <button class="btn btn--primary btn--sm client-only" id="journeyNextBtnClient" onclick="go('milestones')" style="margin-top:0.7rem;">Review &amp; approve →</button>
-            <button class="btn btn--ghost btn--sm studio-only" id="journeyNextBtnStudio" onclick="go('milestones')" style="margin-top:0.7rem;">Open milestones →</button>
+            <span class="mock__k">Next Stage: <span id="journeyNextStageText">—</span></span>
+            <div style="display:flex;flex-direction:column;gap:0.7rem;margin-top:0.7rem;">
+              <div><span class="mock__k">Start</span><div class="mock__v kpi-scale-only" id="projInfoStart">—</div>
+                <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoStartInput" onchange="setProjectStart(document.getElementById('projSelect').value,this.value)"></div>
+              </div>
+              <div><span class="mock__k">Target production completion</span><div class="mock__v kpi-scale-only" id="projInfoCompletion">—</div>
+                <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoCompletionInput" onchange="setProductionCompletionOverride(document.getElementById('projSelect').value,this.value)"></div>
+              </div>
+              <div><span class="mock__k">Target delivery</span><div class="mock__v kpi-scale-only" id="projInfoTarget">—</div>
+                <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoTargetInput" onchange="setTargetDeliveryOverride(document.getElementById('projSelect').value,this.value)"></div>
+              </div>
+            </div>
+            <!-- Kept hidden (not deleted) -- openCompletedProject(), an old
+                 demo-data path apparently unreachable from real nav anymore,
+                 references these ids directly without null checks. No longer
+                 populated by the real renderProjectOverview(). -->
+            <span class="mock__k" id="journeyNextLabel" hidden>What's next — your action</span>
+            <p class="client-only" id="journeyNextClient" hidden>Approve <b>Finishing &amp; Paint</b> to release the model into its final stage.</p>
+            <p class="studio-only" id="journeyNextStudio" hidden>Awaiting client approval on <b>Finishing &amp; Paint</b>.</p>
+            <button class="btn btn--primary btn--sm client-only" id="journeyNextBtnClient" onclick="go('milestones')" style="margin-top:0.7rem;" hidden>Review &amp; approve →</button>
+            <button class="btn btn--ghost btn--sm studio-only" id="journeyNextBtnStudio" onclick="go('milestones')" style="margin-top:0.7rem;" hidden>Open milestones →</button>
           </div>
         </div>
       </div>
@@ -900,15 +916,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   <div class="cm-only" id="projInfoLeadEditWrap" hidden style="margin-top:0.5rem;max-width:280px;">
                     <select id="projInfoLeadSelect" onchange="setBriefManager(document.getElementById('projSelect').value,this.value)"></select>
                   </div>
-                </div>
-                <div><span class="mock__k">Start</span><div class="mock__v kpi-scale-only" id="projInfoStart">—</div>
-                  <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoStartInput" onchange="setProjectStart(document.getElementById('projSelect').value,this.value)"></div>
-                </div>
-                <div><span class="mock__k">Target production completion</span><div class="mock__v kpi-scale-only" id="projInfoCompletion">—</div>
-                  <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoCompletionInput" onchange="setProductionCompletionOverride(document.getElementById('projSelect').value,this.value)"></div>
-                </div>
-                <div><span class="mock__k">Target delivery</span><div class="mock__v kpi-scale-only" id="projInfoTarget">—</div>
-                  <div class="mfield proj-dates-edit-only" style="margin:0.3rem 0 0;max-width:220px;"><input type="date" id="projInfoTargetInput" onchange="setTargetDeliveryOverride(document.getElementById('projSelect').value,this.value)"></div>
                 </div>
                 <div><span class="mock__k">Use case</span><div class="mock__v" id="projInfoUse">—</div></div>
                 <div><span class="mock__k">Model size</span><div class="mock__v" id="projInfoModelSize">—</div></div>
@@ -2715,13 +2722,14 @@ function renderProjectOverview(b){
   }
 
   var nextStage=delivered?null:PROJECT_STAGES[idx+1];
-  setText('journeyNextLabel',delivered?'Status':"What's next");
-  var jnClient=document.getElementById('journeyNextClient');
-  if(jnClient)jnClient.innerHTML=delivered?'Nothing further needed — this project is closed.':(nextStage?('Next up: <b>'+esc(nextStage)+'</b>. We\'ll update you here as production moves forward.'):'Final delivery is being prepared.');
-  var jnStudio=document.getElementById('journeyNextStudio');
-  if(jnStudio)jnStudio.innerHTML=delivered?'Delivered &amp; closed.':'Update this project\'s stage and progress from the Projects tab.';
-  var jnBtnC=document.getElementById('journeyNextBtnClient');if(jnBtnC)jnBtnC.style.display=delivered?'none':'';
-  var jnBtnS=document.getElementById('journeyNextBtnStudio');if(jnBtnS)jnBtnS.style.display=delivered?'none':'';
+  // journeyNextClient/journeyNextStudio/journeyNextBtnClient/journeyNextBtnStudio
+  // are no longer populated here -- that slot now shows Next Stage + the
+  // Start/Target production completion/Target delivery dates instead (see
+  // journeyNextStageText and the projInfo* date fields below). Those four
+  // legacy elements stay in the DOM (hidden) only because an old,
+  // apparently-unreachable demo path (openCompletedProject) still touches
+  // them directly without null checks.
+  setText('journeyNextStageText',delivered?'Complete':(nextStage||'Complete'));
   var jNow=document.getElementById('journeyNow');
   if(jNow)jNow.innerHTML=delivered?'Project complete. Final files are available under Files.':esc(b.projectUpdateNote||('Currently in '+stageName+'.'));
 
