@@ -106,6 +106,12 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .panel{background:var(--cm-ink-900);border:1px solid var(--cm-border);border-radius:var(--r-sm);}
 .panel__head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.3rem;border-bottom:1px solid var(--cm-line-faint);}
 .panel__head h3{font-size:1.05rem;font-weight:var(--w-semibold);}
+/* Project Overview page: panel headers (Client information, Project
+   information, Recent activity, Invoice & Payment) default to
+   --cm-text-strong (white) same as the data underneath, so nothing reads as
+   more important than anything else. Dial the headers back to silver so the
+   actual project data is what pops. */
+#view-overview .panel__head h3{color:var(--cm-silver);font-weight:var(--w-medium);}
 .panel__head .mock__k{cursor:default;}
 /* Field label vs. value hierarchy: a label like "Company" and its actual
    value "Uhaul" both default to --cm-text (near-white) with no rule of
@@ -861,7 +867,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 </div>
               </div>
               <div>
-                <span class="mock__k">Target production completion</span>
+                <span class="mock__k">Target production completion<span class="opt"> (auto: start + production time)</span></span>
                 <div style="display:flex;align-items:center;gap:0.6rem;">
                   <div class="mock__v" id="projInfoCompletion" style="flex:1;">—</div>
                   <button type="button" class="proj-dates-edit-only" id="projInfoCompletionBtn" onclick="toggleDateFieldEdit('completion')" title="Edit target production completion" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
@@ -874,7 +880,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 </div>
               </div>
               <div>
-                <span class="mock__k">Target delivery</span>
+                <span class="mock__k">Target delivery<span class="opt"> (auto: completion + 5 business days)</span></span>
                 <div style="display:flex;align-items:center;gap:0.6rem;">
                   <div class="mock__v" id="projInfoTarget" style="flex:1;">—</div>
                   <button type="button" class="proj-dates-edit-only" id="projInfoTargetBtn" onclick="toggleDateFieldEdit('target')" title="Edit target delivery" style="background:none;border:none;color:var(--cm-text-subtle);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;">&#9998;</button>
