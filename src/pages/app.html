@@ -6096,6 +6096,14 @@ function renderCompanyCard(co,repName){
       '<div class="cc-contact__top"><div><div class="cc-v">'+esc(c.name)+(c.title?(', '+esc(c.title)):'')+'</div><div class="cc-m">'+esc(c.email)+(c.phone?(' · '+esc(c.phone)):'')+'</div></div>'+
       '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'+
       (c.hasAccount===false?'<button class="btn btn--primary btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">+ Assign account</button>':'<button class="btn btn--ghost btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Edit contact</button>')+
+      // "Log in as" this contact's own portal account -- reuses the same
+      // real, server-verified impersonateAccount(email,role,name) Team &
+      // Access already uses for staff/vendor accounts (see api/auth.js's
+      // 'impersonate' action, owner-only). Only makes sense once the
+      // contact actually has a portal account (c.hasAccount!==false) and
+      // only Owner gets it here -- Client Manager doesn't have impersonation
+      // rights server-side either.
+      ((isOwnerView&&c.hasAccount!==false)?('<button class="btn btn--ghost btn--sm" onclick="impersonateAccount(\''+esc(c.email)+'\',\'client\',\''+esc(c.name)+'\')">Log in as</button>'):'')+
       '<button class="btn btn--ghost btn--sm" onclick="openLinkContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Link to another company</button>'+
       (isOwnerView?('<button class="btn btn--ghost btn--sm btn--danger" onclick="deleteClientContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Delete</button>'):'')+
       '</div></div>'+
