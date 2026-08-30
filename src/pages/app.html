@@ -972,7 +972,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:1.25rem;">
-          <div class="panel">
+          <div class="panel cid-only">
             <div class="panel__head"><h3>Client information</h3></div>
             <div class="panel__body">
               <!-- Editing any field here updates ONLY this project's own
@@ -983,7 +983,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                    sync. Same inline Edit-button-next-to-the-value pattern as
                    Carve Lead above. See saveClientField(). -->
               <div style="display:flex;flex-direction:column;gap:0.9rem;">
-                <div class="factory-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientFactory">—</div></div>
                 <div class="cid-only">
                   <span class="mock__k">Company</span>
                   <div style="display:flex;align-items:center;gap:0.6rem;">
@@ -3622,7 +3621,6 @@ function renderProjectOverview(b){
   var c=b.client||{};
   var teamMember=(window.SDB.team||[]).filter(function(t){return t&&t.email&&b.assignedManager&&t.email.toLowerCase()===b.assignedManager.toLowerCase();})[0];
   setText('projInfoClientCM',c.Company||'—');
-  setText('projInfoClientFactory',b.code?('Confidential · Ref '+b.code):'Confidential');
   setText('projInfoLead',teamMember?teamMember.name:'—');
   var leadSel=document.getElementById('projInfoLeadSelect');
   if(leadSel)leadSel.innerHTML=assignManagerOptions(b.assignedManager);
