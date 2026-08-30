@@ -253,13 +253,13 @@ async function filterClaimed(redis, items, keyFn) {
 function resolveFactoryShop(data, email) {
   const emailKey = String(email || '').toLowerCase();
   const vendor = (data.vendors || []).find((v) => v && v.email && v.email.toLowerCase() === emailKey);
-  if (vendor) return { shopId: vendor.id, isPrimary: true, vendor };
+  if (vendor) return { shopId: vendor.id, isPrimary: true, vendor, memberId: null };
   const member = (data.vendorTeam || []).find((t) => t && t.email && t.email.toLowerCase() === emailKey);
   if (member) {
     const vendorRec = (data.vendors || []).find((v) => v && v.id === member.shopId) || null;
-    return { shopId: member.shopId, isPrimary: false, vendor: vendorRec };
+    return { shopId: member.shopId, isPrimary: false, vendor: vendorRec, memberId: member.id };
   }
-  return { shopId: null, isPrimary: false, vendor: null };
+  return { shopId: null, isPrimary: false, vendor: null, memberId: null };
 }
 function vendorSafeBrief(b, shopId, team, isPrimary) {
   const quotes = {};
@@ -341,6 +341,7 @@ function vendorSafeBrief(b, shopId, team, isPrimary) {
     pendingChanges: b.pendingChanges || [],
     clientQuote: clientQuoteSafe,
     assignedTech: b.assignedTech || null,
+    assignedTeamMembers: b.assignedTeamMembers || [],
     assignedManagerName: manager ? manager.name : null,
     invited: b.invited || [],
     sentDate: b.sentDate || null,
@@ -360,11 +361,25 @@ function filterDataForFactory(data, email) {
   // resolveFactoryShop() above. No match for this email in either place —
   // same fail-closed rule as before: show nothing rather than guess. See
   // SRC_prodAdmin's '' guard in app.html.
-  const { shopId, isPrimary, vendor } = resolveFactoryShop(data, email);
+  const { shopId, isPrimary, vendor, memberId } = resolveFactoryShop(data, email);
   if (!shopId) return { briefs: [], leads: [], vendors: [], team: [], vendorTeam: [] };
-  const briefs = (data.briefs || [])
-    .filter((b) => isBriefRelevantToShop(b, shopId))
-    .map((b) => vendorSafeBrief(b, shopId, data.team, isPrimary));
+  let relevantBriefs = (data.briefs || []).filter((b) => isBriefRelevantToShop(b, shopId));
+  // A Vendor Team & Access member (isPrimary===false) only sees a project
+  // once the shop's own admin has assigned THEM to it specifically
+  // (b.assignedTeamMembers, set via the Assigned Team Members panel on the
+  // vendor's Project Overview page) -- the primary admin still sees every
+  // job awarded to the shop, unfiltered, same as always. This only applies
+  // to jobs already AWARDED to this shop: a still-quoting brief (invited/
+  // quoted but not yet awarded) stays visible to every team member exactly
+  // like before, since the Quotes/Sourcing workflow itself is untouched by
+  // this per-project assignment feature.
+  if (!isPrimary) {
+    relevantBriefs = relevantBriefs.filter((b) => {
+      if (b.awarded === shopId) return (b.assignedTeamMembers || []).indexOf(memberId) >= 0;
+      return true;
+    });
+  }
+  const briefs = relevantBriefs.map((b) => vendorSafeBrief(b, shopId, data.team, isPrimary));
   // Only the caller's OWN vendor record — needed so their own device can
   // resolve its own shopId (see reconcileVendorsIntoShops in app.html) —
   // never the full roster. Same for vendorTeam: only THIS shop's own added
@@ -513,6 +528,21 @@ module.exports = async (req, res) => {
           if (c && c.id && !existingChangeIds.has(c.id)) pendingChanges.unshift(c);
         });
         merged.pendingChanges = pendingChanges;
+        // Which of this shop's OWN team members (Team & Access) are
+        // assigned to this specific project -- drives the Assigned Team
+        // Members panel on the vendor's Project Overview page and the
+        // per-member visibility scoping in filterDataForFactory above.
+        // Either the primary admin or a team member may set this (full
+        // parity, same as everything else a factory session can edit) --
+        // sanitized here against THIS shop's actual vendorTeam roster so a
+        // tampered payload can't assign an id that isn't really a member
+        // of this shop (or worse, another shop's member id).
+        if (Array.isArray(incomingBrief.assignedTeamMembers)) {
+          const shopMemberIds = new Set((current.vendorTeam || []).filter((t) => t && t.shopId === shopId).map((t) => t.id));
+          merged.assignedTeamMembers = incomingBrief.assignedTeamMembers.filter((id) => shopMemberIds.has(id));
+        } else {
+          merged.assignedTeamMembers = currentBrief.assignedTeamMembers || [];
+        }
         return merged;
       }
       let briefsForMerge = body.briefs;
