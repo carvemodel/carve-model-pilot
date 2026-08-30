@@ -4148,7 +4148,11 @@ function renderProjectPricingPanel(b){
   // Same two numbers, re-shown to the vendor side itself (see vendor-price-only/
   // vendor-days-only in PERM) -- "your quoted price" IS "how much Carve pays
   // you" for this project, there's no separate vendor-payment figure tracked.
-  setText('kpiVendorQuotedPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
+  // Shown RMB-first here (the currency the vendor actually quoted in and
+  // thinks in), with the USD figure Carve pays alongside as a secondary
+  // "≈" conversion -- same ordering used everywhere else a vendor's own
+  // quote is displayed (e.g. the Quotes tab's own quote card).
+  setText('kpiVendorQuotedPrice',(wq&&wq.priceRMB!=null)?(moneyRMB(wq.priceRMB)+' (≈ '+fmtUsd(vendorPrice)+')'):(vendorPrice!=null?fmtUsd(vendorPrice):'—'));
   setText('kpiVendorQuotedDays',(wq&&wq.days!=null)?(wq.days+' day'+(wq.days===1?'':'s')):'—');
   setText('kpiProfitPct',(profit!=null&&clientPrice)?(Math.round((profit/clientPrice)*1000)/10)+'% margin':'');
   renderShippingCostCard(b);
@@ -6140,17 +6144,19 @@ function enterSession(role,email,name){
   document.getElementById('loginGate').style.display='none';
   var lbl=document.getElementById('sessionLabel');
   if(lbl)lbl.textContent='Signed in \u00b7 '+email;
-  setRole(role);
-  // Real invited accounts carry a real name \u2014 show it instead of the fixed
-  // per-role demo persona from ROLE_INFO (setRole() just set those fields).
-  if(name){
-    var wn=document.getElementById('whoName'), wa=document.getElementById('whoAv');
-    if(wn)wn.textContent=name;
-    if(wa&&typeof initialsOf==='function')wa.textContent=initialsOf(name);
-  }
-  if(role==='client'&&window.recordClientActivity)window.recordClientActivity(email);
+  // Resolve the vendor's shop (and set OUR_SHOP) BEFORE setRole() below --
+  // setRole('factory') immediately calls go('vendorprojects'), which renders
+  // renderVendorProjects() right away off window.OUR_SHOP. This lookup used
+  // to run AFTER setRole(), which meant that very first render always ran
+  // with OUR_SHOP still at its old/blank value, so a vendor (or an Owner
+  // using "Log in as") always saw "This account isn't linked to a
+  // production shop yet" for a moment on every fresh login/impersonation —
+  // regardless of whether the vendor roster was actually synced correctly —
+  // and it only self-corrected once something else (e.g. clicking to
+  // another tab and back to Projects) triggered a second, later render.
+  var factoryAdmin=null;
   if(role==='factory'){
-    var admin=PRODUCTION_ADMINS.filter(function(p){return p.email.toLowerCase()===email.toLowerCase();})[0];
+    factoryAdmin=PRODUCTION_ADMINS.filter(function(p){return p.email.toLowerCase()===email.toLowerCase();})[0];
     // Always set explicitly, including to '' when no match — OUR_SHOP must
     // never be left pointing at whatever shop a PREVIOUS factory session (or
     // the hardcoded default) happened to leave it on. Leaving it stale here
@@ -6161,12 +6167,21 @@ function enterSession(role,email,name){
     // way to tell "not linked to a shop" apart from "linked to shop X" — see
     // the '' guard in SRC_prodAdmin for how this is now shown to the vendor
     // instead of silently rendering someone else's queue.
-    if(window.SRC_setShop)window.SRC_setShop(admin?admin.shopId:'');
-    if(admin){
-      var wn=document.getElementById('whoName'), wr=document.getElementById('whoRole');
-      if(wn)wn.textContent=admin.name;
-      if(wr)wr.textContent='Production Admin \u00b7 '+admin.company;
-    }
+    if(window.SRC_setShop)window.SRC_setShop(factoryAdmin?factoryAdmin.shopId:'');
+  }
+  setRole(role);
+  // Real invited accounts carry a real name \u2014 show it instead of the fixed
+  // per-role demo persona from ROLE_INFO (setRole() just set those fields).
+  if(name){
+    var wn=document.getElementById('whoName'), wa=document.getElementById('whoAv');
+    if(wn)wn.textContent=name;
+    if(wa&&typeof initialsOf==='function')wa.textContent=initialsOf(name);
+  }
+  if(role==='client'&&window.recordClientActivity)window.recordClientActivity(email);
+  if(role==='factory'&&factoryAdmin){
+    var wn=document.getElementById('whoName'), wr=document.getElementById('whoRole');
+    if(wn)wn.textContent=factoryAdmin.name;
+    if(wr)wr.textContent='Production Admin \u00b7 '+factoryAdmin.company;
   }
   var impRaw=null;try{impRaw=localStorage.getItem(IMPERSONATE_KEY);}catch(e){}
   if(impRaw){
@@ -7500,7 +7515,7 @@ function renderCarveAdminBriefDetail(b){
           '</div>';
         }
         html+='<div class="qline2'+(q.unsuccessful?' qline2--unsuccessful':'')+'"><div class="qf-name"><span class="av">'+s.av+'</span><div><div class="nm">'+(admin?admin.name:s.name)+(isVariant&&q.label?(' <span style="color:var(--cm-text-subtle);font-weight:var(--w-regular);">— '+esc(q.label)+'</span>'):'')+(low?'<span class="lowtag">Lowest</span>':'')+'</div><div class="lc">'+(admin?admin.company:s.loc)+(isVariant?' · Variation':'')+'</div></div></div>'+
-          '<div class="qf-price">'+money(q.price)+(q.priceRMB?'<div style="font-family:var(--font-mono);font-weight:var(--w-regular);font-size:0.62rem;color:var(--cm-text-subtle);margin-top:2px;">converted from '+moneyRMB(q.priceRMB)+' RMB</div>':'')+'</div><div class="qf-days">'+q.days+' days</div>'+
+          '<div class="qf-price">'+(q.priceRMB?moneyRMB(q.priceRMB):money(q.price))+(q.priceRMB?'<div style="font-family:var(--font-mono);font-weight:var(--w-regular);font-size:0.62rem;color:var(--cm-text-subtle);margin-top:2px;">≈ '+money(q.price)+'</div>':'')+'</div><div class="qf-days">'+q.days+' days</div>'+
           '<div style="text-align:right;">'+actionHtml+'</div>'+
           quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+unsuccessfulNoteReadonly(q)+carveCommentBlock(b,s.id,opt.variantIndex,q)+'</div>';
       });
