@@ -6150,9 +6150,14 @@ function enterSession(role,email,name){
 // leaving the app to keep quietly failing every save, force a clean
 // re-login so whatever's wrong with this session gets resolved immediately
 // and visibly.
-function forceReLogin(){
+function forceReLogin(reason){
   try{localStorage.removeItem(SESSION_KEY);}catch(e){}
   try{sessionStorage.setItem('cm_portal_session_expired','1');}catch(e){}
+  // Optional detail on WHY this session got kicked (which request 401'd and
+  // what the server said) -- surfaced by showLoginGate() so the next person
+  // to hit this doesn't have to open devtools to find out. Best-effort only:
+  // sessionStorage can legitimately be unavailable (private browsing etc.).
+  if(reason){try{sessionStorage.setItem('cm_portal_session_expired_reason',String(reason).slice(0,300));}catch(e){}}
   location.reload();
 }
 window.forceReLogin=forceReLogin;
@@ -6284,11 +6289,12 @@ function showLoginGate(){
   // Set by forceReLogin() when the server rejected a request with 401
   // (session expired/invalid) — surface why, rather than silently landing
   // back on a blank sign-in form.
-  var expired=false;
+  var expired=false,reason='';
   try{expired=sessionStorage.getItem('cm_portal_session_expired')==='1';sessionStorage.removeItem('cm_portal_session_expired');}catch(e){}
+  try{reason=sessionStorage.getItem('cm_portal_session_expired_reason')||'';sessionStorage.removeItem('cm_portal_session_expired_reason');}catch(e){}
   if(expired){
     var err=document.getElementById('loginErr');
-    if(err){err.textContent='Your session expired — please sign in again.';err.hidden=false;}
+    if(err){err.textContent='Your session expired — please sign in again.'+(reason?(' ('+reason+')'):'');err.hidden=false;}
   }
 }
 (function(){
@@ -6737,7 +6743,11 @@ function saveSRC(opts){
         // saved fine in the browser while never actually reaching the
         // server. Surface it immediately instead of letting more saves
         // quietly go nowhere.
-        if(r.status===401&&payload.role&&typeof window.forceReLogin==='function')window.forceReLogin();
+        if(r.status===401&&payload.role){
+          r.json().catch(function(){return {};}).then(function(d){
+            if(typeof window.forceReLogin==='function')window.forceReLogin('POST /api/sourcing ('+payload.role+'): '+(d&&d.error?d.error:'401'));
+          });
+        }
       })
       .catch(function(e){console.error('Sourcing API sync failed:',e);});
   }
@@ -8705,7 +8715,12 @@ function pullSourcing(){
     // as if it were sourcing data (it has none of the expected fields, so
     // that used to just no-op — safe, but gave no indication anything was
     // wrong, which is how a broken session went unnoticed before).
-    if(r.status===401){if(typeof window.forceReLogin==='function')window.forceReLogin();return null;}
+    if(r.status===401){
+      r.json().catch(function(){return {};}).then(function(d){
+        if(typeof window.forceReLogin==='function')window.forceReLogin('GET /api/sourcing: '+(d&&d.error?d.error:'401'));
+      });
+      return null;
+    }
     return r.json();
   }).then(function(data){
     if(!data)return;
