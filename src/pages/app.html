@@ -564,6 +564,21 @@ body.vendor-no-price .vendor-price-only,body.vendor-no-price .vendor-invoice-onl
 .scope__tools .btn--sm{padding:0.5rem 0.9rem;font-size:0.8rem;}
 .scope__count{font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);margin-left:auto;}
 .scope__upload{margin-top:0.9rem;}
+/* ---- Facade/Landscape material sample pins (pin + numbered callout list,
+   see openFacadeMaterialsModal/openLandscapeMaterialsModal) -- reuses
+   .scope__stage's canvas frame styling above for the image area. ---- */
+.msample-tabs{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.8rem;}
+.msample-tabs button{padding:0.4rem 0.8rem;font-size:0.78rem;}
+.msample-upload{margin-bottom:0.6rem;}
+.msample-tools{display:flex;gap:0.5rem;margin:0.7rem 0;flex-wrap:wrap;align-items:center;}
+.msample-list{display:flex;flex-direction:column;gap:0.6rem;margin-top:0.8rem;}
+.msample-item{display:flex;gap:0.7rem;align-items:flex-start;border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.7rem 0.8rem;background:var(--cm-ink-850);}
+.msample-item__num{flex:none;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--cm-silver);color:#0D0E11;font-family:var(--font-mono);font-size:0.72rem;font-weight:var(--w-semibold);display:flex;align-items:center;justify-content:center;}
+.msample-item__thumb{flex:none;width:44px;height:44px;border-radius:var(--r-sm);object-fit:cover;background:var(--cm-ink-800);}
+.msample-item__body{flex:1;min-width:0;}
+.msample-item__label{font-size:0.86rem;color:var(--cm-text-strong);}
+.msample-item__meta{font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);margin-top:0.2rem;}
+.msample-item__actions{display:flex;gap:0.4rem;margin-top:0.5rem;flex-wrap:wrap;}
 /* multi-select checks (special requirements — shared with public quote form) */
 .checks{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
 .checks label{display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.85rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);cursor:pointer;font-size:0.88rem;color:var(--cm-text-muted);transition:0.16s;}
@@ -1888,6 +1903,70 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
+<!-- Facade material confirmation (Confirmed Material Samples checklist
+     item #0) -- vendor uploads a photo/rendering elevation for each of the
+     4 compass directions, then places numbered pins on the current
+     elevation, each linking to an uploaded photo of the actual physical
+     material sample -- pin + callout style: numbered markers on the image,
+     matching numbered thumbnails in the list below, no free-hand leader
+     lines to route/hit-test. No client interaction here (see
+     facadeMaterialsDone/fm-edit-only) -- everyone can open this to look,
+     only the vendor can upload/pin. -->
+<div class="modal-overlay" id="facadeMaterialsModal" hidden>
+  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-label="Facade material confirmation">
+    <div class="modal__head"><h3>Facade material confirmation</h3><button class="modal__x" onclick="closeFacadeMaterialsModal()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <p class="modal__intro">Vendor uploads an elevation for each side, then pins a photo of the actual material sample onto it.</p>
+      <div class="msample-tabs" id="fmElevationTabs"></div>
+      <div class="msample-upload fm-edit-only" id="fmUploadWrap">
+        <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('fmElevationFileInput').click()">Upload/replace this elevation</button>
+        <input type="file" id="fmElevationFileInput" accept="image/*" style="display:none;" onchange="fmUploadElevationImage(this)">
+      </div>
+      <div class="scope__stage" id="fmStage">
+        <canvas id="fmCanvas"></canvas>
+      </div>
+      <div class="msample-tools fm-edit-only" id="fmTools" style="display:none;">
+        <button type="button" class="btn btn--ghost btn--sm" onclick="fmStartAddPin()">+ Add material sample</button>
+        <span class="scope__count" id="fmPinHint"></span>
+      </div>
+      <input type="file" id="fmSampleFileInput" accept="image/*" style="display:none;" onchange="fmSamplePicked(this)">
+      <div id="fmPinList" class="msample-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Landscape material confirmation (Confirmed Material Samples checklist
+     item #1) -- vendor uploads a single site plan/rendering and pins
+     material samples onto it, same pin+callout style as the facade modal.
+     Unlike facade, the CLIENT gets a real say here: they can drop their
+     own comment-only pin anywhere on the plan, or approve one of the
+     vendor's pins outright -- either counts toward this item reading
+     "done" (see landscapeMaterialsDone). -->
+<div class="modal-overlay" id="landscapeMaterialsModal" hidden>
+  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-label="Landscape material confirmation">
+    <div class="modal__head"><h3>Landscape material confirmation</h3><button class="modal__x" onclick="closeLandscapeMaterialsModal()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <p class="modal__intro" id="lmIntro">Vendor uploads the site plan or rendering, then pins a photo of the actual material sample onto it.</p>
+      <div class="msample-upload lm-edit-only" id="lmUploadWrap">
+        <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('lmPlanFileInput').click()">Upload/replace site plan</button>
+        <input type="file" id="lmPlanFileInput" accept="image/*" style="display:none;" onchange="lmUploadPlanImage(this)">
+      </div>
+      <div class="scope__stage" id="lmStage">
+        <canvas id="lmCanvas"></canvas>
+      </div>
+      <div class="msample-tools lm-edit-only" id="lmTools" style="display:none;">
+        <button type="button" class="btn btn--ghost btn--sm" onclick="lmStartVendorAddPin()">+ Add material sample</button>
+        <span class="scope__count" id="lmPinHint"></span>
+      </div>
+      <div class="msample-tools lm-client-only" id="lmClientTools" style="display:none;">
+        <button type="button" class="btn btn--ghost btn--sm" onclick="lmStartClientAddPin()">+ Add your own note</button>
+      </div>
+      <input type="file" id="lmSampleFileInput" accept="image/*" style="display:none;" onchange="lmSamplePicked(this)">
+      <div id="lmPinList" class="msample-list"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Request a change (vendor OR client) -- flags something on Project
      information that should change without editing it directly; the
      assigned Client Manager/Owner get an email and see it logged in Recent
@@ -2556,6 +2635,54 @@ function designFilesChecklistDone(b){
   return DESIGN_FILE_ITEMS.every(function(it,i){return state[i]===true||(it.optional&&state[i]==='na');});
 }
 window.designFilesChecklistDone=designFilesChecklistDone;
+// ---- Facade/Landscape material sample "leader" pins (Confirmed Material
+// Samples checklist items #0/#1) ---- Vendor (factory/prodtech) uploads
+// photo elevations for facade (all 4 compass directions) or a single site
+// plan/rendering for landscape, then places numbered pins on that image --
+// each pin links to an uploaded photo of the actual physical material
+// sample, shown as a numbered callout in a list beside the image (pin +
+// callout leader style -- no free-hand line drawing to hit-test). Landscape
+// is the one surface the CLIENT also gets a say on: they can either drop
+// their own comment-only pin, or approve an existing vendor pin outright --
+// either one counts toward landscapeMaterialsDone() below. Facade has no
+// client-facing interaction (client can still open the modal to look, just
+// read-only), matching the original ask.
+var FACADE_ELEVATIONS=['North','South','East','West'];
+window.FACADE_ELEVATIONS=FACADE_ELEVATIONS;
+function ensureMaterialSamples(b){
+  if(!b.materialSamples)b.materialSamples={};
+  var ms=b.materialSamples;
+  if(!ms.facade)ms.facade={elevations:{},pins:[]};
+  if(!ms.facade.elevations)ms.facade.elevations={};
+  if(!ms.facade.pins)ms.facade.pins=[];
+  if(!ms.landscape)ms.landscape={plan:null,pins:[]};
+  if(!ms.landscape.pins)ms.landscape.pins=[];
+  return ms;
+}
+window.ensureMaterialSamples=ensureMaterialSamples;
+// Facade material confirmed once at least one material-sample pin has been
+// placed somewhere on an elevation -- an uploaded elevation with nothing
+// pinned to it isn't really "confirmed material", just a blank drawing.
+function facadeMaterialsDone(b){
+  var ms=ensureMaterialSamples(b);
+  return ms.facade.pins.length>0;
+}
+window.facadeMaterialsDone=facadeMaterialsDone;
+// Landscape material confirmed once the vendor has uploaded the site plan/
+// rendering, placed at least one material-sample pin on it, AND the client
+// has weighed in -- either by dropping their own comment pin or by
+// approving one of the vendor's pins outright (either counts).
+function landscapeMaterialsDone(b){
+  var ms=ensureMaterialSamples(b);
+  var lp=ms.landscape;
+  if(!lp.plan)return false;
+  var vendorPins=lp.pins.filter(function(p){return p.origin==='vendor';});
+  if(!vendorPins.length)return false;
+  var clientAddedOwn=lp.pins.some(function(p){return p.origin==='client';});
+  var clientApprovedOne=vendorPins.some(function(p){return !!p.clientApprovedAt;});
+  return clientAddedOwn||clientApprovedOne;
+}
+window.landscapeMaterialsDone=landscapeMaterialsDone;
 function getProjectStartDate(b){
   var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
   return b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt||null;
@@ -2735,10 +2862,22 @@ function journeyStageRange(b,stageIndex){
   var start=getProjectStartDate(b);
   var completion=productionCompletionDate(b);
   var delivery=targetDeliveryDate(b);
+  // Vendor's own quoted days (what agreedProductionDays returns for
+  // factory/prodtech) cover only Confirmed Material Samples + Fabrication
+  // -- their commitment ends when Fabrication does, with nothing held back
+  // for Final Client Approval/Permanently Fixed/Packing (those aren't the
+  // vendor's to estimate, see the vendor journey cutoff at Fabrication
+  // below). So for this role, "completion" (start+their own days) IS the
+  // end of Fabrication itself, not the end of Packing like it is for
+  // everyone else -- e.g. an 18-day vendor quote with 5 days for material
+  // confirmation leaves the full remaining 13 for Fabrication, not 13
+  // minus another 6 days reserved for stages that were never theirs.
+  var viewerRoleForRange=(typeof document!=='undefined'&&document.body)?document.body.dataset.role:null;
+  var isVendorRange=viewerRoleForRange==='factory'||viewerRoleForRange==='prodtech';
   var rs=null,re=null,openEnded=false;
   if(stageName==='Project Kick Off'&&start){rs=start;re=start;}
   else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,5);}
-  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,6);re=addDays(completion,-6);}
+  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,6);re=isVendorRange?completion:addDays(completion,-6);}
   else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-5);re=addDays(completion,-4);}
   else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-3);re=addDays(completion,-2);}
   else if(stageName==='Packing'&&completion){rs=addDays(completion,-1);re=completion;}
@@ -3970,17 +4109,18 @@ function renderProjectOverview(b){
   var short=(b.title||'').split(' — ')[0];
   var startDate=getProjectStartDate(b);
   var targetDelivery=targetDeliveryDate(b);
-  // Vendor (factory/prodtech) only ever committed to Final Client Approval
-  // -- everything after (Permanently Fixed/Cleaned & Polished, Packing,
-  // Shipping, and the delivery date itself) is Carve's OWN post-approval
-  // process on Carve's actual client-facing schedule, not the vendor's.
-  // Every schedule-ish display below (journey dots, Status/Next
-  // milestone/Current Estimated Delivery KPI captions) is gated on this so
-  // none of them show the vendor a date for a stage that was never theirs
-  // to estimate -- computing it off their own (typically faster)
-  // winning-quote days would just mix the two sides' timelines together.
+  // Vendor (factory/prodtech) only ever committed to Confirmed Material
+  // Samples + Fabrication -- their own quoted days cover just those two
+  // (e.g. an 18-day quote = 5 days material confirmation + 13 days
+  // fabrication, with nothing held back for Final Client Approval onward,
+  // see journeyStageRange's isVendorRange branch). Everything from Final
+  // Client Approval on is Carve's OWN process on Carve's actual
+  // client-facing schedule, not the vendor's. Every schedule-ish display
+  // below (journey dots, Status/Next milestone/Current Estimated Delivery
+  // KPI captions) is gated on this so none of them show the vendor a date
+  // for a stage that was never theirs to estimate.
   var viewerRole=document.body.dataset.role;
-  var vendorDateCutoff=(viewerRole==='factory'||viewerRole==='prodtech')?PROJECT_STAGES.indexOf('Final Client Approval'):-1;
+  var vendorDateCutoff=(viewerRole==='factory'||viewerRole==='prodtech')?PROJECT_STAGES.indexOf('Fabrication'):-1;
   var vendorPastCutoff=vendorDateCutoff>=0&&idx>vendorDateCutoff;
 
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
@@ -4236,6 +4376,8 @@ function renderProjectOverview(b){
   // just changed, in case either is currently open over this render.
   if(typeof renderScaleBoundaryModal==='function')renderScaleBoundaryModal(b);
   if(typeof renderDesignFilesModal==='function')renderDesignFilesModal(b);
+  if(typeof renderFacadeMaterialsModal==='function')renderFacadeMaterialsModal(b);
+  if(typeof renderLandscapeMaterialsModal==='function')renderLandscapeMaterialsModal(b);
 }
 window.renderProjectOverview=renderProjectOverview;
 // Whether a stage's checklist item currently reads "done". A few items are
@@ -4256,6 +4398,10 @@ function checklistItemDone(b,stageName,itemIndex){
     if(itemIndex===1)return (typeof designFilesChecklistDone==='function')?designFilesChecklistDone(b):false;
     if(itemIndex===2)return !!(b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositStatus==='paid');
   }
+  if(stageName==='Confirmed Material Samples'){
+    if(itemIndex===0)return (typeof facadeMaterialsDone==='function')?facadeMaterialsDone(b):false;
+    if(itemIndex===1)return (typeof landscapeMaterialsDone==='function')?landscapeMaterialsDone(b):false;
+  }
   var state=(b.stageChecklist&&b.stageChecklist[stageName])||[];
   return !!state[itemIndex];
 }
@@ -4271,6 +4417,13 @@ function checklistItemAction(stageName,itemIndex,role){
     if(itemIndex===0)return (role==='owner'||role==='sales'||role==='client'||role==='factory')?'openScaleBoundaryModal()':null;
     if(itemIndex===1)return 'openDesignFilesModal()';
     if(itemIndex===2)return (role==='owner'||role==='sales')?'openProjectInvoicePanel()':null;
+  }
+  if(stageName==='Confirmed Material Samples'){
+    // Everyone can open these two to at least look -- upload/pin controls
+    // inside are role-gated further (vendor places pins on both; client
+    // can additionally add their own pin or approve one, landscape only).
+    if(itemIndex===0)return 'openFacadeMaterialsModal()';
+    if(itemIndex===1)return 'openLandscapeMaterialsModal()';
   }
   return role==='sales'?('toggleStageChecklistItem('+itemIndex+')'):null;
 }
@@ -4487,6 +4640,459 @@ function toggleDesignFileItem(i){
   renderProjectOverview(b);
 }
 window.toggleDesignFileItem=toggleDesignFileItem;
+// ---- Facade material confirmation modal (Confirmed Material Samples
+// checklist item #0) -- see ensureMaterialSamples/facadeMaterialsDone for
+// the data model. Pin + numbered callout style: click "Add material
+// sample", pick a photo of the actual physical sample, then click where on
+// the current elevation it applies -- no free-hand leader-line drawing to
+// route or hit-test, the number on the pin matches the number on its
+// callout in the list below. ----
+var fmCurrentElevation='North';
+var fmImg=null,fmAddMode=false,fmPendingSample=null;
+function fmCurrentBrief(){
+  var id=document.getElementById('projSelect').value;
+  return findBrief(id);
+}
+// Shared upload helper -- same __blobUpload/fallback pattern as
+// uploadProjectBoundaryFile, just parameterized by path so both the
+// facade and landscape modals (elevations, site plan, and every sample
+// photo) can reuse it instead of repeating the branch four times.
+function msampleUpload(pathPrefix,f){
+  return window.__blobUpload
+    ? window.__blobUpload(pathPrefix+'/'+Date.now()+'-'+f.name,f,{access:'public',handleUploadUrl:'/api/upload',multipart:true}).then(function(blob){return blob.url;})
+    : fetch('/api/upload?path='+encodeURIComponent(pathPrefix),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},body:f}).then(function(r){if(!r.ok)throw new Error('Upload failed: '+r.status);return r.json();}).then(function(data){return data.url;});
+}
+function openFacadeMaterialsModal(){
+  var b=fmCurrentBrief();
+  if(!b)return;
+  ensureMaterialSamples(b);
+  var modal=document.getElementById('facadeMaterialsModal');
+  if(!modal)return;
+  // Land on the first elevation that already has an image, or North by
+  // default, so opening the modal shows something useful right away.
+  var ms=ensureMaterialSamples(b);
+  var withImage=FACADE_ELEVATIONS.filter(function(name){return !!ms.facade.elevations[name];})[0];
+  fmCurrentElevation=withImage||'North';
+  fmAddMode=false;fmPendingSample=null;
+  modal.hidden=false;
+  renderFacadeMaterialsModal(b);
+}
+window.openFacadeMaterialsModal=openFacadeMaterialsModal;
+function closeFacadeMaterialsModal(){
+  var modal=document.getElementById('facadeMaterialsModal');
+  if(modal)modal.hidden=true;
+  fmAddMode=false;fmPendingSample=null;
+}
+window.closeFacadeMaterialsModal=closeFacadeMaterialsModal;
+function fmSelectElevation(name){
+  fmCurrentElevation=name;
+  fmAddMode=false;fmPendingSample=null;
+  var b=fmCurrentBrief();
+  if(b)renderFacadeMaterialsModal(b);
+}
+window.fmSelectElevation=fmSelectElevation;
+function fmDrawElevation(canvas,ctx,pins){
+  if(!fmImg)return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(fmImg,0,0,canvas.width,canvas.height);
+  pins.forEach(function(p,i){
+    var x=p.x*canvas.width,y=p.y*canvas.height;
+    ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);
+    ctx.fillStyle='rgba(182,182,182,0.92)';ctx.fill();
+    ctx.strokeStyle='#0D0E11';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#0D0E11';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(String(i+1),x,y+1);
+  });
+}
+function renderFacadeMaterialsModal(b){
+  var modal=document.getElementById('facadeMaterialsModal');
+  if(!modal||modal.hidden||!b)return;
+  var ms=ensureMaterialSamples(b);
+  var role=document.body.dataset.role;
+  var canEdit=role==='factory'||role==='prodtech';
+  var tabs=document.getElementById('fmElevationTabs');
+  if(tabs){
+    tabs.innerHTML=FACADE_ELEVATIONS.map(function(name){
+      var has=!!ms.facade.elevations[name];
+      var on=name===fmCurrentElevation;
+      return '<button type="button" class="btn '+(on?'btn--primary':'btn--ghost')+' btn--sm" onclick="fmSelectElevation(\''+name+'\')">'+esc(name)+(has?' ✓':'')+'</button>';
+    }).join('');
+  }
+  var elevData=ms.facade.elevations[fmCurrentElevation];
+  var pins=ms.facade.pins.filter(function(p){return p.elevation===fmCurrentElevation;});
+  var stage=document.getElementById('fmStage');
+  var tools=document.getElementById('fmTools');
+  var uploadBtn=document.getElementById('fmUploadWrap');
+  if(uploadBtn){
+    var btn=uploadBtn.querySelector('button');
+    if(btn)btn.textContent=elevData?('Replace '+fmCurrentElevation+' elevation'):('Upload '+fmCurrentElevation+' elevation');
+  }
+  if(!elevData){
+    if(stage)stage.classList.remove('on');
+    if(tools)tools.style.display='none';
+    return;
+  }
+  if(tools)tools.style.display=canEdit?'flex':'none';
+  var img=new Image();
+  img.onload=function(){
+    fmImg=img;
+    var canvas=document.getElementById('fmCanvas');
+    if(!canvas)return;
+    var ctx=canvas.getContext('2d');
+    if(stage)stage.classList.add('on');
+    var maxW=(stage&&stage.clientWidth)||600;
+    var scale=Math.min(1,maxW/img.width);
+    canvas.width=img.width*scale;canvas.height=img.height*scale;
+    canvas.onclick=function(e){
+      if(!fmAddMode||!fmPendingSample)return;
+      var r=canvas.getBoundingClientRect();
+      var x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+      var newB=fmCurrentBrief();
+      if(!newB)return;
+      var newMs=ensureMaterialSamples(newB);
+      newMs.facade.pins.push({
+        id:'fmp'+Date.now(),elevation:fmCurrentElevation,x:x,y:y,
+        sampleUrl:fmPendingSample.url,sampleName:fmPendingSample.name,
+        addedBy:(typeof currentActorLabel==='function')?currentActorLabel(newB):role,
+        addedAt:new Date().toISOString().slice(0,10)
+      });
+      logProjectEvent(newB,'Pinned a facade material sample on the '+fmCurrentElevation+' elevation of "'+newB.title+'"');
+      fmAddMode=false;fmPendingSample=null;
+      if(typeof saveSRC==='function')saveSRC({changedBriefIds:[newB.id]});
+      renderProjectOverview(newB);
+      renderFacadeMaterialsModal(newB);
+    };
+    fmDrawElevation(canvas,ctx,pins);
+  };
+  img.src=elevData.url;
+  var hint=document.getElementById('fmPinHint');
+  if(hint)hint.textContent=fmAddMode?'Click on the elevation where this sample applies':'';
+  var list=document.getElementById('fmPinList');
+  if(list){
+    list.innerHTML=pins.length?pins.map(function(p,i){
+      var delBtn=canEdit?('<button type="button" class="btn btn--ghost btn--sm" onclick="fmDeletePin(\''+p.id+'\')">Remove</button>'):'';
+      return '<div class="msample-item">'+
+        '<div class="msample-item__num">'+(i+1)+'</div>'+
+        '<img class="msample-item__thumb" src="'+esc(p.sampleUrl)+'" alt="">'+
+        '<div class="msample-item__body">'+
+          '<div class="msample-item__label">'+esc(p.sampleName||'Material sample')+'</div>'+
+          '<div class="msample-item__meta">'+esc(p.addedBy||'')+' · '+esc(p.addedAt||'')+'</div>'+
+          '<div class="msample-item__actions">'+delBtn+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join(''):'<div style="color:var(--cm-text-subtle);font-size:0.85rem;">No material samples pinned to this elevation yet.</div>';
+  }
+}
+window.renderFacadeMaterialsModal=renderFacadeMaterialsModal;
+function fmUploadElevationImage(input){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var b=fmCurrentBrief();
+  if(!b)return;
+  var f=input.files&&input.files[0];
+  if(!f)return;
+  var ms=ensureMaterialSamples(b);
+  msampleUpload('facade/'+b.id+'/'+fmCurrentElevation,f).then(function(url){
+    ms.facade.elevations[fmCurrentElevation]={name:f.name,url:url,type:f.type};
+    logProjectEvent(b,'Uploaded '+fmCurrentElevation+' elevation on "'+b.title+'"');
+    if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+    renderProjectOverview(b);
+    renderFacadeMaterialsModal(b);
+  }).catch(function(err){
+    console.error('Elevation upload failed',f.name,err);
+    alert('Upload failed. Please try again.');
+  });
+  input.value='';
+}
+window.fmUploadElevationImage=fmUploadElevationImage;
+function fmStartAddPin(){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var b=fmCurrentBrief();
+  if(!b)return;
+  var ms=ensureMaterialSamples(b);
+  if(!ms.facade.elevations[fmCurrentElevation]){alert('Upload this elevation first.');return;}
+  document.getElementById('fmSampleFileInput').click();
+}
+window.fmStartAddPin=fmStartAddPin;
+function fmSamplePicked(input){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var b=fmCurrentBrief();
+  if(!b)return;
+  var f=input.files&&input.files[0];
+  if(!f)return;
+  var hint=document.getElementById('fmPinHint');
+  if(hint)hint.textContent='Uploading sample photo…';
+  msampleUpload('facade-samples/'+b.id,f).then(function(url){
+    fmPendingSample={url:url,name:f.name};
+    fmAddMode=true;
+    if(hint)hint.textContent='Click on the elevation where this sample applies';
+  }).catch(function(err){
+    console.error('Sample photo upload failed',f.name,err);
+    alert('Upload failed. Please try again.');
+    if(hint)hint.textContent='';
+  });
+  input.value='';
+}
+window.fmSamplePicked=fmSamplePicked;
+function fmDeletePin(id){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var b=fmCurrentBrief();
+  if(!b)return;
+  var ms=ensureMaterialSamples(b);
+  ms.facade.pins=ms.facade.pins.filter(function(p){return p.id!==id;});
+  logProjectEvent(b,'Removed a facade material sample pin on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+  renderFacadeMaterialsModal(b);
+}
+window.fmDeletePin=fmDeletePin;
+
+// ---- Landscape material confirmation modal (Confirmed Material Samples
+// checklist item #1) -- same pin+callout mechanics as facade, but a single
+// site plan/rendering (no elevation tabs) and the one surface the CLIENT
+// gets a real say on: they can drop their own comment-only pin, or
+// approve one of the vendor's pins outright (see landscapeMaterialsDone).
+var lmImg=null,lmAddMode=null,lmPendingSample=null;
+function lmCurrentBrief(){
+  var id=document.getElementById('projSelect').value;
+  return findBrief(id);
+}
+function openLandscapeMaterialsModal(){
+  var b=lmCurrentBrief();
+  if(!b)return;
+  ensureMaterialSamples(b);
+  var modal=document.getElementById('landscapeMaterialsModal');
+  if(!modal)return;
+  lmAddMode=null;lmPendingSample=null;
+  modal.hidden=false;
+  var intro=document.getElementById('lmIntro');
+  if(intro)intro.textContent=document.body.dataset.role==='client'
+    ?'Vendor pins a photo of the actual material sample onto the plan. Add your own note anywhere, or approve one of the vendor\'s pins.'
+    :'Vendor uploads the site plan or rendering, then pins a photo of the actual material sample onto it.';
+  renderLandscapeMaterialsModal(b);
+}
+window.openLandscapeMaterialsModal=openLandscapeMaterialsModal;
+function closeLandscapeMaterialsModal(){
+  var modal=document.getElementById('landscapeMaterialsModal');
+  if(modal)modal.hidden=true;
+  lmAddMode=null;lmPendingSample=null;
+}
+window.closeLandscapeMaterialsModal=closeLandscapeMaterialsModal;
+function lmDrawPlan(canvas,ctx,pins){
+  if(!lmImg)return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(lmImg,0,0,canvas.width,canvas.height);
+  pins.forEach(function(p,i){
+    var x=p.x*canvas.width,y=p.y*canvas.height;
+    var isClient=p.origin==='client';
+    ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);
+    ctx.fillStyle=isClient?'rgba(229,72,77,0.85)':'rgba(182,182,182,0.92)';ctx.fill();
+    ctx.strokeStyle='#0D0E11';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=isClient?'#fff':'#0D0E11';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(String(i+1),x,y+1);
+  });
+}
+function renderLandscapeMaterialsModal(b){
+  var modal=document.getElementById('landscapeMaterialsModal');
+  if(!modal||modal.hidden||!b)return;
+  var ms=ensureMaterialSamples(b);
+  var role=document.body.dataset.role;
+  var canEditVendor=role==='factory'||role==='prodtech';
+  var isClient=role==='client';
+  var plan=ms.landscape.plan;
+  var pins=ms.landscape.pins;
+  var uploadBtn=document.getElementById('lmUploadWrap');
+  if(uploadBtn){
+    var btn=uploadBtn.querySelector('button');
+    if(btn)btn.textContent=plan?'Replace site plan':'Upload site plan';
+  }
+  var stage=document.getElementById('lmStage');
+  var tools=document.getElementById('lmTools');
+  var clientTools=document.getElementById('lmClientTools');
+  if(!plan){
+    if(stage)stage.classList.remove('on');
+    if(tools)tools.style.display='none';
+    if(clientTools)clientTools.style.display='none';
+    return;
+  }
+  if(tools)tools.style.display=canEditVendor?'flex':'none';
+  if(clientTools)clientTools.style.display=isClient?'flex':'none';
+  var img=new Image();
+  img.onload=function(){
+    lmImg=img;
+    var canvas=document.getElementById('lmCanvas');
+    if(!canvas)return;
+    var ctx=canvas.getContext('2d');
+    if(stage)stage.classList.add('on');
+    var maxW=(stage&&stage.clientWidth)||600;
+    var scale=Math.min(1,maxW/img.width);
+    canvas.width=img.width*scale;canvas.height=img.height*scale;
+    canvas.onclick=function(e){
+      if(!lmAddMode)return;
+      var r=canvas.getBoundingClientRect();
+      var x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+      var newB=lmCurrentBrief();
+      if(!newB)return;
+      var newMs=ensureMaterialSamples(newB);
+      if(lmAddMode==='vendor'){
+        if(!lmPendingSample)return;
+        newMs.landscape.pins.push({
+          id:'lmp'+Date.now(),origin:'vendor',x:x,y:y,
+          sampleUrl:lmPendingSample.url,sampleName:lmPendingSample.name,
+          addedBy:(typeof currentActorLabel==='function')?currentActorLabel(newB):role,
+          addedAt:new Date().toISOString().slice(0,10)
+        });
+        logProjectEvent(newB,'Pinned a landscape material sample on "'+newB.title+'"');
+        lmAddMode=null;lmPendingSample=null;
+      }else if(lmAddMode==='client'){
+        var note=prompt('Add your note for this spot on the plan:');
+        lmAddMode=null;
+        if(note==null)return;
+        note=note.trim();
+        if(!note)return;
+        newMs.landscape.pins.push({
+          id:'lmp'+Date.now(),origin:'client',x:x,y:y,note:note,
+          addedBy:(typeof currentActorLabel==='function')?currentActorLabel(newB):role,
+          addedAt:new Date().toISOString().slice(0,10)
+        });
+        logProjectEvent(newB,'Added a landscape note on "'+newB.title+'": '+note);
+      }
+      if(typeof saveSRC==='function')saveSRC({changedBriefIds:[newB.id]});
+      renderProjectOverview(newB);
+      renderLandscapeMaterialsModal(newB);
+    };
+    lmDrawPlan(canvas,ctx,pins);
+  };
+  img.src=plan.url;
+  var hint=document.getElementById('lmPinHint');
+  if(hint)hint.textContent=lmAddMode==='vendor'?'Click on the plan where this sample applies':(lmAddMode==='client'?'Click on the plan to place your note':'');
+  var list=document.getElementById('lmPinList');
+  if(list){
+    list.innerHTML=pins.length?pins.map(function(p,i){
+      var isClientPin=p.origin==='client';
+      var thumb=isClientPin?'':('<img class="msample-item__thumb" src="'+esc(p.sampleUrl)+'" alt="">');
+      var label=isClientPin?esc(p.note||''):esc(p.sampleName||'Material sample');
+      var actions='';
+      if(!isClientPin){
+        if(p.clientApprovedAt){
+          actions='<span style="color:var(--cm-text-strong);font-size:0.82rem;">✓ Approved by client on '+esc(p.clientApprovedAt)+'</span>';
+        }else if(isClient){
+          actions='<button type="button" class="btn btn--primary btn--sm" onclick="lmApprovePin(\''+p.id+'\')">Approve</button>';
+        }
+        if(canEditVendor)actions+=' <button type="button" class="btn btn--ghost btn--sm" onclick="lmDeletePin(\''+p.id+'\')">Remove</button>';
+      }else if(isClient){
+        actions='<button type="button" class="btn btn--ghost btn--sm" onclick="lmDeletePin(\''+p.id+'\')">Remove</button>';
+      }
+      return '<div class="msample-item">'+
+        '<div class="msample-item__num">'+(i+1)+'</div>'+
+        thumb+
+        '<div class="msample-item__body">'+
+          '<div class="msample-item__label">'+(isClientPin?'<i>Client note:</i> ':'')+label+'</div>'+
+          '<div class="msample-item__meta">'+esc(p.addedBy||'')+' · '+esc(p.addedAt||'')+'</div>'+
+          '<div class="msample-item__actions">'+actions+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join(''):'<div style="color:var(--cm-text-subtle);font-size:0.85rem;">Nothing pinned to the plan yet.</div>';
+  }
+}
+window.renderLandscapeMaterialsModal=renderLandscapeMaterialsModal;
+function lmUploadPlanImage(input){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var b=lmCurrentBrief();
+  if(!b)return;
+  var f=input.files&&input.files[0];
+  if(!f)return;
+  var ms=ensureMaterialSamples(b);
+  msampleUpload('landscape/'+b.id,f).then(function(url){
+    ms.landscape.plan={name:f.name,url:url,type:f.type};
+    logProjectEvent(b,'Uploaded landscape site plan on "'+b.title+'"');
+    if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+    renderProjectOverview(b);
+    renderLandscapeMaterialsModal(b);
+  }).catch(function(err){
+    console.error('Site plan upload failed',f.name,err);
+    alert('Upload failed. Please try again.');
+  });
+  input.value='';
+}
+window.lmUploadPlanImage=lmUploadPlanImage;
+function lmStartVendorAddPin(){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var b=lmCurrentBrief();
+  if(!b)return;
+  var ms=ensureMaterialSamples(b);
+  if(!ms.landscape.plan){alert('Upload the site plan first.');return;}
+  document.getElementById('lmSampleFileInput').click();
+}
+window.lmStartVendorAddPin=lmStartVendorAddPin;
+function lmSamplePicked(input){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var b=lmCurrentBrief();
+  if(!b)return;
+  var f=input.files&&input.files[0];
+  if(!f)return;
+  var hint=document.getElementById('lmPinHint');
+  if(hint)hint.textContent='Uploading sample photo…';
+  msampleUpload('landscape-samples/'+b.id,f).then(function(url){
+    lmPendingSample={url:url,name:f.name};
+    lmAddMode='vendor';
+    if(hint)hint.textContent='Click on the plan where this sample applies';
+  }).catch(function(err){
+    console.error('Sample photo upload failed',f.name,err);
+    alert('Upload failed. Please try again.');
+    if(hint)hint.textContent='';
+  });
+  input.value='';
+}
+window.lmSamplePicked=lmSamplePicked;
+function lmStartClientAddPin(){
+  if(document.body.dataset.role!=='client')return;
+  var b=lmCurrentBrief();
+  if(!b)return;
+  var ms=ensureMaterialSamples(b);
+  if(!ms.landscape.plan){alert('Nothing uploaded to the plan yet.');return;}
+  lmAddMode='client';
+  var hint=document.getElementById('lmPinHint');
+  if(hint)hint.textContent='Click on the plan to place your note';
+}
+window.lmStartClientAddPin=lmStartClientAddPin;
+function lmApprovePin(id){
+  if(document.body.dataset.role!=='client')return;
+  var b=lmCurrentBrief();
+  if(!b)return;
+  var ms=ensureMaterialSamples(b);
+  var pin=ms.landscape.pins.filter(function(p){return p.id===id&&p.origin==='vendor';})[0];
+  if(!pin||pin.clientApprovedAt)return;
+  pin.clientApprovedAt=new Date().toISOString().slice(0,10);
+  pin.clientApprovedBy=(typeof currentActorLabel==='function')?currentActorLabel(b):'client';
+  logProjectEvent(b,'Approved a landscape material sample pin on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+  renderLandscapeMaterialsModal(b);
+}
+window.lmApprovePin=lmApprovePin;
+function lmDeletePin(id){
+  var role=document.body.dataset.role;
+  var b=lmCurrentBrief();
+  if(!b)return;
+  var ms=ensureMaterialSamples(b);
+  var pin=ms.landscape.pins.filter(function(p){return p.id===id;})[0];
+  if(!pin)return;
+  var allowed=(pin.origin==='vendor'&&(role==='factory'||role==='prodtech'))||(pin.origin==='client'&&role==='client');
+  if(!allowed)return;
+  ms.landscape.pins=ms.landscape.pins.filter(function(p){return p.id!==id;});
+  logProjectEvent(b,'Removed a landscape pin on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+  renderLandscapeMaterialsModal(b);
+}
+window.lmDeletePin=lmDeletePin;
 // ---- Request a change (factory/prodtech -> Client Manager/Owner) ----
 // Delivery address is deliberately left off this list -- the vendor side
 // never sees that field at all (see the cid-only wrapper on it), so there's
@@ -5982,7 +6588,10 @@ var PERM={
   'vendorfinance-only':['factory'],                // Vendor's own Finance tab -- price, so hidden from a Vendor Team & Access member via body.vendor-no-price (see the CSS rule) even though it's role 'factory' same as the primary admin; Production Technicians never see it either
   'vendorteamassign-only':['factory'],             // Assigned Team Members panel on Project Overview -- role 'factory' so the primary admin sees/edits it, but hidden from a Vendor Team & Access member via body.vendor-no-price (see the CSS rule) same as the Quotes/Team & Access tabs -- deciding who's assigned to a project is the primary admin's job, not every team member's; Production Technicians never see it
   'carvefinance-only':['owner'],                    // Carve Admin's studio-wide Finance tab -- every awarded project's client-facing price + payment status, properly scoped (unlike the old removed Invoices tab, which leaked whichever brief was "latest"); Owner only, same as the rest of the studio-wide oversight views (cm-only)
-  'sb-edit-only':['owner','sales','factory']       // Edit controls inside the Project scale & boundary modal only -- unlike proj-spec-edit-only (Project information's OTHER fields, still owner+sales only), the vendor is the one who actually knows the model's real scale and has the boundary file, so they can fill this one in too; the client still has to separately confirm it (see confirmScaleBoundary)
+  'sb-edit-only':['owner','sales','factory'],      // Edit controls inside the Project scale & boundary modal only -- unlike proj-spec-edit-only (Project information's OTHER fields, still owner+sales only), the vendor is the one who actually knows the model's real scale and has the boundary file, so they can fill this one in too; the client still has to separately confirm it (see confirmScaleBoundary)
+  'fm-edit-only':['factory','prodtech'],           // Facade material modal's upload/pin controls -- vendor only, no client interaction on facade (see facadeMaterialsDone)
+  'lm-edit-only':['factory','prodtech'],           // Landscape material modal's upload/pin controls -- vendor side
+  'lm-client-only':['client']                      // Landscape material modal's "add your own note" / approve controls -- the one surface the client gets a real say on (see landscapeMaterialsDone)
 };
 var ROLE_INFO={
   client:{name:'Asher Liu',av:'AL',org:'Client'},
