@@ -451,6 +451,18 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .mfield input:focus{outline:none;border-color:var(--cm-text-subtle);}
 .mfield select{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-text);border-radius:var(--r-sm);padding:0.78rem 0.9rem;font-family:var(--font-sans);font-size:0.92rem;}
 .mfield select:focus{outline:none;border-color:var(--cm-text-subtle);}
+.mfield textarea{width:100%;background:var(--cm-ink-800);border:1px solid var(--cm-border);color:var(--cm-text);border-radius:var(--r-sm);padding:0.78rem 0.9rem;font-family:var(--font-sans);font-size:0.92rem;resize:vertical;}
+.mfield textarea:focus{outline:none;border-color:var(--cm-text-subtle);}
+.pendchange{padding:0.7rem 0;border-bottom:1px solid var(--cm-line-faint);}
+.pendchange:last-child{border-bottom:none;}
+.pendchange__top{display:flex;align-items:center;justify-content:space-between;gap:0.6rem;}
+.pendchange__field{font-size:0.88rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);}
+.pendchange__note{font-size:0.86rem;color:var(--cm-text-muted);margin-top:0.3rem;line-height:1.45;}
+.pendchange__meta{font-size:0.76rem;color:var(--cm-text-subtle);margin-top:0.3rem;}
+.pendchange__status{font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:99px;border:1px solid var(--cm-border-strong);color:var(--cm-text-muted);white-space:nowrap;flex:none;}
+.pendchange__status.resolved{color:var(--cm-silver);border-color:var(--cm-silver);}
+.pendchange__status.declined{color:var(--cm-text-subtle);}
+.pendchange__actions{display:flex;gap:0.4rem;margin-top:0.5rem;}
 .projassign{border:1px solid var(--cm-line-faint);border-radius:var(--r-sm);padding:0.9rem 1rem;margin-bottom:0.8rem;}
 .projassign__head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.6rem;flex-wrap:wrap;}
 .projassign__name{font-weight:var(--w-semibold);color:var(--cm-text-strong);}
@@ -939,6 +951,12 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
              then relabels to Actual shipping cost. --></div>
         <div class="kpi owner-only"><span class="mock__k">Profit</span><div class="big" id="kpiProfit" style="font-size:1.15rem;">—</div><div class="sub" id="kpiProfitPct"></div></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Scale</span><div class="big" id="kpiScale">—</div><div class="sub" id="kpiScaleSub"></div></div>
+        <!-- Vendor-side production figures -- their own quoted numbers, not
+             the client-facing agreed dates/price shown elsewhere. Days go to
+             the whole vendor side; the price only to Production Admin
+             (factory), never their technicians -- see PERM. -->
+        <div class="kpi vendor-days-only"><span class="mock__k">Quoted production time</span><div class="big" id="kpiVendorQuotedDays" style="font-size:1.15rem;">—</div></div>
+        <div class="kpi vendor-price-only"><span class="mock__k">Your quoted price<span class="opt"> (paid by Carve)</span></span><div class="big" id="kpiVendorQuotedPrice" style="font-size:1.15rem;">—</div></div>
         <div class="kpi proj-invoice-only" style="cursor:pointer;" onclick="openProjectInvoicePanel()"><span class="mock__k">Invoice &amp; Payment</span><div class="big" id="kpiInvoice" style="font-size:1.15rem;">—</div><div class="sub" id="kpiInvoiceSub">Click to view →</div></div>
       </div>
       <div class="cols">
@@ -1021,7 +1039,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             </div>
           </div>
           <div class="panel">
-            <div class="panel__head"><h3>Project information</h3></div>
+            <div class="panel__head"><h3>Project information</h3><button type="button" class="btn btn--ghost btn--sm vendor-request-only" onclick="openRequestChangeModal()">Request a change</button></div>
             <div class="panel__body">
               <div style="display:flex;flex-direction:column;gap:0.9rem;">
                 <div>
@@ -1108,7 +1126,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     </div>
                   </div>
                 </div>
-                <div>
+                <div class="cid-only">
                   <span class="mock__k">Delivery address</span>
                   <div style="display:flex;align-items:center;gap:0.6rem;">
                     <div class="mock__v" id="projInfoDeliveryAddress" style="flex:1;">—</div>
@@ -1130,6 +1148,10 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   <input type="file" id="projInfoBoundaryFileInput" style="display:none;" onchange="uploadProjectBoundaryFile(this)">
                 </div>
                 <div class="proj-actions-only" id="projInfoActionsWrap" style="display:flex;gap:0.5rem;padding-top:0.2rem;"></div>
+                <!-- Vendor-proposed edits to the fields above -- populated by
+                     renderPendingChanges(); hidden entirely when there's
+                     nothing pending/resolved to show. -->
+                <div id="pendingChangesWrap" hidden style="padding-top:0.4rem;border-top:1px solid var(--cm-line-faint);"></div>
               </div>
             </div>
           </div>
@@ -1720,6 +1742,22 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
     <div class="modal__body">
       <p class="modal__intro">Cleared by the production vendor as each file is received and checked.</p>
       <div id="designFilesList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Request a change (factory/prodtech) -- flags something on Project
+     information that should change without editing it directly; the
+     assigned Client Manager/Owner reviews it and makes the real edit
+     themselves. See submitProjectInfoChangeRequest()/resolvePendingChange(). -->
+<div class="modal-overlay" id="requestChangeModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Request a change">
+    <div class="modal__head"><h3>Request a change</h3><button class="modal__x" onclick="closeRequestChangeModal()" aria-label="Close">×</button></div>
+    <div class="modal__body">
+      <p class="modal__intro">Flag something on this project's information that should change. The assigned Client Manager reviews every request and makes the actual update themselves — this doesn't change anything on its own.</p>
+      <div class="mfield"><label for="rcField">What needs to change?</label><select id="rcField"></select></div>
+      <div class="mfield"><label for="rcNote">Details</label><textarea id="rcNote" rows="4" placeholder="What should it be, and why?"></textarea></div>
+      <button class="btn btn--primary full" type="button" onclick="submitProjectInfoChangeRequest()">Send to Client Manager</button>
     </div>
   </div>
 </div>
@@ -3589,6 +3627,7 @@ function renderProjectOverview(b){
   // just changed, in case either is currently open over this render.
   if(typeof renderScaleBoundaryModal==='function')renderScaleBoundaryModal(b);
   if(typeof renderDesignFilesModal==='function')renderDesignFilesModal(b);
+  if(typeof renderPendingChanges==='function')renderPendingChanges(b);
 }
 window.renderProjectOverview=renderProjectOverview;
 // Whether a stage's checklist item currently reads "done". A few items are
@@ -3827,6 +3866,98 @@ function toggleDesignFileItem(i){
   renderProjectOverview(b);
 }
 window.toggleDesignFileItem=toggleDesignFileItem;
+// ---- Request a change (factory/prodtech -> Client Manager/Owner) ----
+// Delivery address is deliberately left off this list -- the vendor side
+// never sees that field at all (see the cid-only wrapper on it), so there's
+// nothing there for them to flag a change to.
+var VENDOR_CHANGE_FIELD_OPTIONS=['Use case','Scale','Materials & presentation','Model size','Package size','Project address','Boundary map','Start date','Target production completion','Target delivery','Other'];
+window.VENDOR_CHANGE_FIELD_OPTIONS=VENDOR_CHANGE_FIELD_OPTIONS;
+function openRequestChangeModal(){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var sel=document.getElementById('rcField');
+  if(sel&&!sel.options.length){
+    sel.innerHTML=VENDOR_CHANGE_FIELD_OPTIONS.map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('');
+  }
+  var note=document.getElementById('rcNote');if(note)note.value='';
+  var modal=document.getElementById('requestChangeModal');
+  if(modal)modal.hidden=false;
+}
+window.openRequestChangeModal=openRequestChangeModal;
+function closeRequestChangeModal(){
+  var modal=document.getElementById('requestChangeModal');
+  if(modal)modal.hidden=true;
+}
+window.closeRequestChangeModal=closeRequestChangeModal;
+// A factory/prodtech "flag" that something on Project information should
+// change -- this never edits the field itself. It just queues a proposal;
+// the assigned Client Manager (or Owner) reviews it in the "Requested
+// changes" list on Project information and makes the real edit themselves
+// with the normal edit controls. See resolvePendingChange().
+function submitProjectInfoChangeRequest(){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var fieldSel=document.getElementById('rcField');
+  var noteEl=document.getElementById('rcNote');
+  var fieldLabel=fieldSel?fieldSel.value:'Other';
+  var noteVal=noteEl?noteEl.value.trim():'';
+  if(!noteVal){alert('Add a few details about what should change.');return;}
+  if(!b.pendingChanges)b.pendingChanges=[];
+  b.pendingChanges.unshift({
+    id:'pc'+Date.now(),
+    field:fieldLabel,
+    note:noteVal,
+    requestedBy:(typeof currentActorLabel==='function')?currentActorLabel(b):role,
+    requestedAt:new Date().toISOString().slice(0,10),
+    status:'pending'
+  });
+  logProjectEvent(b,'Requested a change to "'+fieldLabel+'" on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  closeRequestChangeModal();
+  renderProjectOverview(b);
+}
+window.submitProjectInfoChangeRequest=submitProjectInfoChangeRequest;
+// Client Manager/Owner deciding what happens to a vendor's proposed change
+// -- a status/decision log only, never touches the actual project field
+// (see submitProjectInfoChangeRequest's comment on why).
+function resolvePendingChange(changeId,newStatus){
+  var role=document.body.dataset.role;
+  if(role!=='owner'&&role!=='sales')return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b||!b.pendingChanges)return;
+  var change=b.pendingChanges.filter(function(c){return c.id===changeId;})[0];
+  if(!change)return;
+  change.status=newStatus;
+  change.resolvedAt=new Date().toISOString().slice(0,10);
+  logProjectEvent(b,(newStatus==='resolved'?'Resolved':'Declined')+' change request for "'+change.field+'" on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+}
+window.resolvePendingChange=resolvePendingChange;
+function renderPendingChanges(b){
+  var wrap=document.getElementById('pendingChangesWrap');
+  if(!wrap||!b)return;
+  var role=document.body.dataset.role;
+  var list=b.pendingChanges||[];
+  if(!list.length){wrap.hidden=true;wrap.innerHTML='';return;}
+  var canResolve=role==='owner'||role==='sales';
+  wrap.hidden=false;
+  wrap.innerHTML='<div class="mock__k" style="display:block;margin-bottom:0.5rem;">Requested changes</div>'+list.map(function(c){
+    var statusLabel=c.status==='pending'?'Pending review':(c.status==='resolved'?'Resolved':'Declined');
+    var actions=(canResolve&&c.status==='pending')?('<div class="pendchange__actions"><button type="button" class="btn btn--ghost btn--sm" onclick="resolvePendingChange(\''+c.id+'\',\'resolved\')">Mark resolved</button><button type="button" class="btn btn--ghost btn--sm" onclick="resolvePendingChange(\''+c.id+'\',\'declined\')">Decline</button></div>'):'';
+    return '<div class="pendchange">'+
+      '<div class="pendchange__top"><span class="pendchange__field">'+esc(c.field)+'</span><span class="pendchange__status '+c.status+'">'+statusLabel+'</span></div>'+
+      '<div class="pendchange__note">'+esc(c.note)+'</div>'+
+      '<div class="pendchange__meta">'+esc(c.requestedBy||'')+' · '+esc(c.requestedAt||'')+'</div>'+
+      actions+
+    '</div>';
+  }).join('');
+}
+window.renderPendingChanges=renderPendingChanges;
 // Owner-only admin controls for this one project -- Client Manager
 // assignment, contact info, dates (read-only; the assigned Client Manager
 // edits these from My Projects), delivered/archive toggles, and Invoice &
@@ -3909,6 +4040,11 @@ function renderProjectPricingPanel(b){
   setText('kpiClientPrice',clientPrice!=null?fmtUsd(clientPrice):'—');
   setText('kpiVendorPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
   setText('kpiProfit',profit!=null?fmtUsd(profit):'—');
+  // Same two numbers, re-shown to the vendor side itself (see vendor-price-only/
+  // vendor-days-only in PERM) -- "your quoted price" IS "how much Carve pays
+  // you" for this project, there's no separate vendor-payment figure tracked.
+  setText('kpiVendorQuotedPrice',vendorPrice!=null?fmtUsd(vendorPrice):'—');
+  setText('kpiVendorQuotedDays',(wq&&wq.days!=null)?(wq.days+' day'+(wq.days===1?'':'s')):'—');
   setText('kpiProfitPct',(profit!=null&&clientPrice)?(Math.round((profit/clientPrice)*1000)/10)+'% margin':'');
   renderShippingCostCard(b);
 }
@@ -4838,7 +4974,10 @@ var PERM={
   'proj-dates-edit-only':['owner','sales'],       // Start/Target production completion/Target delivery become editable date inputs for Owner + assigned Client Manager; everyone else (kpi-scale-only audience) just sees the computed read-only text
   'client-edit-only':['owner','sales'],           // Edit control on Client information (Company/Contact name/Email/Phone) -- Owner + assigned Client Manager only, never the client themselves or production
   'proj-actions-only':['owner','sales'],          // Wrapper for Project information's Pause/Delete row -- Pause is Client Manager only and Delete is Owner only (see renderProjectAdminPanel's own role check), but the wrapper itself needs to be visible to both so each role's one allowed action can show
-  'proj-spec-edit-only':['owner','sales']         // Edit control on Project information's spec fields (Use case/Scale/Materials/Presentation method/Model size/Package size) -- Owner + assigned Client Manager only; everyone (incl. client/factory/prodtech) still sees the read-only value
+  'proj-spec-edit-only':['owner','sales'],        // Edit control on Project information's spec fields (Use case/Scale/Materials/Presentation method/Model size/Package size) -- Owner + assigned Client Manager only; everyone (incl. client/factory/prodtech) still sees the read-only value
+  'vendor-price-only':['factory'],                // "Your quoted price" KPI -- Production Admin only, never their technicians and never the client
+  'vendor-days-only':['factory','prodtech'],      // "Quoted production time" KPI -- the whole vendor side, no pricing attached
+  'vendor-request-only':['factory','prodtech']    // "Request a change" button on Project information -- vendor side proposes, Client Manager/Owner decide (see resolvePendingChange)
 };
 var ROLE_INFO={
   client:{name:'Asher Liu',av:'AL',org:'Client'},
