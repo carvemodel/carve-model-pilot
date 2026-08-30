@@ -2520,8 +2520,8 @@ var PROJECT_STAGES=[
 var STAGE_CHECKLISTS={
   'Project Kick Off':[
     'Project scale and boundary confirmed',
-    "50% deposit received (Carve's side)",
-    'Design files complete — nothing missing'
+    'Design files complete — nothing missing',
+    '50% deposit received by Carve'
   ],
   'Confirmed Material Samples':[
     'Facade material confirmed',
@@ -4156,8 +4156,8 @@ function checklistItemDone(b,stageName,itemIndex){
       var boundary=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
       return !!scale&&!!boundary&&!!b.scaleBoundaryConfirmedAt;
     }
-    if(itemIndex===1)return !!(b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositStatus==='paid');
-    if(itemIndex===2)return (typeof designFilesChecklistDone==='function')?designFilesChecklistDone(b):false;
+    if(itemIndex===1)return (typeof designFilesChecklistDone==='function')?designFilesChecklistDone(b):false;
+    if(itemIndex===2)return !!(b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositStatus==='paid');
   }
   var state=(b.stageChecklist&&b.stageChecklist[stageName])||[];
   return !!state[itemIndex];
@@ -4172,8 +4172,8 @@ window.checklistItemDone=checklistItemDone;
 function checklistItemAction(stageName,itemIndex,role){
   if(stageName==='Project Kick Off'){
     if(itemIndex===0)return (role==='owner'||role==='sales'||role==='client'||role==='factory')?'openScaleBoundaryModal()':null;
-    if(itemIndex===1)return (role==='owner'||role==='sales')?'openProjectInvoicePanel()':null;
-    if(itemIndex===2)return 'openDesignFilesModal()';
+    if(itemIndex===1)return 'openDesignFilesModal()';
+    if(itemIndex===2)return (role==='owner'||role==='sales')?'openProjectInvoicePanel()':null;
   }
   return role==='sales'?('toggleStageChecklistItem('+itemIndex+')'):null;
 }
@@ -4187,7 +4187,7 @@ window.checklistItemAction=checklistItemAction;
 // advanceProjectStage() the same as always -- hiding it from one role's
 // view never changes what's actually required to move the stage along).
 function checklistItemVisible(stageName,itemIndex,role){
-  if(stageName==='Project Kick Off'&&itemIndex===1&&(role==='factory'||role==='prodtech'))return false;
+  if(stageName==='Project Kick Off'&&itemIndex===2&&(role==='factory'||role==='prodtech'))return false;
   return true;
 }
 window.checklistItemVisible=checklistItemVisible;
