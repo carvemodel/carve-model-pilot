@@ -253,10 +253,16 @@ body.impersonating .impersonate-bar{display:flex !important;}
 .perm-off{display:none !important;}
 /* A Vendor Team & Access member (see enterSession()'s factoryTeamMember
    check) still IS role 'factory' -- same PERM class membership as the
-   shop's own admin -- so price has to be withheld as an additive layer on
-   top of that, not a role distinction. Kept as plain CSS classes (not
-   .perm-off) so applyPerms()'s role-driven toggling never fights this. */
-body.vendor-no-price .vendor-price-only,body.vendor-no-price .vendor-invoice-only,body.vendor-no-price .vendorfinance-only{display:none !important;}
+   shop's own admin -- so everything beyond "My Projects" has to be
+   withheld as an additive layer on top of that, not a role distinction.
+   Kept as plain CSS classes (not .perm-off) so applyPerms()'s role-driven
+   toggling never fights this. A team member should ONLY see their own
+   assigned projects: no price/payment info (vendor-price-only/
+   vendor-invoice-only/vendorfinance-only, as before), no Quotes tab
+   (prodadmin-only -- submitting/seeing quoted prices to Carve is the
+   primary admin's job), and no Team & Access tab (vendorteam-only --
+   managing who else has a login is the primary admin's job too). */
+body.vendor-no-price .vendor-price-only,body.vendor-no-price .vendor-invoice-only,body.vendor-no-price .vendorfinance-only,body.vendor-no-price .prodadmin-only,body.vendor-no-price .vendorteam-only{display:none !important;}
 .teamrow{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.9rem 0;border-bottom:1px solid var(--cm-line-faint);}
 .teamrow:last-child{border-bottom:0;}
 .teamrow__who{display:flex;align-items:center;gap:0.8rem;}
