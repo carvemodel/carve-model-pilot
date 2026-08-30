@@ -2444,14 +2444,15 @@ function addBusinessDays(dateStr,days){
 }
 // Target production completion defaults to start date + the production
 // time agreed with the client (b.productionDays), and target delivery
-// defaults to that completion date + 7 days -- 2 days of Packing plus 5
-// days of Shipping (see journeyStageRange), so delivery lands on
-// Shipping's own last day rather than being tracked as a separate stage.
-// This keeps both in sync with the start date / production time by
-// default so they don't drift. Either can be directly overridden (see
-// setProductionCompletionOverride/setTargetDeliveryOverride, used by the
-// date inputs in Project information) for cases where the real date needs
-// to diverge from the formula -- the override always wins once set.
+// defaults to that completion date + 5 days -- Shipping's own 5 days (see
+// journeyStageRange); Packing is shown as a same-day milestone right at
+// completion rather than its own buffer added on top, so it no longer
+// pushes delivery out further. This keeps both in sync with the start
+// date / production time by default so they don't drift. Either can be
+// directly overridden (see setProductionCompletionOverride/
+// setTargetDeliveryOverride, used by the date inputs in Project
+// information) for cases where the real date needs to diverge from the
+// formula -- the override always wins once set.
 function productionCompletionDate(b){
   if(b&&b.productionCompletionOverride)return b.productionCompletionOverride;
   var start=getProjectStartDate(b);
@@ -2462,7 +2463,7 @@ function productionCompletionDate(b){
 function targetDeliveryDate(b){
   if(b&&b.targetDeliveryOverride)return b.targetDeliveryOverride;
   var completion=productionCompletionDate(b);
-  return completion?addDays(completion,7):null;
+  return completion?addDays(completion,5):null;
 }
 function paymentStatusLabel(b){
   var inv=b.clientQuote&&b.clientQuote.invoice;
@@ -2522,13 +2523,14 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // immediately before completion are split 1 (Final Client Approval) + 2
 // (Permanently Fixed, Cleaned & Polished, ending ON completion day itself);
 // Fabrication absorbs whatever's left in between (starting the day after
-// material confirmation wraps, day 8). Packing (2 days) and Shipping
-// (5 days) run back-to-back AFTER completion -- the model isn't boxed
-// until it's actually finished -- and Shipping's last day IS the delivery
-// date (see targetDeliveryDate()); delivery is no longer its own stage.
-// Post Delivery Support is open-ended (starts the day after delivery, no
-// fixed end), so it never shows an ahead/behind comparison. Project Kick
-// Off and Project Completed round out the two ends.
+// material confirmation wraps, day 8). Packing is shown as a same-day
+// milestone right ON completion (it no longer adds its own buffer before
+// Shipping starts); Shipping then runs the 5 days immediately after
+// completion, and its own last day IS the delivery date (see
+// targetDeliveryDate()); delivery is no longer its own stage. Post
+// Delivery Support is open-ended (starts the day after delivery, no fixed
+// end), so it never shows an ahead/behind comparison. Project Kick Off and
+// Project Completed round out the two ends.
 function journeyStageRange(b,stageIndex){
   var stageName=PROJECT_STAGES[stageIndex];
   var start=getProjectStartDate(b);
@@ -2540,8 +2542,8 @@ function journeyStageRange(b,stageIndex){
   else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,8);re=addDays(completion,-3);}
   else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-2);re=rs;}
   else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-1);re=completion;}
-  else if(stageName==='Packing'&&completion){rs=addDays(completion,1);re=addDays(completion,2);}
-  else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,3);re=delivery;}
+  else if(stageName==='Packing'&&completion){rs=completion;re=completion;}
+  else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,1);re=delivery;}
   else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
   if(rs&&re&&rs>re)return {start:null,end:null,openEnded:false}; // agreed production time too short for this breakdown to make sense
   return {start:rs,end:re,openEnded:openEnded};

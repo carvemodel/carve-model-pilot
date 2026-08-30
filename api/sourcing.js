@@ -254,6 +254,30 @@ function vendorSafeBrief(b, shopId, team) {
   // session's, always).
   const managerEmail = String(b.assignedManager || '').toLowerCase();
   const manager = managerEmail ? (team || []).find((t) => t && t.email && t.email.toLowerCase() === managerEmail) : null;
+  // Project journey/checklist rendering (renderProjectOverview,
+  // journeyStageRange, checklistItemDone, etc. in app.html) is ONE shared
+  // code path for every role -- it was never written twice. That code
+  // reads b.startDate / b.productionDays / b.productionCompletionOverride /
+  // b.targetDeliveryOverride / b.projectStage / b.deliveredAt / b.paused
+  // directly, and none of those were in this object before, so a factory
+  // session ran the exact same formulas as Carve Admin's but with those
+  // inputs silently undefined -- producing a DIFFERENT date (or none) for
+  // the same project depending who was looking. Sending the vendor the
+  // same "prescribed" schedule fields Carve Admin/Client Manager set (not
+  // a separately-computed vendor-only estimate) is what keeps both sides
+  // showing the exact same journey. clientQuote itself stays withheld
+  // (that's the client-facing PRICE) -- only the two non-price pieces the
+  // shared code actually needs come along: the agreed day count and the
+  // deposit-paid status/date the "50% deposit received" checklist item and
+  // getProjectStartDate's fallback read.
+  var clientQuoteSafe = null;
+  if (b.clientQuote) {
+    var inv = b.clientQuote.invoice || null;
+    clientQuoteSafe = {
+      days: b.clientQuote.days == null ? null : b.clientQuote.days,
+      invoice: inv ? { depositStatus: inv.depositStatus || null, depositPaidAt: inv.depositPaidAt || null, balanceStatus: inv.balanceStatus || null } : null,
+    };
+  }
   return {
     id: b.id,
     title: b.title,
@@ -266,10 +290,25 @@ function vendorSafeBrief(b, shopId, team) {
     awarded: b.awarded || null,
     awardedVariantIndex: b.awardedVariantIndex == null ? null : b.awardedVariantIndex,
     stage: b.stage || null,
+    projectStage: b.projectStage || null,
+    deliveredAt: b.deliveredAt || null,
+    paused: !!b.paused,
+    startDate: b.startDate || null,
+    productionDays: b.productionDays == null ? null : b.productionDays,
+    productionCompletionOverride: b.productionCompletionOverride || null,
+    targetDeliveryOverride: b.targetDeliveryOverride || null,
+    scaleOverride: b.scaleOverride || null,
+    boundaryFileOverride: b.boundaryFileOverride || null,
+    scaleBoundaryConfirmedAt: b.scaleBoundaryConfirmedAt || null,
+    designFilesChecklist: b.designFilesChecklist || null,
+    stageChecklist: b.stageChecklist || null,
+    pendingChanges: b.pendingChanges || [],
+    clientQuote: clientQuoteSafe,
     assignedTech: b.assignedTech || null,
     assignedManagerName: manager ? manager.name : null,
     invited: b.invited || [],
     sentDate: b.sentDate || null,
+    leadReceivedAt: b.leadReceivedAt || null,
     lastCommentAt: b.lastCommentAt || null,
     archived: !!b.archived,
     quotes,
