@@ -3405,29 +3405,26 @@ function renderMyProjectsClient(){
     wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">This account isn\'t linked to a client record yet.</div>';
     return;
   }
-  var mine=myClientBriefs();
+  // Awarded-only, same as Owner's Projects tab (awardedBriefs()) and
+  // Client Manager's My Assigned -- a brief still being quoted (no award
+  // yet) isn't "your project" in this list's sense yet; that pre-award
+  // back-and-forth lives entirely in the Quote tab instead. Exactly three
+  // buckets (In Progress/Paused/Completed), matching Owner's/vendor's own
+  // category names precisely -- no separate Awaiting-review/Awaiting-
+  // deposit/Archived sections here by design.
+  var mine=myClientBriefs().filter(function(b){return b.status==='awarded'&&!b.archived;});
   if(!mine.length){
     wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">You don\'t have any projects with Carve Model yet.</div>';
     return;
   }
   mine.forEach(autoMarkDeliveredIfComplete);
-  var archived=mine.filter(function(b){return b.archived;});
-  var completed=mine.filter(function(b){return !b.archived&&b.deliveredAt;});
-  var reviewing=mine.filter(function(b){return !b.archived&&!b.deliveredAt&&b.status!=='awarded'&&b.clientQuote;});
-  var depositDue=mine.filter(function(b){
-    if(b.archived||b.deliveredAt||b.status!=='awarded')return false;
-    var inv=b.clientQuote&&b.clientQuote.invoice;
-    return !(inv&&inv.depositStatus==='paid');
-  });
-  var active=mine.filter(function(b){
-    return !b.archived&&!b.deliveredAt&&b.status==='awarded'&&depositDue.indexOf(b)===-1;
-  });
+  var completed=mine.filter(function(b){return b.deliveredAt;});
+  var paused=mine.filter(function(b){return !b.deliveredAt&&b.paused;});
+  var active=mine.filter(function(b){return !b.deliveredAt&&!b.paused;});
   wrap.innerHTML=
-    projectSectionHtml('Awaiting your review',reviewing)+
-    projectSectionHtml('Awaiting deposit',depositDue)+
-    projectSectionHtml('In Production',active)+
-    projectSectionHtml('Completed',completed)+
-    projectSectionHtml('Archived',archived);
+    projectSectionHtml('In Progress',active)+
+    projectSectionHtml('Paused',paused)+
+    projectSectionHtml('Completed',completed);
 }
 window.renderMyProjectsClient=renderMyProjectsClient;
 // Owner-only heads-up when a Client Manager changes a client's contact
