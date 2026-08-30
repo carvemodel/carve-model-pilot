@@ -8578,12 +8578,14 @@ function renderCarveAdminBriefDetail(b){
    highest existing sequence number already used for that same date across ALL invoice
    documents already issued that day -- not just one per brief. A project's deposit and
    balance invoices are two separate documents (issued at two different points in the
-   project) and each gets its own number in the shared sequence, e.g. deposit
-   CM-D20260828-01 and balance CM-B20260828-02, rather than both sharing "-01" just
-   because they belong to the same project. Scanning b.code AND both existing
-   depositId/balanceId values (not a separately-tracked counter) means two admins
-   awarding/invoicing around the same time can't collide, and a manually-renumbered
-   invoice doesn't throw off anyone else's sequence. Always overridable by hand
+   project) and each gets its own plain number in the shared sequence, e.g. deposit
+   CM-20260828-01 and balance CM-20260828-02, rather than both sharing "-01" just
+   because they belong to the same project -- no D/B letter is added to either. Scanning
+   b.code AND both existing depositId/balanceId values (not a separately-tracked
+   counter) means two admins awarding/invoicing around the same time can't collide, and
+   a manually-renumbered invoice doesn't throw off anyone else's sequence. The regex
+   below still tolerates an optional legacy D/B letter so it keeps counting correctly
+   against invoices issued before this format changed. Always overridable by hand
    afterward. ---- */
 function nextInvoiceNumber(){
   var today=new Date().toISOString().slice(0,10).replace(/-/g,'');
@@ -8615,14 +8617,16 @@ function ensureClientInvoice(b){
   var today=new Date().toISOString().slice(0,10);
   // b.code stays the project's own general reference number (used elsewhere,
   // e.g. "Confidential · Ref <code>" in Project information) and doubles as
-  // the deposit invoice's number. The balance invoice is a separate document
-  // issued later, so it gets its own, later number in the same sequence --
-  // see nextInvoiceNumber(), which now scans deposit/balance ids too so this
-  // never collides with b.code or any other invoice issued that day.
+  // the deposit invoice's number, plain CM-YYYYMMDD-NN -- no D/B letter
+  // marking which invoice it is. The balance invoice is a separate document
+  // issued later, so it gets its own, later plain number in the same
+  // sequence -- see nextInvoiceNumber(), which now scans deposit/balance ids
+  // too so this never collides with b.code or any other invoice issued that
+  // day.
   if(!b.code)b.code=nextInvoiceNumber();
   b.clientQuote.invoice={
-    depositId:b.code.replace('CM-','CM-D'),
-    balanceId:nextInvoiceNumber().replace('CM-','CM-B'),
+    depositId:b.code,
+    balanceId:nextInvoiceNumber(),
     depositAmt:dep,balanceAmt:bal,
     issuedDate:today,
     depositStatus:'due',balanceStatus:'due'
