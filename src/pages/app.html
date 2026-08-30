@@ -2735,10 +2735,22 @@ function journeyStageRange(b,stageIndex){
   var start=getProjectStartDate(b);
   var completion=productionCompletionDate(b);
   var delivery=targetDeliveryDate(b);
+  // Vendor's own quoted days (what agreedProductionDays returns for
+  // factory/prodtech) cover only Confirmed Material Samples + Fabrication
+  // -- their commitment ends when Fabrication does, with nothing held back
+  // for Final Client Approval/Permanently Fixed/Packing (those aren't the
+  // vendor's to estimate, see the vendor journey cutoff at Fabrication
+  // below). So for this role, "completion" (start+their own days) IS the
+  // end of Fabrication itself, not the end of Packing like it is for
+  // everyone else -- e.g. an 18-day vendor quote with 5 days for material
+  // confirmation leaves the full remaining 13 for Fabrication, not 13
+  // minus another 6 days reserved for stages that were never theirs.
+  var viewerRoleForRange=(typeof document!=='undefined'&&document.body)?document.body.dataset.role:null;
+  var isVendorRange=viewerRoleForRange==='factory'||viewerRoleForRange==='prodtech';
   var rs=null,re=null,openEnded=false;
   if(stageName==='Project Kick Off'&&start){rs=start;re=start;}
   else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,5);}
-  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,6);re=addDays(completion,-6);}
+  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,6);re=isVendorRange?completion:addDays(completion,-6);}
   else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-5);re=addDays(completion,-4);}
   else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-3);re=addDays(completion,-2);}
   else if(stageName==='Packing'&&completion){rs=addDays(completion,-1);re=completion;}
@@ -3970,17 +3982,18 @@ function renderProjectOverview(b){
   var short=(b.title||'').split(' — ')[0];
   var startDate=getProjectStartDate(b);
   var targetDelivery=targetDeliveryDate(b);
-  // Vendor (factory/prodtech) only ever committed to Final Client Approval
-  // -- everything after (Permanently Fixed/Cleaned & Polished, Packing,
-  // Shipping, and the delivery date itself) is Carve's OWN post-approval
-  // process on Carve's actual client-facing schedule, not the vendor's.
-  // Every schedule-ish display below (journey dots, Status/Next
-  // milestone/Current Estimated Delivery KPI captions) is gated on this so
-  // none of them show the vendor a date for a stage that was never theirs
-  // to estimate -- computing it off their own (typically faster)
-  // winning-quote days would just mix the two sides' timelines together.
+  // Vendor (factory/prodtech) only ever committed to Confirmed Material
+  // Samples + Fabrication -- their own quoted days cover just those two
+  // (e.g. an 18-day quote = 5 days material confirmation + 13 days
+  // fabrication, with nothing held back for Final Client Approval onward,
+  // see journeyStageRange's isVendorRange branch). Everything from Final
+  // Client Approval on is Carve's OWN process on Carve's actual
+  // client-facing schedule, not the vendor's. Every schedule-ish display
+  // below (journey dots, Status/Next milestone/Current Estimated Delivery
+  // KPI captions) is gated on this so none of them show the vendor a date
+  // for a stage that was never theirs to estimate.
   var viewerRole=document.body.dataset.role;
-  var vendorDateCutoff=(viewerRole==='factory'||viewerRole==='prodtech')?PROJECT_STAGES.indexOf('Final Client Approval'):-1;
+  var vendorDateCutoff=(viewerRole==='factory'||viewerRole==='prodtech')?PROJECT_STAGES.indexOf('Fabrication'):-1;
   var vendorPastCutoff=vendorDateCutoff>=0&&idx>vendorDateCutoff;
 
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
