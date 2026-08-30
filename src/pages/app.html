@@ -4045,7 +4045,7 @@ function renderProjectOverview(b){
   setText('kpiPct',pct+'%');
   var kpiBar=document.getElementById('kpiBar');if(kpiBar)kpiBar.style.width=pct+'%';
   setText('kpiNext',nextStage||'Complete');
-  setText('kpiNextSub',targetDelivery?('Target '+fmtDateShort(targetDelivery)):'—');
+  setText('kpiNextSub',targetDelivery?('Target Delivery Date '+fmtDateShort(targetDelivery)):'—');
   setText('kpiScale',((typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null)||(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—');
   setText('kpiScaleSub',(b.clientQuote&&b.clientQuote.material)||(b.brief&&b.brief['Model type'])||'');
 
