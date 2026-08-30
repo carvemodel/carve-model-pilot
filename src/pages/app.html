@@ -2877,8 +2877,16 @@ function journeyStageRange(b,stageIndex){
   var rs=null,re=null,openEnded=false;
   if(stageName==='Project Kick Off'&&start){rs=start;re=start;}
   else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,5);}
-  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,6);re=isVendorRange?completion:addDays(completion,-6);}
-  else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-5);re=addDays(completion,-4);}
+  // Vendor's own quoted days cover Confirmed Material Samples + Fabrication
+  // + Final Client Approval -- their commitment ends there, with nothing
+  // held back for Permanently Fixed/Packing (Carve's own scope, see the
+  // vendor journey cutoff at Final Client Approval below). So for this
+  // role "completion" (start+their own days) is the end of THEIR Final
+  // Client Approval, and Fabrication only needs to reserve the 2 days
+  // Approval itself takes at the very end -- not the full 6 days
+  // (Approval+PermFixed+Packing) everyone else's Fabrication reserves.
+  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,6);re=isVendorRange?addDays(completion,-2):addDays(completion,-6);}
+  else if(stageName==='Final Client Approval'&&completion){rs=isVendorRange?addDays(completion,-1):addDays(completion,-5);re=isVendorRange?completion:addDays(completion,-4);}
   else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-3);re=addDays(completion,-2);}
   else if(stageName==='Packing'&&completion){rs=addDays(completion,-1);re=completion;}
   else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,1);re=delivery;}
@@ -4110,17 +4118,19 @@ function renderProjectOverview(b){
   var startDate=getProjectStartDate(b);
   var targetDelivery=targetDeliveryDate(b);
   // Vendor (factory/prodtech) only ever committed to Confirmed Material
-  // Samples + Fabrication -- their own quoted days cover just those two
-  // (e.g. an 18-day quote = 5 days material confirmation + 13 days
-  // fabrication, with nothing held back for Final Client Approval onward,
-  // see journeyStageRange's isVendorRange branch). Everything from Final
-  // Client Approval on is Carve's OWN process on Carve's actual
-  // client-facing schedule, not the vendor's. Every schedule-ish display
-  // below (journey dots, Status/Next milestone/Current Estimated Delivery
-  // KPI captions) is gated on this so none of them show the vendor a date
-  // for a stage that was never theirs to estimate.
+  // Samples + Fabrication + Final Client Approval -- their own quoted
+  // days cover just those three (e.g. an 18-day quote could be 5 days
+  // material confirmation + 11 days fabrication + 2 days for their
+  // client's final approval, with nothing held back beyond that, see
+  // journeyStageRange's isVendorRange branch). Everything from
+  // Permanently Fixed, Cleaned & Polished on is Carve's OWN process on
+  // Carve's actual client-facing schedule, not the vendor's. Every
+  // schedule-ish display below (journey dots, Status/Next
+  // milestone/Current Estimated Delivery KPI captions) is gated on this
+  // so none of them show the vendor a date for a stage that was never
+  // theirs to estimate.
   var viewerRole=document.body.dataset.role;
-  var vendorDateCutoff=(viewerRole==='factory'||viewerRole==='prodtech')?PROJECT_STAGES.indexOf('Fabrication'):-1;
+  var vendorDateCutoff=(viewerRole==='factory'||viewerRole==='prodtech')?PROJECT_STAGES.indexOf('Final Client Approval'):-1;
   var vendorPastCutoff=vendorDateCutoff>=0&&idx>vendorDateCutoff;
 
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
