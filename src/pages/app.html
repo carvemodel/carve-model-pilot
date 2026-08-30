@@ -3129,7 +3129,7 @@ function renderVendorProjects(){
   // SRC_setShop). Surface that plainly instead of showing a generic "no
   // projects" message that would look identical to "you really have none",
   // since those are two very different problems to fix.
-  if(!OUR_SHOP){
+  if(!window.OUR_SHOP){
     wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;"><b style="color:var(--cm-text-strong);">This account isn\'t linked to a production shop yet.</b> Nothing will show here until Carve Admin fixes that.</div>';
     return;
   }
@@ -3143,8 +3143,8 @@ function renderVendorProjects(){
   // Sourcing list uses -- they only see jobs actually kicked off to
   // production AND assigned to them specifically.
   var mine=(SDB.briefs||[]).filter(function(b){
-    if(b.awarded!==OUR_SHOP)return false;
-    if(role==='prodtech')return b.stage==='production'&&b.assignedTech===ME_TECH;
+    if(b.awarded!==window.OUR_SHOP)return false;
+    if(role==='prodtech')return b.stage==='production'&&b.assignedTech===window.ME_TECH;
     return b.status==='awarded';
   });
   mine.forEach(autoMarkDeliveredIfComplete);
@@ -6345,11 +6345,13 @@ var MODEL_CATEGORIES=['Building only','Building with landscape','Topography / te
 // yet" and renders nothing else) -- so defaulting here is a pure safety
 // fix, not a new code path.
 var OUR_SHOP='';
+window.OUR_SHOP=OUR_SHOP; // mirrored -- renderVendorProjects() (an earlier <script> block, outside this IIFE's closure) reads window.OUR_SHOP since it has no access to the local var
 // Deliberately accepts '' (and sets it) so a factory login that couldn't be
 // matched to a shop can explicitly CLEAR OUR_SHOP rather than leave it
 // pointing at whatever it was before — see enterSession().
-window.SRC_setShop=function(id){OUR_SHOP=id||'';};
+window.SRC_setShop=function(id){OUR_SHOP=id||'';window.OUR_SHOP=OUR_SHOP;};
 var ME_TECH='sam';                    // Production Technician identity
+window.ME_TECH=ME_TECH; // mirrored for the same reason as window.OUR_SHOP above -- never reassigned, so a one-time mirror is enough
 var RMB_PER_USD=7.2;                  // demo FX rate — production shops quote in RMB, Carve sees USD
 var SRC_PENDING_BFILE={};             // holds boundary-file metadata picked but not yet submitted, keyed by "<prefix>-<briefId>"
 var SRC_BFILE_UPLOADING={};           // true while a boundary file's upload is still in flight, same keys as above
