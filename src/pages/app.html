@@ -909,14 +909,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 </div>
               </div>
             </div>
-            <!-- Kept hidden (not deleted) -- openCompletedProject(), an old
-                 demo-data path apparently unreachable from real nav anymore,
-                 references these ids directly without null checks. No longer
-                 populated by the real renderProjectOverview(). -->
-            <span class="mock__k" id="journeyNextLabel" hidden>What's next — your action</span>
-            <p class="client-only" id="journeyNextClient" hidden>Approve <b>Finishing &amp; Paint</b> to release the model into its final stage.</p>
-            <p class="studio-only" id="journeyNextStudio" hidden>Awaiting client approval on <b>Finishing &amp; Paint</b>.</p>
-            <button class="btn btn--primary btn--sm client-only" id="journeyNextBtnClient" onclick="go('milestones')" style="margin-top:0.7rem;" hidden>Review &amp; approve →</button>
           </div>
         </div>
       </div>
@@ -1021,9 +1013,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     </div>
                   </div>
                 </div>
-              </div>
-              <div class="proj-cancel client-only" id="projCancelWrap">
-                <button class="linkbtn-danger" onclick="cancelProject()">Need to cancel this project?</button>
               </div>
             </div>
           </div>
@@ -1137,6 +1126,9 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   <input type="file" id="projInfoBoundaryFileInput" style="display:none;" onchange="uploadProjectBoundaryFile(this)">
                 </div>
                 <div class="proj-actions-only" id="projInfoActionsWrap" style="display:flex;gap:0.5rem;padding-top:0.2rem;"></div>
+                <div class="proj-cancel client-only" id="projPauseWrap">
+                  <button class="linkbtn-danger" id="projPauseBtn" onclick="clientRequestPauseProject()">Pause this project</button>
+                </div>
                 <!-- Vendor-proposed edits to the fields above -- populated by
                      renderPendingChanges(); hidden entirely when there's
                      nothing pending/resolved to show. -->
@@ -3946,6 +3938,16 @@ function renderProjectOverview(b){
 
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
 
+  // Client-facing pause control -- see clientRequestPauseProject(). Nothing
+  // left to pause once delivered; label flips to Resume when already paused
+  // (same reversible toggle Client Manager gets, just double-confirmed).
+  var pauseWrap=document.getElementById('projPauseWrap');
+  if(pauseWrap){
+    pauseWrap.hidden=delivered;
+    var pauseBtn=document.getElementById('projPauseBtn');
+    if(pauseBtn)pauseBtn.textContent=paused?'Resume this project':'Pause this project';
+  }
+
   setText('journeyTitle',delivered?('Project Completed — Stage '+totalSteps+' of '+totalSteps):(paused?('Project Paused — Stage '+(idx+1)+' of '+totalSteps+' · '+stageName):('In production — Stage '+(idx+1)+' of '+totalSteps+' · '+stageName)));
   setText('journeyPct',pct+'%');
   var tl=document.querySelector('#journeyTrack .track__line i');if(tl)tl.style.width=pct+'%';
@@ -3967,13 +3969,13 @@ function renderProjectOverview(b){
   }
 
   var nextStage=delivered?null:PROJECT_STAGES[idx+1];
-  // journeyNextClient/journeyNextStudio/journeyNextBtnClient/journeyNextBtnStudio
-  // are no longer populated here -- that slot now shows Next Stage + the
-  // Start/Target production completion/Target delivery dates instead (see
-  // journeyNextStageText and the projInfo* date fields below). Those four
-  // legacy elements stay in the DOM (hidden) only because an old,
-  // apparently-unreachable demo path (openCompletedProject) still touches
-  // them directly without null checks.
+  // The old "What's next" slot (journeyNextClient/journeyNextStudio +
+  // journeyNextBtnClient's "Review & approve" button) was dead, demo-only
+  // markup -- only openCompletedProject() ever populated it, and nothing
+  // reachable from real nav called that anymore. Removed along with it;
+  // this slot shows Next Stage + the Start/Target production
+  // completion/Target delivery dates instead (see journeyNextStageText and
+  // the projInfo* date fields below).
   setText('journeyCurrentStageText',delivered?'Project Completed':stageName);
   var scheduleStatusTxt=(typeof currentStageScheduleStatus==='function')?currentStageScheduleStatus(b):'';
   setText('journeyScheduleStatus',scheduleStatusTxt?(' | '+scheduleStatusTxt):'');
@@ -5110,37 +5112,6 @@ function markQuoteApproved(canRequestChanges){
   }
   var co=document.getElementById('coSection');if(co)co.hidden=!!canRequestChanges?true:false;
 }
-function openCompletedProject(title){
-  window.quoteMode='active';
-  var sel=document.getElementById('projSelect');sel.value='aria';
-  if(title){currentProjTitle=title;var short=title.split(' — ')[0];document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});}
-  // Invoice fully paid
-  document.getElementById('invEmpty').hidden=true;
-  document.getElementById('invIssued').hidden=false;
-  var dchip=document.getElementById('dep-chip');if(dchip){dchip.className='chip done';dchip.textContent='Paid';}
-  // Journey → delivered / 100%
-  document.getElementById('journeyTitle').textContent='Delivered — Stage 6 of 6';
-  document.getElementById('journeyPct').textContent='100%';
-  var tl=document.querySelector('#journeyTrack .track__line i');if(tl)tl.style.width='100%';
-  document.querySelectorAll('#journeyTrack .jstep').forEach(function(s){s.classList.remove('current');s.classList.add('done');var d=s.querySelector('.jstep__dot');if(d)d.textContent='✓';var h=s.querySelector('.jstep__here');if(h)h.remove();});
-  // KPIs
-  document.getElementById('kpiStatus').textContent='Delivered';
-  document.getElementById('kpiStage').textContent='Stage 6 of 6';
-  document.getElementById('kpiPct').textContent='100%';
-  document.getElementById('kpiBar').style.width='100%';
-  document.getElementById('kpiNext').textContent='Complete';
-  document.getElementById('kpiNextSub').textContent='Delivered Dec 12, 2025';
-  // Notice + foot reflect a finished project
-  var notice=document.getElementById('ovNotice');
-  if(notice)notice.innerHTML='Your model <b>'+(currentProjTitle.split(' — ')[0])+'</b> is complete and was delivered on Dec 12, 2025. Thank you for working with Carve Model.<button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>';
-  document.getElementById('journeyNow').innerHTML='Project complete. Your finished model was delivered and signed off. Final photos are in <b>Files</b>.';
-  document.getElementById('journeyNextLabel').textContent='Status';
-  document.getElementById('journeyNextClient').innerHTML='Nothing further needed — this project is closed.';
-  document.getElementById('journeyNextStudio').innerHTML='Delivered &amp; closed.';
-  document.getElementById('journeyNextBtnClient').style.display='none';
-  var jnbs=document.getElementById('journeyNextBtnStudio');if(jnbs)jnbs.style.display='none';
-  go('overview');
-}
 function openProjectAt(val,view){
   var sel=document.getElementById('projSelect');
   sel.value=val;
@@ -5205,13 +5176,23 @@ function toggleProjBack(){
   // Only studio managers (owner/sales) pick across projects; show when one is open.
   btn.hidden=!(document.getElementById('projSelect').value && (role==='owner'||role==='sales'));
 }
-function cancelProject(){
-  // Client informs the studio a project should be cancelled.
-  document.getElementById('ovNotice').innerHTML='<b>Cancellation requested.</b> You\u2019ve let the studio know this project should be cancelled. Your Carve lead will follow up on next steps and any applicable terms (deposits are non-refundable once production has started).';
-  document.getElementById('kpiStatus').textContent='Cancelled';
-  document.getElementById('kpiStage').textContent='Stopped by client';
-  var w=document.getElementById('projCancelWrap');if(w)w.innerHTML='<span style="font-size:0.82rem;color:var(--cm-text-subtle);">\u2713 Cancellation request sent to the studio.</span>';
+// Client-facing pause/resume -- replaces the old "cancel this project"
+// link, which only ever faked a DOM message and never persisted anything
+// or told the studio. Pause is real (same toggleProjectPaused Client
+// Manager uses) and fully reversible, so the client can undo it themselves
+// by clicking again -- but since it stops active production, it's gated
+// behind two confirmations rather than one.
+function clientRequestPauseProject(){
+  if(document.body.dataset.role!=='client')return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b||b.deliveredAt)return;
+  var verb=b.paused?'resume':'pause';
+  if(!confirm('Are you sure you want to '+verb+' this project?'))return;
+  if(!confirm('This is your final confirmation \u2014 '+verb+' this project now?'))return;
+  toggleProjectPaused(b.id);
 }
+window.clientRequestPauseProject=clientRequestPauseProject;
 function setOverdue(on){
   // Demo helper: when a balance goes unpaid, the project pauses and won't advance.
   // (#overdueBanner was removed from the Overview page; guarded in case anything
@@ -5236,13 +5217,75 @@ function reqFilesPicked(input){
   var n=input.files?input.files.length:0;
   document.getElementById('rq-files-label').textContent=n?(n+' file'+(n>1?'s':'')+' attached — '+[].map.call(input.files,function(f){return f.name;}).slice(0,3).join(', ')+(n>3?'…':'')):'Drop files or click to upload.';
 }
+// Returning-client "Request another model" -- writes a REAL lead (source:
+// "Returning client") into the studio inbox, carrying the signed-in
+// account's own contact/company details forward automatically (pulled off
+// whichever of their briefs is at hand, same as the modal's own intro copy
+// promises) plus whatever they filled in here. It lands in Carve Admin's
+// Sourcing & Quotes tab under "Lead submitted" exactly like any other new
+// enquiry -- see createLead() for the sibling (studio-entered) version this
+// mirrors the upload/lead-shape pattern from.
 function submitReq(){
   var project=document.getElementById('rq-project').value.trim();
   if(!project){alert('Please add a project name so we can identify your request.');return;}
-  // LIVE: this writes a lead (source: Returning client) tied to the signed-in account,
-  // carrying their stored contact/company details + any uploaded files, into the studio inbox.
-  document.getElementById('reqForm').hidden=true;
-  document.getElementById('reqDone').hidden=false;
+  var location=document.getElementById('rq-location').value.trim();
+  var type=document.getElementById('rq-type').value;
+  var scale=document.getElementById('rq-scale').value.trim();
+  var timeline=document.getElementById('rq-timeline').value;
+  var size=document.getElementById('rq-size').value.trim();
+  var extras=[];document.querySelectorAll('#rq-extras input:checked').forEach(function(cb){extras.push(cb.value);});
+  var notes=document.getElementById('rq-notes').value.trim()||'(no additional notes)';
+  var dropboxLink=document.getElementById('rq-dropbox').value.trim();
+  var srcBrief=findBrief(document.getElementById('projSelect').value)||(typeof myClientBriefs==='function'?(myClientBriefs()[0]||null):null);
+  var c=(srcBrief&&srcBrief.client)||{};
+  var id='L'+Date.now();
+  var today=new Date().toISOString().slice(0,10);
+  var fi=document.getElementById('rq-file-input');
+  var pickedFiles=fi&&fi.files?[].slice.call(fi.files):[];
+  var sendBtn=document.querySelector('#reqForm .btn--primary');
+  if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Sending…';}
+
+  var uploadTasks=pickedFiles.map(function(f){
+    if(!window.__blobUpload){
+      return fetch('/api/upload?path=leads/'+encodeURIComponent(id),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},body:f})
+        .then(function(r){if(!r.ok)throw new Error('Upload failed: '+r.status);return r.json();})
+        .then(function(data){return {name:f.name,size:f.size,url:data.url};})
+        .catch(function(err){console.error('Upload failed',f.name,err);return {name:f.name,size:f.size,url:null};});
+    }
+    return window.__blobUpload('leads/'+id+'/'+f.name,f,{access:'public',handleUploadUrl:'/api/upload',multipart:true})
+      .then(function(blob){return {name:f.name,size:f.size,url:blob.url};})
+      .catch(function(err){console.error('Upload failed',f.name,err);return {name:f.name,size:f.size,url:null};});
+  });
+
+  Promise.all(uploadTasks).then(function(uploadedFiles){
+    var lead={
+      id:id,
+      title:project+(location?' — '+location:''),
+      type:type||'Not sure yet',
+      client:{Name:c.Name||'(name not given)',Company:c.Company||'—',Email:c.Email||window.ME_CLIENT_EMAIL||'',Phone:c.Phone||''},
+      scale:scale||'Not specified',
+      modelsize:size||'Not specified',
+      quantity:'1',
+      timeline:timeline||'Not specified',
+      deliveryTo:location||'Not specified',
+      extras:extras,
+      notes:notes,
+      files:uploadedFiles,
+      filelink:dropboxLink?[dropboxLink]:null,
+      boundaryMap:null,
+      receivedAt:today,
+      receivedAtISO:new Date().toISOString(),
+      source:'Returning client'
+    };
+    window.SDB.leads=window.SDB.leads||[];
+    window.SDB.leads.unshift(lead);
+    ensureClientContact(lead);
+    if(typeof saveSRC==='function')saveSRC();
+    if(window.SRC_renderLeads)window.SRC_renderLeads();
+    if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Send request';}
+    document.getElementById('reqForm').hidden=true;
+    document.getElementById('reqDone').hidden=false;
+  });
 }
 function replyLead(email,project,id){
   // Opens the user's default mail app (Outlook, Apple Mail, etc.) with the
@@ -5826,7 +5869,7 @@ var PERM={
   'cm-only':['owner'],                         // studio-wide leads/clients pipeline + full project list — Owner only; Client Manager gets the scoped 'cmproj-only' view instead
   'cmproj-only':['sales'],                     // Client Manager's own scoped "My Projects" view (assigned + awarded-to-production only)
   'owner-only':['owner'],                       // team & access control
-  'cid-only':['client','owner','sales'],        // client identity + client comms (hidden from production)
+  'cid-only':['owner','sales'],                 // client identity + client comms (hidden from production and from the client themselves -- they know their own info, this module is Carve's internal reference)
   'factory-only':['factory','prodtech'],        // production substitutes (anonymized client, internal notes)
   'sourcing-only':['owner','factory'],          // Sourcing & Quotes tab (Carve Admin + Production Admin)
   'prodadmin-only':['factory'],                 // Production Admin only (assign technicians)
