@@ -605,7 +605,7 @@ body.vendor-no-price .vendor-price-only,body.vendor-no-price .vendor-invoice-onl
 .co-card__act{display:flex;gap:0.6rem;margin-top:1.1rem;flex-wrap:wrap;}
 body.at-portfolio[data-role="client"] .navbtn.projnav{display:none;}
 body.at-portfolio[data-role="owner"] .navbtn.projnav,body.at-portfolio[data-role="sales"] .navbtn.projnav{display:none;}
-body[data-role="owner"] .side__project,body[data-role="sales"] .side__project,body[data-role="factory"] .side__project,body[data-role="prodtech"] .side__project{display:none;}
+body[data-role="owner"] .side__project,body[data-role="sales"] .side__project,body[data-role="factory"] .side__project,body[data-role="prodtech"] .side__project,body[data-role="client"] .side__project{display:none;}
 body.quote-stage[data-role="client"] .navbtn.projnav[data-view="overview"],
 body.quote-stage[data-role="client"] .navbtn.projnav[data-view="milestones"],
 body.quote-stage[data-role="client"] .navbtn.projnav[data-view="invoices"]{display:none;}
@@ -795,24 +795,25 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       </div>
     </section>
 
-    <!-- NO PROJECT YET (client with a portal account but nothing awarded)
-         -- Project/Quote/Invoice are flat, always-on tabs for a client (no
-         "My Projects" list gating them, see the sidebar's #projSelect
-         instead for switching between more than one project); this is
-         just the empty state for an account with zero of its own briefs
-         yet, shown in place of the studio-wide project picker (which would
-         otherwise leak every client's projects -- see go()). -->
+    <!-- CLIENT PROJECT LIST -- shown by go()'s project-required gate
+         whenever no specific project is selected, same "list first, click
+         in" pattern Owner/Client Manager/vendor all use (view-projects/
+         view-myassigned/view-vendorprojects) -- no sidebar dropdown for
+         client (see .side__project CSS), a real list is the only way to
+         switch between more than one project. Populated by
+         renderClientProjectList(). -->
     <section class="view client-only" id="view-noproject-client" hidden>
       <div class="myproj-hero">
         <span class="mock__k">Your workspace</span>
         <h2 class="myproj-title">Your projects with Carve Model</h2>
-        <p class="myproj-sub">You don't have any projects with Carve Model yet. Once your studio team awards one, it'll open right here.</p>
         <button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:1rem;">+ Request another model</button>
       </div>
+      <div id="clientProjectsListWrap"></div>
     </section>
 
     <!-- OVERVIEW -->
     <section class="view" id="view-overview">
+      <button class="backlink client-only" onclick="clientBackToProjectList()" style="margin-bottom:1rem;">← Your projects</button>
       <div class="notice client-only" id="ovNotice">Welcome back. Your model <b><span class="pname">Aria Tower</span></b> is in fabrication — 68% complete, on track for delivery in 6 days.
         <button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>
       </div>
@@ -910,7 +911,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
              proj-pricing-only / owner-only cards below): dollar figures
              matter more than fabrication status for those roles here, and
              they already get full production detail from Milestones. -->
-        <div class="kpi kpi-scale-only"><span class="mock__k">Status</span><div class="big" id="kpiStatus">Fabrication</div><div class="sub" id="kpiStage">Stage 4 of 6</div></div>
+        <div class="kpi kpi-scale-only"><span class="mock__k">Status</span><div class="big" id="kpiStatus">Fabrication</div><div class="sub" id="kpiStage">Stage 4 of 6</div><div class="sub" id="kpiStageSchedule" style="margin-top:0.3rem;"></div></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Progress</span><div class="big" id="kpiPct">68%</div><div class="mock__progress" style="margin-top:0.6rem;"><i id="kpiBar" style="width:68%"></i></div><div class="sub" id="kpiPctSchedule" style="margin-top:0.5rem;"></div></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Next milestone</span><div class="big" id="kpiNext" style="font-size:1.15rem;">Finishing &amp; Paint</div><div class="sub" id="kpiNextSub">Due in 6 days</div></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Current Estimated Delivery Date</span><div class="big" id="kpiEstDelivery" style="font-size:1.15rem;">—</div><div class="sub" id="kpiEstDeliverySub"></div></div>
@@ -1009,7 +1010,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             </div>
           </div>
           <div class="panel">
-            <div class="panel__head"><h3>Project information</h3><button type="button" class="btn btn--ghost btn--sm vendor-request-only" onclick="openRequestChangeModal()">Request a change</button></div>
+            <div class="panel__head"><h3>Project information</h3><button type="button" class="btn btn--ghost btn--sm reqchange-only" onclick="openRequestChangeModal()">Request a change</button></div>
             <div class="panel__body">
               <div style="display:flex;flex-direction:column;gap:0.9rem;">
                 <div>
@@ -2504,11 +2505,12 @@ var PROJECT_STAGES=[
   'Confirmed Material Samples',                // 2
   'Fabrication',                                // 3
   'Final Client Approval',                      // 4
-  'Permanently Fixed, Cleaned & Polished',      // 5
+  'Permanently Fixed, Cleaned & Polished',      // 5 -- 2 days
   'Packing',                                     // 6 -- 2 days
-  'Shipping',                                    // 7 -- 5 days; the model physically arrives with the
-                                                  //      client at the end of this stage -- delivery is no
-                                                  //      longer its own stage, see journeyStageRange below
+  'Shipping',                                    // 7 -- 5 days, on top of the agreed production total; the
+                                                  //      model physically arrives with the client at the end
+                                                  //      of this stage -- delivery is no longer its own
+                                                  //      stage, see journeyStageRange below
   'Post Delivery Support',                      // 8
   'Project Completed'                           // 9 -- final stage; corresponds to b.deliveredAt
 ];
@@ -2610,16 +2612,16 @@ function addBusinessDays(dateStr,days){
   return d.toISOString().slice(0,10);
 }
 // Target production completion defaults to start date + the production
-// time agreed with the client (b.productionDays), and target delivery
-// defaults to that completion date + 5 days -- Shipping's own 5 days (see
-// journeyStageRange); Packing is shown as a same-day milestone right at
-// completion rather than its own buffer added on top, so it no longer
-// pushes delivery out further. This keeps both in sync with the start
-// date / production time by default so they don't drift. Either can be
-// directly overridden (see setProductionCompletionOverride/
-// setTargetDeliveryOverride, used by the date inputs in Project
-// information) for cases where the real date needs to diverge from the
-// formula -- the override always wins once set.
+// time agreed with the client (b.productionDays) -- that total already
+// includes Confirmed Material Samples (5 days), Final Client Approval
+// (2 days), Permanently Fixed, Cleaned & Polished (2 days), and Packing
+// (2 days), with whatever's left over going to Fabrication (see
+// journeyStageRange). Target delivery is completion + 5 more days for
+// Shipping, which is NOT part of the agreed production total -- it's
+// additional transit time on top. Either date can be directly overridden
+// (see setProductionCompletionOverride/setTargetDeliveryOverride, used by
+// the date inputs in Project information) for cases where the real date
+// needs to diverge from the formula -- the override always wins once set.
 function productionCompletionDate(b){
   if(b&&b.productionCompletionOverride)return b.productionCompletionOverride;
   var start=getProjectStartDate(b);
@@ -2719,30 +2721,32 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // Raw {start,end,openEnded} for a stage's estimated window -- shared by
 // stageDateLabelCompact() (the visible per-dot date label) and
 // currentStageScheduleStatus() (the visible ahead/behind line on the
-// journey card) so the two never drift apart. Derived entirely from the
-// project's own Start date and Target production completion (start +
-// agreed production time) -- that whole span, kickoff through completion,
-// is allocated as: Confirmed Material Samples gets the first 3 days after
-// kickoff; Final Client Approval gets the last 2 days, ending ON
-// completion day itself; Fabrication absorbs whatever's left in between
-// (day 4 through completion-2). Stages after completion -- Permanently
-// Fixed/Cleaned & Polished, Packing, Shipping, and Post Delivery Support
-// -- intentionally show NO computed date range at all (they still exist
-// as checklist/journey stages, just without a date estimate under the
-// dot or an ahead/behind comparison). Project Kick Off and Project
+// journey card) so the two never drift apart. The agreed production total
+// (start through Target production completion) is carved up as: Confirmed
+// Material Samples gets the first 5 days after kickoff; Final Client
+// Approval, Permanently Fixed/Cleaned & Polished, and Packing each get
+// 2 days at the tail end, right up through completion day itself;
+// Fabrication absorbs whatever's left over in between. Shipping is NOT
+// part of that agreed total -- it's a separate 5-day buffer added after
+// completion, running through Target delivery (completion+5, see
+// targetDeliveryDate). Post Delivery Support starts the day after
+// delivery with no end date (openEnded -- support continues indefinitely,
+// there's nothing to count down to). Project Kick Off and Project
 // Completed round out the two ends.
 function journeyStageRange(b,stageIndex){
   var stageName=PROJECT_STAGES[stageIndex];
-  if(stageName==='Permanently Fixed, Cleaned & Polished'||stageName==='Packing'||stageName==='Shipping'||stageName==='Post Delivery Support'){
-    return {start:null,end:null,openEnded:false};
-  }
   var start=getProjectStartDate(b);
   var completion=productionCompletionDate(b);
+  var delivery=targetDeliveryDate(b);
   var rs=null,re=null,openEnded=false;
   if(stageName==='Project Kick Off'&&start){rs=start;re=start;}
-  else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,3);}
-  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,4);re=addDays(completion,-2);}
-  else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-1);re=completion;}
+  else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,5);}
+  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,6);re=addDays(completion,-6);}
+  else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-5);re=addDays(completion,-4);}
+  else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-3);re=addDays(completion,-2);}
+  else if(stageName==='Packing'&&completion){rs=addDays(completion,-1);re=completion;}
+  else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,1);re=delivery;}
+  else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
   if(rs&&re&&rs>re)return {start:null,end:null,openEnded:false}; // agreed production time too short for this breakdown to make sense
   return {start:rs,end:re,openEnded:openEnded};
 }
@@ -3348,7 +3352,7 @@ window.renderProjectsList=renderProjectsList;
 // actually assigned to them (ME_TECH), matching the scoping their existing
 // "Assigned to you" Sourcing list already uses. This is the only real
 // entry point into a project's Overview page for the vendor side -- see
-// the vendor-price-only/vendor-days-only/vendor-request-only KPIs and
+// the vendor-price-only/vendor-days-only/reqchange-only KPIs and
 // button that live there.
 function renderVendorProjects(){
   var wrap=document.getElementById('vendorProjectsList');
@@ -3411,26 +3415,44 @@ function myClientBriefs(){
   });
 }
 window.myClientBriefs=myClientBriefs;
-// Client's own project dropdown -- the same #projSelect Owner/CM use in
-// the sidebar, just scoped to this client's own awarded (non-archived)
-// briefs instead of the whole studio's (see syncProjectSelectOptions for
-// the studio-wide sibling). This is what makes Project/Quote/Invoice work
-// as flat, always-available tabs for a client with no separate "My
-// Projects" list gating them -- replaces the old renderMyProjectsClient()
-// list view entirely (see view-noproject-client for the zero-projects
-// empty state, and setRole() for where this gets called on login).
-function populateClientProjectOptions(){
-  var sel=document.getElementById('projSelect');
-  if(!sel)return [];
-  var cur=sel.value;
+// Client's project list -- shown by go()'s project-required gate whenever
+// no specific project is selected, same "land on a list, click in"
+// pattern Owner/Client Manager/vendor all use (renderProjectsList/
+// renderMyAssigned/renderVendorProjects), and the same 3 categories
+// (In Progress/Paused/Completed) those already render with. No sidebar
+// dropdown for client (see .side__project CSS) -- this list is the only
+// way to switch between more than one project; #projSelect itself is
+// still just the internal "which project is open" state every role's
+// openProject() shares, never shown to this role.
+function renderClientProjectList(){
+  var wrap=document.getElementById('clientProjectsListWrap');
+  if(!wrap)return;
   var mine=(typeof myClientBriefs==='function'?myClientBriefs():[]).filter(function(b){return b.status==='awarded'&&!b.archived;});
+  if(!mine.length){
+    wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">You don\'t have any projects with Carve Model yet.</div>';
+    return;
+  }
   mine.forEach(autoMarkDeliveredIfComplete);
-  sel.innerHTML='<option value="" id="projPlaceholder">— Select a project —</option>'+
-    mine.map(function(b){return '<option value="'+esc(b.id)+'">'+esc(b.title)+'</option>';}).join('');
-  if(mine.some(function(b){return b.id===cur;}))sel.value=cur;
-  return mine;
+  var completed=mine.filter(function(b){return b.deliveredAt;});
+  var paused=mine.filter(function(b){return !b.deliveredAt&&b.paused;});
+  var active=mine.filter(function(b){return !b.deliveredAt&&!b.paused;});
+  wrap.innerHTML=
+    projectSectionHtml('In Progress',active)+
+    projectSectionHtml('Paused',paused)+
+    projectSectionHtml('Completed',completed);
 }
-window.populateClientProjectOptions=populateClientProjectOptions;
+window.renderClientProjectList=renderClientProjectList;
+// Clears the currently open project and returns to the list above --
+// client's equivalent of Owner/Client Manager's "← All projects"
+// (backToProjects/#projBack), just without that cm-only sidebar button
+// since client has no visible project switcher there.
+function clientBackToProjectList(){
+  var sel=document.getElementById('projSelect');
+  if(sel)sel.value='';
+  currentProjTitle='';
+  go('overview');
+}
+window.clientBackToProjectList=clientBackToProjectList;
 // Owner-only heads-up when a Client Manager changes a client's contact
 // info (see saveClientEdit/notifyOwner) -- same {text,time,read} shape and
 // "mark all read" pattern as the vendor Quotes tab's notification banner,
@@ -3845,6 +3867,7 @@ function go(v){
     var isClient=document.body.dataset.role==='client';
     document.getElementById(isClient?'view-noproject-client':'view-pickproject').hidden=false;
     if(!isClient&&window.renderPickProjectList)window.renderPickProjectList();
+    if(isClient&&window.renderClientProjectList)window.renderClientProjectList();
     document.querySelectorAll('.navbtn').forEach(function(b){b.classList.toggle('on',b.dataset.view===v);});
     document.getElementById('viewTitle').textContent=viewTitleFor(v);
     document.getElementById('crumb').textContent=isClient?'Select a project':'Studio · Select a project';
@@ -4057,6 +4080,12 @@ function renderProjectOverview(b){
 
   setText('kpiStatus',paused?'Paused':stageName);
   setText('kpiStage','Stage '+(delivered?totalSteps:(idx+1))+' of '+totalSteps);
+  // The CURRENT stage's own originally-scheduled date range (same
+  // stageDateLabelCompact() the journey dots and Next milestone card use)
+  // -- lets someone glancing at the Status card see the plan for the
+  // stage they're actually in, not just its ordinal position.
+  var curStageRange=(!delivered&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx):'';
+  setText('kpiStageSchedule',curStageRange&&curStageRange!=='—'?('Original schedule '+curStageRange):'');
   setText('kpiPct',pct+'%');
   // Same "N days ahead/behind" comparison already shown on the journey
   // card (currentStageScheduleStatus/scheduleStatusTxt above), echoed as a
@@ -4430,14 +4459,20 @@ window.toggleDesignFileItem=toggleDesignFileItem;
 // Delivery address is deliberately left off this list -- the vendor side
 // never sees that field at all (see the cid-only wrapper on it), so there's
 // nothing there for them to flag a change to.
-var VENDOR_CHANGE_FIELD_OPTIONS=['Use case','Scale','Materials & presentation','Model size','Package size','Project address','Boundary map','Start date','Target production completion','Target delivery','Other'];
-window.VENDOR_CHANGE_FIELD_OPTIONS=VENDOR_CHANGE_FIELD_OPTIONS;
+// Shared by both the vendor (factory/prodtech) AND the client -- either
+// side can flag something on Project information that should change;
+// Client Manager/Owner review it and make the real edit themselves either
+// way (see resolvePendingChange). Kept as one list rather than a separate
+// client-facing one since the fields that matter (scale, use case, dates,
+// address...) are the same regardless of who's asking.
+var CHANGE_REQUEST_FIELD_OPTIONS=['Use case','Scale','Materials & presentation','Model size','Package size','Project address','Boundary map','Start date','Target production completion','Target delivery','Other'];
+window.CHANGE_REQUEST_FIELD_OPTIONS=CHANGE_REQUEST_FIELD_OPTIONS;
 function openRequestChangeModal(){
   var role=document.body.dataset.role;
-  if(role!=='factory'&&role!=='prodtech')return;
+  if(role!=='factory'&&role!=='prodtech'&&role!=='client')return;
   var sel=document.getElementById('rcField');
   if(sel&&!sel.options.length){
-    sel.innerHTML=VENDOR_CHANGE_FIELD_OPTIONS.map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('');
+    sel.innerHTML=CHANGE_REQUEST_FIELD_OPTIONS.map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('');
   }
   var note=document.getElementById('rcNote');if(note)note.value='';
   var modal=document.getElementById('requestChangeModal');
@@ -4456,7 +4491,7 @@ window.closeRequestChangeModal=closeRequestChangeModal;
 // with the normal edit controls. See resolvePendingChange().
 function submitProjectInfoChangeRequest(){
   var role=document.body.dataset.role;
-  if(role!=='factory'&&role!=='prodtech')return;
+  if(role!=='factory'&&role!=='prodtech'&&role!=='client')return;
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
   if(!b)return;
@@ -5121,7 +5156,7 @@ function clientInvoiceLinesHtml(b){
   var depDesc='Deposit · 50% to begin fabrication · issued '+issuedFmt+(depStatus==='paid'&&inv.depositPaidAt?(' · paid '+inv.depositPaidAt):'');
   var balDesc='Final balance · due on delivery'+(balStatus==='paid'&&inv.balancePaidAt?(' · paid '+inv.balancePaidAt):'');
   return '<div class="inv">'+
-      '<div><div class="id">'+inv.depositId+' <span class="inv-badge">Official</span></div><div class="desc">'+depDesc+'</div></div>'+
+      '<div><div class="id">'+inv.depositId+'</div><div class="desc">'+depDesc+'</div></div>'+
       '<div class="amt">$'+dep.toLocaleString('en-US')+'</div>'+
       '<span class="'+depChipClass+'" style="margin-left:1rem;">'+depChipText+'</span>'+
       '<button class="btn btn--ghost btn--sm" style="margin-left:1rem;" onclick="downloadInvoice(\''+b.id+'\',\'deposit\')">↓ PDF</button>'+
@@ -5129,8 +5164,7 @@ function clientInvoiceLinesHtml(b){
     '</div>'+
     depBanner+
     '<div class="inv"><div><div class="id">'+inv.balanceId+'</div><div class="desc">'+balDesc+'</div></div><div class="amt">$'+bal.toLocaleString('en-US')+'</div><span class="chip" style="margin-left:1rem;'+balChipStyle+'">'+balChipText+'</span>'+
-      '<button class="btn btn--ghost btn--sm" style="margin-left:1rem;" onclick="downloadInvoice(\''+b.id+'\',\'balance\')">↓ PDF</button></div>'+
-    '<p class="form-note">Invoice '+inv.depositId+' was generated automatically once your project was confirmed. Download a PDF copy any time with the <b>↓ PDF</b> button above.</p>';
+      '<button class="btn btn--ghost btn--sm" style="margin-left:1rem;" onclick="downloadInvoice(\''+b.id+'\',\'balance\')">↓ PDF</button></div>';
 }
 window.clientInvoiceLinesHtml=clientInvoiceLinesHtml;
 // Client's Invoice tab -- every one of THEIR awarded (non-archived)
@@ -5941,7 +5975,7 @@ var PERM={
   'proj-spec-edit-only':['owner','sales'],        // Edit control on Project information's spec fields (Use case/Scale/Materials/Presentation method/Model size/Package size) -- Owner + assigned Client Manager only; everyone (incl. client/factory/prodtech) still sees the read-only value
   'vendor-price-only':['factory'],                // "Your quoted price" KPI -- Production Admin only, never their technicians and never the client
   'vendor-days-only':['factory','prodtech'],      // "Quoted production time" KPI -- the whole vendor side, no pricing attached
-  'vendor-request-only':['factory','prodtech'],   // "Request a change" button on Project information -- vendor side proposes, Client Manager/Owner decide (see resolvePendingChange)
+  'reqchange-only':['factory','prodtech','client'], // "Request a change" button on Project information -- vendor OR client proposes, Client Manager/Owner decide (see resolvePendingChange)
   'vendorproj-only':['factory','prodtech'],       // Vendor side's own scoped "My Projects" list (this shop's awarded-to-production jobs) -- the only real entry point into a project's Overview page for factory/prodtech
   'vendorteam-only':['factory'],                  // Vendor's own Team & Access tab -- Production Admin (primary admin or an already-added team member, both role 'factory') can add/remove more logins for their own shop; Production Technicians never manage access
   'vendorfinance-only':['factory'],                // Vendor's own Finance tab -- price, so hidden from a Vendor Team & Access member via body.vendor-no-price (see the CSS rule) even though it's role 'factory' same as the primary admin; Production Technicians never see it either
@@ -6398,23 +6432,12 @@ function setRole(r){
     sel.value='';
     go('projects');
   }else if(r==='client'){
-    // Land directly on the client's own project workspace -- Project/Quote/
-    // Invoice are flat top-level tabs for a client (see populateClientProjectOptions()),
-    // not gated behind a separate "My Projects" list anymore. Picks whichever
-    // of their own projects is most relevant (active over paused over
-    // completed) if they have more than one; #projSelect (now visible for
-    // this role, see .side__project CSS) lets them switch. Zero projects
-    // falls through to view-noproject-client via go()'s project gate.
-    var myProjs=populateClientProjectOptions();
-    var pick=myProjs.filter(function(b){return !b.deliveredAt&&!b.paused;})[0]
-      ||myProjs.filter(function(b){return !b.deliveredAt&&b.paused;})[0]
-      ||myProjs[0];
-    if(pick){
-      openProject(pick.id);
-    }else{
-      sel.value='';
-      go('overview');
-    }
+    // Land on the client's own project list (renderClientProjectList(),
+    // shown via go()'s project-required gate since no project is
+    // pre-selected) -- same "list first, click in" pattern Owner/Client
+    // Manager/vendor all use below, no sidebar dropdown for this role.
+    sel.value='';
+    go('overview');
   }else if(r==='factory'||r==='prodtech'){
     // Vendor side lands on their own scoped project list (renderVendorProjects()),
     // same pattern as Client Manager landing on My Projects instead of a
