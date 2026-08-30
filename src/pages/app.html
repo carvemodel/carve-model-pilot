@@ -1813,7 +1813,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <h4 class="inv-ok-h">Account created</h4>
         <p class="modal__intro">Send <b id="invWho">the client</b> this secure invite link. Opening it lets them set a password and enter their workspace.</p>
         <div class="linkbox"><input id="inviteLink" type="text" readonly><button class="btn btn--ghost btn--sm" onclick="copyLink()" id="copyBtn">Copy</button></div>
-        <p class="modal__note">The link is tied to their email and expires in 7 days. In the live portal, it's also emailed automatically.</p>
+        <p class="modal__note" id="inviteNote">The link is tied to their email and expires in 7 days.</p>
         <button class="btn btn--primary full" onclick="closeInvite()" style="margin-top:1.2rem;">Done</button>
       </div>
     </div>
@@ -2423,13 +2423,36 @@ function createInvite(e){
   e.preventDefault();
   var name=document.getElementById('invName').value.trim();
   var email=document.getElementById('invEmail').value.trim();
-  var token='inv_'+Math.random().toString(36).slice(2,10);
-  var base=location.origin+'/';
-  var link=base+'/login?invite='+token+'&email='+encodeURIComponent(email);
   document.getElementById('invWho').textContent=name||'the client';
-  document.getElementById('inviteLink').value=link;
-  document.getElementById('inviteForm').hidden=true;
-  document.getElementById('inviteResult').hidden=false;
+  // Was previously entirely local: a fabricated token that was never
+  // registered anywhere (the /login?invite= link it built could never
+  // actually resolve), and no email was ever sent despite the modal's old
+  // copy claiming "it's also emailed automatically." Now calls the same
+  // real invite pipeline createTeamMember/createVendor already use, so the
+  // link is real and redeemable and, when RESEND_API_KEY is configured, an
+  // actual email goes out too.
+  var submitBtn=e.target.querySelector('button[type="submit"]');
+  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Creating…';}
+  fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:'client'})})
+    .then(function(r){return r.json().catch(function(){return {};});})
+    .then(function(data){
+      var link=(data&&data.link)||(location.origin+'/login');
+      document.getElementById('inviteLink').value=link;
+      var note=document.getElementById('inviteNote');
+      if(note){
+        note.textContent=(data&&data.emailed)
+          ?('An invite email has already been sent to '+email+'. This link also works if you\'d like to share it directly.')
+          :('The link is tied to their email and expires in 7 days. No invite email was sent automatically (email service isn\'t configured yet) — copy this link and send it to them yourself.');
+      }
+      document.getElementById('inviteForm').hidden=true;
+      document.getElementById('inviteResult').hidden=false;
+    })
+    .catch(function(){
+      alert('Something went wrong creating the invite. Please try again.');
+    })
+    .then(function(){
+      if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Create account & generate link';}
+    });
   return false;
 }
 function copyLink(){
@@ -5288,7 +5311,23 @@ function createClientAccount(e){
   }
   assignAccountTarget=null;
   closeAddClient();
-  showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+') — sign-in and invoice access sent.');
+  // Actually call the real invite pipeline (same one createTeamMember/
+  // createVendor already use) instead of just claiming success -- this
+  // used to show "sign-in and invoice access sent" unconditionally without
+  // ever contacting an email API, so the admin had no way to know (and the
+  // client never actually got) a real invite.
+  fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:'client'})})
+    .then(function(r){return r.json().catch(function(){return {};});})
+    .then(function(data){
+      if(data&&data.emailed){
+        showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+') — an invite email was sent so they can set a password and sign in.');
+      }else{
+        showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+'), but no invite email was sent (email service isn\'t configured yet) — send them the sign-up link directly.');
+      }
+    })
+    .catch(function(){
+      showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+'), but the invite email failed to send — send them the sign-up link directly.');
+    });
   if(document.getElementById('view-clients')&&!document.getElementById('view-clients').hidden&&window.scopeClients)window.scopeClients(role);
   return false;
 }
