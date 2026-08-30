@@ -3973,6 +3973,18 @@ function renderProjectOverview(b){
   var short=(b.title||'').split(' — ')[0];
   var startDate=getProjectStartDate(b);
   var targetDelivery=targetDeliveryDate(b);
+  // Vendor (factory/prodtech) only ever committed to Final Client Approval
+  // -- everything after (Permanently Fixed/Cleaned & Polished, Packing,
+  // Shipping, and the delivery date itself) is Carve's OWN post-approval
+  // process on Carve's actual client-facing schedule, not the vendor's.
+  // Every schedule-ish display below (journey dots, Status/Next
+  // milestone/Current Estimated Delivery KPI captions) is gated on this so
+  // none of them show the vendor a date for a stage that was never theirs
+  // to estimate -- computing it off their own (typically faster)
+  // winning-quote days would just mix the two sides' timelines together.
+  var viewerRole=document.body.dataset.role;
+  var vendorDateCutoff=(viewerRole==='factory'||viewerRole==='prodtech')?PROJECT_STAGES.indexOf('Final Client Approval'):-1;
+  var vendorPastCutoff=vendorDateCutoff>=0&&idx>vendorDateCutoff;
 
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
 
@@ -3992,6 +4004,9 @@ function renderProjectOverview(b){
 
   var stepsWrap=document.getElementById('journeySteps');
   if(stepsWrap){
+    // vendorDateCutoff (computed once, above) hides the date for any
+    // stage past Final Client Approval when viewed by a vendor -- see its
+    // own comment near the top of this function.
     stepsWrap.innerHTML=PROJECT_STAGES.map(function(name,i){
       var done=delivered?true:(i<idx);
       var current=!delivered&&i===idx;
@@ -3999,7 +4014,10 @@ function renderProjectOverview(b){
       var dotTxt=done?'✓':String(i+1);
       // Each stage's indicative estimated date/range shows directly under
       // its name -- no hover needed (see stageDateLabelCompact() above).
-      var dateLabel=delivered?'Done':((typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,i):'');
+      var dateLabel;
+      if(delivered)dateLabel='Done';
+      else if(vendorDateCutoff>=0&&i>vendorDateCutoff)dateLabel='';
+      else dateLabel=(typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,i):'';
       return '<li class="jstep '+cls+'">'+(current?'<span class="jstep__here">You\'re here</span>':'')+
         '<span class="jstep__dot">'+dotTxt+'</span><span class="jstep__name">'+esc(name)+'</span>'+
         '<span class="jstep__date">'+esc(dateLabel)+'</span></li>';
@@ -4015,7 +4033,10 @@ function renderProjectOverview(b){
   // completion/Target delivery dates instead (see journeyNextStageText and
   // the projInfo* date fields below).
   setText('journeyCurrentStageText',delivered?'Project Completed':stageName);
-  var scheduleStatusTxt=(typeof currentStageScheduleStatus==='function')?currentStageScheduleStatus(b):'';
+  // Blank for a vendor past Final Client Approval (vendorPastCutoff) --
+  // same reasoning as vendorDateCutoff above, this is Carve's own stage by
+  // that point, not the vendor's to be "ahead/behind" on.
+  var scheduleStatusTxt=(!vendorPastCutoff&&typeof currentStageScheduleStatus==='function')?currentStageScheduleStatus(b):'';
   setText('journeyScheduleStatus',scheduleStatusTxt?(' | '+scheduleStatusTxt):'');
   setText('journeyNextStageText',delivered?'Complete':(nextStage||'Complete'));
   // Stages with a defined STAGE_CHECKLISTS entry show that checklist
@@ -4084,15 +4105,16 @@ function renderProjectOverview(b){
   // stageDateLabelCompact() the journey dots and Next milestone card use)
   // -- lets someone glancing at the Status card see the plan for the
   // stage they're actually in, not just its ordinal position.
-  var curStageRange=(!delivered&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx):'';
+  var curStageRange=(!delivered&&!vendorPastCutoff&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx):'';
   setText('kpiStageSchedule',curStageRange&&curStageRange!=='—'?('Original schedule '+curStageRange):'');
   setText('kpiPct',pct+'%');
   // Same "N days ahead/behind" comparison already shown on the journey
   // card (currentStageScheduleStatus/scheduleStatusTxt above), echoed as a
-  // small caption under the Progress KPI's bar too -- delivered projects
-  // and stages with no defined date range (scheduleStatusTxt==='') show
-  // nothing rather than a stale/misleading label.
-  setText('kpiPctSchedule',delivered?'':scheduleStatusTxt);
+  // small caption under the Progress KPI's bar too -- delivered projects,
+  // a vendor past their own Final Client Approval cutoff, and stages with
+  // no defined date range (scheduleStatusTxt==='') all show nothing rather
+  // than a stale/misleading label.
+  setText('kpiPctSchedule',(delivered||vendorPastCutoff)?'':scheduleStatusTxt);
   var kpiBar=document.getElementById('kpiBar');if(kpiBar)kpiBar.style.width=pct+'%';
   setText('kpiNext',nextStage||'Complete');
   // The next stage's own originally-scheduled date range (same
@@ -4100,14 +4122,18 @@ function renderProjectOverview(b){
   // not the overall project's target delivery date, which lives on its
   // own KPI card elsewhere. Same "Original schedule" label prefix as the
   // Status card's kpiStageSchedule so the two read consistently.
-  var nextStageRange=(!delivered&&nextStage&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx+1):'';
+  var nextStageVendorBlocked=vendorDateCutoff>=0&&(idx+1)>vendorDateCutoff;
+  var nextStageRange=(!delivered&&nextStage&&!nextStageVendorBlocked&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx+1):'';
   setText('kpiNextSub',nextStageRange&&nextStageRange!=='—'?('Original schedule '+nextStageRange):'—');
   // Current Estimated Delivery Date -- live projection (see
   // currentEstimatedDeliveryDate) up top, original fixed commitment
   // (targetDelivery, already computed above) underneath for comparison.
+  // Delivery itself is entirely Carve's own post-approval commitment, not
+  // the vendor's -- blank for a vendor past their own cutoff, same as
+  // every other schedule display on this page.
   var estDelivery=(typeof currentEstimatedDeliveryDate==='function')?currentEstimatedDeliveryDate(b):targetDelivery;
-  setText('kpiEstDelivery',estDelivery?fmtDateShort(estDelivery):'—');
-  setText('kpiEstDeliverySub',targetDelivery?('Originally targeted '+fmtDateShort(targetDelivery)):'');
+  setText('kpiEstDelivery',vendorPastCutoff?'—':(estDelivery?fmtDateShort(estDelivery):'—'));
+  setText('kpiEstDeliverySub',vendorPastCutoff?'':(targetDelivery?('Originally targeted '+fmtDateShort(targetDelivery)):''));
   setText('kpiScale',((typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null)||(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—');
   setText('kpiScaleSub',(b.clientQuote&&b.clientQuote.material)||(b.brief&&b.brief['Model type'])||'');
 
