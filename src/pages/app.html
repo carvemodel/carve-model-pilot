@@ -3124,6 +3124,15 @@ function renderVendorProjects(){
   var wrap=document.getElementById('vendorProjectsList');
   if(!wrap)return;
   var role=document.body.dataset.role;
+  // Same safety guard as SRC_prodAdmin() -- OUR_SHOP is only ever '' when
+  // this account's email couldn't be matched to a shop (see enterSession()/
+  // SRC_setShop). Surface that plainly instead of showing a generic "no
+  // projects" message that would look identical to "you really have none",
+  // since those are two very different problems to fix.
+  if(!OUR_SHOP){
+    wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;"><b style="color:var(--cm-text-strong);">This account isn\'t linked to a production shop yet.</b> Nothing will show here until Carve Admin fixes that.</div>';
+    return;
+  }
   // Factory sees every job actually awarded to their shop -- same
   // b.status==='awarded' gate awardedBriefs()/Owner's Projects/Client
   // Manager's My Projects already use, not the stricter "proceeded to
@@ -5449,9 +5458,11 @@ function setRole(r){
     onProjChange();
     go('quote');
   }else if(r==='factory'||r==='prodtech'){
-    if(!sel.value)sel.value='aria';
-    onProjChange();
-    go('sourcing');
+    // Vendor side lands on their own scoped project list (renderVendorProjects()),
+    // same pattern as Client Manager landing on My Projects instead of a
+    // specific project -- Sourcing & Quotes is still one click away.
+    sel.value='';
+    go('vendorprojects');
   }else if(r==='sales'){
     // Client Manager doesn't land in a specific project — they land on their
     // own scoped list of assigned + awarded-to-production projects (see
