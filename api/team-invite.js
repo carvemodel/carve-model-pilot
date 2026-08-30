@@ -36,8 +36,11 @@ function escapeHtml(s) {
 
 // Role key 'sales' is displayed to admins/invitees as "Client Manager" — see
 // the matching note in app.html's ROLE_LABELS for why the stored key differs
-// from the label.
-const ROLE_LABELS = { owner: 'Owner', sales: 'Client Manager', factory: 'Factory Representative' };
+// from the label. 'client' was added later, when the Clients tab's "+ Assign
+// account" / top-nav "Invite a client" flows were wired to this same real
+// invite pipeline instead of the fake, never-actually-sent local mockups
+// they used before.
+const ROLE_LABELS = { owner: 'Owner', sales: 'Client Manager', factory: 'Factory Representative', client: 'Client' };
 const INVITE_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days — matches the copy in the email
 
 module.exports = async (req, res) => {
@@ -79,25 +82,42 @@ module.exports = async (req, res) => {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       console.warn('RESEND_API_KEY not set — invite created but no email sent for', email);
-      res.status(200).json({ ok: true, emailed: false, reason: 'RESEND_API_KEY not configured' });
+      // link is included even when no email goes out -- it's still a real,
+      // redeemable invite (see the redis.set above), so the caller (Clients
+      // tab / Invite a client modal) can show it as a manual fallback
+      // instead of the invite silently going nowhere.
+      res.status(200).json({ ok: true, emailed: false, reason: 'RESEND_API_KEY not configured', link });
       return;
     }
 
+    const isClient = role === 'client';
     const roleLabel = ROLE_LABELS[role] || role || 'Team member';
     const from = process.env.TEAM_INVITE_FROM || process.env.LEAD_NOTIFY_FROM || 'Carve Model <onboarding@resend.dev>';
-    const html =
-      '<div style="font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#111;">' +
-      '<h2 style="margin:0 0 12px;">You’ve been added to the Carve team</h2>' +
-      '<p>Hi ' + escapeHtml(name) + ',</p>' +
-      '<p>You’ve been added to the Carve internal team as <b>' + escapeHtml(roleLabel) + '</b>.</p>' +
-      '<p><a href="' + link + '">Set your password &amp; open the Carve Studio Portal →</a></p>' +
-      '<p style="color:#666;">This link expires in 7 days. If you weren’t expecting this, you can safely ignore this email.</p>' +
-      '</div>';
+    // A client is an external customer, not internal staff -- the "added to
+    // the Carve internal team" framing below is only correct for
+    // owner/sales/factory invites, so a client gets its own subject/copy
+    // instead of that same wording with just the role name swapped in.
+    const subject = isClient ? 'Your Carve Model project portal is ready' : 'You’ve been added to the Carve team';
+    const html = isClient
+      ? '<div style="font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#111;">' +
+        '<h2 style="margin:0 0 12px;">Your Carve Model project portal is ready</h2>' +
+        '<p>Hi ' + escapeHtml(name) + ',</p>' +
+        '<p>Carve Model has set up your project portal, where you can review quotes, track production, and manage invoices for your project.</p>' +
+        '<p><a href="' + link + '">Set your password &amp; open your portal →</a></p>' +
+        '<p style="color:#666;">This link expires in 7 days. If you weren’t expecting this, you can safely ignore this email.</p>' +
+        '</div>'
+      : '<div style="font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#111;">' +
+        '<h2 style="margin:0 0 12px;">You’ve been added to the Carve team</h2>' +
+        '<p>Hi ' + escapeHtml(name) + ',</p>' +
+        '<p>You’ve been added to the Carve internal team as <b>' + escapeHtml(roleLabel) + '</b>.</p>' +
+        '<p><a href="' + link + '">Set your password &amp; open the Carve Studio Portal →</a></p>' +
+        '<p style="color:#666;">This link expires in 7 days. If you weren’t expecting this, you can safely ignore this email.</p>' +
+        '</div>';
 
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to: [email], subject: 'You’ve been added to the Carve team', html }),
+      body: JSON.stringify({ from, to: [email], subject, html }),
     });
 
     if (!r.ok) {
@@ -105,11 +125,11 @@ module.exports = async (req, res) => {
       console.error('Resend team-invite failed:', r.status, text);
       // The invite itself is still valid even though the email failed —
       // report emailed:false rather than erroring the whole request out.
-      res.status(200).json({ ok: true, emailed: false, error: 'Failed to send invite email.' });
+      res.status(200).json({ ok: true, emailed: false, error: 'Failed to send invite email.', link });
       return;
     }
 
-    res.status(200).json({ ok: true, emailed: true });
+    res.status(200).json({ ok: true, emailed: true, link });
   } catch (err) {
     console.error('team-invite API error:', err);
     res.status(500).json({ error: 'Server error' });
