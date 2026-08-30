@@ -2416,9 +2416,26 @@ function getProjectStartDate(b){
 // (which could drift out of sync with what was actually promised). A
 // manual edit here (setProductionDays) still wins once made, for cases
 // where the agreed time genuinely changes after the fact.
+//
+// The vendor's OWN journey is the one exception: Carve's client-facing
+// days (b.clientQuote.days) can carry padding/buffer beyond what the
+// vendor actually committed to in their own winning quote (wq.days) --
+// showing the padded, client-facing number back to the vendor would have
+// their own checklist/journey tracking against a schedule that isn't
+// really theirs. So for factory/prodtech specifically, the vendor's own
+// quoted days take priority over the client-facing figure (falling back
+// to it only if their own quote is somehow missing days). A manual
+// b.productionDays override still wins for everyone, including the
+// vendor -- that's Carve deliberately overriding the default, not the
+// default itself.
 function agreedProductionDays(b){
   if(!b)return null;
   if(b.productionDays!=null)return b.productionDays;
+  var role=(typeof document!=='undefined'&&document.body)?document.body.dataset.role:null;
+  if(role==='factory'||role==='prodtech'){
+    var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+    if(wq&&wq.days!=null)return wq.days;
+  }
   return (b.clientQuote&&b.clientQuote.days!=null)?b.clientQuote.days:null;
 }
 function addDays(dateStr,days){
