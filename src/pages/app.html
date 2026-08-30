@@ -679,27 +679,27 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="3" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="2.5" y="11" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
         My Projects
       </button>
-      <button class="navbtn on projnav" data-view="overview" onclick="go('overview')" style="display:none;">
+      <button class="navbtn on projnav" data-view="overview" onclick="go('overview')">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="2" width="6" height="6" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="10" width="6" height="6" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="10" width="6" height="6" stroke="currentColor" stroke-width="1.4"/></svg>
-        Overview
+        <span class="studio-only">Overview</span><span class="client-only">Project</span>
       </button>
       <button class="navbtn client-quote-only projnav" data-view="quote" onclick="go('quote')">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 2.5h10v13H4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 6h4M7 9h4M7 12h2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         Quote <span class="badge">1</span>
       </button>
-      <button class="navbtn projnav" data-view="milestones" onclick="go('milestones')" style="display:none;">
+      <button class="navbtn proj-notclient-only projnav" data-view="milestones" onclick="go('milestones')" style="display:none;">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="4" cy="4" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="4" cy="14" r="2" stroke="currentColor" stroke-width="1.4"/><path d="M4 6v6M8 4h7M8 14h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         Milestones <span class="badge">1</span>
       </button>
-      <button class="navbtn projnav" data-view="files" onclick="go('files')" style="display:none;">
+      <button class="navbtn proj-notclient-only projnav" data-view="files" onclick="go('files')" style="display:none;">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 4.5A1.5 1.5 0 014.5 3h3l1.5 2h4.5A1.5 1.5 0 0115 6.5v6A1.5 1.5 0 0113.5 14h-9A1.5 1.5 0 013 12.5v-8z" stroke="currentColor" stroke-width="1.4"/></svg>
         Files
       </button>
-      <button class="navbtn projnav" data-view="messages" onclick="go('messages')" style="display:none;">
+      <button class="navbtn proj-notclient-only projnav" data-view="messages" onclick="go('messages')" style="display:none;">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 4.5A1.5 1.5 0 014.5 3h9A1.5 1.5 0 0115 4.5v6A1.5 1.5 0 0113.5 12H7l-3.5 3v-3H4.5A1.5 1.5 0 013 10.5v-6z" stroke="currentColor" stroke-width="1.4"/></svg>
         Messages <span class="badge">2</span>
       </button>
-      <a class="navbtn projnav" href="/photo-markup-review" style="display:none;">
+      <a class="navbtn proj-notclient-only projnav" href="/photo-markup-review" style="display:none;">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="3.5" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><circle cx="6.5" cy="7.5" r="1.4" stroke="currentColor" stroke-width="1.4"/><path d="M3 13l3.5-3 2.5 2 3-2.5 3 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Photo Review <span class="badge">3</span>
       </a>
@@ -809,55 +809,14 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:1rem;">+ Request another model</button>
       </div>
 
-      <div class="myproj-section">
-        <div class="myproj-label"><span class="mock__k">Awaiting your review</span><span class="myproj-count">1</span></div>
-        <button class="projrow projcard" onclick="openQuoteStage('aria','Solace Chapel — Santa Fe, NM')">
-          <div>
-            <div class="projrow__name">Solace Chapel — Santa Fe, NM</div>
-            <div class="projrow__sub">Architectural model with context · 1:100</div>
-            <div class="projcard__meta">Estimate CM-Q-2044 ready · ~ USD 6,200 · valid 30 days</div>
-          </div>
-          <span class="projrow__stat"><span class="chip await">Quote ready</span></span>
-        </button>
-      </div>
-
-      <div class="myproj-section">
-        <div class="myproj-label"><span class="mock__k">Awaiting deposit</span><span class="myproj-count">1</span></div>
-        <button class="projrow projcard" onclick="openAwaitingDeposit('aria','Maritime Center — Long Beach, CA')">
-          <div>
-            <div class="projrow__name">Maritime Center — Long Beach, CA</div>
-            <div class="projrow__sub">Sales gallery model · 1:75 · lit base</div>
-            <div class="projcard__meta">Quote approved Mar 14 · deposit invoice CM-1051 sent · production starts once deposit clears</div>
-          </div>
-          <span class="projrow__stat"><span class="chip await">Deposit due</span></span>
-        </button>
-      </div>
-
-      <div class="myproj-section">
-        <div class="myproj-label"><span class="mock__k">Active</span><span class="myproj-count">1</span></div>
-        <button class="projrow projcard" onclick="openProject('aria')">
-          <div>
-            <div class="projrow__name">Aria Tower — Los Angeles, CA</div>
-            <div class="projrow__sub">Architectural massing · 1:96 · Investor presentation</div>
-            <div class="projcard__bar"><i style="width:68%"></i></div>
-            <div class="projcard__meta">Fabrication · 68% · target delivery Apr 2, 2026</div>
-          </div>
-          <span class="projrow__stat"><span class="chip active">In production</span></span>
-        </button>
-      </div>
-
-      <div class="myproj-section">
-        <div class="myproj-label"><span class="mock__k">Completed</span><span class="myproj-count">1</span></div>
-        <button class="projrow projcard" onclick="openCompletedProject('Lumen Courtyard — San Diego, CA')">
-          <div>
-            <div class="projrow__name">Lumen Courtyard — San Diego, CA</div>
-            <div class="projrow__sub">Sales gallery model · 1:50 · lit base</div>
-            <div class="projcard__bar"><i style="width:100%"></i></div>
-            <div class="projcard__meta">100% complete · delivered Dec 12, 2025</div>
-          </div>
-          <span class="projrow__stat"><span class="chip done">Delivered</span></span>
-        </button>
-      </div>
+      <!-- Real data only: populated by renderMyProjectsClient() from
+           myClientBriefs() (SDB.briefs matched to this session's own
+           email via b.client.Email) -- replaces what used to be four
+           permanently-hardcoded demo project cards (Solace Chapel,
+           Maritime Center, Aria Tower, Lumen Courtyard) that showed the
+           same fake projects to every client account regardless of what
+           they'd actually submitted or been awarded. -->
+      <div id="myProjectsListWrap"></div>
     </section>
 
     <!-- OVERVIEW -->
@@ -2436,6 +2395,11 @@ function createInvite(e){
   fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:'client'})})
     .then(function(r){return r.json().catch(function(){return {};});})
     .then(function(data){
+      if(data&&data.code==='EMAIL_TAKEN'){
+        if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Create invite';}
+        alert(email+' already has a Carve Model account. Use Team & Access (or the Clients tab) to reset their access instead of creating a new one.');
+        return;
+      }
       var link=(data&&data.link)||(location.origin+'/login');
       document.getElementById('inviteLink').value=link;
       var note=document.getElementById('inviteNote');
@@ -3408,6 +3372,64 @@ function renderVendorProjects(){
   wrap.innerHTML=projectSectionHtml('In Progress',active)+projectSectionHtml('Paused',paused)+projectSectionHtml('Completed',completed)+projectSectionHtml('Archived',archived);
 }
 window.renderVendorProjects=renderVendorProjects;
+// Every brief actually addressed to this client -- matched by email
+// (b.client.Email), not by anything the client themselves picked, since a
+// client account should only ever be able to see work that was actually
+// submitted/quoted under their own email. Includes briefs that haven't
+// been awarded yet (still being quoted), unlike awardedBriefs(), since a
+// client needs to see "your quote is ready for review" before award ever
+// happens.
+function myClientBriefs(){
+  if(!window.ME_CLIENT_EMAIL)return [];
+  return (SDB.briefs||[]).filter(function(b){
+    return b.client&&b.client.Email&&b.client.Email.toLowerCase()===window.ME_CLIENT_EMAIL;
+  });
+}
+window.myClientBriefs=myClientBriefs;
+// Client's own "My Projects" list -- replaces four permanently-hardcoded
+// demo cards (Solace Chapel/Maritime Center/Aria Tower/Lumen Courtyard,
+// see view-myprojects) that showed the exact same fake projects to every
+// client account no matter who was actually signed in or what they'd
+// submitted. Buckets mirror the real states a client's own project can
+// actually be in: a quote sent but not yet accepted, an accepted quote
+// awaiting its deposit, awarded-and-in-progress, delivered, or archived --
+// reusing the same real projectSectionHtml/projectRowHtml Owner's Projects
+// tab and Client Manager's My Assigned already render with (which already
+// scrub nothing client-inappropriate; the cid-only company/contact line
+// they show is the client's own, and paymentStatusLabel() is their own
+// payment status).
+function renderMyProjectsClient(){
+  var wrap=document.getElementById('myProjectsListWrap');
+  if(!wrap)return;
+  if(!window.ME_CLIENT_EMAIL){
+    wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">This account isn\'t linked to a client record yet.</div>';
+    return;
+  }
+  var mine=myClientBriefs();
+  if(!mine.length){
+    wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">You don\'t have any projects with Carve Model yet.</div>';
+    return;
+  }
+  mine.forEach(autoMarkDeliveredIfComplete);
+  var archived=mine.filter(function(b){return b.archived;});
+  var completed=mine.filter(function(b){return !b.archived&&b.deliveredAt;});
+  var reviewing=mine.filter(function(b){return !b.archived&&!b.deliveredAt&&b.status!=='awarded'&&b.clientQuote;});
+  var depositDue=mine.filter(function(b){
+    if(b.archived||b.deliveredAt||b.status!=='awarded')return false;
+    var inv=b.clientQuote&&b.clientQuote.invoice;
+    return !(inv&&inv.depositStatus==='paid');
+  });
+  var active=mine.filter(function(b){
+    return !b.archived&&!b.deliveredAt&&b.status==='awarded'&&depositDue.indexOf(b)===-1;
+  });
+  wrap.innerHTML=
+    projectSectionHtml('Awaiting your review',reviewing)+
+    projectSectionHtml('Awaiting deposit',depositDue)+
+    projectSectionHtml('In Production',active)+
+    projectSectionHtml('Completed',completed)+
+    projectSectionHtml('Archived',archived);
+}
+window.renderMyProjectsClient=renderMyProjectsClient;
 // Owner-only heads-up when a Client Manager changes a client's contact
 // info (see saveClientEdit/notifyOwner) -- same {text,time,read} shape and
 // "mark all read" pattern as the vendor Quotes tab's notification banner,
@@ -3573,6 +3595,7 @@ function submitReassignVendor(e){
   var newEmail=document.getElementById('reassignEmail').value.trim();
   if(!newName||!newEmail)return false;
   var oldEmail=v.email;
+  var oldContact=v.contact;
   v.contact=newName;
   v.email=newEmail;
   if(window.PRODUCTION_ADMINS){
@@ -3590,6 +3613,21 @@ function submitReassignVendor(e){
   fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newName,email:newEmail,role:'factory'})})
     .then(function(r){return r.json().catch(function(){return {};});})
     .then(function(data){
+      if(data&&data.code==='EMAIL_TAKEN'){
+        // Someone else already owns this email -- undo the reassignment
+        // (including the old contact's access we just revoked above) rather
+        // than leaving this vendor's record pointed at an email that will
+        // never actually be able to log in as them.
+        v.contact=oldContact;v.email=oldEmail;
+        if(window.PRODUCTION_ADMINS){
+          var admin2=window.PRODUCTION_ADMINS.filter(function(a){return a.shopId===v.id;})[0];
+          if(admin2){admin2.name=oldContact;admin2.email=oldEmail;}
+        }
+        if(typeof saveSRC==='function')saveSRC();
+        renderVendors();
+        alert(newEmail+' already has a Carve Model account under someone else. The vendor contact was left unchanged ('+oldEmail+' still has access) -- use a different email to reassign.');
+        return;
+      }
       alert((data&&data.emailed)?('Reassigned to '+newName+'. An invite was sent to '+newEmail+' to set a password.'+(oldEmail?(' '+oldEmail+' no longer has access.'):'')):('Reassigned to '+newName+', but the invite email didn\'t send — share the sign-up link with '+newEmail+' directly.'));
     })
     .catch(function(){alert('Reassigned to '+newName+', but couldn\'t reach the server to send the invite — share the sign-up link with '+newEmail+' directly.');});
@@ -3631,6 +3669,17 @@ function createTeamMember(e){
   fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:role})})
     .then(function(r){return r.json().catch(function(){return {};});})
     .then(function(data){
+      if(data&&data.code==='EMAIL_TAKEN'){
+        // Already has a real account somewhere -- remove the roster entry
+        // we just optimistically added rather than leaving a team member
+        // on the list who can never actually log in as themselves.
+        window.SDB.team=(window.SDB.team||[]).filter(function(t){return t.email.toLowerCase()!==email.toLowerCase()||t.name!==name;});
+        if(typeof saveSRC==='function')saveSRC();
+        renderTeam();
+        if(window.renderAwardedProjects)window.renderAwardedProjects();
+        alert(email+' already has a Carve Model account. Not added -- if they need '+roleLabel+' access, reset their existing access instead of creating a new one.');
+        return;
+      }
       if(data&&data.emailed){
         alert('Added '+name+' as '+roleLabel+'. An invite email was sent to '+email+' to set their password.');
       }else{
@@ -3664,6 +3713,18 @@ function createVendor(e){
   fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:contact||name,email:email,role:'factory'})})
     .then(function(r){return r.json().catch(function(){return {};});})
     .then(function(data){
+      if(data&&data.code==='EMAIL_TAKEN'){
+        // Already has a real account somewhere -- remove the vendor/shop
+        // roster entries we just optimistically added rather than leaving
+        // a vendor who can never actually log in as themselves.
+        window.SDB.vendors=(window.SDB.vendors||[]).filter(function(x){return x.id!==id;});
+        if(window.SHOPS)window.SHOPS=window.SHOPS.filter(function(s){return s.id!==id;});
+        if(window.PRODUCTION_ADMINS)window.PRODUCTION_ADMINS=window.PRODUCTION_ADMINS.filter(function(a){return a.shopId!==id;});
+        if(typeof saveSRC==='function')saveSRC();
+        renderVendors();
+        alert(email+' already has a Carve Model account. Not added -- if they need vendor access, reset their existing access instead of creating a new one.');
+        return;
+      }
       if(data&&data.emailed){
         alert('Added '+name+' as a vendor. An invite email was sent to '+email+' so they can set a password and sign in.');
       }else{
@@ -3720,6 +3781,16 @@ function createVendorTeamMember(e){
   fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:'factory'})})
     .then(function(r){return r.json().catch(function(){return {};});})
     .then(function(data){
+      if(data&&data.code==='EMAIL_TAKEN'){
+        // Already has a real account somewhere -- remove the roster entry
+        // we just optimistically added rather than leaving a team member
+        // who can never actually log in as themselves.
+        window.SDB.vendorTeam=(window.SDB.vendorTeam||[]).filter(function(t){return t.email.toLowerCase()!==email.toLowerCase()||t.name!==name;});
+        if(typeof saveSRC==='function')saveSRC();
+        renderVendorTeam();
+        alert(email+' already has a Carve Model account. Not added -- if they need access, reset their existing access instead of creating a new one.');
+        return;
+      }
       if(data&&data.emailed){
         alert('Added '+name+' to your team. An invite email was sent to '+email+' to set their password.');
       }else{
@@ -3748,6 +3819,16 @@ window.removeVendorTeamMember=removeVendorTeamMember;
 </script>
 <script>
 var titles={myprojects:'My Projects',myassigned:'My Projects',vendorprojects:'My Projects',projects:'Projects',overview:'Overview',quote:'Quote',editquote:'Edit Estimate',changes:'Request Changes',milestones:'Milestones',files:'Files',messages:'Messages',invoices:'Invoices',leads:'Leads',clients:'Clients',team:'Team & Access',vendorteam:'Team & Access',vendorfinance:'Finance',financestudio:'Finance',sourcing:'Quotes'};
+// A client's per-project nav is scoped down to just Project/Quote/Invoice
+// (Milestones/Files/Messages/Photo Review are studio-internal detail the
+// client doesn't need -- see the proj-notclient-only PERM class), and
+// "Overview" reads as internal-admin language for that same page from a
+// client's seat, so it's relabeled "Project" for them specifically here
+// rather than renaming the view everywhere.
+function viewTitleFor(v){
+  if(v==='overview'&&document.body.dataset.role==='client')return 'Project';
+  return titles[v];
+}
 var currentProjTitle='Aria Tower — Los Angeles, CA';
 var PROJECT_VIEWS=['overview','quote','editquote','changes','milestones','files','messages','invoices'];
 function go(v){
@@ -3759,7 +3840,7 @@ function go(v){
     document.getElementById('view-pickproject').hidden=false;
     if(window.renderPickProjectList)window.renderPickProjectList();
     document.querySelectorAll('.navbtn').forEach(function(b){b.classList.toggle('on',b.dataset.view===v);});
-    document.getElementById('viewTitle').textContent=titles[v];
+    document.getElementById('viewTitle').textContent=viewTitleFor(v);
     document.getElementById('crumb').textContent='Studio · Select a project';
     document.getElementById('side').classList.remove('open');
     return;
@@ -3767,7 +3848,7 @@ function go(v){
   document.querySelectorAll('.view').forEach(function(s){s.hidden=true;});
   document.getElementById('view-'+v).hidden=false;
   document.querySelectorAll('.navbtn').forEach(function(b){b.classList.toggle('on',b.dataset.view===v);});
-  document.getElementById('viewTitle').textContent=titles[v];
+  document.getElementById('viewTitle').textContent=viewTitleFor(v);
   // Oversight / portfolio views aren't tied to one project; project views are.
   var projScoped=(v!=='clients'&&v!=='team'&&v!=='vendorteam'&&v!=='vendorfinance'&&v!=='financestudio'&&v!=='leads'&&v!=='myprojects'&&v!=='myassigned'&&v!=='vendorprojects'&&v!=='projects'&&v!=='sourcing')&&!skipProjectGate;
   var oversightPrefix=(document.body.dataset.role==='client')?'':'Studio · ';
@@ -3792,6 +3873,7 @@ function go(v){
   if(v==='projects'&&window.renderAwardedProjects)window.renderAwardedProjects();
   if(v==='myassigned'&&window.renderMyAssigned)window.renderMyAssigned();
   if(v==='vendorprojects'&&window.renderVendorProjects)window.renderVendorProjects();
+  if(v==='myprojects'&&window.renderMyProjectsClient)window.renderMyProjectsClient();
   if(v==='milestones'&&window.renderMilestonesReal)window.renderMilestonesReal(findBrief(document.getElementById('projSelect').value));
   if(v==='files'&&window.renderFilesReal)window.renderFilesReal(findBrief(document.getElementById('projSelect').value));
   if(v==='clients'&&window.scopeClients)window.scopeClients(document.body.dataset.role);
@@ -3804,12 +3886,42 @@ function go(v){
 // Projects tab, the sidebar project picker, and (once assigned) a Client
 // Manager's My Projects list -- every entry point now passes a real brief
 // id (see renderProjectsList/renderPickProjectList), never a fake demo key.
+// The sidebar's #projSelect only ever gets its <option>s bulk-rebuilt by
+// syncProjectSelectOptions() (Owner's Projects tab / Client Manager's My
+// Assigned, and only from awardedBriefs()) -- so a role or brief status
+// that render path never touches (vendor's own My Projects, a client
+// opening a project that isn't awarded yet) found no matching <option>
+// when openProject() tried to select it. Per the HTML <select> spec,
+// setting .value to a non-matching id silently resets it to '' instead of
+// keeping the id, which then threw inside onProjChange()
+// (sel.options[sel.selectedIndex] was undefined) and broke the entire
+// project workspace for that click -- every "My Projects" list this app
+// has (Owner/CM/vendor/client) ultimately opens a project through this one
+// function, so guaranteeing a real <option> exists here, for the exact id
+// being opened, fixes it at the one shared chokepoint rather than requiring
+// every render path to remember to sync first.
+function ensureProjOption(id){
+  var sel=document.getElementById('projSelect');
+  if(!sel||!id)return;
+  var b=findBrief(id);
+  if(!b)return;
+  var opt=null;
+  Array.prototype.forEach.call(sel.options,function(o){if(o.value===id)opt=o;});
+  if(!opt){
+    opt=document.createElement('option');
+    opt.value=id;
+    sel.appendChild(opt);
+  }
+  opt.textContent=b.title||id;
+}
+window.ensureProjOption=ensureProjOption;
 function openProject(id){
   document.body.classList.remove('quote-stage');
   document.body.classList.remove('pre-deposit');
   var b=findBrief(id);
   if(!b){go(document.body.dataset.role==='owner'?'projects':'overview');return;}
   window.quoteMode='active';
+  ensureProjOption(id);
   var sel=document.getElementById('projSelect');
   sel.value=id;
   onProjChange();
@@ -5355,19 +5467,24 @@ function createClientAccount(e){
   // who already has an account and just needed their phone number
   // corrected would be confusing and wrong.
   var wasNewAccount=true;
+  var rollbackTargetContact=null;   // an existing contact whose hasAccount we flipped true -- revert on EMAIL_TAKEN
+  var rollbackNewContact=null;      // a brand-new contact card we created -- remove entirely on EMAIL_TAKEN
+  var rollbackNewCompany=null;      // the company we created to hold it, if it didn't already exist
   if(assignAccountTarget){
     var targetCo=COMPANIES.filter(function(c){return c.id===assignAccountTarget.companyId;})[0];
     var targetContact=targetCo&&targetCo.contacts.filter(function(c){return c.id===assignAccountTarget.contactId;})[0];
     if(targetContact){
       wasNewAccount=targetContact.hasAccount===false;
+      if(wasNewAccount)rollbackTargetContact=targetContact;
       targetContact.name=name;targetContact.title=title;targetContact.email=email;targetContact.phone=phone;
       targetContact.hasAccount=true;
     }
   }else{
     var contact={id:'c'+Date.now(),name:name,title:title,email:email,phone:phone,quoteRequests:0,projects:[],hasAccount:true};
     var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
+    rollbackNewContact=contact;
     if(co){co.contacts.push(contact);}
-    else{COMPANIES.push({id:'co'+Date.now(),name:companyName,parentId:null,rep:rep,contacts:[contact]});}
+    else{co={id:'co'+Date.now(),name:companyName,parentId:null,rep:rep,contacts:[contact]};COMPANIES.push(co);rollbackNewCompany=co;}
   }
   assignAccountTarget=null;
   closeAddClient();
@@ -5389,6 +5506,27 @@ function createClientAccount(e){
     fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:'client'})})
       .then(function(r){return r.json().catch(function(){return {};});})
       .then(function(data){
+        if(data&&data.code==='EMAIL_TAKEN'){
+          // Already has a real account somewhere -- undo whatever we just
+          // did to this contact card rather than leaving it claiming a
+          // portal account that will never actually work.
+          if(rollbackTargetContact){
+            rollbackTargetContact.hasAccount=false;
+          }else if(rollbackNewContact){
+            var ownerCo=COMPANIES.filter(function(c){return c.contacts.indexOf(rollbackNewContact)>=0;})[0];
+            if(ownerCo){
+              ownerCo.contacts=ownerCo.contacts.filter(function(c){return c!==rollbackNewContact;});
+              if(!ownerCo.contacts.length&&rollbackNewCompany===ownerCo){
+                var idx=COMPANIES.indexOf(ownerCo);
+                if(idx>=0)COMPANIES.splice(idx,1);
+              }
+            }
+          }
+          if(typeof saveSRC==='function')saveSRC();
+          if(document.getElementById('view-clients')&&!document.getElementById('view-clients').hidden&&window.scopeClients)window.scopeClients(document.body.dataset.role);
+          showEmailToast(esc(email)+' already has a Carve Model account. Not created -- if they need portal access, reset their existing access instead.');
+          return;
+        }
         if(data&&data.emailed){
           showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+') — an invite email was sent so they can set a password and sign in.');
         }else{
@@ -5662,7 +5800,13 @@ function createLead(e){
 // brief — removed so there's only one implementation to reason about.
 function onProjChange(){
   var sel=document.getElementById('projSelect');
-  currentProjTitle=sel.options[sel.selectedIndex].textContent;
+  // sel.selectedIndex is -1 (options[-1] is undefined) whenever .value was
+  // just set to an id with no matching <option> -- see ensureProjOption(),
+  // which is supposed to prevent that, but this stays defensive rather than
+  // throwing and breaking the whole page if some future caller forgets to
+  // call it first.
+  var opt=sel.options[sel.selectedIndex];
+  currentProjTitle=opt?opt.textContent:(sel.value?((findBrief(sel.value)||{}).title||sel.value):'');
   var shortName=currentProjTitle.split(' — ')[0];
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=shortName;});
   // Re-render the crumb for whatever project view is open.
@@ -5678,6 +5822,7 @@ var PERM={
   'studio-only':['owner','sales','factory','prodtech'],
   'finance-only':['client'],                   // client's own project invoice. Owner no longer gets a standalone Invoices nav tab — Invoice & Payment is reached per-project from the Projects tab instead. Client Manager doesn't get this either: the old tab shows whatever brief is "latest" studio-wide, which would leak a different Client Manager's client — they use the correctly-scoped invoice downloads in My Projects.
   'client-quote-only':['client'],               // client-facing Quote nav — Client Manager doesn't see quote/estimate negotiation, only Owner does via Sourcing & Quotes
+  'proj-notclient-only':['owner','sales','factory','prodtech'],  // Milestones/Files/Messages/Photo Review -- studio-internal project detail a client doesn't need; their per-project nav is scoped down to just Project (Overview)/Quote/Invoice.
   'finance-edit':['owner'],                    // edit/resend estimates — Client Manager is view-only on invoices
   'fab-only':['owner','factory','prodtech'],   // fabrication controls
   'cm-only':['owner'],                         // studio-wide leads/clients pipeline + full project list — Owner only; Client Manager gets the scoped 'cmproj-only' view instead
@@ -6148,9 +6293,15 @@ function setRole(r){
     sel.value='';
     go('projects');
   }else if(r==='client'){
-    if(!sel.value)sel.value='aria';
-    onProjChange();
-    go('quote');
+    // Land on the client's own real "My Projects" list (renderMyProjectsClient(),
+    // scoped to their email via window.ME_CLIENT_EMAIL) instead of forcing a
+    // specific project open -- this used to hardcode sel.value to the 'aria'
+    // demo project and jump straight into its Quote tab, so every client
+    // account landed on the exact same fake project regardless of who was
+    // actually signed in or what they'd submitted. Same "land on your own
+    // scoped list, then pick a project" pattern Client Manager/vendor use below.
+    sel.value='';
+    go('myprojects');
   }else if(r==='factory'||r==='prodtech'){
     // Vendor side lands on their own scoped project list (renderVendorProjects()),
     // same pattern as Client Manager landing on My Projects instead of a
@@ -6851,6 +7002,12 @@ function enterSession(role,email,name){
   // Overview / SRC_toggleTeamMemberAssignment) -- mirrors how ME_TECH
   // scopes a Production Technician's own assignments.
   window.ME_TEAM_MEMBER_ID=(role==='factory'&&factoryTeamMember)?factoryTeamMember.id:null;
+  // Which real client this session IS, if any -- null for every non-client
+  // role. myClientBriefs()/renderMyProjectsClient() read this to scope the
+  // client's own "My Projects" list to briefs actually addressed to their
+  // email (b.client.Email), the same way ME_TEAM_MEMBER_ID/OUR_SHOP scope
+  // a vendor session to their own shop's projects.
+  window.ME_CLIENT_EMAIL=(role==='client'&&email)?email.toLowerCase():null;
   setRole(role);
   // Real invited accounts carry a real name \u2014 show it instead of the fixed
   // per-role demo persona from ROLE_INFO (setRole() just set those fields).
@@ -6858,6 +7015,21 @@ function enterSession(role,email,name){
     var wn=document.getElementById('whoName'), wa=document.getElementById('whoAv');
     if(wn)wn.textContent=name;
     if(wa&&typeof initialsOf==='function')wa.textContent=initialsOf(name);
+  }else if(role==='client'){
+    // No real name on file for this account (e.g. a legacy/demo login that
+    // predates real invites) -- rather than leaving setRole()'s fabricated
+    // ROLE_INFO.client persona ("Asher Liu") on screen, which looks like a
+    // real account that just happens to be wrong, fall back to a name
+    // actually tied to this email in real data (any brief they've
+    // submitted carries their real b.client.Name), or their email itself
+    // if nothing else is on record.
+    var realName=null;
+    var theirBriefs=(typeof myClientBriefs==='function')?myClientBriefs():[];
+    var withName=theirBriefs.filter(function(b){return b.client&&b.client.Name;})[0];
+    if(withName)realName=withName.client.Name;
+    var wn2=document.getElementById('whoName'), wa2=document.getElementById('whoAv');
+    if(wn2)wn2.textContent=realName||email;
+    if(wa2)wa2.textContent=(realName&&typeof initialsOf==='function')?initialsOf(realName):(email?email[0].toUpperCase():'?');
   }
   if(role==='client'&&window.recordClientActivity)window.recordClientActivity(email);
   if(role==='factory'&&factoryAdmin){
