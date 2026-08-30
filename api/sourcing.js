@@ -408,6 +408,7 @@ module.exports = async (req, res) => {
       if (!data.vendors) data.vendors = [];
       if (!data.team) data.team = [];
       if (!data.vendorTeam) data.vendorTeam = [];
+      if (!data.companies) data.companies = [];
       const query = req.query || {};
       if (query.role) {
         const session = await resolveSession(redis, query.token);
@@ -475,6 +476,7 @@ module.exports = async (req, res) => {
       if (!current.vendors) current.vendors = [];
       if (!current.team) current.team = [];
       if (!current.vendorTeam) current.vendorTeam = [];
+      if (!current.companies) current.companies = [];
 
       // A factory (vendor) caller's local briefs are the server-FILTERED,
       // redacted view from GET (see filterDataForFactory) — their browser
@@ -655,6 +657,11 @@ module.exports = async (req, res) => {
         vendors: isFactorySave ? current.vendors : mergeById(current.vendors, body.vendors, body.deletedVendorIds),
         team: isFactorySave ? current.team : mergeById(current.team, body.team, body.deletedTeamIds),
         vendorTeam: vendorTeamForMerge,
+        // companies (Clients tab) is Owner-only data, same as vendors/team —
+        // a factory session never touches it (isFactorySave keeps whatever
+        // was already stored, untouched, same fail-closed rule as the rest
+        // of this block).
+        companies: isFactorySave ? current.companies : mergeById(current.companies, body.companies, body.deletedCompanyIds),
       };
       await redis.set(KEY, JSON.stringify(data));
 
@@ -674,7 +681,7 @@ module.exports = async (req, res) => {
         await Promise.allSettled(notifications);
       }
 
-      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads, vendors: data.vendors, team: data.team, vendorTeam: data.vendorTeam });
+      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads, vendors: data.vendors, team: data.team, vendorTeam: data.vendorTeam, companies: data.companies });
       return;
     }
 

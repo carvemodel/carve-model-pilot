@@ -1596,7 +1596,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <div class="notice studio-only" id="clientsNotice" hidden></div>
       <div class="kpis" id="clientsKpis" style="grid-template-columns:repeat(6,1fr);margin-top:0;"></div>
       <div class="panel" style="margin-top:1.25rem;">
-        <div class="panel__head"><h3 id="clientsHeading">Clients</h3><div style="display:flex;align-items:center;gap:0.9rem;"><span class="mock__k" id="clientsCount"></span><button class="btn btn--ghost btn--sm" onclick="exportClientsCSV()">↓ Export to Excel (CSV)</button></div></div>
+        <div class="panel__head"><h3 id="clientsHeading">Clients</h3><div style="display:flex;align-items:center;gap:0.9rem;"><span class="mock__k" id="clientsCount"></span><select id="clientSortSelect" class="input input--sm" style="width:auto;" onchange="setClientSort(this.value)"><option value="value_desc" selected>Contract Value (High to Low)</option><option value="name_asc">Company name (A-Z)</option></select><button class="btn btn--ghost btn--sm" onclick="exportClientsCSV()">↓ Export to Excel (CSV)</button></div></div>
         <div class="panel__body" id="companyList"></div>
       </div>
     </section>
@@ -2267,7 +2267,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 <!-- Add client account modal (set up portal + invoice access for a client) -->
 <div class="modal-overlay" id="addClientModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Add a client account">
-    <div class="modal__head"><h3>Add a client account</h3><button class="modal__x" onclick="closeAddClient()" aria-label="Close">×</button></div>
+    <div class="modal__head"><h3 id="addClientModalTitle">Add a client account</h3><button class="modal__x" onclick="closeAddClient()" aria-label="Close">×</button></div>
     <div class="modal__body">
       <form onsubmit="return createClientAccount(event)">
         <div class="efield-row">
@@ -2282,7 +2282,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="efield"><label for="ac-phone">Phone <span class="optional">(optional)</span></label><input id="ac-phone" type="tel" placeholder="(555) 000-0000"></div>
         </div>
         <div class="changes__act" style="margin-top:0.4rem;">
-          <button class="btn btn--primary" type="submit">Create account</button>
+          <button class="btn btn--primary" type="submit" id="addClientSubmitBtn">Create account</button>
         </div>
       </form>
     </div>
@@ -4635,6 +4635,15 @@ function inCfRange(dateStr){
   }
   return true;
 }
+// Studio-wide amounts owed to Carve's vendors, mirroring vendorPaymentStatusLabel()/
+// the per-project Vendor Payment panel (b.vendorInvoice) but rolled up across every
+// awarded project, in the same RMB-primary/USD-approx format the vendor's own
+// Finance tab (renderVendorFinance) already uses -- that's the vendor's real
+// invoiced currency, so it stays primary here too rather than being converted away.
+function vendorAmountTxt(rmb,usdApprox){
+  if(!rmb)return moneyRMB(0);
+  return moneyRMB(rmb)+(usdApprox!=null?(' (≈ '+fmtUsd(usdApprox)+')'):'');
+}
 function renderCarveFinance(){
   var wrap=document.getElementById('carveFinanceList');
   if(!wrap)return;
@@ -4644,17 +4653,33 @@ function renderCarveFinance(){
     return;
   }
   var totalUsd=0, receivedUsd=0;
+  var payableRMB=0, paidRMB=0, payableUsd=0, paidUsd=0;
   mine.forEach(function(b){
     var price=(b.clientQuote&&b.clientQuote.price!=null)?b.clientQuote.price:0;
     totalUsd+=price;
     var inv=b.clientQuote&&b.clientQuote.invoice;
     if(inv&&inv.balanceStatus==='paid')receivedUsd+=price;
     else if(inv&&inv.depositStatus==='paid')receivedUsd+=price/2;
+    // Vendor side -- what CARVE owes the shop that won this project, not
+    // what the client owes Carve. Same winningQuote()/b.vendorInvoice pair
+    // the Vendor Payment panel and vendor's own Finance tab already read.
+    var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+    var vRmb=(wq&&wq.priceRMB)||0, vUsd=(wq&&wq.price)||0;
+    payableRMB+=vRmb;payableUsd+=vUsd;
+    var vinv=b.vendorInvoice||{};
+    if(vinv.balanceStatus==='paid'){paidRMB+=vRmb;paidUsd+=vUsd;}
+    else if(vinv.depositStatus==='paid'){paidRMB+=vRmb/2;paidUsd+=vUsd/2;}
   });
-  var html='<div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
+  var html='<div class="mock__k" style="margin-bottom:0.6rem;">Client billing</div><div class="kpis" style="grid-template-columns:repeat(4,1fr);">'+
     '<div class="kpi"><span class="mock__k">Awarded projects</span><div class="big">'+mine.length+'</div></div>'+
     '<div class="kpi"><span class="mock__k">Total quoted</span><div class="big">'+fmtUsd(totalUsd)+'</div></div>'+
     '<div class="kpi"><span class="mock__k">Received so far</span><div class="big">'+fmtUsd(receivedUsd)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Outstanding from client</span><div class="big">'+fmtUsd(totalUsd-receivedUsd)+'</div></div>'+
+  '</div>';
+  html+='<div class="mock__k" style="margin:1.25rem 0 0.6rem;">Vendor payables</div><div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
+    '<div class="kpi"><span class="mock__k">Total payable</span><div class="big">'+vendorAmountTxt(payableRMB,payableUsd)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Paid so far</span><div class="big">'+vendorAmountTxt(paidRMB,paidUsd)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Remaining</span><div class="big">'+vendorAmountTxt(payableRMB-paidRMB,payableUsd-paidUsd)+'</div></div>'+
   '</div>';
   mine.sort(function(a,c){return (c.awardedAt||c.sentDate||'').localeCompare(a.awardedAt||a.sentDate||'');});
   html+='<div class="panel" style="margin-top:1.25rem;"><div class="panel__head"><h3>Awarded projects</h3></div><div class="panel__body">'+
@@ -4662,7 +4687,21 @@ function renderCarveFinance(){
       var c=b.client||{};
       var price=(b.clientQuote&&b.clientQuote.price!=null)?b.clientQuote.price:null;
       var priceTxt=price!=null?fmtUsd(price):'—';
-      return '<div class="qline2" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><div class="qf-name"><div class="nm">'+esc(b.title)+'</div><div class="mock__k">'+esc(c.Company||'—')+'</div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">'+priceTxt+'</div><div></div><div style="text-align:right;">'+esc(paymentStatusLabel(b))+'</div></div>';
+      var vendorRec=(typeof shop==='function')?shop(b.awarded):null;
+      var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+      var vRmb=(wq&&wq.priceRMB)||0, vUsd=(wq&&wq.price)||0;
+      var vinv=b.vendorInvoice||{};
+      var vPaidRmb=vinv.balanceStatus==='paid'?vRmb:(vinv.depositStatus==='paid'?vRmb/2:0);
+      var vPaidUsd=vinv.balanceStatus==='paid'?vUsd:(vinv.depositStatus==='paid'?vUsd/2:0);
+      return '<div class="qline2" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><div class="qf-name"><div class="nm">'+esc(b.title)+'</div><div class="mock__k">'+esc(c.Company||'—')+'</div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">'+priceTxt+'</div><div></div><div style="text-align:right;">'+esc(paymentStatusLabel(b))+'</div>'+
+        '<div style="grid-column:1/-1;margin-top:0.6rem;padding-top:0.6rem;border-top:1px dashed var(--cm-line-faint);display:flex;flex-wrap:wrap;gap:1.2rem;font-size:0.8rem;color:var(--cm-text-subtle);">'+
+          '<span>Vendor: <span style="color:var(--cm-text);">'+esc(vendorRec?vendorRec.name:'—')+'</span></span>'+
+          '<span>Payable: <span style="color:var(--cm-text);">'+vendorAmountTxt(vRmb,vUsd)+'</span></span>'+
+          '<span>Paid: <span style="color:var(--cm-text);">'+vendorAmountTxt(vPaidRmb,vPaidUsd)+'</span></span>'+
+          '<span>Remaining: <span style="color:var(--cm-text);">'+vendorAmountTxt(vRmb-vPaidRmb,vUsd-vPaidUsd)+'</span></span>'+
+          '<span>Vendor payment: <span style="color:var(--cm-text);">'+esc(vendorPaymentStatusLabel(b))+'</span></span>'+
+        '</div>'+
+      '</div>';
     }).join('')+
   '</div></div>';
   wrap.innerHTML=html;
@@ -5271,6 +5310,15 @@ var assignAccountTarget=null; // {companyId,contactId} when assigning an existin
 function openAddClient(companyId,contactId){
   ['ac-contact','ac-title','ac-company','ac-email','ac-phone'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
   assignAccountTarget=null;
+  // Same modal serves two different actions depending on the contact's
+  // current hasAccount state: a fresh "+ Assign account" (no portal login
+  // yet -- submitting sends a real invite email, see createClientAccount)
+  // vs. "Edit contact" on someone who already has one (submitting just
+  // updates their info in place, no invite re-sent). The title/button
+  // copy reflects whichever this actually is so it's never misleading.
+  var titleEl=document.getElementById('addClientModalTitle');
+  var btnEl=document.getElementById('addClientSubmitBtn');
+  var editingExistingAccount=false;
   if(companyId&&contactId){
     var co=COMPANIES.filter(function(c){return c.id===companyId;})[0];
     var contact=co&&co.contacts.filter(function(c){return c.id===contactId;})[0];
@@ -5281,8 +5329,11 @@ function openAddClient(companyId,contactId){
       document.getElementById('ac-company').value=co.name||'';
       document.getElementById('ac-email').value=contact.email||'';
       document.getElementById('ac-phone').value=contact.phone||'';
+      editingExistingAccount=contact.hasAccount!==false;
     }
   }
+  if(titleEl)titleEl.textContent=editingExistingAccount?'Edit contact':'Add a client account';
+  if(btnEl)btnEl.textContent=editingExistingAccount?'Save changes':'Create account';
   document.getElementById('addClientModal').hidden=false;
 }
 function closeAddClient(){ document.getElementById('addClientModal').hidden=true; }
@@ -5296,10 +5347,19 @@ function createClientAccount(e){
   if(!name||!email)return false;
   var role=document.body.dataset.role;
   var rep=(role==='sales')?'jordan':null;
+  // Whether this save is a brand-new invite (contact didn't have a portal
+  // account yet) vs. just fixing this existing contact's own info (name/
+  // title/email/phone) -- captured BEFORE hasAccount gets set below, since
+  // that's the one thing that tells the two apart. Only the former should
+  // trigger a real invite email; re-sending "set your password" to someone
+  // who already has an account and just needed their phone number
+  // corrected would be confusing and wrong.
+  var wasNewAccount=true;
   if(assignAccountTarget){
     var targetCo=COMPANIES.filter(function(c){return c.id===assignAccountTarget.companyId;})[0];
     var targetContact=targetCo&&targetCo.contacts.filter(function(c){return c.id===assignAccountTarget.contactId;})[0];
     if(targetContact){
+      wasNewAccount=targetContact.hasAccount===false;
       targetContact.name=name;targetContact.title=title;targetContact.email=email;targetContact.phone=phone;
       targetContact.hasAccount=true;
     }
@@ -5311,23 +5371,34 @@ function createClientAccount(e){
   }
   assignAccountTarget=null;
   closeAddClient();
-  // Actually call the real invite pipeline (same one createTeamMember/
-  // createVendor already use) instead of just claiming success -- this
-  // used to show "sign-in and invoice access sent" unconditionally without
-  // ever contacting an email API, so the admin had no way to know (and the
-  // client never actually got) a real invite.
-  fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:'client'})})
-    .then(function(r){return r.json().catch(function(){return {};});})
-    .then(function(data){
-      if(data&&data.emailed){
-        showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+') — an invite email was sent so they can set a password and sign in.');
-      }else{
-        showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+'), but no invite email was sent (email service isn\'t configured yet) — send them the sign-up link directly.');
-      }
-    })
-    .catch(function(){
-      showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+'), but the invite email failed to send — send them the sign-up link directly.');
-    });
+  // This used to never call saveSRC() at all -- the new/updated contact
+  // card looked created in the UI but reverted the moment SDB.companies
+  // got persisted by some unrelated later action (or never persisted at
+  // all if none happened to fire first).
+  if(typeof saveSRC==='function')saveSRC();
+  if(!wasNewAccount){
+    // Pure edit of an existing contact -- no invite to send, just confirm
+    // the save.
+    showEmailToast('Contact info updated for <b>'+esc(name)+'</b> ('+esc(email)+').');
+  }else{
+    // Actually call the real invite pipeline (same one createTeamMember/
+    // createVendor already use) instead of just claiming success -- this
+    // used to show "sign-in and invoice access sent" unconditionally
+    // without ever contacting an email API, so the admin had no way to
+    // know (and the client never actually got) a real invite.
+    fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:'client'})})
+      .then(function(r){return r.json().catch(function(){return {};});})
+      .then(function(data){
+        if(data&&data.emailed){
+          showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+') — an invite email was sent so they can set a password and sign in.');
+        }else{
+          showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+'), but no invite email was sent (email service isn\'t configured yet) — send them the sign-up link directly.');
+        }
+      })
+      .catch(function(){
+        showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+'), but the invite email failed to send — send them the sign-up link directly.');
+      });
+  }
   if(document.getElementById('view-clients')&&!document.getElementById('view-clients').hidden&&window.scopeClients)window.scopeClients(role);
   return false;
 }
@@ -5342,8 +5413,22 @@ function deleteClientContact(coId,contactId){
   if(!contact)return;
   if(!confirm('Permanently delete the contact record for '+contact.name+' ('+contact.email+')? This cannot be undone.'))return;
   co.contacts=co.contacts.filter(function(c){return c.id!==contactId;});
-  if(!co.contacts.length)COMPANIES=COMPANIES.filter(function(c){return c!==co;});
-  if(typeof saveSRC==='function')saveSRC();
+  // Splice in place rather than `COMPANIES=COMPANIES.filter(...)` -- that
+  // reassignment would point the local COMPANIES variable at a brand-new
+  // array while SDB.companies (and anything else holding the old
+  // reference) kept pointing at the original, silently breaking the
+  // persistence link set up right after SDB=loadSRC(). This is also a
+  // real, permanent delete (not just a local edit), so tell the server to
+  // actually drop it -- otherwise a later pull could resurrect a company
+  // this admin just deleted.
+  if(!co.contacts.length){
+    var coIdx=COMPANIES.indexOf(co);
+    if(coIdx>=0)COMPANIES.splice(coIdx,1);
+    if(window.srcPendingDeleteCompanyIds)window.srcPendingDeleteCompanyIds.push(co.id);
+    if(typeof saveSRC==='function')saveSRC({deletedCompanyIds:[co.id]});
+  }else if(typeof saveSRC==='function'){
+    saveSRC();
+  }
   if(typeof renderClients==='function')renderClients(document.body.dataset.role);
 }
 window.deleteClientContact=deleteClientContact;
@@ -5790,7 +5875,17 @@ function confirmLinkContact(){
   if(!targetCo)return;
   fromCo.contacts.splice(idx,1);
   targetCo.contacts.push(contact);
-  if(!fromCo.contacts.length)COMPANIES=COMPANIES.filter(function(c){return c!==fromCo;});
+  // Splice in place (not `COMPANIES=COMPANIES.filter(...)`) so the
+  // COMPANIES/SDB.companies aliasing set up after SDB=loadSRC() never
+  // breaks -- see the same fix/comment in deleteClientContact above.
+  if(!fromCo.contacts.length){
+    var fromIdx=COMPANIES.indexOf(fromCo);
+    if(fromIdx>=0)COMPANIES.splice(fromIdx,1);
+  }
+  // This used to never call saveSRC() at all -- the re-grouped contact
+  // looked moved in the UI but reverted on the next reload since nothing
+  // ever persisted it.
+  if(typeof saveSRC==='function')saveSRC();
   document.getElementById('linkContactModal').hidden=true;
   scopeClients(document.body.dataset.role);
 }
@@ -5842,14 +5937,20 @@ function renderCompanyCard(co,repName){
   var isOwnerView=document.body.dataset.role==='owner';
   var contactsHtml=co.contacts.map(function(c){
     var projHtml=c.projects.map(function(p){
-      return '<div class="cc-projrow"><span>'+esc(p.name)+'</span><span class="chip '+esc(p.statusClass)+'">'+esc(p.statusLabel)+'</span></div>';
+      // Lets Carve Admin jump straight from a client's project list to
+      // that project's own Overview page -- same openProject(id) used
+      // elsewhere (e.g. the Finance tab rows). Guarded on p.briefId
+      // actually still resolving to a real brief, since a very old
+      // project record could in principle outlive the brief it came from.
+      var clickable=p.briefId&&typeof findBrief==='function'&&findBrief(p.briefId);
+      return '<div class="cc-projrow"'+(clickable?' style="cursor:pointer;" onclick="openProject(\''+esc(p.briefId)+'\')"':'')+'><span>'+esc(p.name)+'</span><span class="chip '+esc(p.statusClass)+'">'+esc(p.statusLabel)+'</span></div>';
     }).join('');
     var delivered=c.projects.filter(function(p){return p.statusLabel==='Delivered';}).length;
     var inProgress=c.projects.length-delivered;
     return '<div class="cc-contact">'+
       '<div class="cc-contact__top"><div><div class="cc-v">'+esc(c.name)+(c.title?(', '+esc(c.title)):'')+'</div><div class="cc-m">'+esc(c.email)+(c.phone?(' · '+esc(c.phone)):'')+'</div></div>'+
       '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'+
-      (c.hasAccount===false?'<button class="btn btn--primary btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">+ Assign account</button>':'')+
+      (c.hasAccount===false?'<button class="btn btn--primary btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">+ Assign account</button>':'<button class="btn btn--ghost btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Edit contact</button>')+
       '<button class="btn btn--ghost btn--sm" onclick="openLinkContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Link to another company</button>'+
       (isOwnerView?('<button class="btn btn--ghost btn--sm btn--danger" onclick="deleteClientContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Delete</button>'):'')+
       '</div></div>'+
@@ -5919,6 +6020,16 @@ function exportClientsCSV(){
   setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
 }
 function scopeClients(role){renderClients(role);}
+// Company name (A-Z) or Contract Value (High to Low) for the Clients tab
+// card list -- see the <select id="clientSortSelect"> in the Clients tab
+// panel head and the cards.sort() call inside renderClients(). Contract
+// Value High-to-Low is the default (most valuable accounts surface first).
+var clientSort='value_desc';
+function setClientSort(val){
+  clientSort=val;
+  renderClients(document.body.dataset.role);
+}
+window.setClientSort=setClientSort;
 function renderClients(role){
   var rep=REP_OF_ROLE[role];           // undefined for owner → sees all
   var list=document.getElementById('companyList');
@@ -5931,7 +6042,12 @@ function renderClients(role){
   var parentGroups=PARENTS.map(function(p){
     return {parent:p,offices:visibleCos.filter(function(co){return co.parentId===p.id;})};
   }).filter(function(g){return g.offices.length;});
-  var html='';
+  // Cards are collected here (with a sort key each) rather than appended
+  // straight into one running `html` string, so Company name / Contract
+  // value sorting (clientSort, see setClientSort()) can apply across BOTH
+  // parent-group cards and standalone company cards together as one list,
+  // not just within each kind separately.
+  var cards=[];
   parentGroups.forEach(function(g){
     var repNames=[].concat.apply([],g.offices.map(function(o){return [o.rep];})).filter(function(v,i,a){return a.indexOf(v)===i;}).map(function(r){return r==='jordan'?'Jordan Lee':(r==='sam'?'Sam Ortiz':r);}).join(', ');
     var globalValue=0,globalPaid=0,globalQuotes=0,globalProjects=0,globalActivity=null;
@@ -5939,7 +6055,7 @@ function renderClients(role){
     total+=globalValue;paid+=globalPaid;quoteReqTotal+=globalQuotes;shown+=g.offices.length;
     projectTotal+=globalProjects;if(globalActivity&&(!lastActivityGlobal||globalActivity>lastActivityGlobal))lastActivityGlobal=globalActivity;
     var pExpanded=!!expandedParents[g.parent.id];
-    html+='<div class="clientcard clientcard--parent">'+
+    var cardHtml='<div class="clientcard clientcard--parent">'+
       '<div class="clientcard__top" style="cursor:pointer;" onclick="toggleParent(\''+esc(g.parent.id)+'\')">'+
         '<div><div class="clientcard__name">'+esc(g.parent.name)+' <span class="tagm" style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-silver);">Global</span></div><div class="clientcard__sub">'+g.offices.length+' office'+(g.offices.length===1?'':'s')+' · '+(pExpanded?'Click to collapse':'Click to expand')+'</div></div>'+
         '<span class="rolepill rolepill--sales">Sales: '+esc(repNames)+'</span>'+
@@ -5954,6 +6070,7 @@ function renderClients(role){
       '</div>'+
       (pExpanded?('<div class="cc-offices">'+g.offices.map(function(o){return renderCompanyCard(o,o.rep==='jordan'?'Jordan Lee':(o.rep==='sam'?'Sam Ortiz':o.rep));}).join('')+'</div>'):'')+
     '</div>';
+    cards.push({sortName:(g.parent.name||'').toLowerCase(),sortValue:globalValue,html:cardHtml});
   });
   standalone.forEach(function(co){
     shown++;
@@ -5961,8 +6078,15 @@ function renderClients(role){
     total+=sub.value;paid+=sub.paid;quoteReqTotal+=sub.quotes;
     projectTotal+=sub.projectCount;if(sub.lastActivityAt&&(!lastActivityGlobal||sub.lastActivityAt>lastActivityGlobal))lastActivityGlobal=sub.lastActivityAt;
     var repName=co.rep==='jordan'?'Jordan Lee':(co.rep==='sam'?'Sam Ortiz':co.rep);
-    html+=renderCompanyCard(co,repName);
+    cards.push({sortName:(co.name||'').toLowerCase(),sortValue:sub.value,html:renderCompanyCard(co,repName)});
   });
+  // Company name (A-Z) or Contract Value (High to Low, the default) -- see
+  // setClientSort()/the sort <select> in the Clients tab panel head.
+  cards.sort(function(a,b){
+    if(clientSort==='name_asc')return a.sortName.localeCompare(b.sortName);
+    return b.sortValue-a.sortValue;
+  });
+  var html=cards.map(function(c){return c.html;}).join('');
   list.innerHTML=html||'<p class="hint">No clients in this range.</p>';
   var notice=document.getElementById('clientsNotice');
   var kpis=document.getElementById('clientsKpis');
@@ -7276,11 +7400,33 @@ function seedSRC(){
     // used everywhere that means "the shop's primary/official contact") so
     // adding a team member never disturbs that. See renderVendorTeam()/
     // createVendorTeamMember() and resolveFactoryShop() in api/sourcing.js.
-    vendorTeam:[]
+    vendorTeam:[],
+    // The Clients tab roster (COMPANIES below) -- persisted so a superseded
+    // contact card (e.g. after a client's email changed on a project) stays
+    // around as history across a reload, not just for the rest of the
+    // current browser session. See the COMPANIES/SDB.companies aliasing
+    // right after SDB=loadSRC() for how the two stay in sync.
+    companies:[]
   };
 }
 var SKEY='cm_portal_sourcing_v22', SDB=loadSRC(), apiReady=false;
 window.SDB=SDB;
+// COMPANIES (the Clients tab roster, declared further down as a plain
+// script-global -- see the comment above its declaration) used to be
+// entirely derived at runtime from current briefs/leads and never
+// persisted, so a superseded contact (old email, once a project's client
+// info changed) vanished the moment the page reloaded even though it was
+// supposed to stick around as history until Carve Admin deleted it. Fix:
+// seed COMPANIES with whatever was already persisted, then point
+// SDB.companies at the EXACT SAME array object (not a copy) -- from here
+// on, every COMPANIES.push()/contact edit is automatically visible to
+// saveSRC() (which reads SDB.companies) with no extra wiring, as long as
+// nothing ever reassigns COMPANIES to a brand-new array (see the two
+// splice-in-place fixes in deleteClientContact/confirmLinkContact, and the
+// in-place merge in pullSourcing(), all of which preserve this same
+// reference on purpose).
+Array.prototype.push.apply(COMPANIES,SDB.companies||[]);
+SDB.companies=COMPANIES;
 // Any vendor added via Team & Access — on THIS browser or, now that vendors
 // sync through /api/sourcing (see pullSourcing below), on any other admin's
 // browser too — needs to be wired into SHOPS/PRODUCTION_ADMINS: those two
@@ -7309,13 +7455,14 @@ reconcileVendorsIntoShops();
 // Ids removed locally via deleteLead()/SRC_deleteBrief() but not yet confirmed
 // gone from the server (the delete's saveSRC() call is fire-and-forget — see
 // pullSourcing() below for why this list exists).
-var srcPendingDeleteLeadIds=[], srcPendingDeleteBriefIds=[], srcPendingDeleteVendorIds=[], srcPendingDeleteTeamIds=[], srcPendingDeleteVendorTeamIds=[];
+var srcPendingDeleteLeadIds=[], srcPendingDeleteBriefIds=[], srcPendingDeleteVendorIds=[], srcPendingDeleteTeamIds=[], srcPendingDeleteVendorTeamIds=[], srcPendingDeleteCompanyIds=[];
 // Exposed on window: removeMember()/removeVendor() (Team & Access, an
 // earlier <script> block with no closure access to this IIFE's own
 // variables) push onto these same array objects by reference.
 window.srcPendingDeleteVendorIds=srcPendingDeleteVendorIds;
 window.srcPendingDeleteTeamIds=srcPendingDeleteTeamIds;
 window.srcPendingDeleteVendorTeamIds=srcPendingDeleteVendorTeamIds;
+window.srcPendingDeleteCompanyIds=srcPendingDeleteCompanyIds;
 // One-time cleanup: briefs sent before Materials/Base were dropped from the
 // client brief still carry those two placeholder keys on disk (local storage
 // or the shared API) — strip them so old data matches what new briefs look
@@ -7341,7 +7488,7 @@ function migrateBriefFields(briefs){
 }
 if(migrateBriefFields(SDB.briefs))saveSRC();
 syncClientsFromLeads();
-function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];if(!d.team)d.team=seedSRC().team;if(!d.vendors)d.vendors=seedSRC().vendors;if(!d.vendorTeam)d.vendorTeam=[];return d;}}}catch(e){}return seedSRC();}
+function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r);if(d&&d.briefs){if(!d.leads)d.leads=[];if(!d.team)d.team=seedSRC().team;if(!d.vendors)d.vendors=seedSRC().vendors;if(!d.vendorTeam)d.vendorTeam=[];if(!d.companies)d.companies=[];return d;}}}catch(e){}return seedSRC();}
 function saveSRC(opts){
   try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
   if(apiReady){
@@ -7354,7 +7501,7 @@ function saveSRC(opts){
     // OTHER browser's next pull picks up a newly-added vendor/team member —
     // see reconcileVendorsIntoShops() above for why this matters: without
     // it, a vendor's own device never learns its own account's shop mapping.
-    var payload={briefs:SDB.briefs,leads:SDB.leads||[],vendors:SDB.vendors||[],team:SDB.team||[],vendorTeam:SDB.vendorTeam||[]};
+    var payload={briefs:SDB.briefs,leads:SDB.leads||[],vendors:SDB.vendors||[],team:SDB.team||[],vendorTeam:SDB.vendorTeam||[],companies:SDB.companies||[]};
     // Tell the server who's actually saving. For a factory (vendor) session
     // this is load-bearing, not just informational: the server uses it to
     // resolve which shop this caller owns, then rewrites this save so it can
@@ -7374,6 +7521,7 @@ function saveSRC(opts){
     if(opts&&opts.deletedVendorIds&&opts.deletedVendorIds.length)payload.deletedVendorIds=opts.deletedVendorIds;
     if(opts&&opts.deletedTeamIds&&opts.deletedTeamIds.length)payload.deletedTeamIds=opts.deletedTeamIds;
     if(opts&&opts.deletedVendorTeamIds&&opts.deletedVendorTeamIds.length)payload.deletedVendorTeamIds=opts.deletedVendorTeamIds;
+    if(opts&&opts.deletedCompanyIds&&opts.deletedCompanyIds.length)payload.deletedCompanyIds=opts.deletedCompanyIds;
     // Tells the server exactly which brief(s) this particular save is
     // intentionally changing (see mergeById's allowedIds in api/sourcing.js).
     // Without this, EVERY save anywhere in the app — adding a vendor,
@@ -9462,11 +9610,23 @@ function pullSourcing(){
       // pull merges (it's the full studio-wide roster), a factory pull
       // replaces (it's already exactly this one shop's slice).
       SDB.vendorTeam=mergeSrcList(isScopedPull?[]:SDB.vendorTeam,data.vendorTeam||[],srcPendingDeleteVendorTeamIds);
+      // companies (Clients tab) merges in-place rather than via plain
+      // reassignment -- COMPANIES and SDB.companies are the SAME array
+      // object (see the aliasing right after SDB=loadSRC() above), and a
+      // plain `SDB.companies=mergeSrcList(...)` would silently break that
+      // link by pointing SDB.companies at a brand-new array while every
+      // other function in the file kept mutating the old COMPANIES object.
+      // A factory pull never includes `companies` at all (Clients tab is
+      // Owner-only), so isScopedPull naturally clears it for that role.
+      var mergedCompanies=mergeSrcList(isScopedPull?[]:SDB.companies,data.companies||[],srcPendingDeleteCompanyIds);
+      COMPANIES.length=0;
+      Array.prototype.push.apply(COMPANIES,mergedCompanies);
       reconcilePendingDeletes(srcPendingDeleteBriefIds,data.briefs||[]);
       reconcilePendingDeletes(srcPendingDeleteLeadIds,data.leads||[]);
       reconcilePendingDeletes(srcPendingDeleteVendorIds,data.vendors||[]);
       reconcilePendingDeletes(srcPendingDeleteTeamIds,data.team||[]);
       reconcilePendingDeletes(srcPendingDeleteVendorTeamIds,data.vendorTeam||[]);
+      reconcilePendingDeletes(srcPendingDeleteCompanyIds,data.companies||[]);
       migrateBriefFields(SDB.briefs);
       if(window.reconcileVendorsIntoShops)window.reconcileVendorsIntoShops();
       if(window.syncClientsFromLeads)window.syncClientsFromLeads();
