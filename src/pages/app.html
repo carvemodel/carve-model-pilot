@@ -4196,7 +4196,16 @@ function renderProjectOverview(b){
   renderProjectInvoicePanel(b);
   renderProjectPricingPanel(b);
   renderVendorPaymentPanel(b);
-  if(typeof renderClientProjectInvoice==='function')renderClientProjectInvoice(b);
+  // Client-only panel -- its DOM target is already hidden for every other
+  // role via CSS, but ONLY render it for an actual client session. This
+  // used to run unconditionally for every role; a single malformed/legacy
+  // invoice record (see clientInvoiceLinesHtml's own defensive fallback
+  // below) threw here and, since this fires inside openProject() before
+  // the page finishes switching views, silently broke "click a project"
+  // for EVERY role, not just client -- a data problem on one client-facing
+  // field should never be able to take down Owner/Client Manager/vendor
+  // navigation.
+  if(document.body.dataset.role==='client'&&typeof renderClientProjectInvoice==='function')renderClientProjectInvoice(b);
   if(typeof renderVendorTeamAssignPanel==='function')renderVendorTeamAssignPanel(b);
   setText('kpiInvoice',paymentStatusLabel(b));
   setText('kpiInvoiceSub','Click to view →');
@@ -5144,7 +5153,11 @@ function srcAcceptQuote(){
 function clientInvoiceLinesHtml(b){
   var cq=b.clientQuote, inv=cq&&cq.invoice;
   if(!inv)return '<div style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once your estimate is accepted.</div>';
-  var dep=inv.depositAmt, bal=inv.balanceAmt;
+  // Fall back to 0 rather than throwing on an older/malformed invoice
+  // record missing these fields -- a bad value on one project should
+  // degrade to "$0" here, never crash the render (see the call site's own
+  // comment on why a throw here used to break navigation for every role).
+  var dep=inv.depositAmt||0, bal=inv.balanceAmt||0;
   var issuedFmt=inv.issuedDate?new Date(inv.issuedDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
   var depStatus=inv.depositStatus||'due', balStatus=inv.balanceStatus||'due';
   var depChipClass=depStatus==='paid'?'chip done':'chip await';
@@ -5192,8 +5205,8 @@ function renderPhase1Invoice(){
   var outstanding=0, collected=0;
   mine.forEach(function(b){
     var inv=b.clientQuote.invoice;
-    if((inv.depositStatus||'due')==='paid')collected+=inv.depositAmt; else outstanding+=inv.depositAmt;
-    if((inv.balanceStatus||'due')==='paid')collected+=inv.balanceAmt; else outstanding+=inv.balanceAmt;
+    if((inv.depositStatus||'due')==='paid')collected+=inv.depositAmt||0; else outstanding+=inv.depositAmt||0;
+    if((inv.balanceStatus||'due')==='paid')collected+=inv.balanceAmt||0; else outstanding+=inv.balanceAmt||0;
   });
   mine.sort(function(a,c){return (c.clientQuote.invoice.issuedDate||'').localeCompare(a.clientQuote.invoice.issuedDate||'');});
   var html='<div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
@@ -8830,8 +8843,8 @@ window.SRC_carveInvoices=function(){
   var outstanding=0, collected=0;
   invoiced.forEach(function(b){
     var inv=b.clientQuote.invoice;
-    if((inv.depositStatus||'due')==='paid')collected+=inv.depositAmt; else outstanding+=inv.depositAmt;
-    if((inv.balanceStatus||'due')==='paid')collected+=inv.balanceAmt; else outstanding+=inv.balanceAmt;
+    if((inv.depositStatus||'due')==='paid')collected+=inv.depositAmt||0; else outstanding+=inv.depositAmt||0;
+    if((inv.balanceStatus||'due')==='paid')collected+=inv.balanceAmt||0; else outstanding+=inv.balanceAmt||0;
   });
   var html='<div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
     '<div class="kpi"><span class="mock__k">Invoiced projects</span><div class="big">'+invoiced.length+'</div></div>'+
