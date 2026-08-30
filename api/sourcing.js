@@ -103,13 +103,17 @@ function rowsTable(rows) {
     '</table>';
 }
 
-async function sendNotificationEmail(subject, html) {
+// toOverride lets a caller send to someone other than the default admin
+// inbox (e.g. sendChangeRequestNotification also notifying the project's
+// assigned Client Manager) -- defaults to LEAD_NOTIFY_TO/support@ when
+// omitted, same as every existing call site.
+async function sendNotificationEmail(subject, html, toOverride) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn('RESEND_API_KEY not set — skipping notification email:', subject);
     return;
   }
-  const to = process.env.LEAD_NOTIFY_TO || 'support@physical-model.com';
+  const to = toOverride || process.env.LEAD_NOTIFY_TO || 'support@physical-model.com';
   const from = process.env.LEAD_NOTIFY_FROM || 'Carve Model <onboarding@resend.dev>';
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -167,6 +171,56 @@ async function sendQuoteNotification(entry) {
     'New quote from ' + shopName + ': ' + (brief.title || brief.id),
     html
   );
+}
+
+// entry: { brief, change } — change is one item from brief.pendingChanges
+// (see submitProjectInfoChangeRequest in app.html): {field, note,
+// requestedBy, requestedAt}. Notifies both the Client Manager assigned to
+// this project (brief.assignedManager, if any) and Carve Admin (the same
+// LEAD_NOTIFY_TO admin inbox every other studio-wide notification uses) —
+// whoever's actually free to act on it, since a project without an
+// assigned Client Manager yet still needs SOMEONE to see this.
+async function sendChangeRequestNotification(entry) {
+  const { brief, change } = entry;
+  const html =
+    '<div style="font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#111;">' +
+    '<h2 style="margin:0 0 12px;">Change requested on "' + escapeHtml(brief.title || brief.id) + '"</h2>' +
+    rowsTable([
+      ['Project', brief.title], ['Reference', brief.code], ['Field', change.field],
+      ['Details', change.note], ['Requested by', change.requestedBy], ['Date', change.requestedAt],
+    ]) +
+    '<p style="margin-top:16px;"><a href="https://www.carvecreation.com/login">Open Studio Portal →</a></p>' +
+    '</div>';
+  const subject = 'Change requested on "' + (brief.title || brief.id) + '": ' + (change.field || 'Other');
+  const adminTo = process.env.LEAD_NOTIFY_TO || 'support@physical-model.com';
+  const recipients = new Set([adminTo]);
+  if (brief.assignedManager) recipients.add(brief.assignedManager);
+  await Promise.allSettled(
+    Array.from(recipients).map((to) => sendNotificationEmail(subject, html, to))
+  );
+}
+
+// Diffs incoming briefs against what was stored before this save and
+// returns one entry per genuinely-new pending change request — an item
+// appended to pendingChanges[] whose id wasn't in the previously-stored
+// array for that same brief. Requests are always unshift()ed onto the
+// front client-side, so comparing ids (rather than "beyond the old
+// length") is what correctly identifies the new one regardless of where
+// it landed in the array.
+function detectNewChangeRequests(currentBriefs, incomingBriefs) {
+  const currentById = new Map();
+  (currentBriefs || []).forEach((b) => { if (b && b.id) currentById.set(b.id, b); });
+  const found = [];
+  (incomingBriefs || []).forEach((incoming) => {
+    if (!incoming || !incoming.id) return;
+    const prev = currentById.get(incoming.id);
+    const prevIds = new Set(((prev && prev.pendingChanges) || []).map((c) => c && c.id));
+    const incChanges = incoming.pendingChanges || [];
+    incChanges.forEach((c) => {
+      if (c && c.id && !prevIds.has(c.id)) found.push({ brief: incoming, change: c });
+    });
+  });
+  return found;
 }
 
 // Diffs incoming briefs against what was stored before this save and
@@ -578,6 +632,7 @@ module.exports = async (req, res) => {
       const existingLeadIds = new Set(current.leads.map((l) => l && l.id));
       const newLeads = identity.role === 'factory' ? [] : (body.leads || []).filter((l) => l && l.id && !existingLeadIds.has(l.id));
       const newQuotes = detectNewQuotes(current.briefs, briefsForMerge);
+      const newChangeRequests = detectNewChangeRequests(current.briefs, briefsForMerge);
 
       // allowedIds, when given, restricts what an incoming item is allowed to
       // OVERWRITE: for an id that already exists in currentList, the incoming
@@ -673,9 +728,13 @@ module.exports = async (req, res) => {
       const claimedQuotes = await filterClaimed(redis, newQuotes, (q) => (
         'carve:notified:quote:' + q.brief.id + ':' + q.shopId + ':' + (q.variationLabel ? ('var:' + q.variantIndex) : 'primary')
       ));
+      const claimedChangeRequests = await filterClaimed(redis, newChangeRequests, (c) => (
+        'carve:notified:change:' + c.brief.id + ':' + c.change.id
+      ));
       const notifications = [
         ...claimedLeads.map((l) => sendLeadNotification(l)),
         ...claimedQuotes.map((q) => sendQuoteNotification(q)),
+        ...claimedChangeRequests.map((c) => sendChangeRequestNotification(c)),
       ];
       if (notifications.length) {
         await Promise.allSettled(notifications);

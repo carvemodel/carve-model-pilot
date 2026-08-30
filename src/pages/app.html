@@ -1122,10 +1122,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 <div class="proj-cancel client-only" id="projPauseWrap">
                   <button class="linkbtn-danger" id="projPauseBtn" onclick="clientRequestPauseProject()">Pause this project</button>
                 </div>
-                <!-- Vendor-proposed edits to the fields above -- populated by
-                     renderPendingChanges(); hidden entirely when there's
-                     nothing pending/resolved to show. -->
-                <div id="pendingChangesWrap" hidden style="padding-top:0.4rem;border-top:1px solid var(--cm-line-faint);"></div>
               </div>
             </div>
           </div>
@@ -1892,10 +1888,11 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
-<!-- Request a change (factory/prodtech) -- flags something on Project
+<!-- Request a change (vendor OR client) -- flags something on Project
      information that should change without editing it directly; the
-     assigned Client Manager/Owner reviews it and makes the real edit
-     themselves. See submitProjectInfoChangeRequest()/resolvePendingChange(). -->
+     assigned Client Manager/Owner get an email and see it logged in Recent
+     Activity, and make the real edit themselves.
+     See submitProjectInfoChangeRequest(). -->
 <div class="modal-overlay" id="requestChangeModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Request a change">
     <div class="modal__head"><h3>Request a change</h3><button class="modal__x" onclick="closeRequestChangeModal()" aria-label="Close">×</button></div>
@@ -3973,6 +3970,18 @@ function renderProjectOverview(b){
   var short=(b.title||'').split(' — ')[0];
   var startDate=getProjectStartDate(b);
   var targetDelivery=targetDeliveryDate(b);
+  // Vendor (factory/prodtech) only ever committed to Final Client Approval
+  // -- everything after (Permanently Fixed/Cleaned & Polished, Packing,
+  // Shipping, and the delivery date itself) is Carve's OWN post-approval
+  // process on Carve's actual client-facing schedule, not the vendor's.
+  // Every schedule-ish display below (journey dots, Status/Next
+  // milestone/Current Estimated Delivery KPI captions) is gated on this so
+  // none of them show the vendor a date for a stage that was never theirs
+  // to estimate -- computing it off their own (typically faster)
+  // winning-quote days would just mix the two sides' timelines together.
+  var viewerRole=document.body.dataset.role;
+  var vendorDateCutoff=(viewerRole==='factory'||viewerRole==='prodtech')?PROJECT_STAGES.indexOf('Final Client Approval'):-1;
+  var vendorPastCutoff=vendorDateCutoff>=0&&idx>vendorDateCutoff;
 
   document.querySelectorAll('.pname').forEach(function(el){el.textContent=short;});
 
@@ -3992,6 +4001,9 @@ function renderProjectOverview(b){
 
   var stepsWrap=document.getElementById('journeySteps');
   if(stepsWrap){
+    // vendorDateCutoff (computed once, above) hides the date for any
+    // stage past Final Client Approval when viewed by a vendor -- see its
+    // own comment near the top of this function.
     stepsWrap.innerHTML=PROJECT_STAGES.map(function(name,i){
       var done=delivered?true:(i<idx);
       var current=!delivered&&i===idx;
@@ -3999,7 +4011,10 @@ function renderProjectOverview(b){
       var dotTxt=done?'✓':String(i+1);
       // Each stage's indicative estimated date/range shows directly under
       // its name -- no hover needed (see stageDateLabelCompact() above).
-      var dateLabel=delivered?'Done':((typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,i):'');
+      var dateLabel;
+      if(delivered)dateLabel='Done';
+      else if(vendorDateCutoff>=0&&i>vendorDateCutoff)dateLabel='';
+      else dateLabel=(typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,i):'';
       return '<li class="jstep '+cls+'">'+(current?'<span class="jstep__here">You\'re here</span>':'')+
         '<span class="jstep__dot">'+dotTxt+'</span><span class="jstep__name">'+esc(name)+'</span>'+
         '<span class="jstep__date">'+esc(dateLabel)+'</span></li>';
@@ -4015,7 +4030,10 @@ function renderProjectOverview(b){
   // completion/Target delivery dates instead (see journeyNextStageText and
   // the projInfo* date fields below).
   setText('journeyCurrentStageText',delivered?'Project Completed':stageName);
-  var scheduleStatusTxt=(typeof currentStageScheduleStatus==='function')?currentStageScheduleStatus(b):'';
+  // Blank for a vendor past Final Client Approval (vendorPastCutoff) --
+  // same reasoning as vendorDateCutoff above, this is Carve's own stage by
+  // that point, not the vendor's to be "ahead/behind" on.
+  var scheduleStatusTxt=(!vendorPastCutoff&&typeof currentStageScheduleStatus==='function')?currentStageScheduleStatus(b):'';
   setText('journeyScheduleStatus',scheduleStatusTxt?(' | '+scheduleStatusTxt):'');
   setText('journeyNextStageText',delivered?'Complete':(nextStage||'Complete'));
   // Stages with a defined STAGE_CHECKLISTS entry show that checklist
@@ -4084,15 +4102,16 @@ function renderProjectOverview(b){
   // stageDateLabelCompact() the journey dots and Next milestone card use)
   // -- lets someone glancing at the Status card see the plan for the
   // stage they're actually in, not just its ordinal position.
-  var curStageRange=(!delivered&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx):'';
+  var curStageRange=(!delivered&&!vendorPastCutoff&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx):'';
   setText('kpiStageSchedule',curStageRange&&curStageRange!=='—'?('Original schedule '+curStageRange):'');
   setText('kpiPct',pct+'%');
   // Same "N days ahead/behind" comparison already shown on the journey
   // card (currentStageScheduleStatus/scheduleStatusTxt above), echoed as a
-  // small caption under the Progress KPI's bar too -- delivered projects
-  // and stages with no defined date range (scheduleStatusTxt==='') show
-  // nothing rather than a stale/misleading label.
-  setText('kpiPctSchedule',delivered?'':scheduleStatusTxt);
+  // small caption under the Progress KPI's bar too -- delivered projects,
+  // a vendor past their own Final Client Approval cutoff, and stages with
+  // no defined date range (scheduleStatusTxt==='') all show nothing rather
+  // than a stale/misleading label.
+  setText('kpiPctSchedule',(delivered||vendorPastCutoff)?'':scheduleStatusTxt);
   var kpiBar=document.getElementById('kpiBar');if(kpiBar)kpiBar.style.width=pct+'%';
   setText('kpiNext',nextStage||'Complete');
   // The next stage's own originally-scheduled date range (same
@@ -4100,14 +4119,18 @@ function renderProjectOverview(b){
   // not the overall project's target delivery date, which lives on its
   // own KPI card elsewhere. Same "Original schedule" label prefix as the
   // Status card's kpiStageSchedule so the two read consistently.
-  var nextStageRange=(!delivered&&nextStage&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx+1):'';
+  var nextStageVendorBlocked=vendorDateCutoff>=0&&(idx+1)>vendorDateCutoff;
+  var nextStageRange=(!delivered&&nextStage&&!nextStageVendorBlocked&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx+1):'';
   setText('kpiNextSub',nextStageRange&&nextStageRange!=='—'?('Original schedule '+nextStageRange):'—');
   // Current Estimated Delivery Date -- live projection (see
   // currentEstimatedDeliveryDate) up top, original fixed commitment
   // (targetDelivery, already computed above) underneath for comparison.
+  // Delivery itself is entirely Carve's own post-approval commitment, not
+  // the vendor's -- blank for a vendor past their own cutoff, same as
+  // every other schedule display on this page.
   var estDelivery=(typeof currentEstimatedDeliveryDate==='function')?currentEstimatedDeliveryDate(b):targetDelivery;
-  setText('kpiEstDelivery',estDelivery?fmtDateShort(estDelivery):'—');
-  setText('kpiEstDeliverySub',targetDelivery?('Originally targeted '+fmtDateShort(targetDelivery)):'');
+  setText('kpiEstDelivery',vendorPastCutoff?'—':(estDelivery?fmtDateShort(estDelivery):'—'));
+  setText('kpiEstDeliverySub',vendorPastCutoff?'':(targetDelivery?('Originally targeted '+fmtDateShort(targetDelivery)):''));
   setText('kpiScale',((typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null)||(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—');
   setText('kpiScaleSub',(b.clientQuote&&b.clientQuote.material)||(b.brief&&b.brief['Model type'])||'');
 
@@ -4213,7 +4236,6 @@ function renderProjectOverview(b){
   // just changed, in case either is currently open over this render.
   if(typeof renderScaleBoundaryModal==='function')renderScaleBoundaryModal(b);
   if(typeof renderDesignFilesModal==='function')renderDesignFilesModal(b);
-  if(typeof renderPendingChanges==='function')renderPendingChanges(b);
 }
 window.renderProjectOverview=renderProjectOverview;
 // Whether a stage's checklist item currently reads "done". A few items are
@@ -4472,7 +4494,7 @@ window.toggleDesignFileItem=toggleDesignFileItem;
 // Shared by both the vendor (factory/prodtech) AND the client -- either
 // side can flag something on Project information that should change;
 // Client Manager/Owner review it and make the real edit themselves either
-// way (see resolvePendingChange). Kept as one list rather than a separate
+// way. Kept as one list rather than a separate
 // client-facing one since the fields that matter (scale, use case, dates,
 // address...) are the same regardless of who's asking.
 var CHANGE_REQUEST_FIELD_OPTIONS=['Use case','Scale','Materials & presentation','Model size','Package size','Project address','Boundary map','Start date','Target production completion','Target delivery','Other'];
@@ -4494,11 +4516,15 @@ function closeRequestChangeModal(){
   if(modal)modal.hidden=true;
 }
 window.closeRequestChangeModal=closeRequestChangeModal;
-// A factory/prodtech "flag" that something on Project information should
-// change -- this never edits the field itself. It just queues a proposal;
-// the assigned Client Manager (or Owner) reviews it in the "Requested
-// changes" list on Project information and makes the real edit themselves
-// with the normal edit controls. See resolvePendingChange().
+// A factory/prodtech/client "flag" that something on Project information
+// should change -- this never edits the field itself. It records the
+// request on b.pendingChanges (kept as a hidden data trail -- no longer
+// rendered as its own list, see below -- purely so the server can detect a
+// genuinely NEW request and email the Client Manager/Owner; see
+// detectNewChangeRequests/sendChangeRequestNotification in
+// api/sourcing.js) and logs a full Recent Activity entry (including the
+// actual note text, not just the field name) so it's visible right there
+// without a separate "Requested changes" panel to check.
 function submitProjectInfoChangeRequest(){
   var role=document.body.dataset.role;
   if(role!=='factory'&&role!=='prodtech'&&role!=='client')return;
@@ -4516,53 +4542,14 @@ function submitProjectInfoChangeRequest(){
     field:fieldLabel,
     note:noteVal,
     requestedBy:(typeof currentActorLabel==='function')?currentActorLabel(b):role,
-    requestedAt:new Date().toISOString().slice(0,10),
-    status:'pending'
+    requestedAt:new Date().toISOString().slice(0,10)
   });
-  logProjectEvent(b,'Requested a change to "'+fieldLabel+'" on "'+b.title+'"');
+  logProjectEvent(b,'Requested a change to "'+fieldLabel+'" on "'+b.title+'": '+noteVal);
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   closeRequestChangeModal();
   renderProjectOverview(b);
 }
 window.submitProjectInfoChangeRequest=submitProjectInfoChangeRequest;
-// Client Manager/Owner deciding what happens to a vendor's proposed change
-// -- a status/decision log only, never touches the actual project field
-// (see submitProjectInfoChangeRequest's comment on why).
-function resolvePendingChange(changeId,newStatus){
-  var role=document.body.dataset.role;
-  if(role!=='owner'&&role!=='sales')return;
-  var id=document.getElementById('projSelect').value;
-  var b=findBrief(id);
-  if(!b||!b.pendingChanges)return;
-  var change=b.pendingChanges.filter(function(c){return c.id===changeId;})[0];
-  if(!change)return;
-  change.status=newStatus;
-  change.resolvedAt=new Date().toISOString().slice(0,10);
-  logProjectEvent(b,(newStatus==='resolved'?'Resolved':'Declined')+' change request for "'+change.field+'" on "'+b.title+'"');
-  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-  renderProjectOverview(b);
-}
-window.resolvePendingChange=resolvePendingChange;
-function renderPendingChanges(b){
-  var wrap=document.getElementById('pendingChangesWrap');
-  if(!wrap||!b)return;
-  var role=document.body.dataset.role;
-  var list=b.pendingChanges||[];
-  if(!list.length){wrap.hidden=true;wrap.innerHTML='';return;}
-  var canResolve=role==='owner'||role==='sales';
-  wrap.hidden=false;
-  wrap.innerHTML='<div class="mock__k" style="display:block;margin-bottom:0.5rem;">Requested changes</div>'+list.map(function(c){
-    var statusLabel=c.status==='pending'?'Pending review':(c.status==='resolved'?'Resolved':'Declined');
-    var actions=(canResolve&&c.status==='pending')?('<div class="pendchange__actions"><button type="button" class="btn btn--ghost btn--sm" onclick="resolvePendingChange(\''+c.id+'\',\'resolved\')">Mark resolved</button><button type="button" class="btn btn--ghost btn--sm" onclick="resolvePendingChange(\''+c.id+'\',\'declined\')">Decline</button></div>'):'';
-    return '<div class="pendchange">'+
-      '<div class="pendchange__top"><span class="pendchange__field">'+esc(c.field)+'</span><span class="pendchange__status '+c.status+'">'+statusLabel+'</span></div>'+
-      '<div class="pendchange__note">'+esc(c.note)+'</div>'+
-      '<div class="pendchange__meta">'+esc(c.requestedBy||'')+' · '+esc(c.requestedAt||'')+'</div>'+
-      actions+
-    '</div>';
-  }).join('');
-}
-window.renderPendingChanges=renderPendingChanges;
 // Owner-only admin controls for this one project -- Client Manager
 // assignment, contact info, dates (read-only; the assigned Client Manager
 // edits these from My Projects), delivered/archive toggles, and Invoice &
@@ -5989,7 +5976,7 @@ var PERM={
   'proj-spec-edit-only':['owner','sales'],        // Edit control on Project information's spec fields (Use case/Scale/Materials/Presentation method/Model size/Package size) -- Owner + assigned Client Manager only; everyone (incl. client/factory/prodtech) still sees the read-only value
   'vendor-price-only':['factory'],                // "Your quoted price" KPI -- Production Admin only, never their technicians and never the client
   'vendor-days-only':['factory','prodtech'],      // "Quoted production time" KPI -- the whole vendor side, no pricing attached
-  'reqchange-only':['factory','prodtech','client'], // "Request a change" button on Project information -- vendor OR client proposes, Client Manager/Owner decide (see resolvePendingChange)
+  'reqchange-only':['factory','prodtech','client'], // "Request a change" button on Project information -- vendor OR client proposes, Client Manager/Owner decide (see submitProjectInfoChangeRequest)
   'vendorproj-only':['factory','prodtech'],       // Vendor side's own scoped "My Projects" list (this shop's awarded-to-production jobs) -- the only real entry point into a project's Overview page for factory/prodtech
   'vendorteam-only':['factory'],                  // Vendor's own Team & Access tab -- Production Admin (primary admin or an already-added team member, both role 'factory') can add/remove more logins for their own shop; Production Technicians never manage access
   'vendorfinance-only':['factory'],                // Vendor's own Finance tab -- price, so hidden from a Vendor Team & Access member via body.vendor-no-price (see the CSS rule) even though it's role 'factory' same as the primary admin; Production Technicians never see it either
