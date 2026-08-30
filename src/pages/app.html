@@ -4635,6 +4635,15 @@ function inCfRange(dateStr){
   }
   return true;
 }
+// Studio-wide amounts owed to Carve's vendors, mirroring vendorPaymentStatusLabel()/
+// the per-project Vendor Payment panel (b.vendorInvoice) but rolled up across every
+// awarded project, in the same RMB-primary/USD-approx format the vendor's own
+// Finance tab (renderVendorFinance) already uses -- that's the vendor's real
+// invoiced currency, so it stays primary here too rather than being converted away.
+function vendorAmountTxt(rmb,usdApprox){
+  if(!rmb)return moneyRMB(0);
+  return moneyRMB(rmb)+(usdApprox!=null?(' (≈ '+fmtUsd(usdApprox)+')'):'');
+}
 function renderCarveFinance(){
   var wrap=document.getElementById('carveFinanceList');
   if(!wrap)return;
@@ -4644,17 +4653,33 @@ function renderCarveFinance(){
     return;
   }
   var totalUsd=0, receivedUsd=0;
+  var payableRMB=0, paidRMB=0, payableUsd=0, paidUsd=0;
   mine.forEach(function(b){
     var price=(b.clientQuote&&b.clientQuote.price!=null)?b.clientQuote.price:0;
     totalUsd+=price;
     var inv=b.clientQuote&&b.clientQuote.invoice;
     if(inv&&inv.balanceStatus==='paid')receivedUsd+=price;
     else if(inv&&inv.depositStatus==='paid')receivedUsd+=price/2;
+    // Vendor side -- what CARVE owes the shop that won this project, not
+    // what the client owes Carve. Same winningQuote()/b.vendorInvoice pair
+    // the Vendor Payment panel and vendor's own Finance tab already read.
+    var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+    var vRmb=(wq&&wq.priceRMB)||0, vUsd=(wq&&wq.price)||0;
+    payableRMB+=vRmb;payableUsd+=vUsd;
+    var vinv=b.vendorInvoice||{};
+    if(vinv.balanceStatus==='paid'){paidRMB+=vRmb;paidUsd+=vUsd;}
+    else if(vinv.depositStatus==='paid'){paidRMB+=vRmb/2;paidUsd+=vUsd/2;}
   });
-  var html='<div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
+  var html='<div class="mock__k" style="margin-bottom:0.6rem;">Client billing</div><div class="kpis" style="grid-template-columns:repeat(4,1fr);">'+
     '<div class="kpi"><span class="mock__k">Awarded projects</span><div class="big">'+mine.length+'</div></div>'+
     '<div class="kpi"><span class="mock__k">Total quoted</span><div class="big">'+fmtUsd(totalUsd)+'</div></div>'+
     '<div class="kpi"><span class="mock__k">Received so far</span><div class="big">'+fmtUsd(receivedUsd)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Outstanding from client</span><div class="big">'+fmtUsd(totalUsd-receivedUsd)+'</div></div>'+
+  '</div>';
+  html+='<div class="mock__k" style="margin:1.25rem 0 0.6rem;">Vendor payables</div><div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
+    '<div class="kpi"><span class="mock__k">Total payable</span><div class="big">'+vendorAmountTxt(payableRMB,payableUsd)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Paid so far</span><div class="big">'+vendorAmountTxt(paidRMB,paidUsd)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Remaining</span><div class="big">'+vendorAmountTxt(payableRMB-paidRMB,payableUsd-paidUsd)+'</div></div>'+
   '</div>';
   mine.sort(function(a,c){return (c.awardedAt||c.sentDate||'').localeCompare(a.awardedAt||a.sentDate||'');});
   html+='<div class="panel" style="margin-top:1.25rem;"><div class="panel__head"><h3>Awarded projects</h3></div><div class="panel__body">'+
@@ -4662,7 +4687,21 @@ function renderCarveFinance(){
       var c=b.client||{};
       var price=(b.clientQuote&&b.clientQuote.price!=null)?b.clientQuote.price:null;
       var priceTxt=price!=null?fmtUsd(price):'—';
-      return '<div class="qline2" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><div class="qf-name"><div class="nm">'+esc(b.title)+'</div><div class="mock__k">'+esc(c.Company||'—')+'</div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">'+priceTxt+'</div><div></div><div style="text-align:right;">'+esc(paymentStatusLabel(b))+'</div></div>';
+      var vendorRec=(typeof shop==='function')?shop(b.awarded):null;
+      var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+      var vRmb=(wq&&wq.priceRMB)||0, vUsd=(wq&&wq.price)||0;
+      var vinv=b.vendorInvoice||{};
+      var vPaidRmb=vinv.balanceStatus==='paid'?vRmb:(vinv.depositStatus==='paid'?vRmb/2:0);
+      var vPaidUsd=vinv.balanceStatus==='paid'?vUsd:(vinv.depositStatus==='paid'?vUsd/2:0);
+      return '<div class="qline2" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><div class="qf-name"><div class="nm">'+esc(b.title)+'</div><div class="mock__k">'+esc(c.Company||'—')+'</div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">'+priceTxt+'</div><div></div><div style="text-align:right;">'+esc(paymentStatusLabel(b))+'</div>'+
+        '<div style="grid-column:1/-1;margin-top:0.6rem;padding-top:0.6rem;border-top:1px dashed var(--cm-line-faint);display:flex;flex-wrap:wrap;gap:1.2rem;font-size:0.8rem;color:var(--cm-text-subtle);">'+
+          '<span>Vendor: <span style="color:var(--cm-text);">'+esc(vendorRec?vendorRec.name:'—')+'</span></span>'+
+          '<span>Payable: <span style="color:var(--cm-text);">'+vendorAmountTxt(vRmb,vUsd)+'</span></span>'+
+          '<span>Paid: <span style="color:var(--cm-text);">'+vendorAmountTxt(vPaidRmb,vPaidUsd)+'</span></span>'+
+          '<span>Remaining: <span style="color:var(--cm-text);">'+vendorAmountTxt(vRmb-vPaidRmb,vUsd-vPaidUsd)+'</span></span>'+
+          '<span>Vendor payment: <span style="color:var(--cm-text);">'+esc(vendorPaymentStatusLabel(b))+'</span></span>'+
+        '</div>'+
+      '</div>';
     }).join('')+
   '</div></div>';
   wrap.innerHTML=html;
