@@ -72,8 +72,25 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const token = 'inv_' + crypto.randomBytes(12).toString('hex');
     const redis = await getClient();
+
+    // One email, one account. Without this, two different people (or the
+    // same admin twice) could each send an invite for the same address and
+    // whichever one is redeemed last would silently overwrite the other's
+    // real, already-set-password account (see api/auth.js's "acceptInvite"
+    // -- it just does a plain redis.set on carve:user:<email> with no
+    // existence check of its own). adminResetAccess/adminRemoveAccount
+    // explicitly redis.del this key first, so resetting or reassigning an
+    // existing person's access still goes through fine -- this only blocks
+    // inviting an email that already has a real, live account.
+    const emailKey = email.toLowerCase();
+    const existingUser = await redis.get('carve:user:' + emailKey);
+    if (existingUser) {
+      res.status(409).json({ error: 'An account with this email already exists.', code: 'EMAIL_TAKEN' });
+      return;
+    }
+
+    const token = 'inv_' + crypto.randomBytes(12).toString('hex');
     await redis.set('carve:invite:' + token, JSON.stringify({ name, email, role }), { EX: INVITE_TTL_SECONDS });
 
     const origin = req.headers.origin || ('https://' + req.headers.host);
