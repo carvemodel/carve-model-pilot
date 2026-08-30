@@ -3124,10 +3124,19 @@ function renderVendorProjects(){
   var wrap=document.getElementById('vendorProjectsList');
   if(!wrap)return;
   var role=document.body.dataset.role;
+  // Factory sees every job actually awarded to their shop -- same
+  // b.status==='awarded' gate awardedBriefs()/Owner's Projects/Client
+  // Manager's My Projects already use, not the stricter "proceeded to
+  // production + tech assigned" gate (b.stage==='production'). A newly
+  // awarded job with no technician assigned yet is still very much
+  // "theirs" and should show up here. Production Technicians keep the
+  // stricter, already-established scoping their own "Assigned to you"
+  // Sourcing list uses -- they only see jobs actually kicked off to
+  // production AND assigned to them specifically.
   var mine=(SDB.briefs||[]).filter(function(b){
-    if(b.awarded!==OUR_SHOP||b.stage!=='production')return false;
-    if(role==='prodtech')return b.assignedTech===ME_TECH;
-    return true;
+    if(b.awarded!==OUR_SHOP)return false;
+    if(role==='prodtech')return b.stage==='production'&&b.assignedTech===ME_TECH;
+    return b.status==='awarded';
   });
   mine.forEach(autoMarkDeliveredIfComplete);
   var active=mine.filter(function(b){return !b.archived&&!b.deliveredAt&&!b.paused;});
@@ -3135,7 +3144,7 @@ function renderVendorProjects(){
   var completed=mine.filter(function(b){return !b.archived&&b.deliveredAt;});
   var archived=mine.filter(function(b){return b.archived;});
   if(!mine.length){
-    wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No projects in production yet. Once Carve Admin awards a job to your shop and kicks it off, it will appear here.</div>';
+    wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No projects awarded to your shop yet.</div>';
     return;
   }
   wrap.innerHTML=projectSectionHtml('In Progress',active)+projectSectionHtml('Paused',paused)+projectSectionHtml('Completed',completed)+projectSectionHtml('Archived',archived);
