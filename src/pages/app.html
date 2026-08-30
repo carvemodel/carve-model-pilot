@@ -1122,10 +1122,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                 <div class="proj-cancel client-only" id="projPauseWrap">
                   <button class="linkbtn-danger" id="projPauseBtn" onclick="clientRequestPauseProject()">Pause this project</button>
                 </div>
-                <!-- Vendor-proposed edits to the fields above -- populated by
-                     renderPendingChanges(); hidden entirely when there's
-                     nothing pending/resolved to show. -->
-                <div id="pendingChangesWrap" hidden style="padding-top:0.4rem;border-top:1px solid var(--cm-line-faint);"></div>
               </div>
             </div>
           </div>
@@ -1892,10 +1888,11 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   </div>
 </div>
 
-<!-- Request a change (factory/prodtech) -- flags something on Project
+<!-- Request a change (vendor OR client) -- flags something on Project
      information that should change without editing it directly; the
-     assigned Client Manager/Owner reviews it and makes the real edit
-     themselves. See submitProjectInfoChangeRequest()/resolvePendingChange(). -->
+     assigned Client Manager/Owner get an email and see it logged in Recent
+     Activity, and make the real edit themselves.
+     See submitProjectInfoChangeRequest(). -->
 <div class="modal-overlay" id="requestChangeModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Request a change">
     <div class="modal__head"><h3>Request a change</h3><button class="modal__x" onclick="closeRequestChangeModal()" aria-label="Close">×</button></div>
@@ -4239,7 +4236,6 @@ function renderProjectOverview(b){
   // just changed, in case either is currently open over this render.
   if(typeof renderScaleBoundaryModal==='function')renderScaleBoundaryModal(b);
   if(typeof renderDesignFilesModal==='function')renderDesignFilesModal(b);
-  if(typeof renderPendingChanges==='function')renderPendingChanges(b);
 }
 window.renderProjectOverview=renderProjectOverview;
 // Whether a stage's checklist item currently reads "done". A few items are
@@ -4498,7 +4494,7 @@ window.toggleDesignFileItem=toggleDesignFileItem;
 // Shared by both the vendor (factory/prodtech) AND the client -- either
 // side can flag something on Project information that should change;
 // Client Manager/Owner review it and make the real edit themselves either
-// way (see resolvePendingChange). Kept as one list rather than a separate
+// way. Kept as one list rather than a separate
 // client-facing one since the fields that matter (scale, use case, dates,
 // address...) are the same regardless of who's asking.
 var CHANGE_REQUEST_FIELD_OPTIONS=['Use case','Scale','Materials & presentation','Model size','Package size','Project address','Boundary map','Start date','Target production completion','Target delivery','Other'];
@@ -4520,11 +4516,15 @@ function closeRequestChangeModal(){
   if(modal)modal.hidden=true;
 }
 window.closeRequestChangeModal=closeRequestChangeModal;
-// A factory/prodtech "flag" that something on Project information should
-// change -- this never edits the field itself. It just queues a proposal;
-// the assigned Client Manager (or Owner) reviews it in the "Requested
-// changes" list on Project information and makes the real edit themselves
-// with the normal edit controls. See resolvePendingChange().
+// A factory/prodtech/client "flag" that something on Project information
+// should change -- this never edits the field itself. It records the
+// request on b.pendingChanges (kept as a hidden data trail -- no longer
+// rendered as its own list, see below -- purely so the server can detect a
+// genuinely NEW request and email the Client Manager/Owner; see
+// detectNewChangeRequests/sendChangeRequestNotification in
+// api/sourcing.js) and logs a full Recent Activity entry (including the
+// actual note text, not just the field name) so it's visible right there
+// without a separate "Requested changes" panel to check.
 function submitProjectInfoChangeRequest(){
   var role=document.body.dataset.role;
   if(role!=='factory'&&role!=='prodtech'&&role!=='client')return;
@@ -4542,53 +4542,14 @@ function submitProjectInfoChangeRequest(){
     field:fieldLabel,
     note:noteVal,
     requestedBy:(typeof currentActorLabel==='function')?currentActorLabel(b):role,
-    requestedAt:new Date().toISOString().slice(0,10),
-    status:'pending'
+    requestedAt:new Date().toISOString().slice(0,10)
   });
-  logProjectEvent(b,'Requested a change to "'+fieldLabel+'" on "'+b.title+'"');
+  logProjectEvent(b,'Requested a change to "'+fieldLabel+'" on "'+b.title+'": '+noteVal);
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   closeRequestChangeModal();
   renderProjectOverview(b);
 }
 window.submitProjectInfoChangeRequest=submitProjectInfoChangeRequest;
-// Client Manager/Owner deciding what happens to a vendor's proposed change
-// -- a status/decision log only, never touches the actual project field
-// (see submitProjectInfoChangeRequest's comment on why).
-function resolvePendingChange(changeId,newStatus){
-  var role=document.body.dataset.role;
-  if(role!=='owner'&&role!=='sales')return;
-  var id=document.getElementById('projSelect').value;
-  var b=findBrief(id);
-  if(!b||!b.pendingChanges)return;
-  var change=b.pendingChanges.filter(function(c){return c.id===changeId;})[0];
-  if(!change)return;
-  change.status=newStatus;
-  change.resolvedAt=new Date().toISOString().slice(0,10);
-  logProjectEvent(b,(newStatus==='resolved'?'Resolved':'Declined')+' change request for "'+change.field+'" on "'+b.title+'"');
-  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-  renderProjectOverview(b);
-}
-window.resolvePendingChange=resolvePendingChange;
-function renderPendingChanges(b){
-  var wrap=document.getElementById('pendingChangesWrap');
-  if(!wrap||!b)return;
-  var role=document.body.dataset.role;
-  var list=b.pendingChanges||[];
-  if(!list.length){wrap.hidden=true;wrap.innerHTML='';return;}
-  var canResolve=role==='owner'||role==='sales';
-  wrap.hidden=false;
-  wrap.innerHTML='<div class="mock__k" style="display:block;margin-bottom:0.5rem;">Requested changes</div>'+list.map(function(c){
-    var statusLabel=c.status==='pending'?'Pending review':(c.status==='resolved'?'Resolved':'Declined');
-    var actions=(canResolve&&c.status==='pending')?('<div class="pendchange__actions"><button type="button" class="btn btn--ghost btn--sm" onclick="resolvePendingChange(\''+c.id+'\',\'resolved\')">Mark resolved</button><button type="button" class="btn btn--ghost btn--sm" onclick="resolvePendingChange(\''+c.id+'\',\'declined\')">Decline</button></div>'):'';
-    return '<div class="pendchange">'+
-      '<div class="pendchange__top"><span class="pendchange__field">'+esc(c.field)+'</span><span class="pendchange__status '+c.status+'">'+statusLabel+'</span></div>'+
-      '<div class="pendchange__note">'+esc(c.note)+'</div>'+
-      '<div class="pendchange__meta">'+esc(c.requestedBy||'')+' · '+esc(c.requestedAt||'')+'</div>'+
-      actions+
-    '</div>';
-  }).join('');
-}
-window.renderPendingChanges=renderPendingChanges;
 // Owner-only admin controls for this one project -- Client Manager
 // assignment, contact info, dates (read-only; the assigned Client Manager
 // edits these from My Projects), delivered/archive toggles, and Invoice &
@@ -6015,7 +5976,7 @@ var PERM={
   'proj-spec-edit-only':['owner','sales'],        // Edit control on Project information's spec fields (Use case/Scale/Materials/Presentation method/Model size/Package size) -- Owner + assigned Client Manager only; everyone (incl. client/factory/prodtech) still sees the read-only value
   'vendor-price-only':['factory'],                // "Your quoted price" KPI -- Production Admin only, never their technicians and never the client
   'vendor-days-only':['factory','prodtech'],      // "Quoted production time" KPI -- the whole vendor side, no pricing attached
-  'reqchange-only':['factory','prodtech','client'], // "Request a change" button on Project information -- vendor OR client proposes, Client Manager/Owner decide (see resolvePendingChange)
+  'reqchange-only':['factory','prodtech','client'], // "Request a change" button on Project information -- vendor OR client proposes, Client Manager/Owner decide (see submitProjectInfoChangeRequest)
   'vendorproj-only':['factory','prodtech'],       // Vendor side's own scoped "My Projects" list (this shop's awarded-to-production jobs) -- the only real entry point into a project's Overview page for factory/prodtech
   'vendorteam-only':['factory'],                  // Vendor's own Team & Access tab -- Production Admin (primary admin or an already-added team member, both role 'factory') can add/remove more logins for their own shop; Production Technicians never manage access
   'vendorfinance-only':['factory'],                // Vendor's own Finance tab -- price, so hidden from a Vendor Team & Access member via body.vendor-no-price (see the CSS rule) even though it's role 'factory' same as the primary admin; Production Technicians never see it either
