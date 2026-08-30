@@ -239,11 +239,21 @@ async function filterClaimed(redis, items, keyFn) {
 // based on an older main) silently dropped these three definitions while
 // leaving the call site intact, which is what caused every factory GET to
 // 500 with "filterDataForFactory is not defined".
-function vendorSafeBrief(b, shopId) {
+function vendorSafeBrief(b, shopId, team) {
   const quotes = {};
   if (b.quotes && b.quotes[shopId]) quotes[shopId] = b.quotes[shopId];
   const variations = {};
   if (b.variations && b.variations[shopId]) variations[shopId] = b.variations[shopId];
+  // The vendor side never gets the full team roster (team: [] below, same
+  // as always -- names/emails of every Carve staffer isn't theirs to see),
+  // but they should still be able to see WHO their own point of contact is
+  // ("Carve Lead" on Project information). Resolve just that one name here,
+  // server-side, from the full roster this function still has access to
+  // before filterDataForFactory strips it -- the client falls back to this
+  // precomputed field when its own local team list is empty (a factory
+  // session's, always).
+  const managerEmail = String(b.assignedManager || '').toLowerCase();
+  const manager = managerEmail ? (team || []).find((t) => t && t.email && t.email.toLowerCase() === managerEmail) : null;
   return {
     id: b.id,
     title: b.title,
@@ -257,6 +267,7 @@ function vendorSafeBrief(b, shopId) {
     awardedVariantIndex: b.awardedVariantIndex == null ? null : b.awardedVariantIndex,
     stage: b.stage || null,
     assignedTech: b.assignedTech || null,
+    assignedManagerName: manager ? manager.name : null,
     invited: b.invited || [],
     sentDate: b.sentDate || null,
     lastCommentAt: b.lastCommentAt || null,
@@ -277,7 +288,7 @@ function filterDataForFactory(data, email) {
   const shopId = vendor.id;
   const briefs = (data.briefs || [])
     .filter((b) => isBriefRelevantToShop(b, shopId))
-    .map((b) => vendorSafeBrief(b, shopId));
+    .map((b) => vendorSafeBrief(b, shopId, data.team));
   // Only the caller's OWN vendor record — needed so their own device can
   // resolve its own shopId (see reconcileVendorsIntoShops in app.html) —
   // never the full roster.
