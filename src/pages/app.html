@@ -4098,9 +4098,10 @@ function renderProjectOverview(b){
   // The next stage's own originally-scheduled date range (same
   // stageDateLabelCompact() the journey dots show under each stage) --
   // not the overall project's target delivery date, which lives on its
-  // own KPI card elsewhere.
+  // own KPI card elsewhere. Same "Original schedule" label prefix as the
+  // Status card's kpiStageSchedule so the two read consistently.
   var nextStageRange=(!delivered&&nextStage&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx+1):'';
-  setText('kpiNextSub',nextStageRange&&nextStageRange!=='—'?nextStageRange:'—');
+  setText('kpiNextSub',nextStageRange&&nextStageRange!=='—'?('Original schedule '+nextStageRange):'—');
   // Current Estimated Delivery Date -- live projection (see
   // currentEstimatedDeliveryDate) up top, original fixed commitment
   // (targetDelivery, already computed above) underneath for comparison.
