@@ -2507,9 +2507,10 @@ var PROJECT_STAGES=[
   'Final Client Approval',                      // 4
   'Permanently Fixed, Cleaned & Polished',      // 5 -- 2 days
   'Packing',                                     // 6 -- 2 days
-  'Shipping',                                    // 7 -- 5 days; the model physically arrives with the
-                                                  //      client at the end of this stage -- delivery is no
-                                                  //      longer its own stage, see journeyStageRange below
+  'Shipping',                                    // 7 -- 5 days, on top of the agreed production total; the
+                                                  //      model physically arrives with the client at the end
+                                                  //      of this stage -- delivery is no longer its own
+                                                  //      stage, see journeyStageRange below
   'Post Delivery Support',                      // 8
   'Project Completed'                           // 9 -- final stage; corresponds to b.deliveredAt
 ];
@@ -2611,15 +2612,16 @@ function addBusinessDays(dateStr,days){
   return d.toISOString().slice(0,10);
 }
 // Target production completion defaults to start date + the production
-// time agreed with the client (b.productionDays), and target delivery
-// defaults to that completion date + 9 days -- the agreed post-completion
-// buffer of Permanently Fixed, Cleaned & Polished (2 days) + Packing
-// (2 days) + Shipping (5 days), see journeyStageRange. This keeps both in
-// sync with the start date / production time by default so they don't
-// drift. Either can be directly overridden (see
-// setProductionCompletionOverride/setTargetDeliveryOverride, used by the
-// date inputs in Project information) for cases where the real date needs
-// to diverge from the formula -- the override always wins once set.
+// time agreed with the client (b.productionDays) -- that total already
+// includes Confirmed Material Samples (5 days), Final Client Approval
+// (2 days), Permanently Fixed, Cleaned & Polished (2 days), and Packing
+// (2 days), with whatever's left over going to Fabrication (see
+// journeyStageRange). Target delivery is completion + 5 more days for
+// Shipping, which is NOT part of the agreed production total -- it's
+// additional transit time on top. Either date can be directly overridden
+// (see setProductionCompletionOverride/setTargetDeliveryOverride, used by
+// the date inputs in Project information) for cases where the real date
+// needs to diverge from the formula -- the override always wins once set.
 function productionCompletionDate(b){
   if(b&&b.productionCompletionOverride)return b.productionCompletionOverride;
   var start=getProjectStartDate(b);
@@ -2630,7 +2632,7 @@ function productionCompletionDate(b){
 function targetDeliveryDate(b){
   if(b&&b.targetDeliveryOverride)return b.targetDeliveryOverride;
   var completion=productionCompletionDate(b);
-  return completion?addDays(completion,9):null;
+  return completion?addDays(completion,5):null;
 }
 // The ORIGINAL target delivery date (targetDeliveryDate above) never
 // drifts once set -- it's the fixed commitment made at kickoff. This is
@@ -2719,19 +2721,18 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // Raw {start,end,openEnded} for a stage's estimated window -- shared by
 // stageDateLabelCompact() (the visible per-dot date label) and
 // currentStageScheduleStatus() (the visible ahead/behind line on the
-// journey card) so the two never drift apart. Derived from the project's
-// own Start date, Target production completion (start + agreed production
-// time), and Target delivery (completion + 9 days): Confirmed Material
-// Samples gets the first 3 days after kickoff; Final Client Approval gets
-// the last 2 days, ending ON completion day itself; Fabrication absorbs
-// whatever's left in between (day 4 through completion-2). After
-// completion, the agreed post-production buffer runs Permanently
-// Fixed/Cleaned & Polished for 2 days, then Packing for 2 days, then
-// Shipping for the remaining 5 days through Target delivery (2+2+5=9,
-// matching targetDeliveryDate's completion+9), and Post Delivery Support
-// starts the day after delivery with no end date (openEnded -- support
-// continues indefinitely, there's nothing to count down to). Project Kick
-// Off and Project Completed round out the two ends.
+// journey card) so the two never drift apart. The agreed production total
+// (start through Target production completion) is carved up as: Confirmed
+// Material Samples gets the first 5 days after kickoff; Final Client
+// Approval, Permanently Fixed/Cleaned & Polished, and Packing each get
+// 2 days at the tail end, right up through completion day itself;
+// Fabrication absorbs whatever's left over in between. Shipping is NOT
+// part of that agreed total -- it's a separate 5-day buffer added after
+// completion, running through Target delivery (completion+5, see
+// targetDeliveryDate). Post Delivery Support starts the day after
+// delivery with no end date (openEnded -- support continues indefinitely,
+// there's nothing to count down to). Project Kick Off and Project
+// Completed round out the two ends.
 function journeyStageRange(b,stageIndex){
   var stageName=PROJECT_STAGES[stageIndex];
   var start=getProjectStartDate(b);
@@ -2739,12 +2740,12 @@ function journeyStageRange(b,stageIndex){
   var delivery=targetDeliveryDate(b);
   var rs=null,re=null,openEnded=false;
   if(stageName==='Project Kick Off'&&start){rs=start;re=start;}
-  else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,3);}
-  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,4);re=addDays(completion,-2);}
-  else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-1);re=completion;}
-  else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,1);re=addDays(completion,2);}
-  else if(stageName==='Packing'&&completion){rs=addDays(completion,3);re=addDays(completion,4);}
-  else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,5);re=delivery;}
+  else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,5);}
+  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,6);re=addDays(completion,-6);}
+  else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-5);re=addDays(completion,-4);}
+  else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-3);re=addDays(completion,-2);}
+  else if(stageName==='Packing'&&completion){rs=addDays(completion,-1);re=completion;}
+  else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,1);re=delivery;}
   else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
   if(rs&&re&&rs>re)return {start:null,end:null,openEnded:false}; // agreed production time too short for this breakdown to make sense
   return {start:rs,end:re,openEnded:openEnded};
