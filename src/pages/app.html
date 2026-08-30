@@ -972,7 +972,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:1.25rem;">
-          <div class="panel">
+          <div class="panel cid-only">
             <div class="panel__head"><h3>Client information</h3></div>
             <div class="panel__body">
               <!-- Editing any field here updates ONLY this project's own
@@ -983,7 +983,6 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                    sync. Same inline Edit-button-next-to-the-value pattern as
                    Carve Lead above. See saveClientField(). -->
               <div style="display:flex;flex-direction:column;gap:0.9rem;">
-                <div class="factory-only"><span class="mock__k">Client</span><div class="mock__v" id="projInfoClientFactory">—</div></div>
                 <div class="cid-only">
                   <span class="mock__k">Company</span>
                   <div style="display:flex;align-items:center;gap:0.6rem;">
@@ -1720,12 +1719,13 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 
 <!-- Project scale & boundary -- dedicated working page for the "Project
      scale and boundary confirmed" Project Kick Off checklist item. Owner/
-     Client Manager set the values here (same data shown in Project
-     information -- b.scaleOverride / b.boundaryFileOverride, see
-     saveScaleBoundaryScale/uploadProjectBoundaryFile); the client sees the
-     same info and has to explicitly confirm it themselves before the
-     checklist item can read done -- see confirmScaleBoundary() /
-     checklistItemDone(). -->
+     Client Manager/vendor (factory) can set the values here (same data
+     shown in Project information -- b.scaleOverride / b.boundaryFileOverride,
+     see saveScaleBoundaryScale/uploadProjectBoundaryFile) -- the vendor is
+     the one who actually has the real scale and boundary map, so they get
+     write access too, not just view. The client sees the same info and has
+     to explicitly confirm it themselves before the checklist item can read
+     done -- see confirmScaleBoundary() / checklistItemDone(). -->
 <div class="modal-overlay" id="scaleBoundaryModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Project scale and boundary">
     <div class="modal__head"><h3>Project scale &amp; boundary</h3><button class="modal__x" onclick="closeScaleBoundaryModal()" aria-label="Close">×</button></div>
@@ -1733,7 +1733,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <div class="mfield">
         <label>Scale</label>
         <div class="mock__v" id="sbScaleDisplay" style="margin:0.3rem 0 0.6rem;">—</div>
-        <div class="proj-spec-edit-only" style="display:flex;gap:0.5rem;">
+        <div class="sb-edit-only" style="display:flex;gap:0.5rem;">
           <input type="text" id="sbScaleInput" placeholder="e.g. 1:96" style="flex:1;">
           <button type="button" class="btn btn--primary btn--sm" onclick="saveScaleBoundaryScale()">Save</button>
         </div>
@@ -1741,7 +1741,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <div class="mfield">
         <label>Boundary map</label>
         <div id="sbBoundaryDisplay" style="margin:0.3rem 0 0.6rem;">—</div>
-        <div class="proj-spec-edit-only">
+        <div class="sb-edit-only">
           <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('sbBoundaryFileInput').click()">Upload</button>
           <input type="file" id="sbBoundaryFileInput" style="display:none;" onchange="uploadProjectBoundaryFile(this)">
         </div>
@@ -2444,14 +2444,15 @@ function addBusinessDays(dateStr,days){
 }
 // Target production completion defaults to start date + the production
 // time agreed with the client (b.productionDays), and target delivery
-// defaults to that completion date + 7 days -- 2 days of Packing plus 5
-// days of Shipping (see journeyStageRange), so delivery lands on
-// Shipping's own last day rather than being tracked as a separate stage.
-// This keeps both in sync with the start date / production time by
-// default so they don't drift. Either can be directly overridden (see
-// setProductionCompletionOverride/setTargetDeliveryOverride, used by the
-// date inputs in Project information) for cases where the real date needs
-// to diverge from the formula -- the override always wins once set.
+// defaults to that completion date + 5 days -- Shipping's own 5 days (see
+// journeyStageRange); Packing is shown as a same-day milestone right at
+// completion rather than its own buffer added on top, so it no longer
+// pushes delivery out further. This keeps both in sync with the start
+// date / production time by default so they don't drift. Either can be
+// directly overridden (see setProductionCompletionOverride/
+// setTargetDeliveryOverride, used by the date inputs in Project
+// information) for cases where the real date needs to diverge from the
+// formula -- the override always wins once set.
 function productionCompletionDate(b){
   if(b&&b.productionCompletionOverride)return b.productionCompletionOverride;
   var start=getProjectStartDate(b);
@@ -2462,7 +2463,7 @@ function productionCompletionDate(b){
 function targetDeliveryDate(b){
   if(b&&b.targetDeliveryOverride)return b.targetDeliveryOverride;
   var completion=productionCompletionDate(b);
-  return completion?addDays(completion,7):null;
+  return completion?addDays(completion,5):null;
 }
 function paymentStatusLabel(b){
   var inv=b.clientQuote&&b.clientQuote.invoice;
@@ -2522,13 +2523,14 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // immediately before completion are split 1 (Final Client Approval) + 2
 // (Permanently Fixed, Cleaned & Polished, ending ON completion day itself);
 // Fabrication absorbs whatever's left in between (starting the day after
-// material confirmation wraps, day 8). Packing (2 days) and Shipping
-// (5 days) run back-to-back AFTER completion -- the model isn't boxed
-// until it's actually finished -- and Shipping's last day IS the delivery
-// date (see targetDeliveryDate()); delivery is no longer its own stage.
-// Post Delivery Support is open-ended (starts the day after delivery, no
-// fixed end), so it never shows an ahead/behind comparison. Project Kick
-// Off and Project Completed round out the two ends.
+// material confirmation wraps, day 8). Packing is shown as a same-day
+// milestone right ON completion (it no longer adds its own buffer before
+// Shipping starts); Shipping then runs the 5 days immediately after
+// completion, and its own last day IS the delivery date (see
+// targetDeliveryDate()); delivery is no longer its own stage. Post
+// Delivery Support is open-ended (starts the day after delivery, no fixed
+// end), so it never shows an ahead/behind comparison. Project Kick Off and
+// Project Completed round out the two ends.
 function journeyStageRange(b,stageIndex){
   var stageName=PROJECT_STAGES[stageIndex];
   var start=getProjectStartDate(b);
@@ -2540,8 +2542,8 @@ function journeyStageRange(b,stageIndex){
   else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,8);re=addDays(completion,-3);}
   else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-2);re=rs;}
   else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-1);re=completion;}
-  else if(stageName==='Packing'&&completion){rs=addDays(completion,1);re=addDays(completion,2);}
-  else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,3);re=delivery;}
+  else if(stageName==='Packing'&&completion){rs=completion;re=completion;}
+  else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,1);re=delivery;}
   else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
   if(rs&&re&&rs>re)return {start:null,end:null,openEnded:false}; // agreed production time too short for this breakdown to make sense
   return {start:rs,end:re,openEnded:openEnded};
@@ -2849,6 +2851,8 @@ window.saveProjectSpecField=saveProjectSpecField;
 // lets Carve set/replace it directly from the project page rather than only
 // ever coming from the vendor's own quotation upload.
 function uploadProjectBoundaryFile(input){
+  var role=document.body.dataset.role;
+  if(role!=='owner'&&role!=='sales'&&role!=='factory')return;
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
   if(!b)return;
@@ -3563,6 +3567,7 @@ function renderProjectOverview(b){
       jChecklist.hidden=false;
       var curChecklistRole=document.body.dataset.role;
       jChecklist.innerHTML=checklistItems.map(function(label,i){
+        if(!checklistItemVisible(stageName,i,curChecklistRole))return '';
         var done=checklistItemDone(b,stageName,i);
         var action=checklistItemAction(stageName,i,curChecklistRole);
         return '<div class="stagecheck'+(done?' done':'')+'"'+(action?(' onclick="'+action+'"'):'')+'>'+
@@ -3611,7 +3616,7 @@ function renderProjectOverview(b){
   var kpiBar=document.getElementById('kpiBar');if(kpiBar)kpiBar.style.width=pct+'%';
   setText('kpiNext',nextStage||'Complete');
   setText('kpiNextSub',targetDelivery?('Target '+fmtDateShort(targetDelivery)):'—');
-  setText('kpiScale',(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—');
+  setText('kpiScale',((typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null)||(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—');
   setText('kpiScaleSub',(b.clientQuote&&b.clientQuote.material)||(b.brief&&b.brief['Model type'])||'');
 
   var notice=document.getElementById('ovNotice');
@@ -3622,8 +3627,7 @@ function renderProjectOverview(b){
   var c=b.client||{};
   var teamMember=(window.SDB.team||[]).filter(function(t){return t&&t.email&&b.assignedManager&&t.email.toLowerCase()===b.assignedManager.toLowerCase();})[0];
   setText('projInfoClientCM',c.Company||'—');
-  setText('projInfoClientFactory',b.code?('Confidential · Ref '+b.code):'Confidential');
-  setText('projInfoLead',teamMember?teamMember.name:'—');
+  setText('projInfoLead',teamMember?teamMember.name:(b.assignedManagerName||'—'));
   var leadSel=document.getElementById('projInfoLeadSelect');
   if(leadSel)leadSel.innerHTML=assignManagerOptions(b.assignedManager);
   var leadEditWrap=document.getElementById('projInfoLeadEditWrap');
@@ -3674,7 +3678,13 @@ function renderProjectOverview(b){
 
   var actWrap=document.getElementById('ovActivityList');
   if(actWrap){
-    var hist=(b.history||[]).filter(function(h){return !h.shop;}).slice(0,8);
+    var actViewerRole=document.body.dataset.role;
+    // visibleActivityFor lives in the Sourcing & Quotes <script> block
+    // (defined alongside logProjectEvent, which stamps actorRole) --
+    // outside this block's own closure, so it's only reachable via
+    // window (see the OUR_SHOP/ME_TECH mirroring above for the same
+    // cross-<script>-block pattern and why a bare call here would throw).
+    var hist=(b.history||[]).filter(function(h){return !h.shop;}).filter(function(h){return (typeof window.visibleActivityFor!=='function')||window.visibleActivityFor(h,actViewerRole);}).slice(0,8);
     actWrap.innerHTML=hist.length?hist.map(function(h){
       var line=esc(h.action||'Update');
       if(h.price!=null)line+=' — $'+Number(h.price).toLocaleString('en-US')+(h.days?(', '+h.days+' days'):'');
@@ -3732,13 +3742,26 @@ window.checklistItemDone=checklistItemDone;
 // Admin gets to do it (see toggleStageChecklistItem).
 function checklistItemAction(stageName,itemIndex,role){
   if(stageName==='Project Kick Off'){
-    if(itemIndex===0)return (role==='owner'||role==='sales'||role==='client')?'openScaleBoundaryModal()':null;
+    if(itemIndex===0)return (role==='owner'||role==='sales'||role==='client'||role==='factory')?'openScaleBoundaryModal()':null;
     if(itemIndex===1)return (role==='owner'||role==='sales')?'openProjectInvoicePanel()':null;
     if(itemIndex===2)return 'openDesignFilesModal()';
   }
   return role==='sales'?('toggleStageChecklistItem('+itemIndex+')'):null;
 }
 window.checklistItemAction=checklistItemAction;
+// Whether a checklist item should even be listed for the CURRENT viewer --
+// separate from checklistItemAction (which just says whether *clicking* it
+// does anything). "50% deposit received" is Carve's own internal billing
+// milestone; the vendor doesn't act on it and doesn't need to see it
+// either, so it's dropped from their list entirely rather than shown as an
+// inert row. Every other role still sees it (and it still gates
+// advanceProjectStage() the same as always -- hiding it from one role's
+// view never changes what's actually required to move the stage along).
+function checklistItemVisible(stageName,itemIndex,role){
+  if(stageName==='Project Kick Off'&&itemIndex===1&&(role==='factory'||role==='prodtech'))return false;
+  return true;
+}
+window.checklistItemVisible=checklistItemVisible;
 // Toggles one item in the CURRENT stage's checklist (see STAGE_CHECKLISTS
 // above) for the currently-open project. Client Manager only -- not even
 // Carve Admin, per instruction; the client-facing view never calls this
@@ -3847,7 +3870,7 @@ window.closeScaleBoundaryModal=closeScaleBoundaryModal;
 // confirmation, since what the client signed off on no longer matches.
 function saveScaleBoundaryScale(){
   var role=document.body.dataset.role;
-  if(role!=='owner'&&role!=='sales')return;
+  if(role!=='owner'&&role!=='sales'&&role!=='factory')return;
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
   if(!b)return;
@@ -5050,7 +5073,8 @@ var PERM={
   'vendor-price-only':['factory'],                // "Your quoted price" KPI -- Production Admin only, never their technicians and never the client
   'vendor-days-only':['factory','prodtech'],      // "Quoted production time" KPI -- the whole vendor side, no pricing attached
   'vendor-request-only':['factory','prodtech'],   // "Request a change" button on Project information -- vendor side proposes, Client Manager/Owner decide (see resolvePendingChange)
-  'vendorproj-only':['factory','prodtech']        // Vendor side's own scoped "My Projects" list (this shop's awarded-to-production jobs) -- the only real entry point into a project's Overview page for factory/prodtech
+  'vendorproj-only':['factory','prodtech'],       // Vendor side's own scoped "My Projects" list (this shop's awarded-to-production jobs) -- the only real entry point into a project's Overview page for factory/prodtech
+  'sb-edit-only':['owner','sales','factory']       // Edit controls inside the Project scale & boundary modal only -- unlike proj-spec-edit-only (Project information's OTHER fields, still owner+sales only), the vendor is the one who actually knows the model's real scale and has the boundary file, so they can fill this one in too; the client still has to separately confirm it (see confirmScaleBoundary)
 };
 var ROLE_INFO={
   client:{name:'Asher Liu',av:'AL',org:'Client'},
@@ -6407,6 +6431,12 @@ function logHistory(b,shopId,optData,action){
 // real session (e.g. local demo/dev use), and finally just the role label
 // if even that isn't available.
 var ROLE_DISPLAY_LABEL={owner:'Carve Admin',sales:'Client Manager',factory:'Vendor',prodtech:'Production Tech',client:'Client'};
+// Which of the three "sides" a role's Recent Activity entries count as,
+// for visibleActivityFor()'s per-viewer filtering below: Carve staff
+// (owner/sales) vs the client vs the vendor side (factory/prodtech share
+// one category -- a technician's actions are still "the vendor" from
+// everyone else's point of view).
+var ROLE_ACTOR_CATEGORY={owner:'carve',sales:'carve',client:'client',factory:'vendor',prodtech:'vendor'};
 function currentActorLabel(b){
   var role=document.body.dataset.role;
   var roleLabel=ROLE_DISPLAY_LABEL[role]||'';
@@ -6465,7 +6495,11 @@ function logProjectEvent(b,action,whenDateStr){
   // anyone got around to marking it in the system) instead of always
   // stamping the moment the button was clicked.
   var time=whenDateStr?new Date(whenDateStr+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):nowStamp();
-  b.history.unshift({action:action,time:time,by:currentActorLabel(b)});
+  // actorRole records which SIDE (not just which person) did this, purely
+  // from the role active when it happened -- see visibleActivityFor() for
+  // how each viewer's Recent Activity list is filtered by it.
+  var actorRole=ROLE_ACTOR_CATEGORY[document.body.dataset.role]||'carve';
+  b.history.unshift({action:action,time:time,by:currentActorLabel(b),actorRole:actorRole});
 }
 // logProjectEvent is defined inside this IIFE but called from EVERY other
 // <script> block on the page (Client info/spec field saves, date field
@@ -6478,6 +6512,26 @@ function logProjectEvent(b,action,whenDateStr){
 // the file) succeeded, but logging the history entry right after it threw
 // and killed the rest of the function silently.
 window.logProjectEvent=logProjectEvent;
+// Per-viewer Recent Activity visibility. Carve staff (owner/sales) see
+// everything -- the full internal audit trail. Client and vendor each see
+// a narrower slice: the client only ever sees what CARVE'S team did (never
+// the vendor's own production-side actions -- those aren't the client's
+// business and would just be confusing/unprofessional to surface raw), and
+// the vendor sees what the CLIENT or CARVE did (but not a mirror of their
+// own actions back at them -- they already know what they just did; this
+// feed is about what changed on the OTHER sides of the project). Entries
+// logged before actorRole existed have none -- default those to 'carve'
+// (the great majority of pre-existing entries are Carve-driven system
+// events like awards/invoices) so old activity doesn't just vanish for
+// the client's view instead of needing a data migration.
+function visibleActivityFor(h,role){
+  var actor=h.actorRole||'carve';
+  if(role==='owner'||role==='sales')return true;
+  if(role==='client')return actor==='carve';
+  if(role==='factory'||role==='prodtech')return actor==='carve'||actor==='client';
+  return true;
+}
+window.visibleActivityFor=visibleActivityFor;
 function optKey(vi){return vi==null?'p':String(vi);}
 function getOption(b,shopId,vi){return vi==null?b.quotes[shopId]:((b.variations&&b.variations[shopId])||[])[vi];}
 window.SRC_openCommentForm=function(bid,shopId,vi){SRC_OPEN_COMMENT[bid+'|'+shopId+'|'+optKey(vi)]=true;SRC_render();};

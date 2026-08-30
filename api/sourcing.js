@@ -239,11 +239,45 @@ async function filterClaimed(redis, items, keyFn) {
 // based on an older main) silently dropped these three definitions while
 // leaving the call site intact, which is what caused every factory GET to
 // 500 with "filterDataForFactory is not defined".
-function vendorSafeBrief(b, shopId) {
+function vendorSafeBrief(b, shopId, team) {
   const quotes = {};
   if (b.quotes && b.quotes[shopId]) quotes[shopId] = b.quotes[shopId];
   const variations = {};
   if (b.variations && b.variations[shopId]) variations[shopId] = b.variations[shopId];
+  // The vendor side never gets the full team roster (team: [] below, same
+  // as always -- names/emails of every Carve staffer isn't theirs to see),
+  // but they should still be able to see WHO their own point of contact is
+  // ("Carve Lead" on Project information). Resolve just that one name here,
+  // server-side, from the full roster this function still has access to
+  // before filterDataForFactory strips it -- the client falls back to this
+  // precomputed field when its own local team list is empty (a factory
+  // session's, always).
+  const managerEmail = String(b.assignedManager || '').toLowerCase();
+  const manager = managerEmail ? (team || []).find((t) => t && t.email && t.email.toLowerCase() === managerEmail) : null;
+  // Project journey/checklist rendering (renderProjectOverview,
+  // journeyStageRange, checklistItemDone, etc. in app.html) is ONE shared
+  // code path for every role -- it was never written twice. That code
+  // reads b.startDate / b.productionDays / b.productionCompletionOverride /
+  // b.targetDeliveryOverride / b.projectStage / b.deliveredAt / b.paused
+  // directly, and none of those were in this object before, so a factory
+  // session ran the exact same formulas as Carve Admin's but with those
+  // inputs silently undefined -- producing a DIFFERENT date (or none) for
+  // the same project depending who was looking. Sending the vendor the
+  // same "prescribed" schedule fields Carve Admin/Client Manager set (not
+  // a separately-computed vendor-only estimate) is what keeps both sides
+  // showing the exact same journey. clientQuote itself stays withheld
+  // (that's the client-facing PRICE) -- only the two non-price pieces the
+  // shared code actually needs come along: the agreed day count and the
+  // deposit-paid status/date the "50% deposit received" checklist item and
+  // getProjectStartDate's fallback read.
+  var clientQuoteSafe = null;
+  if (b.clientQuote) {
+    var inv = b.clientQuote.invoice || null;
+    clientQuoteSafe = {
+      days: b.clientQuote.days == null ? null : b.clientQuote.days,
+      invoice: inv ? { depositStatus: inv.depositStatus || null, depositPaidAt: inv.depositPaidAt || null, balanceStatus: inv.balanceStatus || null } : null,
+    };
+  }
   return {
     id: b.id,
     title: b.title,
@@ -256,9 +290,25 @@ function vendorSafeBrief(b, shopId) {
     awarded: b.awarded || null,
     awardedVariantIndex: b.awardedVariantIndex == null ? null : b.awardedVariantIndex,
     stage: b.stage || null,
+    projectStage: b.projectStage || null,
+    deliveredAt: b.deliveredAt || null,
+    paused: !!b.paused,
+    startDate: b.startDate || null,
+    productionDays: b.productionDays == null ? null : b.productionDays,
+    productionCompletionOverride: b.productionCompletionOverride || null,
+    targetDeliveryOverride: b.targetDeliveryOverride || null,
+    scaleOverride: b.scaleOverride || null,
+    boundaryFileOverride: b.boundaryFileOverride || null,
+    scaleBoundaryConfirmedAt: b.scaleBoundaryConfirmedAt || null,
+    designFilesChecklist: b.designFilesChecklist || null,
+    stageChecklist: b.stageChecklist || null,
+    pendingChanges: b.pendingChanges || [],
+    clientQuote: clientQuoteSafe,
     assignedTech: b.assignedTech || null,
+    assignedManagerName: manager ? manager.name : null,
     invited: b.invited || [],
     sentDate: b.sentDate || null,
+    leadReceivedAt: b.leadReceivedAt || null,
     lastCommentAt: b.lastCommentAt || null,
     archived: !!b.archived,
     quotes,
@@ -277,7 +327,7 @@ function filterDataForFactory(data, email) {
   const shopId = vendor.id;
   const briefs = (data.briefs || [])
     .filter((b) => isBriefRelevantToShop(b, shopId))
-    .map((b) => vendorSafeBrief(b, shopId));
+    .map((b) => vendorSafeBrief(b, shopId, data.team));
   // Only the caller's OWN vendor record — needed so their own device can
   // resolve its own shopId (see reconcileVendorsIntoShops in app.html) —
   // never the full roster.
@@ -394,6 +444,34 @@ module.exports = async (req, res) => {
         if (incomingBrief.variations && incomingBrief.variations[shopId]) variations[shopId] = incomingBrief.variations[shopId];
         else delete variations[shopId];
         merged.variations = variations;
+        // The vendor side has grown real write access beyond just quotes/
+        // variations since this function was first written -- toggling the
+        // Design files checklist (toggleDesignFileItem), filling in Scale &
+        // boundary (saveScaleBoundaryScale/uploadProjectBoundaryFile), and
+        // filing a change request (submitProjectInfoChangeRequest) all call
+        // the same saveSRC() path. Without carrying these over too, every
+        // one of those silently appeared to save (no error, UI updated
+        // instantly from local state) but reverted the moment this vendor's
+        // own next pull replaced their local copy with the untouched
+        // server version -- exactly the "checked all the boxes, logged
+        // back in, nothing was checked" bug.
+        merged.designFilesChecklist = incomingBrief.designFilesChecklist || currentBrief.designFilesChecklist || null;
+        merged.scaleOverride = incomingBrief.scaleOverride != null ? incomingBrief.scaleOverride : (currentBrief.scaleOverride || null);
+        merged.boundaryFileOverride = incomingBrief.boundaryFileOverride || currentBrief.boundaryFileOverride || null;
+        // pendingChanges is additive-only from the vendor's side (they can
+        // only ever propose a NEW change, never touch an existing one's
+        // status -- see resolvePendingChange, owner/sales only): merge by
+        // id, keeping the server's copy of anything already there
+        // (protects a Carve Admin resolution that landed between this
+        // vendor's last pull and this save from being reverted by their
+        // stale local copy) and only ADDING ids the server doesn't have
+        // yet.
+        const pendingChanges = (currentBrief.pendingChanges || []).slice();
+        const existingChangeIds = new Set(pendingChanges.map((c) => c && c.id));
+        (incomingBrief.pendingChanges || []).forEach((c) => {
+          if (c && c.id && !existingChangeIds.has(c.id)) pendingChanges.unshift(c);
+        });
+        merged.pendingChanges = pendingChanges;
         return merged;
       }
       let briefsForMerge = body.briefs;
