@@ -256,7 +256,7 @@ body.impersonating .impersonate-bar{display:flex !important;}
    shop's own admin -- so price has to be withheld as an additive layer on
    top of that, not a role distinction. Kept as plain CSS classes (not
    .perm-off) so applyPerms()'s role-driven toggling never fights this. */
-body.vendor-no-price .vendor-price-only,body.vendor-no-price .vendor-invoice-only{display:none !important;}
+body.vendor-no-price .vendor-price-only,body.vendor-no-price .vendor-invoice-only,body.vendor-no-price .vendorfinance-only{display:none !important;}
 .teamrow{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.9rem 0;border-bottom:1px solid var(--cm-line-faint);}
 .teamrow:last-child{border-bottom:0;}
 .teamrow__who{display:flex;align-items:center;gap:0.8rem;}
@@ -717,6 +717,10 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <button class="navbtn vendorproj-only" data-view="vendorprojects" onclick="go('vendorprojects')">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="3" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="2.5" y="11" width="13" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
         My Projects
+      </button>
+      <button class="navbtn vendorfinance-only" data-view="vendorfinance" onclick="go('vendorfinance')">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="3" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 10.5l2-2 2 1.5 3-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Finance
       </button>
       <button class="navbtn vendorteam-only" data-view="vendorteam" onclick="go('vendorteam')">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="6.5" cy="6" r="2.4" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 14.5c0-2.2 1.8-3.6 4-3.6s4 1.4 4 3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 4.2a2.2 2.2 0 010 4.2M13 14.5c0-1.8-1-3-2.4-3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -1709,6 +1713,32 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="panel__body" id="vendorTeamList"></div>
         </div>
       </div>
+    </section>
+
+    <!-- FINANCE (vendor admin only) -- every project awarded to this shop,
+         the price quoted to Carve, and whether the 50% deposit/100% balance
+         has been received. Same daterange filter-row pattern used on
+         Leads/Quotes (setLeadsRange/setSrcRange), filtering by when the
+         project was awarded. Hidden from a Vendor Team & Access member via
+         body.vendor-no-price (see vendorfinance-only in PERM) -- same price
+         data the Vendor Payment panel and project list already withhold
+         from them. -->
+    <section class="view vendorfinance-only" id="view-vendorfinance" hidden>
+      <div class="daterange">
+        <span class="daterange__label">Period</span>
+        <div class="daterange__seg">
+          <button type="button" class="on" data-range="all" onclick="setVfRange('all',this)">All time</button>
+          <button type="button" data-range="30" onclick="setVfRange('30',this)">Last 30 days</button>
+          <button type="button" data-range="90" onclick="setVfRange('90',this)">Last 90 days</button>
+          <button type="button" data-range="ytd" onclick="setVfRange('ytd',this)">Year to date</button>
+        </div>
+        <div class="daterange__custom" id="vfCustom">
+          <input type="date" id="vfFrom" aria-label="From date" onchange="applyVfRange()">
+          <span class="daterange__to">→</span>
+          <input type="date" id="vfTo" aria-label="To date" onchange="applyVfRange()">
+        </div>
+      </div>
+      <div id="vendorFinanceList" style="margin-top:1.25rem;"></div>
     </section>
   </div>
 </div>
@@ -3636,7 +3666,7 @@ function removeVendorTeamMember(id){
 window.removeVendorTeamMember=removeVendorTeamMember;
 </script>
 <script>
-var titles={myprojects:'My Projects',myassigned:'My Projects',vendorprojects:'My Projects',projects:'Projects',overview:'Overview',quote:'Quote',editquote:'Edit Estimate',changes:'Request Changes',milestones:'Milestones',files:'Files',messages:'Messages',invoices:'Invoices',leads:'Leads',clients:'Clients',team:'Team & Access',vendorteam:'Team & Access',sourcing:'Quotes'};
+var titles={myprojects:'My Projects',myassigned:'My Projects',vendorprojects:'My Projects',projects:'Projects',overview:'Overview',quote:'Quote',editquote:'Edit Estimate',changes:'Request Changes',milestones:'Milestones',files:'Files',messages:'Messages',invoices:'Invoices',leads:'Leads',clients:'Clients',team:'Team & Access',vendorteam:'Team & Access',vendorfinance:'Finance',sourcing:'Quotes'};
 var currentProjTitle='Aria Tower — Los Angeles, CA';
 var PROJECT_VIEWS=['overview','quote','editquote','changes','milestones','files','messages','invoices'];
 function go(v){
@@ -3658,7 +3688,7 @@ function go(v){
   document.querySelectorAll('.navbtn').forEach(function(b){b.classList.toggle('on',b.dataset.view===v);});
   document.getElementById('viewTitle').textContent=titles[v];
   // Oversight / portfolio views aren't tied to one project; project views are.
-  var projScoped=(v!=='clients'&&v!=='team'&&v!=='vendorteam'&&v!=='leads'&&v!=='myprojects'&&v!=='myassigned'&&v!=='vendorprojects'&&v!=='projects'&&v!=='sourcing')&&!skipProjectGate;
+  var projScoped=(v!=='clients'&&v!=='team'&&v!=='vendorteam'&&v!=='vendorfinance'&&v!=='leads'&&v!=='myprojects'&&v!=='myassigned'&&v!=='vendorprojects'&&v!=='projects'&&v!=='sourcing')&&!skipProjectGate;
   var oversightPrefix=(document.body.dataset.role==='client')?'':'Studio · ';
   // The project-scoped Overview page's own header already tells you it's
   // the overview (journey card etc.), so the breadcrumb just shows the
@@ -3676,6 +3706,7 @@ function go(v){
   if(v==='leads'&&window.SRC_renderLeads)window.SRC_renderLeads();
   if(v==='team'){if(window.renderTeam)window.renderTeam();if(window.renderVendors)window.renderVendors();}
   if(v==='vendorteam'&&window.renderVendorTeam)window.renderVendorTeam();
+  if(v==='vendorfinance'&&window.renderVendorFinance)window.renderVendorFinance();
   if(v==='projects'&&window.renderAwardedProjects)window.renderAwardedProjects();
   if(v==='myassigned'&&window.renderMyAssigned)window.renderMyAssigned();
   if(v==='vendorprojects'&&window.renderVendorProjects)window.renderVendorProjects();
@@ -4383,6 +4414,79 @@ function renderVendorPaymentPanel(b){
   }
 }
 window.renderVendorPaymentPanel=renderVendorPaymentPanel;
+/* ---- Vendor's own Finance tab -- every awarded project, quoted price, and
+   payment status, filtered by a daterange filter row (same pattern as
+   Leads/Quotes: setLeadsRange/setSrcRange). Vendor-admin-only -- see
+   vendorfinance-only in PERM and the body.vendor-no-price CSS rule that
+   hides it from a Vendor Team & Access member. ---- */
+var vfRange={mode:'all',from:null,to:null};
+function setVfRange(mode,btn){
+  vfRange.mode=mode;
+  vfRange.from=null;vfRange.to=null; // clear any custom dates so the always-visible inputs reset when a preset is picked
+  document.querySelectorAll('#view-vendorfinance .daterange__seg button').forEach(function(b){b.classList.toggle('on',b===btn);});
+  renderVendorFinance();
+}
+window.setVfRange=setVfRange;
+function applyVfRange(){
+  vfRange.mode='custom';
+  vfRange.from=document.getElementById('vfFrom').value||null;
+  vfRange.to=document.getElementById('vfTo').value||null;
+  renderVendorFinance();
+}
+window.applyVfRange=applyVfRange;
+function inVfRange(dateStr){
+  if(vfRange.mode==='all'||!dateStr)return true;
+  var d=new Date(dateStr+'T00:00:00');var now=new Date();
+  if(vfRange.mode==='30'){return d>=new Date(now.getTime()-30*864e5);}
+  if(vfRange.mode==='90'){return d>=new Date(now.getTime()-90*864e5);}
+  if(vfRange.mode==='ytd'){return d>=new Date(now.getFullYear(),0,1);}
+  if(vfRange.mode==='custom'){
+    if(vfRange.from&&d<new Date(vfRange.from+'T00:00:00'))return false;
+    if(vfRange.to&&d>new Date(vfRange.to+'T23:59:59'))return false;
+    return true;
+  }
+  return true;
+}
+function renderVendorFinance(){
+  var wrap=document.getElementById('vendorFinanceList');
+  if(!wrap)return;
+  if(!window.OUR_SHOP){
+    wrap.innerHTML='<div class="panel"><div class="panel__body"><div style="color:var(--cm-text-subtle);font-size:0.9rem;">This account isn\'t linked to a production shop yet.</div></div></div>';
+    return;
+  }
+  // Filtered by when the project was awarded to this shop -- same period a
+  // vendor would naturally think in ("what did I win/get paid on this
+  // quarter"), not by an unrelated brief-intake date.
+  var mine=(SDB.briefs||[]).filter(function(b){return b.awarded===window.OUR_SHOP&&b.status==='awarded'&&inVfRange(b.awardedAt||b.sentDate);});
+  if(!mine.length){
+    wrap.innerHTML='<div class="panel"><div class="panel__body"><div style="color:var(--cm-text-subtle);font-size:0.9rem;">No awarded projects in this period.</div></div></div>';
+    return;
+  }
+  var totalRMB=0, receivedRMB=0;
+  mine.forEach(function(b){
+    var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+    var priceRMB=(wq&&wq.priceRMB)||0;
+    totalRMB+=priceRMB;
+    var inv=b.vendorInvoice||{};
+    if(inv.balanceStatus==='paid')receivedRMB+=priceRMB;
+    else if(inv.depositStatus==='paid')receivedRMB+=priceRMB/2;
+  });
+  var html='<div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
+    '<div class="kpi"><span class="mock__k">Awarded projects</span><div class="big">'+mine.length+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Total quoted</span><div class="big">'+moneyRMB(totalRMB)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Received so far</span><div class="big">'+moneyRMB(receivedRMB)+'</div></div>'+
+  '</div>';
+  mine.sort(function(a,c){return (c.awardedAt||c.sentDate||'').localeCompare(a.awardedAt||a.sentDate||'');});
+  html+='<div class="panel" style="margin-top:1.25rem;"><div class="panel__head"><h3>Awarded projects</h3></div><div class="panel__body">'+
+    mine.map(function(b){
+      var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+      var quotedTxt=(wq&&wq.priceRMB!=null)?(moneyRMB(wq.priceRMB)+(wq.price!=null?(' (≈ $'+wq.price.toLocaleString('en-US')+')'):'')):'—';
+      return '<div class="qline2" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><div class="qf-name"><div class="nm">'+esc(b.title)+'</div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">'+quotedTxt+'</div><div></div><div style="text-align:right;">'+esc((typeof vendorPaymentStatusLabel==='function')?vendorPaymentStatusLabel(b):'')+'</div></div>';
+    }).join('')+
+  '</div></div>';
+  wrap.innerHTML=html;
+}
+window.renderVendorFinance=renderVendorFinance;
 // Shipping cost is a single card, not two. It starts out as the Estimated
 // shipping cost entered internally when the client quote goes out, and once
 // the Client Manager enters the real figure at the packing & shipping stage
@@ -5304,7 +5408,7 @@ var PERM={
   'prodtech-only':['prodtech'],                 // Production Technician only (My Assignments)
   'proj-invoice-only':['owner','sales'],         // per-project Invoice & Payment panel on Overview -- Owner + the assigned Client Manager; never factory/prodtech (client pricing) or client (uses their own Invoices tab)
   'vendor-invoice-only':['owner','sales','factory'], // Vendor Payment panel on Overview -- Owner + Client Manager (who record payments) plus Production Admin (who sees their own quote + payment status); never Production Technicians (no pricing) or the client (not their business)
-  'vendor-invoice-edit-only':['owner','sales'],  // Mark paid/Reopen controls inside the Vendor Payment panel -- Owner + Client Manager only, vendor sees the same panel read-only
+  'vendor-invoice-edit-only':['owner','sales','factory'],  // Mark paid/Reopen controls inside the Vendor Payment panel -- Owner + Client Manager can record a payment they sent; the vendor (factory) can also confirm receipt themselves. The whole panel (vendor-invoice-only) is hidden from a Vendor Team & Access member via body.vendor-no-price regardless of this class, so only the shop's own primary admin ever actually sees these controls.
   'kpi-scale-only':['client','factory','prodtech'], // 4th Overview KPI slot for everyone except owner/sales, who see Invoice & Payment there instead
   'proj-pricing-only':['owner','sales'],         // Project Price KPI card on Overview -- same audience as proj-invoice-only. Vendor price + profit cards are further gated owner-only so Client Manager sees only the project (client-facing) price.
   'proj-dates-edit-only':['owner','sales'],       // Start/Target production completion/Target delivery become editable date inputs for Owner + assigned Client Manager; everyone else (kpi-scale-only audience) just sees the computed read-only text
@@ -5316,6 +5420,7 @@ var PERM={
   'vendor-request-only':['factory','prodtech'],   // "Request a change" button on Project information -- vendor side proposes, Client Manager/Owner decide (see resolvePendingChange)
   'vendorproj-only':['factory','prodtech'],       // Vendor side's own scoped "My Projects" list (this shop's awarded-to-production jobs) -- the only real entry point into a project's Overview page for factory/prodtech
   'vendorteam-only':['factory'],                  // Vendor's own Team & Access tab -- Production Admin (primary admin or an already-added team member, both role 'factory') can add/remove more logins for their own shop; Production Technicians never manage access
+  'vendorfinance-only':['factory'],                // Vendor's own Finance tab -- price, so hidden from a Vendor Team & Access member via body.vendor-no-price (see the CSS rule) even though it's role 'factory' same as the primary admin; Production Technicians never see it either
   'sb-edit-only':['owner','sales','factory']       // Edit controls inside the Project scale & boundary modal only -- unlike proj-spec-edit-only (Project information's OTHER fields, still owner+sales only), the vendor is the one who actually knows the model's real scale and has the boundary file, so they can fill this one in too; the client still has to separately confirm it (see confirmScaleBoundary)
 };
 var ROLE_INFO={
