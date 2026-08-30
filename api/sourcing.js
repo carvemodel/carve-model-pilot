@@ -239,7 +239,29 @@ async function filterClaimed(redis, items, keyFn) {
 // based on an older main) silently dropped these three definitions while
 // leaving the call site intact, which is what caused every factory GET to
 // 500 with "filterDataForFactory is not defined".
-function vendorSafeBrief(b, shopId, team) {
+// A factory-role login used to be resolvable ONLY via the single email on
+// its shop's own `vendors` record (one login per shop). Vendor Team & Access
+// (app.html) lets a vendor admin add MORE logins scoped to the same shop --
+// those live in `vendorTeam` (their own list, {id,shopId,name,email}, never
+// mixed into `vendors` itself so the "one designated admin contact per shop"
+// data other code already relies on -- vendorCompany(), the Owner's Quotes
+// tab admin display, etc. -- keeps meaning exactly what it always meant).
+// This resolves an email to a shop checking BOTH: the shop's own vendors
+// record first (the primary/designated admin), then vendorTeam (an added
+// team member). isPrimary distinguishes the two -- see vendorSafeBrief's
+// vendorInvoice redaction below for why that distinction matters.
+function resolveFactoryShop(data, email) {
+  const emailKey = String(email || '').toLowerCase();
+  const vendor = (data.vendors || []).find((v) => v && v.email && v.email.toLowerCase() === emailKey);
+  if (vendor) return { shopId: vendor.id, isPrimary: true, vendor };
+  const member = (data.vendorTeam || []).find((t) => t && t.email && t.email.toLowerCase() === emailKey);
+  if (member) {
+    const vendorRec = (data.vendors || []).find((v) => v && v.id === member.shopId) || null;
+    return { shopId: member.shopId, isPrimary: false, vendor: vendorRec };
+  }
+  return { shopId: null, isPrimary: false, vendor: null };
+}
+function vendorSafeBrief(b, shopId, team, isPrimary) {
   const quotes = {};
   if (b.quotes && b.quotes[shopId]) quotes[shopId] = b.quotes[shopId];
   const variations = {};
@@ -308,7 +330,11 @@ function vendorSafeBrief(b, shopId, team) {
     // Payment panel, alongside their own already-known quoted price, so
     // they know where payment stands without having to ask -- no dollar
     // amounts beyond what the vendor already quoted are exposed here.
-    vendorInvoice: b.vendorInvoice || null,
+    // Redacted for a Vendor Team & Access member (isPrimary===false) --
+    // see resolveFactoryShop() above and the vendor-invoice-only/
+    // vendor-invoice-edit-only PERM classes in app.html for the matching
+    // client-side hiding of the price these numbers sit alongside.
+    vendorInvoice: isPrimary ? (b.vendorInvoice || null) : null,
     scaleBoundaryConfirmedAt: b.scaleBoundaryConfirmedAt || null,
     designFilesChecklist: b.designFilesChecklist || null,
     stageChecklist: b.stageChecklist || null,
@@ -329,19 +355,22 @@ function isBriefRelevantToShop(b, shopId) {
   return !!(b && ((b.invited || []).indexOf(shopId) >= 0 || (b.quotes && b.quotes[shopId]) || b.awarded === shopId));
 }
 function filterDataForFactory(data, email) {
-  const emailKey = String(email || '').toLowerCase();
-  const vendor = (data.vendors || []).find((v) => v && v.email && v.email.toLowerCase() === emailKey);
-  // No matching vendor for this email — same fail-closed rule as the client:
-  // show nothing rather than guess. See SRC_prodAdmin's '' guard in app.html.
-  if (!vendor) return { briefs: [], leads: [], vendors: [], team: [] };
-  const shopId = vendor.id;
+  // Resolves against BOTH the shop's own vendors record (the primary/
+  // designated admin) and vendorTeam (an admin-added team member) -- see
+  // resolveFactoryShop() above. No match for this email in either place —
+  // same fail-closed rule as before: show nothing rather than guess. See
+  // SRC_prodAdmin's '' guard in app.html.
+  const { shopId, isPrimary, vendor } = resolveFactoryShop(data, email);
+  if (!shopId) return { briefs: [], leads: [], vendors: [], team: [], vendorTeam: [] };
   const briefs = (data.briefs || [])
     .filter((b) => isBriefRelevantToShop(b, shopId))
-    .map((b) => vendorSafeBrief(b, shopId, data.team));
+    .map((b) => vendorSafeBrief(b, shopId, data.team, isPrimary));
   // Only the caller's OWN vendor record — needed so their own device can
   // resolve its own shopId (see reconcileVendorsIntoShops in app.html) —
-  // never the full roster.
-  return { briefs, leads: [], vendors: [vendor], team: [] };
+  // never the full roster. Same for vendorTeam: only THIS shop's own added
+  // team members, never another shop's roster.
+  const vendorTeam = (data.vendorTeam || []).filter((t) => t && t.shopId === shopId);
+  return { briefs, leads: [], vendors: vendor ? [vendor] : [], team: [], vendorTeam };
 }
 
 module.exports = async (req, res) => {
@@ -363,6 +392,7 @@ module.exports = async (req, res) => {
       if (!data.briefs) data.briefs = [];
       if (!data.vendors) data.vendors = [];
       if (!data.team) data.team = [];
+      if (!data.vendorTeam) data.vendorTeam = [];
       const query = req.query || {};
       if (query.role) {
         const session = await resolveSession(redis, query.token);
@@ -429,6 +459,7 @@ module.exports = async (req, res) => {
       if (!current.briefs) current.briefs = [];
       if (!current.vendors) current.vendors = [];
       if (!current.team) current.team = [];
+      if (!current.vendorTeam) current.vendorTeam = [];
 
       // A factory (vendor) caller's local briefs are the server-FILTERED,
       // redacted view from GET (see filterDataForFactory) — their browser
@@ -485,12 +516,17 @@ module.exports = async (req, res) => {
         return merged;
       }
       let briefsForMerge = body.briefs;
+      let factoryShopId = null;
       if (identity.role === 'factory') {
-        const emailKey = String(identity.email || '').toLowerCase();
-        const vendor = current.vendors.find((v) => v && v.email && v.email.toLowerCase() === emailKey);
-        const shopId = vendor ? vendor.id : null;
+        // Resolves against BOTH the shop's own vendors record and vendorTeam
+        // (an added team member) -- see resolveFactoryShop() above. A team
+        // member gets exactly the same scoped write access as the primary
+        // admin here; isPrimary only matters for the price/vendorInvoice
+        // redaction on GET, never for what a factory session may edit.
+        const resolved = resolveFactoryShop(current, identity.email);
+        factoryShopId = resolved.shopId;
         const allowed = new Set(body.changedBriefIds || []);
-        briefsForMerge = shopId ? (body.briefs || [])
+        briefsForMerge = factoryShopId ? (body.briefs || [])
           .filter((incoming) => incoming && incoming.id && allowed.has(incoming.id))
           .map((incoming) => {
             const cur = current.briefs.find((b) => b && b.id === incoming.id);
@@ -498,7 +534,7 @@ module.exports = async (req, res) => {
             // ever act on briefs Carve already sent them) — if it somehow
             // did, there's nothing safe to scope it against, so drop it
             // rather than trust it wholesale.
-            return cur ? vendorScopedBriefUpdate(cur, incoming, shopId) : null;
+            return cur ? vendorScopedBriefUpdate(cur, incoming, factoryShopId) : null;
           })
           .filter(Boolean) : []; // no matched vendor — fail closed, same rule as GET
       }
@@ -561,11 +597,34 @@ module.exports = async (req, res) => {
       // from smuggling in extra entries; fail closed by ignoring those
       // fields entirely for factory-role saves.
       const isFactorySave = identity.role === 'factory';
+      // vendorTeam is the one exception to "a factory caller can never touch
+      // the vendors/team rosters": Vendor Team & Access (app.html) lets a
+      // factory session (primary admin or an already-added team member) add
+      // more team members for their OWN shop. Scope it exactly like
+      // vendorScopedBriefUpdate scopes briefs -- only rows for factoryShopId
+      // may be added/removed; every other shop's roster passes through
+      // from `current` completely untouched, so one vendor's crafted POST
+      // can never add/remove another shop's team members.
+      let vendorTeamForMerge;
+      if (isFactorySave) {
+        if (factoryShopId) {
+          const others = current.vendorTeam.filter((t) => !t || t.shopId !== factoryShopId);
+          const deletedOwn = new Set(body.deletedVendorTeamIds || []);
+          const keptOwn = current.vendorTeam.filter((t) => t && t.shopId === factoryShopId && !deletedOwn.has(t.id));
+          const incomingOwn = (body.vendorTeam || []).filter((t) => t && t.shopId === factoryShopId);
+          vendorTeamForMerge = others.concat(mergeById(keptOwn, incomingOwn, [], null));
+        } else {
+          vendorTeamForMerge = current.vendorTeam; // no matched shop — fail closed, same rule as briefs
+        }
+      } else {
+        vendorTeamForMerge = mergeById(current.vendorTeam, body.vendorTeam, body.deletedVendorTeamIds);
+      }
       const data = {
         briefs: mergeById(current.briefs, briefsForMerge, isFactorySave ? [] : body.deletedBriefIds, body.changedBriefIds),
         leads: isFactorySave ? current.leads : mergeById(current.leads, body.leads, body.deletedLeadIds),
         vendors: isFactorySave ? current.vendors : mergeById(current.vendors, body.vendors, body.deletedVendorIds),
         team: isFactorySave ? current.team : mergeById(current.team, body.team, body.deletedTeamIds),
+        vendorTeam: vendorTeamForMerge,
       };
       await redis.set(KEY, JSON.stringify(data));
 
@@ -585,7 +644,7 @@ module.exports = async (req, res) => {
         await Promise.allSettled(notifications);
       }
 
-      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads, vendors: data.vendors, team: data.team });
+      res.status(200).json({ ok: true, briefs: data.briefs, leads: data.leads, vendors: data.vendors, team: data.team, vendorTeam: data.vendorTeam });
       return;
     }
 
