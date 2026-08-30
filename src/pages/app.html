@@ -913,6 +913,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="kpi kpi-scale-only"><span class="mock__k">Status</span><div class="big" id="kpiStatus">Fabrication</div><div class="sub" id="kpiStage">Stage 4 of 6</div></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Progress</span><div class="big" id="kpiPct">68%</div><div class="mock__progress" style="margin-top:0.6rem;"><i id="kpiBar" style="width:68%"></i></div><div class="sub" id="kpiPctSchedule" style="margin-top:0.5rem;"></div></div>
         <div class="kpi kpi-scale-only"><span class="mock__k">Next milestone</span><div class="big" id="kpiNext" style="font-size:1.15rem;">Finishing &amp; Paint</div><div class="sub" id="kpiNextSub">Due in 6 days</div></div>
+        <div class="kpi kpi-scale-only"><span class="mock__k">Current Estimated Delivery Date</span><div class="big" id="kpiEstDelivery" style="font-size:1.15rem;">—</div><div class="sub" id="kpiEstDeliverySub"></div></div>
         <!-- Pricing KPIs -- replace Status/Progress/Next milestone for Owner
              + Client Manager. Client price visible to both; vendor price and
              profit are Owner-only, same rule as the Pricing panel below.
@@ -2613,6 +2614,28 @@ function targetDeliveryDate(b){
   var completion=productionCompletionDate(b);
   return completion?addDays(completion,5):null;
 }
+// The ORIGINAL target delivery date (targetDeliveryDate above) never
+// drifts once set -- it's the fixed commitment made at kickoff. This is
+// the live, calendar-aware projection: if the CURRENT stage is running N
+// days ahead/behind its own estimated window (same comparison
+// currentStageScheduleStatus() shows), that same slip gets carried
+// forward onto the original target so the client sees a realistic
+// "expect it around here" date rather than a promise that's already
+// visibly wrong. Collapses back to the original target once delivered, or
+// wherever there's no stage-range data to compare against (e.g. missing
+// Start date) -- see journeyStageRange's own caveats on when ranges exist.
+function currentEstimatedDeliveryDate(b){
+  var target=targetDeliveryDate(b);
+  if(!target||!b||b.deliveredAt)return target;
+  var idx=projectStageIndex(b);
+  var r=journeyStageRange(b,idx);
+  if(!r.start||!r.end)return target;
+  var today=new Date().toISOString().slice(0,10);
+  if(today>r.end)return addDays(target,daysBetween(r.end,today));
+  if(today<r.start)return addDays(target,-daysBetween(today,r.start));
+  return target;
+}
+window.currentEstimatedDeliveryDate=currentEstimatedDeliveryDate;
 function paymentStatusLabel(b){
   var inv=b.clientQuote&&b.clientQuote.invoice;
   if(!inv)return 'Not invoiced';
@@ -4031,6 +4054,12 @@ function renderProjectOverview(b){
   // own KPI card elsewhere.
   var nextStageRange=(!delivered&&nextStage&&typeof stageDateLabelCompact==='function')?stageDateLabelCompact(b,idx+1):'';
   setText('kpiNextSub',nextStageRange&&nextStageRange!=='—'?nextStageRange:'—');
+  // Current Estimated Delivery Date -- live projection (see
+  // currentEstimatedDeliveryDate) up top, original fixed commitment
+  // (targetDelivery, already computed above) underneath for comparison.
+  var estDelivery=(typeof currentEstimatedDeliveryDate==='function')?currentEstimatedDeliveryDate(b):targetDelivery;
+  setText('kpiEstDelivery',estDelivery?fmtDateShort(estDelivery):'—');
+  setText('kpiEstDeliverySub',targetDelivery?('Originally targeted '+fmtDateShort(targetDelivery)):'');
   setText('kpiScale',((typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null)||(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—');
   setText('kpiScaleSub',(b.clientQuote&&b.clientQuote.material)||(b.brief&&b.brief['Model type'])||'');
 
