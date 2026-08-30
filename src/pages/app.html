@@ -1596,7 +1596,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <div class="notice studio-only" id="clientsNotice" hidden></div>
       <div class="kpis" id="clientsKpis" style="grid-template-columns:repeat(6,1fr);margin-top:0;"></div>
       <div class="panel" style="margin-top:1.25rem;">
-        <div class="panel__head"><h3 id="clientsHeading">Clients</h3><div style="display:flex;align-items:center;gap:0.9rem;"><span class="mock__k" id="clientsCount"></span><button class="btn btn--ghost btn--sm" onclick="exportClientsCSV()">↓ Export to Excel (CSV)</button></div></div>
+        <div class="panel__head"><h3 id="clientsHeading">Clients</h3><div style="display:flex;align-items:center;gap:0.9rem;"><span class="mock__k" id="clientsCount"></span><select id="clientSortSelect" class="input input--sm" style="width:auto;" onchange="setClientSort(this.value)"><option value="value_desc" selected>Contract Value (High to Low)</option><option value="name_asc">Company name (A-Z)</option></select><button class="btn btn--ghost btn--sm" onclick="exportClientsCSV()">↓ Export to Excel (CSV)</button></div></div>
         <div class="panel__body" id="companyList"></div>
       </div>
     </section>
@@ -2267,7 +2267,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 <!-- Add client account modal (set up portal + invoice access for a client) -->
 <div class="modal-overlay" id="addClientModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Add a client account">
-    <div class="modal__head"><h3>Add a client account</h3><button class="modal__x" onclick="closeAddClient()" aria-label="Close">×</button></div>
+    <div class="modal__head"><h3 id="addClientModalTitle">Add a client account</h3><button class="modal__x" onclick="closeAddClient()" aria-label="Close">×</button></div>
     <div class="modal__body">
       <form onsubmit="return createClientAccount(event)">
         <div class="efield-row">
@@ -2282,7 +2282,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="efield"><label for="ac-phone">Phone <span class="optional">(optional)</span></label><input id="ac-phone" type="tel" placeholder="(555) 000-0000"></div>
         </div>
         <div class="changes__act" style="margin-top:0.4rem;">
-          <button class="btn btn--primary" type="submit">Create account</button>
+          <button class="btn btn--primary" type="submit" id="addClientSubmitBtn">Create account</button>
         </div>
       </form>
     </div>
@@ -5271,6 +5271,15 @@ var assignAccountTarget=null; // {companyId,contactId} when assigning an existin
 function openAddClient(companyId,contactId){
   ['ac-contact','ac-title','ac-company','ac-email','ac-phone'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
   assignAccountTarget=null;
+  // Same modal serves two different actions depending on the contact's
+  // current hasAccount state: a fresh "+ Assign account" (no portal login
+  // yet -- submitting sends a real invite email, see createClientAccount)
+  // vs. "Edit contact" on someone who already has one (submitting just
+  // updates their info in place, no invite re-sent). The title/button
+  // copy reflects whichever this actually is so it's never misleading.
+  var titleEl=document.getElementById('addClientModalTitle');
+  var btnEl=document.getElementById('addClientSubmitBtn');
+  var editingExistingAccount=false;
   if(companyId&&contactId){
     var co=COMPANIES.filter(function(c){return c.id===companyId;})[0];
     var contact=co&&co.contacts.filter(function(c){return c.id===contactId;})[0];
@@ -5281,8 +5290,11 @@ function openAddClient(companyId,contactId){
       document.getElementById('ac-company').value=co.name||'';
       document.getElementById('ac-email').value=contact.email||'';
       document.getElementById('ac-phone').value=contact.phone||'';
+      editingExistingAccount=contact.hasAccount!==false;
     }
   }
+  if(titleEl)titleEl.textContent=editingExistingAccount?'Edit contact':'Add a client account';
+  if(btnEl)btnEl.textContent=editingExistingAccount?'Save changes':'Create account';
   document.getElementById('addClientModal').hidden=false;
 }
 function closeAddClient(){ document.getElementById('addClientModal').hidden=true; }
@@ -5296,10 +5308,19 @@ function createClientAccount(e){
   if(!name||!email)return false;
   var role=document.body.dataset.role;
   var rep=(role==='sales')?'jordan':null;
+  // Whether this save is a brand-new invite (contact didn't have a portal
+  // account yet) vs. just fixing this existing contact's own info (name/
+  // title/email/phone) -- captured BEFORE hasAccount gets set below, since
+  // that's the one thing that tells the two apart. Only the former should
+  // trigger a real invite email; re-sending "set your password" to someone
+  // who already has an account and just needed their phone number
+  // corrected would be confusing and wrong.
+  var wasNewAccount=true;
   if(assignAccountTarget){
     var targetCo=COMPANIES.filter(function(c){return c.id===assignAccountTarget.companyId;})[0];
     var targetContact=targetCo&&targetCo.contacts.filter(function(c){return c.id===assignAccountTarget.contactId;})[0];
     if(targetContact){
+      wasNewAccount=targetContact.hasAccount===false;
       targetContact.name=name;targetContact.title=title;targetContact.email=email;targetContact.phone=phone;
       targetContact.hasAccount=true;
     }
@@ -5316,23 +5337,29 @@ function createClientAccount(e){
   // got persisted by some unrelated later action (or never persisted at
   // all if none happened to fire first).
   if(typeof saveSRC==='function')saveSRC();
-  // Actually call the real invite pipeline (same one createTeamMember/
-  // createVendor already use) instead of just claiming success -- this
-  // used to show "sign-in and invoice access sent" unconditionally without
-  // ever contacting an email API, so the admin had no way to know (and the
-  // client never actually got) a real invite.
-  fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:'client'})})
-    .then(function(r){return r.json().catch(function(){return {};});})
-    .then(function(data){
-      if(data&&data.emailed){
-        showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+') — an invite email was sent so they can set a password and sign in.');
-      }else{
-        showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+'), but no invite email was sent (email service isn\'t configured yet) — send them the sign-up link directly.');
-      }
-    })
-    .catch(function(){
-      showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+'), but the invite email failed to send — send them the sign-up link directly.');
-    });
+  if(!wasNewAccount){
+    // Pure edit of an existing contact -- no invite to send, just confirm
+    // the save.
+    showEmailToast('Contact info updated for <b>'+esc(name)+'</b> ('+esc(email)+').');
+  }else{
+    // Actually call the real invite pipeline (same one createTeamMember/
+    // createVendor already use) instead of just claiming success -- this
+    // used to show "sign-in and invoice access sent" unconditionally
+    // without ever contacting an email API, so the admin had no way to
+    // know (and the client never actually got) a real invite.
+    fetch('/api/team-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,role:'client'})})
+      .then(function(r){return r.json().catch(function(){return {};});})
+      .then(function(data){
+        if(data&&data.emailed){
+          showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+') — an invite email was sent so they can set a password and sign in.');
+        }else{
+          showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+'), but no invite email was sent (email service isn\'t configured yet) — send them the sign-up link directly.');
+        }
+      })
+      .catch(function(){
+        showEmailToast('Portal account created for <b>'+esc(name)+'</b> ('+esc(email)+'), but the invite email failed to send — send them the sign-up link directly.');
+      });
+  }
   if(document.getElementById('view-clients')&&!document.getElementById('view-clients').hidden&&window.scopeClients)window.scopeClients(role);
   return false;
 }
@@ -5871,14 +5898,20 @@ function renderCompanyCard(co,repName){
   var isOwnerView=document.body.dataset.role==='owner';
   var contactsHtml=co.contacts.map(function(c){
     var projHtml=c.projects.map(function(p){
-      return '<div class="cc-projrow"><span>'+esc(p.name)+'</span><span class="chip '+esc(p.statusClass)+'">'+esc(p.statusLabel)+'</span></div>';
+      // Lets Carve Admin jump straight from a client's project list to
+      // that project's own Overview page -- same openProject(id) used
+      // elsewhere (e.g. the Finance tab rows). Guarded on p.briefId
+      // actually still resolving to a real brief, since a very old
+      // project record could in principle outlive the brief it came from.
+      var clickable=p.briefId&&typeof findBrief==='function'&&findBrief(p.briefId);
+      return '<div class="cc-projrow"'+(clickable?' style="cursor:pointer;" onclick="openProject(\''+esc(p.briefId)+'\')"':'')+'><span>'+esc(p.name)+'</span><span class="chip '+esc(p.statusClass)+'">'+esc(p.statusLabel)+'</span></div>';
     }).join('');
     var delivered=c.projects.filter(function(p){return p.statusLabel==='Delivered';}).length;
     var inProgress=c.projects.length-delivered;
     return '<div class="cc-contact">'+
       '<div class="cc-contact__top"><div><div class="cc-v">'+esc(c.name)+(c.title?(', '+esc(c.title)):'')+'</div><div class="cc-m">'+esc(c.email)+(c.phone?(' · '+esc(c.phone)):'')+'</div></div>'+
       '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'+
-      (c.hasAccount===false?'<button class="btn btn--primary btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">+ Assign account</button>':'')+
+      (c.hasAccount===false?'<button class="btn btn--primary btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">+ Assign account</button>':'<button class="btn btn--ghost btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Edit contact</button>')+
       '<button class="btn btn--ghost btn--sm" onclick="openLinkContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Link to another company</button>'+
       (isOwnerView?('<button class="btn btn--ghost btn--sm btn--danger" onclick="deleteClientContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Delete</button>'):'')+
       '</div></div>'+
@@ -5948,6 +5981,16 @@ function exportClientsCSV(){
   setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
 }
 function scopeClients(role){renderClients(role);}
+// Company name (A-Z) or Contract Value (High to Low) for the Clients tab
+// card list -- see the <select id="clientSortSelect"> in the Clients tab
+// panel head and the cards.sort() call inside renderClients(). Contract
+// Value High-to-Low is the default (most valuable accounts surface first).
+var clientSort='value_desc';
+function setClientSort(val){
+  clientSort=val;
+  renderClients(document.body.dataset.role);
+}
+window.setClientSort=setClientSort;
 function renderClients(role){
   var rep=REP_OF_ROLE[role];           // undefined for owner → sees all
   var list=document.getElementById('companyList');
@@ -5960,7 +6003,12 @@ function renderClients(role){
   var parentGroups=PARENTS.map(function(p){
     return {parent:p,offices:visibleCos.filter(function(co){return co.parentId===p.id;})};
   }).filter(function(g){return g.offices.length;});
-  var html='';
+  // Cards are collected here (with a sort key each) rather than appended
+  // straight into one running `html` string, so Company name / Contract
+  // value sorting (clientSort, see setClientSort()) can apply across BOTH
+  // parent-group cards and standalone company cards together as one list,
+  // not just within each kind separately.
+  var cards=[];
   parentGroups.forEach(function(g){
     var repNames=[].concat.apply([],g.offices.map(function(o){return [o.rep];})).filter(function(v,i,a){return a.indexOf(v)===i;}).map(function(r){return r==='jordan'?'Jordan Lee':(r==='sam'?'Sam Ortiz':r);}).join(', ');
     var globalValue=0,globalPaid=0,globalQuotes=0,globalProjects=0,globalActivity=null;
@@ -5968,7 +6016,7 @@ function renderClients(role){
     total+=globalValue;paid+=globalPaid;quoteReqTotal+=globalQuotes;shown+=g.offices.length;
     projectTotal+=globalProjects;if(globalActivity&&(!lastActivityGlobal||globalActivity>lastActivityGlobal))lastActivityGlobal=globalActivity;
     var pExpanded=!!expandedParents[g.parent.id];
-    html+='<div class="clientcard clientcard--parent">'+
+    var cardHtml='<div class="clientcard clientcard--parent">'+
       '<div class="clientcard__top" style="cursor:pointer;" onclick="toggleParent(\''+esc(g.parent.id)+'\')">'+
         '<div><div class="clientcard__name">'+esc(g.parent.name)+' <span class="tagm" style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-silver);">Global</span></div><div class="clientcard__sub">'+g.offices.length+' office'+(g.offices.length===1?'':'s')+' · '+(pExpanded?'Click to collapse':'Click to expand')+'</div></div>'+
         '<span class="rolepill rolepill--sales">Sales: '+esc(repNames)+'</span>'+
@@ -5983,6 +6031,7 @@ function renderClients(role){
       '</div>'+
       (pExpanded?('<div class="cc-offices">'+g.offices.map(function(o){return renderCompanyCard(o,o.rep==='jordan'?'Jordan Lee':(o.rep==='sam'?'Sam Ortiz':o.rep));}).join('')+'</div>'):'')+
     '</div>';
+    cards.push({sortName:(g.parent.name||'').toLowerCase(),sortValue:globalValue,html:cardHtml});
   });
   standalone.forEach(function(co){
     shown++;
@@ -5990,8 +6039,15 @@ function renderClients(role){
     total+=sub.value;paid+=sub.paid;quoteReqTotal+=sub.quotes;
     projectTotal+=sub.projectCount;if(sub.lastActivityAt&&(!lastActivityGlobal||sub.lastActivityAt>lastActivityGlobal))lastActivityGlobal=sub.lastActivityAt;
     var repName=co.rep==='jordan'?'Jordan Lee':(co.rep==='sam'?'Sam Ortiz':co.rep);
-    html+=renderCompanyCard(co,repName);
+    cards.push({sortName:(co.name||'').toLowerCase(),sortValue:sub.value,html:renderCompanyCard(co,repName)});
   });
+  // Company name (A-Z) or Contract Value (High to Low, the default) -- see
+  // setClientSort()/the sort <select> in the Clients tab panel head.
+  cards.sort(function(a,b){
+    if(clientSort==='name_asc')return a.sortName.localeCompare(b.sortName);
+    return b.sortValue-a.sortValue;
+  });
+  var html=cards.map(function(c){return c.html;}).join('');
   list.innerHTML=html||'<p class="hint">No clients in this range.</p>';
   var notice=document.getElementById('clientsNotice');
   var kpis=document.getElementById('clientsKpis');
