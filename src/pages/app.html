@@ -2417,25 +2417,23 @@ function getProjectStartDate(b){
 // manual edit here (setProductionDays) still wins once made, for cases
 // where the agreed time genuinely changes after the fact.
 //
-// The vendor's OWN journey is the one exception: Carve's client-facing
-// days (b.clientQuote.days) can carry padding/buffer beyond what the
-// vendor actually committed to in their own winning quote (wq.days) --
-// showing the padded, client-facing number back to the vendor would have
-// their own checklist/journey tracking against a schedule that isn't
-// really theirs. So for factory/prodtech specifically, the vendor's own
-// quoted days take priority over the client-facing figure (falling back
-// to it only if their own quote is somehow missing days). A manual
-// b.productionDays override still wins for everyone, including the
-// vendor -- that's Carve deliberately overriding the default, not the
-// default itself.
+// The vendor's OWN journey is the one exception, and it takes priority
+// over BOTH of those: b.productionDays and b.clientQuote.days both
+// represent what Carve told/promised the CLIENT (padding/buffer
+// included, whether that number came from the original quote or a later
+// manual correction) -- neither one is the vendor's own committed
+// schedule. So for factory/prodtech specifically, their own winning
+// quote's days (wq.days) comes first, and the client-facing fields are
+// only a fallback for the rare case their own quote is somehow missing a
+// days value.
 function agreedProductionDays(b){
   if(!b)return null;
-  if(b.productionDays!=null)return b.productionDays;
   var role=(typeof document!=='undefined'&&document.body)?document.body.dataset.role:null;
   if(role==='factory'||role==='prodtech'){
     var wq=(typeof winningQuote==='function')?winningQuote(b):null;
     if(wq&&wq.days!=null)return wq.days;
   }
+  if(b.productionDays!=null)return b.productionDays;
   return (b.clientQuote&&b.clientQuote.days!=null)?b.clientQuote.days:null;
 }
 function addDays(dateStr,days){
@@ -2535,33 +2533,28 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // currentStageScheduleStatus() (the visible ahead/behind line on the
 // journey card) so the two never drift apart. Derived entirely from the
 // project's own Start date and Target production completion (start +
-// agreed production time), using a fixed, consistent allocation: Confirmed
-// Material Samples always gets the first 7 days after kickoff; the 3 days
-// immediately before completion are split 1 (Final Client Approval) + 2
-// (Permanently Fixed, Cleaned & Polished, ending ON completion day itself);
-// Fabrication absorbs whatever's left in between (starting the day after
-// material confirmation wraps, day 8). Packing is shown as a same-day
-// milestone right ON completion (it no longer adds its own buffer before
-// Shipping starts); Shipping then runs the 5 days immediately after
-// completion, and its own last day IS the delivery date (see
-// targetDeliveryDate()); delivery is no longer its own stage. Post
-// Delivery Support is open-ended (starts the day after delivery, no fixed
-// end), so it never shows an ahead/behind comparison. Project Kick Off and
-// Project Completed round out the two ends.
+// agreed production time) -- that whole span, kickoff through completion,
+// is allocated as: Confirmed Material Samples gets the first 3 days after
+// kickoff; Final Client Approval gets the last 2 days, ending ON
+// completion day itself; Fabrication absorbs whatever's left in between
+// (day 4 through completion-2). Stages after completion -- Permanently
+// Fixed/Cleaned & Polished, Packing, Shipping, and Post Delivery Support
+// -- intentionally show NO computed date range at all (they still exist
+// as checklist/journey stages, just without a date estimate under the
+// dot or an ahead/behind comparison). Project Kick Off and Project
+// Completed round out the two ends.
 function journeyStageRange(b,stageIndex){
   var stageName=PROJECT_STAGES[stageIndex];
+  if(stageName==='Permanently Fixed, Cleaned & Polished'||stageName==='Packing'||stageName==='Shipping'||stageName==='Post Delivery Support'){
+    return {start:null,end:null,openEnded:false};
+  }
   var start=getProjectStartDate(b);
   var completion=productionCompletionDate(b);
-  var delivery=targetDeliveryDate(b);
   var rs=null,re=null,openEnded=false;
   if(stageName==='Project Kick Off'&&start){rs=start;re=start;}
-  else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,7);}
-  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,8);re=addDays(completion,-3);}
-  else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-2);re=rs;}
-  else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-1);re=completion;}
-  else if(stageName==='Packing'&&completion){rs=completion;re=completion;}
-  else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,1);re=delivery;}
-  else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
+  else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,3);}
+  else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,4);re=addDays(completion,-2);}
+  else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-1);re=completion;}
   if(rs&&re&&rs>re)return {start:null,end:null,openEnded:false}; // agreed production time too short for this breakdown to make sense
   return {start:rs,end:re,openEnded:openEnded};
 }
