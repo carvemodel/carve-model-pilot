@@ -605,7 +605,7 @@ body.vendor-no-price .vendor-price-only,body.vendor-no-price .vendor-invoice-onl
 .co-card__act{display:flex;gap:0.6rem;margin-top:1.1rem;flex-wrap:wrap;}
 body.at-portfolio[data-role="client"] .navbtn.projnav{display:none;}
 body.at-portfolio[data-role="owner"] .navbtn.projnav,body.at-portfolio[data-role="sales"] .navbtn.projnav{display:none;}
-body[data-role="owner"] .side__project,body[data-role="sales"] .side__project,body[data-role="factory"] .side__project,body[data-role="prodtech"] .side__project{display:none;}
+body[data-role="owner"] .side__project,body[data-role="sales"] .side__project,body[data-role="factory"] .side__project,body[data-role="prodtech"] .side__project,body[data-role="client"] .side__project{display:none;}
 body.quote-stage[data-role="client"] .navbtn.projnav[data-view="overview"],
 body.quote-stage[data-role="client"] .navbtn.projnav[data-view="milestones"],
 body.quote-stage[data-role="client"] .navbtn.projnav[data-view="invoices"]{display:none;}
@@ -795,24 +795,25 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       </div>
     </section>
 
-    <!-- NO PROJECT YET (client with a portal account but nothing awarded)
-         -- Project/Quote/Invoice are flat, always-on tabs for a client (no
-         "My Projects" list gating them, see the sidebar's #projSelect
-         instead for switching between more than one project); this is
-         just the empty state for an account with zero of its own briefs
-         yet, shown in place of the studio-wide project picker (which would
-         otherwise leak every client's projects -- see go()). -->
+    <!-- CLIENT PROJECT LIST -- shown by go()'s project-required gate
+         whenever no specific project is selected, same "list first, click
+         in" pattern Owner/Client Manager/vendor all use (view-projects/
+         view-myassigned/view-vendorprojects) -- no sidebar dropdown for
+         client (see .side__project CSS), a real list is the only way to
+         switch between more than one project. Populated by
+         renderClientProjectList(). -->
     <section class="view client-only" id="view-noproject-client" hidden>
       <div class="myproj-hero">
         <span class="mock__k">Your workspace</span>
         <h2 class="myproj-title">Your projects with Carve Model</h2>
-        <p class="myproj-sub">You don't have any projects with Carve Model yet. Once your studio team awards one, it'll open right here.</p>
         <button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:1rem;">+ Request another model</button>
       </div>
+      <div id="clientProjectsListWrap"></div>
     </section>
 
     <!-- OVERVIEW -->
     <section class="view" id="view-overview">
+      <button class="backlink client-only" onclick="clientBackToProjectList()" style="margin-bottom:1rem;">← Your projects</button>
       <div class="notice client-only" id="ovNotice">Welcome back. Your model <b><span class="pname">Aria Tower</span></b> is in fabrication — 68% complete, on track for delivery in 6 days.
         <button class="btn btn--ghost btn--sm" onclick="requestAnother()" style="margin-top:0.9rem;">+ Request another model</button>
       </div>
@@ -3411,26 +3412,44 @@ function myClientBriefs(){
   });
 }
 window.myClientBriefs=myClientBriefs;
-// Client's own project dropdown -- the same #projSelect Owner/CM use in
-// the sidebar, just scoped to this client's own awarded (non-archived)
-// briefs instead of the whole studio's (see syncProjectSelectOptions for
-// the studio-wide sibling). This is what makes Project/Quote/Invoice work
-// as flat, always-available tabs for a client with no separate "My
-// Projects" list gating them -- replaces the old renderMyProjectsClient()
-// list view entirely (see view-noproject-client for the zero-projects
-// empty state, and setRole() for where this gets called on login).
-function populateClientProjectOptions(){
-  var sel=document.getElementById('projSelect');
-  if(!sel)return [];
-  var cur=sel.value;
+// Client's project list -- shown by go()'s project-required gate whenever
+// no specific project is selected, same "land on a list, click in"
+// pattern Owner/Client Manager/vendor all use (renderProjectsList/
+// renderMyAssigned/renderVendorProjects), and the same 3 categories
+// (In Progress/Paused/Completed) those already render with. No sidebar
+// dropdown for client (see .side__project CSS) -- this list is the only
+// way to switch between more than one project; #projSelect itself is
+// still just the internal "which project is open" state every role's
+// openProject() shares, never shown to this role.
+function renderClientProjectList(){
+  var wrap=document.getElementById('clientProjectsListWrap');
+  if(!wrap)return;
   var mine=(typeof myClientBriefs==='function'?myClientBriefs():[]).filter(function(b){return b.status==='awarded'&&!b.archived;});
+  if(!mine.length){
+    wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">You don\'t have any projects with Carve Model yet.</div>';
+    return;
+  }
   mine.forEach(autoMarkDeliveredIfComplete);
-  sel.innerHTML='<option value="" id="projPlaceholder">— Select a project —</option>'+
-    mine.map(function(b){return '<option value="'+esc(b.id)+'">'+esc(b.title)+'</option>';}).join('');
-  if(mine.some(function(b){return b.id===cur;}))sel.value=cur;
-  return mine;
+  var completed=mine.filter(function(b){return b.deliveredAt;});
+  var paused=mine.filter(function(b){return !b.deliveredAt&&b.paused;});
+  var active=mine.filter(function(b){return !b.deliveredAt&&!b.paused;});
+  wrap.innerHTML=
+    projectSectionHtml('In Progress',active)+
+    projectSectionHtml('Paused',paused)+
+    projectSectionHtml('Completed',completed);
 }
-window.populateClientProjectOptions=populateClientProjectOptions;
+window.renderClientProjectList=renderClientProjectList;
+// Clears the currently open project and returns to the list above --
+// client's equivalent of Owner/Client Manager's "← All projects"
+// (backToProjects/#projBack), just without that cm-only sidebar button
+// since client has no visible project switcher there.
+function clientBackToProjectList(){
+  var sel=document.getElementById('projSelect');
+  if(sel)sel.value='';
+  currentProjTitle='';
+  go('overview');
+}
+window.clientBackToProjectList=clientBackToProjectList;
 // Owner-only heads-up when a Client Manager changes a client's contact
 // info (see saveClientEdit/notifyOwner) -- same {text,time,read} shape and
 // "mark all read" pattern as the vendor Quotes tab's notification banner,
@@ -3845,6 +3864,7 @@ function go(v){
     var isClient=document.body.dataset.role==='client';
     document.getElementById(isClient?'view-noproject-client':'view-pickproject').hidden=false;
     if(!isClient&&window.renderPickProjectList)window.renderPickProjectList();
+    if(isClient&&window.renderClientProjectList)window.renderClientProjectList();
     document.querySelectorAll('.navbtn').forEach(function(b){b.classList.toggle('on',b.dataset.view===v);});
     document.getElementById('viewTitle').textContent=viewTitleFor(v);
     document.getElementById('crumb').textContent=isClient?'Select a project':'Studio · Select a project';
@@ -6398,23 +6418,12 @@ function setRole(r){
     sel.value='';
     go('projects');
   }else if(r==='client'){
-    // Land directly on the client's own project workspace -- Project/Quote/
-    // Invoice are flat top-level tabs for a client (see populateClientProjectOptions()),
-    // not gated behind a separate "My Projects" list anymore. Picks whichever
-    // of their own projects is most relevant (active over paused over
-    // completed) if they have more than one; #projSelect (now visible for
-    // this role, see .side__project CSS) lets them switch. Zero projects
-    // falls through to view-noproject-client via go()'s project gate.
-    var myProjs=populateClientProjectOptions();
-    var pick=myProjs.filter(function(b){return !b.deliveredAt&&!b.paused;})[0]
-      ||myProjs.filter(function(b){return !b.deliveredAt&&b.paused;})[0]
-      ||myProjs[0];
-    if(pick){
-      openProject(pick.id);
-    }else{
-      sel.value='';
-      go('overview');
-    }
+    // Land on the client's own project list (renderClientProjectList(),
+    // shown via go()'s project-required gate since no project is
+    // pre-selected) -- same "list first, click in" pattern Owner/Client
+    // Manager/vendor all use below, no sidebar dropdown for this role.
+    sel.value='';
+    go('overview');
   }else if(r==='factory'||r==='prodtech'){
     // Vendor side lands on their own scoped project list (renderVendorProjects()),
     // same pattern as Client Manager landing on My Projects instead of a
