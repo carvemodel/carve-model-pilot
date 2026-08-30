@@ -299,6 +299,16 @@ function vendorSafeBrief(b, shopId, team) {
     targetDeliveryOverride: b.targetDeliveryOverride || null,
     scaleOverride: b.scaleOverride || null,
     boundaryFileOverride: b.boundaryFileOverride || null,
+    // Whether Carve has paid the VENDOR's 50% deposit / 100% balance so far
+    // -- the mirror image of clientQuote.invoice (which tracks the CLIENT's
+    // payments to Carve), but this one is Carve-Admin/Client-Manager-entered
+    // only and never writable by the vendor's own save (see
+    // vendorScopedBriefUpdate, which does not carry this field over from a
+    // factory-role POST). The vendor sees it read-only in their own Vendor
+    // Payment panel, alongside their own already-known quoted price, so
+    // they know where payment stands without having to ask -- no dollar
+    // amounts beyond what the vendor already quoted are exposed here.
+    vendorInvoice: b.vendorInvoice || null,
     scaleBoundaryConfirmedAt: b.scaleBoundaryConfirmedAt || null,
     designFilesChecklist: b.designFilesChecklist || null,
     stageChecklist: b.stageChecklist || null,

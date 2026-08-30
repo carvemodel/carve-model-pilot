@@ -1169,6 +1169,38 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="panel__head"><h3>Invoice &amp; Payment</h3></div>
         <div class="panel__body" id="projectInvoicePanel"></div>
       </div>
+
+      <!-- Vendor Payment: the mirror image of Invoice & Payment above, but
+           for what CARVE owes/has paid the VENDOR, not what the client owes
+           Carve. Owner + Client Manager can mark deposit/balance paid;
+           Production Admin (factory) sees the same panel read-only so they
+           know where payment stands without asking. Populated by
+           renderVendorPaymentPanel(). -->
+      <div class="panel vendor-invoice-only" id="vendorPaymentPanelWrap" style="margin-top:1.5rem;">
+        <div class="panel__head"><h3>Vendor Payment</h3></div>
+        <div class="panel__body">
+          <div style="display:flex;flex-direction:column;gap:0.9rem;">
+            <div>
+              <span class="mock__k">Quoted to Carve</span>
+              <div class="mock__v" id="vpQuoted">—</div>
+            </div>
+            <div>
+              <span class="mock__k">50% Deposit</span>
+              <div style="display:flex;align-items:center;gap:0.6rem;">
+                <div class="mock__v" id="vpDepositStatus" style="flex:1;">—</div>
+                <button type="button" class="btn btn--ghost btn--sm vendor-invoice-edit-only" id="vpDepositBtn">Mark paid</button>
+              </div>
+            </div>
+            <div>
+              <span class="mock__k">100% Balance</span>
+              <div style="display:flex;align-items:center;gap:0.6rem;">
+                <div class="mock__v" id="vpBalanceStatus" style="flex:1;">—</div>
+                <button type="button" class="btn btn--ghost btn--sm vendor-invoice-edit-only" id="vpBalanceBtn">Mark paid</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- QUOTE -->
@@ -2487,6 +2519,20 @@ function paymentStatusLabel(b){
   if(inv.depositStatus==='paid')return '50% Deposit Received, 50% Final Due';
   return '50% Deposit Due';
 }
+// Mirror of paymentStatusLabel() above, but for the OTHER direction of
+// money -- what CARVE has paid the VENDOR (b.vendorInvoice), not what the
+// client has paid Carve (b.clientQuote.invoice). Shown on the vendor's own
+// project list row and in the Vendor Payment panel on Overview -- see
+// SRC_markVendorPaymentPaid()/SRC_reopenVendorPayment() for how
+// b.vendorInvoice gets set.
+function vendorPaymentStatusLabel(b){
+  var inv=b.vendorInvoice;
+  if(!inv)return 'Not yet paid';
+  if(inv.balanceStatus==='paid')return '100% Paid';
+  if(inv.depositStatus==='paid')return '50% Paid, 50% Due';
+  return 'Not yet paid';
+}
+window.vendorPaymentStatusLabel=vendorPaymentStatusLabel;
 // The stage a project is genuinely AT is confirmed by a person (Owner or
 // the assigned Client Manager), never assumed from the calendar alone --
 // real production can run ahead or behind the estimated timeline, and only
@@ -3091,13 +3137,35 @@ function projectRowHtml(b){
   var c=b.client||{};
   var delivered=!!b.deliveredAt;
   var stageName=delivered?'Project Completed':PROJECT_STAGES[projectStageIndex(b)];
-  var scale=(b.clientQuote&&b.clientQuote.scale)||(b.brief&&b.brief['Scale'])||'—';
+  // Route through projectSpecValue() (owner/sales scale override, then the
+  // client-facing quote, then the vendor's own submitted quote, then the
+  // raw intake brief) same as the Overview KPI card -- this used to read
+  // clientQuote.scale/brief['Scale'] directly and skip the override
+  // entirely, so correcting a project's scale on Project information never
+  // updated what showed here on the list.
+  var scale=projectSpecValue(b,'scale')||'—';
+  var role=document.body.dataset.role;
   var metaBits=['Stage: '+esc(stageName)];
   metaBits.push('Start: '+(b.startDate?fmtDateShort(b.startDate):'—'));
   metaBits.push('Target completion: '+(productionCompletionDate(b)?fmtDateShort(productionCompletionDate(b)):'—'));
   metaBits.push('Target delivery: '+(targetDeliveryDate(b)?fmtDateShort(targetDeliveryDate(b)):'—'));
   metaBits.push('Scale: '+esc(scale));
-  metaBits.push('Payment: '+esc(paymentStatusLabel(b)));
+  // Vendor/Production Tech have no stake in the CLIENT's deposit/balance
+  // status (that's Carve-client business -- same principle as the earlier
+  // "50% deposit received" checklist-item fix) so they never see the
+  // "Payment: ..." line at all. Production Admin (factory) instead sees
+  // their OWN quoted price and whether CARVE has paid THEM -- Production
+  // Technicians see neither (same vendor-price-only-to-Production-Admin
+  // rule the Overview KPIs already use).
+  if(role==='factory'){
+    var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+    if(wq&&wq.priceRMB!=null){
+      metaBits.push('Quoted: '+moneyRMB(wq.priceRMB)+(wq.price!=null?(' (≈ $'+wq.price.toLocaleString('en-US')+')'):''));
+      metaBits.push('Paid: '+esc(vendorPaymentStatusLabel(b)));
+    }
+  }else if(role!=='prodtech'){
+    metaBits.push('Payment: '+esc(paymentStatusLabel(b)));
+  }
   return '<div class="projrow projcard" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')">'+
     '<div>'+
         '<div class="projrow__name">'+esc(b.title)+'</div>'+
@@ -3713,6 +3781,7 @@ function renderProjectOverview(b){
   renderProjectAdminPanel(b);
   renderProjectInvoicePanel(b);
   renderProjectPricingPanel(b);
+  renderVendorPaymentPanel(b);
   setText('kpiInvoice',paymentStatusLabel(b));
   setText('kpiInvoiceSub','Click to view →');
   // Keep the scale/boundary and design-files modals in sync with whatever
@@ -4158,6 +4227,35 @@ function renderProjectPricingPanel(b){
   renderShippingCostCard(b);
 }
 window.renderProjectPricingPanel=renderProjectPricingPanel;
+// Vendor Payment panel -- mirror of the Invoice & Payment panel above, but
+// tracking what CARVE owes/has paid the VENDOR (b.vendorInvoice) instead of
+// what the client owes Carve (b.clientQuote.invoice/clientPrice). Owner +
+// Client Manager see Mark paid/Reopen controls (vendor-invoice-edit-only);
+// Production Admin (factory) sees the same numbers read-only
+// (vendor-invoice-only, no edit class) so they always know where payment
+// stands. Quoted price is the vendor's own winning quote -- nothing here
+// exposes the client-facing price to the vendor.
+function renderVendorPaymentPanel(b){
+  var wrap=document.getElementById('vendorPaymentPanelWrap');
+  if(!wrap)return;
+  if(!b)return;
+  var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+  setText('vpQuoted',(wq&&wq.priceRMB!=null)?(moneyRMB(wq.priceRMB)+(wq.price!=null?(' (≈ '+fmtUsd(wq.price)+')'):'')):'—');
+  var inv=b.vendorInvoice||{};
+  setText('vpDepositStatus',inv.depositStatus==='paid'?('Paid'+(inv.depositPaidAt?(' · '+fmtDateShort(inv.depositPaidAt)):'')):'Not yet paid');
+  setText('vpBalanceStatus',inv.balanceStatus==='paid'?('Paid'+(inv.balancePaidAt?(' · '+fmtDateShort(inv.balancePaidAt)):'')):'Not yet paid');
+  var depBtn=document.getElementById('vpDepositBtn');
+  if(depBtn){
+    if(inv.depositStatus==='paid'){depBtn.textContent='Reopen';depBtn.onclick=function(){SRC_reopenVendorPayment(b.id,'deposit');};}
+    else{depBtn.textContent='Mark paid';depBtn.onclick=function(){SRC_markVendorPaymentPaid(b.id,'deposit');};}
+  }
+  var balBtn=document.getElementById('vpBalanceBtn');
+  if(balBtn){
+    if(inv.balanceStatus==='paid'){balBtn.textContent='Reopen';balBtn.onclick=function(){SRC_reopenVendorPayment(b.id,'balance');};}
+    else{balBtn.textContent='Mark paid';balBtn.onclick=function(){SRC_markVendorPaymentPaid(b.id,'balance');};}
+  }
+}
+window.renderVendorPaymentPanel=renderVendorPaymentPanel;
 // Shipping cost is a single card, not two. It starts out as the Estimated
 // shipping cost entered internally when the client quote goes out, and once
 // the Client Manager enters the real figure at the packing & shipping stage
@@ -5078,6 +5176,8 @@ var PERM={
   'prodadmin-only':['factory'],                 // Production Admin only (assign technicians)
   'prodtech-only':['prodtech'],                 // Production Technician only (My Assignments)
   'proj-invoice-only':['owner','sales'],         // per-project Invoice & Payment panel on Overview -- Owner + the assigned Client Manager; never factory/prodtech (client pricing) or client (uses their own Invoices tab)
+  'vendor-invoice-only':['owner','sales','factory'], // Vendor Payment panel on Overview -- Owner + Client Manager (who record payments) plus Production Admin (who sees their own quote + payment status); never Production Technicians (no pricing) or the client (not their business)
+  'vendor-invoice-edit-only':['owner','sales'],  // Mark paid/Reopen controls inside the Vendor Payment panel -- Owner + Client Manager only, vendor sees the same panel read-only
   'kpi-scale-only':['client','factory','prodtech'], // 4th Overview KPI slot for everyone except owner/sales, who see Invoice & Payment there instead
   'proj-pricing-only':['owner','sales'],         // Project Price KPI card on Overview -- same audience as proj-invoice-only. Vendor price + profit cards are further gated owner-only so Client Manager sees only the project (client-facing) price.
   'proj-dates-edit-only':['owner','sales'],       // Start/Target production completion/Target delivery become editable date inputs for Owner + assigned Client Manager; everyone else (kpi-scale-only audience) just sees the computed read-only text
@@ -6629,6 +6729,7 @@ function collapsedSummaryLine(b,q,won,lost,inProd,quoteUnsuccessful){
 }
 
 function rmbToUsd(rmb){return rmb==null?null:Math.round(rmb/RMB_PER_USD);}
+window.rmbToUsd=rmbToUsd; // exposed -- renderProjectPricingPanel/projectRowHtml (earlier <script> blocks) convert the vendor-paid RMB figure to its USD equivalent
 function moneyRMB(n){return n==null?'—':'¥'+Math.round(n).toLocaleString('en-US');}
 function money(n){return n==null?'—':'$'+n.toLocaleString('en-US');}
 function shop(id){return SHOPS.filter(function(s){return s.id===id;})[0];}
@@ -7653,6 +7754,39 @@ window.SRC_reopenInvoicePayment=function(bid,which){
   if(window.renderMyAssigned)window.renderMyAssigned();
   var selEl2=document.getElementById('projSelect');
   if(which==='deposit'&&selEl2&&selEl2.value===bid&&typeof renderProjectOverview==='function')renderProjectOverview(b);
+};
+// Vendor Payment (b.vendorInvoice) -- mirror of SRC_markInvoicePaid/
+// SRC_reopenInvoicePayment above, but for what CARVE has paid the VENDOR
+// rather than what the client has paid Carve. Owner/Client Manager only
+// (see vendor-invoice-edit-only in PERM); the vendor's own panel renders
+// the same b.vendorInvoice read-only via renderVendorPaymentPanel().
+window.SRC_markVendorPaymentPaid=function(bid,which){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b)return;
+  if(!b.vendorInvoice)b.vendorInvoice={depositStatus:'due',balanceStatus:'due'};
+  var inv=b.vendorInvoice;
+  var today=new Date().toISOString().slice(0,10);
+  var sent=prompt('What date was this payment actually sent to the vendor? (YYYY-MM-DD)',today);
+  if(sent==null)return;
+  sent=sent.trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(sent)){alert('Please enter the date as YYYY-MM-DD.');return;}
+  if(which==='deposit'){inv.depositStatus='paid';inv.depositPaidAt=sent;logProjectEvent(b,'Vendor 50% deposit paid',sent);}
+  else{inv.balanceStatus='paid';inv.balancePaidAt=sent;logProjectEvent(b,'Vendor 100% balance paid',sent);}
+  saveSRC({changedBriefIds:[b.id]});
+  var selElv=document.getElementById('projSelect');
+  if(selElv&&selElv.value===bid&&typeof renderProjectOverview==='function')renderProjectOverview(b);
+  if(window.renderVendorProjects)window.renderVendorProjects();
+};
+window.SRC_reopenVendorPayment=function(bid,which){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b||!b.vendorInvoice)return;
+  var inv=b.vendorInvoice;
+  if(which==='deposit'){inv.depositStatus='due';delete inv.depositPaidAt;}
+  else{inv.balanceStatus='due';delete inv.balancePaidAt;}
+  saveSRC({changedBriefIds:[b.id]});
+  var selElv2=document.getElementById('projSelect');
+  if(selElv2&&selElv2.value===bid&&typeof renderProjectOverview==='function')renderProjectOverview(b);
+  if(window.renderVendorProjects)window.renderVendorProjects();
 };
 window.SRC_editInvoiceId=function(bid,which){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
