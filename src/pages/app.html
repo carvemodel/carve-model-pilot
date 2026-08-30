@@ -2505,7 +2505,7 @@ var PROJECT_STAGES=[
   'Confirmed Material Samples',                // 2
   'Fabrication',                                // 3
   'Final Client Approval',                      // 4
-  'Permanently Fixed, Cleaned & Polished',      // 5
+  'Permanently Fixed, Cleaned & Polished',      // 5 -- 2 days
   'Packing',                                     // 6 -- 2 days
   'Shipping',                                    // 7 -- 5 days; the model physically arrives with the
                                                   //      client at the end of this stage -- delivery is no
@@ -2612,15 +2612,14 @@ function addBusinessDays(dateStr,days){
 }
 // Target production completion defaults to start date + the production
 // time agreed with the client (b.productionDays), and target delivery
-// defaults to that completion date + 5 days -- Shipping's own 5 days (see
-// journeyStageRange); Packing is shown as a same-day milestone right at
-// completion rather than its own buffer added on top, so it no longer
-// pushes delivery out further. This keeps both in sync with the start
-// date / production time by default so they don't drift. Either can be
-// directly overridden (see setProductionCompletionOverride/
-// setTargetDeliveryOverride, used by the date inputs in Project
-// information) for cases where the real date needs to diverge from the
-// formula -- the override always wins once set.
+// defaults to that completion date + 9 days -- the agreed post-completion
+// buffer of Permanently Fixed, Cleaned & Polished (2 days) + Packing
+// (2 days) + Shipping (5 days), see journeyStageRange. This keeps both in
+// sync with the start date / production time by default so they don't
+// drift. Either can be directly overridden (see
+// setProductionCompletionOverride/setTargetDeliveryOverride, used by the
+// date inputs in Project information) for cases where the real date needs
+// to diverge from the formula -- the override always wins once set.
 function productionCompletionDate(b){
   if(b&&b.productionCompletionOverride)return b.productionCompletionOverride;
   var start=getProjectStartDate(b);
@@ -2631,7 +2630,7 @@ function productionCompletionDate(b){
 function targetDeliveryDate(b){
   if(b&&b.targetDeliveryOverride)return b.targetDeliveryOverride;
   var completion=productionCompletionDate(b);
-  return completion?addDays(completion,5):null;
+  return completion?addDays(completion,9):null;
 }
 // The ORIGINAL target delivery date (targetDeliveryDate above) never
 // drifts once set -- it's the fixed commitment made at kickoff. This is
@@ -2722,16 +2721,17 @@ function scheduleStatusLabel(rangeStart,rangeEnd){
 // currentStageScheduleStatus() (the visible ahead/behind line on the
 // journey card) so the two never drift apart. Derived from the project's
 // own Start date, Target production completion (start + agreed production
-// time), and Target delivery (completion + 5 days): Confirmed Material
+// time), and Target delivery (completion + 9 days): Confirmed Material
 // Samples gets the first 3 days after kickoff; Final Client Approval gets
 // the last 2 days, ending ON completion day itself; Fabrication absorbs
 // whatever's left in between (day 4 through completion-2). After
-// completion, Permanently Fixed/Cleaned & Polished takes the day before
-// completion through completion itself, Packing is completion day,
-// Shipping runs completion+1 through Target delivery, and Post Delivery
-// Support starts the day after delivery with no end date (openEnded --
-// support continues indefinitely, there's nothing to count down to).
-// Project Kick Off and Project Completed round out the two ends.
+// completion, the agreed post-production buffer runs Permanently
+// Fixed/Cleaned & Polished for 2 days, then Packing for 2 days, then
+// Shipping for the remaining 5 days through Target delivery (2+2+5=9,
+// matching targetDeliveryDate's completion+9), and Post Delivery Support
+// starts the day after delivery with no end date (openEnded -- support
+// continues indefinitely, there's nothing to count down to). Project Kick
+// Off and Project Completed round out the two ends.
 function journeyStageRange(b,stageIndex){
   var stageName=PROJECT_STAGES[stageIndex];
   var start=getProjectStartDate(b);
@@ -2742,9 +2742,9 @@ function journeyStageRange(b,stageIndex){
   else if(stageName==='Confirmed Material Samples'&&start){rs=addDays(start,1);re=addDays(start,3);}
   else if(stageName==='Fabrication'&&start&&completion){rs=addDays(start,4);re=addDays(completion,-2);}
   else if(stageName==='Final Client Approval'&&completion){rs=addDays(completion,-1);re=completion;}
-  else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,-1);re=completion;}
-  else if(stageName==='Packing'&&completion){rs=completion;re=completion;}
-  else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,1);re=delivery;}
+  else if(stageName==='Permanently Fixed, Cleaned & Polished'&&completion){rs=addDays(completion,1);re=addDays(completion,2);}
+  else if(stageName==='Packing'&&completion){rs=addDays(completion,3);re=addDays(completion,4);}
+  else if(stageName==='Shipping'&&completion&&delivery){rs=addDays(completion,5);re=delivery;}
   else if(stageName==='Post Delivery Support'&&delivery){rs=addDays(delivery,1);re=null;openEnded=true;}
   if(rs&&re&&rs>re)return {start:null,end:null,openEnded:false}; // agreed production time too short for this breakdown to make sense
   return {start:rs,end:re,openEnded:openEnded};
