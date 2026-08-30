@@ -1215,6 +1215,21 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           </div>
         </div>
       </div>
+
+      <!-- Which of this shop's OWN team members (Team & Access) are
+           assigned to THIS project -- vendor-only (factory), same for the
+           primary admin and a team member (full parity, no price content
+           here so it isn't hidden by vendor-no-price). Lets the admin hand
+           a specific project to specific teammates; renderVendorProjects()
+           uses this to restrict a team member's own "My Projects" list to
+           only what they've been assigned. Populated by
+           renderVendorTeamAssignPanel(). -->
+      <div class="panel vendorteamassign-only" id="vendorTeamAssignPanelWrap" style="margin-top:1.5rem;">
+        <div class="panel__head"><h3>Assigned Team Members</h3></div>
+        <div class="panel__body">
+          <div id="vendorTeamAssignList" style="display:flex;flex-direction:column;gap:0.7rem;"></div>
+        </div>
+      </div>
     </section>
 
     <!-- QUOTE -->
@@ -3313,6 +3328,14 @@ function renderVendorProjects(){
   var mine=(SDB.briefs||[]).filter(function(b){
     if(b.awarded!==window.OUR_SHOP)return false;
     if(role==='prodtech')return b.stage==='production'&&b.assignedTech===window.ME_TECH;
+    // A Vendor Team & Access member (window.ME_TEAM_MEMBER_ID set --
+    // see enterSession()) only sees a project once the shop's own admin
+    // has assigned them to it specifically, via the Assigned Team Members
+    // panel on Project Overview. The primary admin (ME_TEAM_MEMBER_ID
+    // null) still sees every job awarded to the shop, same as always.
+    if(role==='factory'&&window.ME_TEAM_MEMBER_ID){
+      return b.status==='awarded'&&(b.assignedTeamMembers||[]).indexOf(window.ME_TEAM_MEMBER_ID)>=0;
+    }
     return b.status==='awarded';
   });
   mine.forEach(autoMarkDeliveredIfComplete);
@@ -3940,6 +3963,7 @@ function renderProjectOverview(b){
   renderProjectInvoicePanel(b);
   renderProjectPricingPanel(b);
   renderVendorPaymentPanel(b);
+  if(typeof renderVendorTeamAssignPanel==='function')renderVendorTeamAssignPanel(b);
   setText('kpiInvoice',paymentStatusLabel(b));
   setText('kpiInvoiceSub','Click to view →');
   // Keep the scale/boundary and design-files modals in sync with whatever
@@ -4414,6 +4438,33 @@ function renderVendorPaymentPanel(b){
   }
 }
 window.renderVendorPaymentPanel=renderVendorPaymentPanel;
+// Lets the shop's own admin (or a team member -- full parity, no price
+// content here) hand THIS specific project to specific teammates from
+// their own Team & Access roster. Checking/unchecking a name calls
+// window.SRC_toggleTeamMemberAssignment (Sourcing IIFE, mirrors
+// SRC_markVendorPaymentPaid's cross-<script>-block pattern), which is the
+// only thing that actually writes b.assignedTeamMembers.
+function renderVendorTeamAssignPanel(b){
+  var wrap=document.getElementById('vendorTeamAssignPanelWrap');
+  if(!wrap||!b)return;
+  var listEl=document.getElementById('vendorTeamAssignList');
+  if(!listEl)return;
+  var shopId=window.OUR_SHOP;
+  var members=((window.SDB&&window.SDB.vendorTeam)||[]).filter(function(t){return t.shopId===shopId;});
+  if(!members.length){
+    listEl.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">No team members added yet. Add teammates from Team &amp; Access, then assign them to this project here.</div>';
+    return;
+  }
+  var assigned=b.assignedTeamMembers||[];
+  listEl.innerHTML=members.map(function(m){
+    var checked=assigned.indexOf(m.id)>=0;
+    return '<label style="display:flex;align-items:center;gap:0.6rem;font-size:0.9rem;cursor:pointer;">'+
+      '<input type="checkbox" '+(checked?'checked':'')+' onchange="SRC_toggleTeamMemberAssignment(\''+esc(b.id)+'\',\''+esc(m.id)+'\',this.checked)">'+
+      '<span>'+esc(m.name)+' <span style="color:var(--cm-text-subtle);">('+esc(m.email)+')</span></span>'+
+    '</label>';
+  }).join('');
+}
+window.renderVendorTeamAssignPanel=renderVendorTeamAssignPanel;
 /* ---- Vendor's own Finance tab -- every awarded project, quoted price, and
    payment status, filtered by a daterange filter row (same pattern as
    Leads/Quotes: setLeadsRange/setSrcRange). Vendor-admin-only -- see
@@ -5421,6 +5472,7 @@ var PERM={
   'vendorproj-only':['factory','prodtech'],       // Vendor side's own scoped "My Projects" list (this shop's awarded-to-production jobs) -- the only real entry point into a project's Overview page for factory/prodtech
   'vendorteam-only':['factory'],                  // Vendor's own Team & Access tab -- Production Admin (primary admin or an already-added team member, both role 'factory') can add/remove more logins for their own shop; Production Technicians never manage access
   'vendorfinance-only':['factory'],                // Vendor's own Finance tab -- price, so hidden from a Vendor Team & Access member via body.vendor-no-price (see the CSS rule) even though it's role 'factory' same as the primary admin; Production Technicians never see it either
+  'vendorteamassign-only':['factory'],             // Assigned Team Members panel on Project Overview -- no price content, so full parity: both the primary admin and a team member see/edit it, same as everything else a factory session can touch; Production Technicians never see it
   'sb-edit-only':['owner','sales','factory']       // Edit controls inside the Project scale & boundary modal only -- unlike proj-spec-edit-only (Project information's OTHER fields, still owner+sales only), the vendor is the one who actually knows the model's real scale and has the boundary file, so they can fill this one in too; the client still has to separately confirm it (see confirmScaleBoundary)
 };
 var ROLE_INFO={
@@ -6520,6 +6572,14 @@ function enterSession(role,email,name){
   // SEPARATE, additive restriction layered on with a body class rather
   // than a role distinction -- see the CSS rule next to .impersonating).
   document.body.classList.toggle('vendor-no-price',role==='factory'&&!!factoryTeamMember);
+  // Which of this shop's own team members this session IS, if any -- null
+  // for the primary admin (who always sees every project awarded to the
+  // shop) and every non-factory role. renderVendorProjects() reads this to
+  // restrict a team member to only the projects the admin has actually
+  // assigned them to (see the Assigned Team Members panel on Project
+  // Overview / SRC_toggleTeamMemberAssignment) -- mirrors how ME_TECH
+  // scopes a Production Technician's own assignments.
+  window.ME_TEAM_MEMBER_ID=(role==='factory'&&factoryTeamMember)?factoryTeamMember.id:null;
   setRole(role);
   // Real invited accounts carry a real name \u2014 show it instead of the fixed
   // per-role demo persona from ROLE_INFO (setRole() just set those fields).
@@ -8049,6 +8109,23 @@ window.SRC_reopenVendorPayment=function(bid,which){
   saveSRC({changedBriefIds:[b.id]});
   var selElv2=document.getElementById('projSelect');
   if(selElv2&&selElv2.value===bid&&typeof renderProjectOverview==='function')renderProjectOverview(b);
+  if(window.renderVendorProjects)window.renderVendorProjects();
+};
+// Toggles whether a specific member of THIS shop's own Team & Access
+// roster is assigned to project `bid` -- the only thing that writes
+// b.assignedTeamMembers. Either the primary admin or a team member may
+// call this (full parity, same as everything else a factory session can
+// edit); the server sanitizes the saved list against this shop's actual
+// vendorTeam roster on POST (see vendorScopedBriefUpdate in
+// api/sourcing.js) so a tampered payload can't assign a bogus/foreign id.
+window.SRC_toggleTeamMemberAssignment=function(bid,memberId,checked){
+  var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+  if(!b)return;
+  if(!b.assignedTeamMembers)b.assignedTeamMembers=[];
+  var idx=b.assignedTeamMembers.indexOf(memberId);
+  if(checked&&idx<0)b.assignedTeamMembers.push(memberId);
+  else if(!checked&&idx>=0)b.assignedTeamMembers.splice(idx,1);
+  saveSRC({changedBriefIds:[b.id]});
   if(window.renderVendorProjects)window.renderVendorProjects();
 };
 window.SRC_editInvoiceId=function(bid,which){
