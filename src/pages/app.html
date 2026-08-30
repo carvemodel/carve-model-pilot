@@ -3567,6 +3567,7 @@ function renderProjectOverview(b){
       jChecklist.hidden=false;
       var curChecklistRole=document.body.dataset.role;
       jChecklist.innerHTML=checklistItems.map(function(label,i){
+        if(!checklistItemVisible(stageName,i,curChecklistRole))return '';
         var done=checklistItemDone(b,stageName,i);
         var action=checklistItemAction(stageName,i,curChecklistRole);
         return '<div class="stagecheck'+(done?' done':'')+'"'+(action?(' onclick="'+action+'"'):'')+'>'+
@@ -3677,7 +3678,13 @@ function renderProjectOverview(b){
 
   var actWrap=document.getElementById('ovActivityList');
   if(actWrap){
-    var hist=(b.history||[]).filter(function(h){return !h.shop;}).slice(0,8);
+    var actViewerRole=document.body.dataset.role;
+    // visibleActivityFor lives in the Sourcing & Quotes <script> block
+    // (defined alongside logProjectEvent, which stamps actorRole) --
+    // outside this block's own closure, so it's only reachable via
+    // window (see the OUR_SHOP/ME_TECH mirroring above for the same
+    // cross-<script>-block pattern and why a bare call here would throw).
+    var hist=(b.history||[]).filter(function(h){return !h.shop;}).filter(function(h){return (typeof window.visibleActivityFor!=='function')||window.visibleActivityFor(h,actViewerRole);}).slice(0,8);
     actWrap.innerHTML=hist.length?hist.map(function(h){
       var line=esc(h.action||'Update');
       if(h.price!=null)line+=' — $'+Number(h.price).toLocaleString('en-US')+(h.days?(', '+h.days+' days'):'');
@@ -3742,6 +3749,19 @@ function checklistItemAction(stageName,itemIndex,role){
   return role==='sales'?('toggleStageChecklistItem('+itemIndex+')'):null;
 }
 window.checklistItemAction=checklistItemAction;
+// Whether a checklist item should even be listed for the CURRENT viewer --
+// separate from checklistItemAction (which just says whether *clicking* it
+// does anything). "50% deposit received" is Carve's own internal billing
+// milestone; the vendor doesn't act on it and doesn't need to see it
+// either, so it's dropped from their list entirely rather than shown as an
+// inert row. Every other role still sees it (and it still gates
+// advanceProjectStage() the same as always -- hiding it from one role's
+// view never changes what's actually required to move the stage along).
+function checklistItemVisible(stageName,itemIndex,role){
+  if(stageName==='Project Kick Off'&&itemIndex===1&&(role==='factory'||role==='prodtech'))return false;
+  return true;
+}
+window.checklistItemVisible=checklistItemVisible;
 // Toggles one item in the CURRENT stage's checklist (see STAGE_CHECKLISTS
 // above) for the currently-open project. Client Manager only -- not even
 // Carve Admin, per instruction; the client-facing view never calls this
@@ -6411,6 +6431,12 @@ function logHistory(b,shopId,optData,action){
 // real session (e.g. local demo/dev use), and finally just the role label
 // if even that isn't available.
 var ROLE_DISPLAY_LABEL={owner:'Carve Admin',sales:'Client Manager',factory:'Vendor',prodtech:'Production Tech',client:'Client'};
+// Which of the three "sides" a role's Recent Activity entries count as,
+// for visibleActivityFor()'s per-viewer filtering below: Carve staff
+// (owner/sales) vs the client vs the vendor side (factory/prodtech share
+// one category -- a technician's actions are still "the vendor" from
+// everyone else's point of view).
+var ROLE_ACTOR_CATEGORY={owner:'carve',sales:'carve',client:'client',factory:'vendor',prodtech:'vendor'};
 function currentActorLabel(b){
   var role=document.body.dataset.role;
   var roleLabel=ROLE_DISPLAY_LABEL[role]||'';
@@ -6469,7 +6495,11 @@ function logProjectEvent(b,action,whenDateStr){
   // anyone got around to marking it in the system) instead of always
   // stamping the moment the button was clicked.
   var time=whenDateStr?new Date(whenDateStr+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):nowStamp();
-  b.history.unshift({action:action,time:time,by:currentActorLabel(b)});
+  // actorRole records which SIDE (not just which person) did this, purely
+  // from the role active when it happened -- see visibleActivityFor() for
+  // how each viewer's Recent Activity list is filtered by it.
+  var actorRole=ROLE_ACTOR_CATEGORY[document.body.dataset.role]||'carve';
+  b.history.unshift({action:action,time:time,by:currentActorLabel(b),actorRole:actorRole});
 }
 // logProjectEvent is defined inside this IIFE but called from EVERY other
 // <script> block on the page (Client info/spec field saves, date field
@@ -6482,6 +6512,26 @@ function logProjectEvent(b,action,whenDateStr){
 // the file) succeeded, but logging the history entry right after it threw
 // and killed the rest of the function silently.
 window.logProjectEvent=logProjectEvent;
+// Per-viewer Recent Activity visibility. Carve staff (owner/sales) see
+// everything -- the full internal audit trail. Client and vendor each see
+// a narrower slice: the client only ever sees what CARVE'S team did (never
+// the vendor's own production-side actions -- those aren't the client's
+// business and would just be confusing/unprofessional to surface raw), and
+// the vendor sees what the CLIENT or CARVE did (but not a mirror of their
+// own actions back at them -- they already know what they just did; this
+// feed is about what changed on the OTHER sides of the project). Entries
+// logged before actorRole existed have none -- default those to 'carve'
+// (the great majority of pre-existing entries are Carve-driven system
+// events like awards/invoices) so old activity doesn't just vanish for
+// the client's view instead of needing a data migration.
+function visibleActivityFor(h,role){
+  var actor=h.actorRole||'carve';
+  if(role==='owner'||role==='sales')return true;
+  if(role==='client')return actor==='carve';
+  if(role==='factory'||role==='prodtech')return actor==='carve'||actor==='client';
+  return true;
+}
+window.visibleActivityFor=visibleActivityFor;
 function optKey(vi){return vi==null?'p':String(vi);}
 function getOption(b,shopId,vi){return vi==null?b.quotes[shopId]:((b.variations&&b.variations[shopId])||[])[vi];}
 window.SRC_openCommentForm=function(bid,shopId,vi){SRC_OPEN_COMMENT[bid+'|'+shopId+'|'+optKey(vi)]=true;SRC_render();};

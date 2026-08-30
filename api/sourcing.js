@@ -444,6 +444,34 @@ module.exports = async (req, res) => {
         if (incomingBrief.variations && incomingBrief.variations[shopId]) variations[shopId] = incomingBrief.variations[shopId];
         else delete variations[shopId];
         merged.variations = variations;
+        // The vendor side has grown real write access beyond just quotes/
+        // variations since this function was first written -- toggling the
+        // Design files checklist (toggleDesignFileItem), filling in Scale &
+        // boundary (saveScaleBoundaryScale/uploadProjectBoundaryFile), and
+        // filing a change request (submitProjectInfoChangeRequest) all call
+        // the same saveSRC() path. Without carrying these over too, every
+        // one of those silently appeared to save (no error, UI updated
+        // instantly from local state) but reverted the moment this vendor's
+        // own next pull replaced their local copy with the untouched
+        // server version -- exactly the "checked all the boxes, logged
+        // back in, nothing was checked" bug.
+        merged.designFilesChecklist = incomingBrief.designFilesChecklist || currentBrief.designFilesChecklist || null;
+        merged.scaleOverride = incomingBrief.scaleOverride != null ? incomingBrief.scaleOverride : (currentBrief.scaleOverride || null);
+        merged.boundaryFileOverride = incomingBrief.boundaryFileOverride || currentBrief.boundaryFileOverride || null;
+        // pendingChanges is additive-only from the vendor's side (they can
+        // only ever propose a NEW change, never touch an existing one's
+        // status -- see resolvePendingChange, owner/sales only): merge by
+        // id, keeping the server's copy of anything already there
+        // (protects a Carve Admin resolution that landed between this
+        // vendor's last pull and this save from being reverted by their
+        // stale local copy) and only ADDING ids the server doesn't have
+        // yet.
+        const pendingChanges = (currentBrief.pendingChanges || []).slice();
+        const existingChangeIds = new Set(pendingChanges.map((c) => c && c.id));
+        (incomingBrief.pendingChanges || []).forEach((c) => {
+          if (c && c.id && !existingChangeIds.has(c.id)) pendingChanges.unshift(c);
+        });
+        merged.pendingChanges = pendingChanges;
         return merged;
       }
       let briefsForMerge = body.briefs;
