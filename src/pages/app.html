@@ -5686,7 +5686,7 @@ function editProjectPrice(){
   var current=b.clientQuote.price;
   var next=prompt('Project price -- agreed with client (USD) -- for "'+b.title+'":',current!=null?current:'');
   if(next==null)return;
-  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  next=parseMoneyInput(next);
   if(!next||next<=0){alert('Enter a valid price greater than 0.');return;}
   b.clientQuote.price=next;
   logProjectEvent(b,'Project price updated to $'+next.toLocaleString('en-US'));
@@ -5705,7 +5705,7 @@ function editVendorPrice(){
   var current=wq.price;
   var next=prompt('Vendor price -- agreed with vendor (USD) -- for "'+b.title+'":',current!=null?current:'');
   if(next==null)return;
-  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  next=parseMoneyInput(next);
   if(!next||next<=0){alert('Enter a valid price greater than 0.');return;}
   wq.price=next;
   logProjectEvent(b,'Vendor price updated to $'+next.toLocaleString('en-US'));
@@ -5730,7 +5730,7 @@ function editEstimatedShipping(){
   var current=b.clientQuote.estimatedShippingCost;
   var next=prompt('Estimated shipping cost (USD, internal only) for "'+b.title+'":',current!=null?current:'');
   if(next==null)return;
-  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  next=parseMoneyInput(next);
   if(isNaN(next)||next<0){alert('Enter a valid amount, 0 or more.');return;}
   b.clientQuote.estimatedShippingCost=next;
   logProjectEvent(b,'Estimated shipping cost set to $'+next.toLocaleString('en-US'));
@@ -5745,7 +5745,7 @@ function editActualShipping(){
   var current=b.actualShippingCost;
   var next=prompt('Actual shipping cost (USD, internal only) for "'+b.title+'":',current!=null?current:'');
   if(next==null)return;
-  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  next=parseMoneyInput(next);
   if(isNaN(next)||next<0){alert('Enter a valid amount, 0 or more.');return;}
   b.actualShippingCost=next;
   logProjectEvent(b,'Actual shipping cost set to $'+next.toLocaleString('en-US'));
@@ -8373,6 +8373,23 @@ function rmbToUsd(rmb){return rmb==null?null:Math.round(rmb/RMB_PER_USD);}
 window.rmbToUsd=rmbToUsd; // exposed -- renderProjectPricingPanel/projectRowHtml (earlier <script> blocks) convert the vendor-paid RMB figure to its USD equivalent
 function moneyRMB(n){return n==null?'—':'¥'+Math.round(n).toLocaleString('en-US');}
 function money(n){return n==null?'—':'$'+n.toLocaleString('en-US');}
+// Parses a user-typed dollar amount into a number rounded to the cent --
+// tolerant of a leading "$", thousands commas, and stray whitespace (all
+// stripped before parsing) so a price typed as "$3,200.20" or "3200.20"
+// both come out to exactly 3200.2. Used anywhere Carve Admin enters a
+// client- or vendor-facing price by hand (Finalize quote for client, the
+// Project/Vendor price pencil-edit prompts, shipping cost, invoice amount
+// corrections) so cents never get silently dropped the way a bare
+// parseInt (or a regex that strips the decimal point along with commas)
+// used to.
+function parseMoneyInput(v){
+  if(v==null)return NaN;
+  var cleaned=String(v).replace(/[^0-9.\-]/g,'');
+  var n=parseFloat(cleaned);
+  if(isNaN(n))return NaN;
+  return Math.round(n*100)/100;
+}
+window.parseMoneyInput=parseMoneyInput;
 function shop(id){return SHOPS.filter(function(s){return s.id===id;})[0];}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 // downloadInvoice() / SRC_generateQuotationPDF() live in an earlier <script> tag,
@@ -9511,7 +9528,7 @@ window.SRC_editInvoiceAmount=function(bid,which){
   var current=which==='deposit'?inv.depositAmt:inv.balanceAmt;
   var next=prompt('Correct the '+(which==='deposit'?'deposit':'balance')+' amount (USD) on "'+b.title+'" -- this should be the price agreed with the client, not the vendor:',current!=null?current:'');
   if(next==null)return;
-  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  next=parseMoneyInput(next);
   if(!next||next<=0){alert('Enter a valid amount greater than 0.');return;}
   if(which==='deposit')inv.depositAmt=next; else inv.balanceAmt=next;
   logProjectEvent(b,(which==='deposit'?'Deposit':'Balance')+' invoice amount corrected to $'+next.toLocaleString('en-US'));
@@ -9609,8 +9626,8 @@ function clientQuoteSection(b){
   html+='<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);margin-bottom:0.9rem;">Based on — '+esc(srcLabel)+': '+moneyRMB(srcQ.priceRMB)+' <span style="opacity:0.7;">(≈ '+money(srcQ.price)+')</span> · '+ (srcQ.days||'—') +' days. Pick a different option above to change the basis.</div>';
   if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Not yet awarded to production — '+esc(shop(basisShop(b)).name)+' has not been notified. You can still finalize and send this price to the client now.</div>';
   html+='<div class="qform2">';
-  html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" placeholder="e.g. 3200" value="'+(base.price!=null?base.price:'')+'"></div>';
-  html+='<div><label>Est. shipping cost (USD) <span class="opt">internal only</span></label><input id="cq-shipest-'+b.id+'" type="number" placeholder="e.g. 350" value="'+(base.estimatedShippingCost!=null?base.estimatedShippingCost:'')+'"></div>';
+  html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" step="0.01" placeholder="e.g. 3200.50" value="'+(base.price!=null?base.price:'')+'"></div>';
+  html+='<div><label>Est. shipping cost (USD) <span class="opt">internal only</span></label><input id="cq-shipest-'+b.id+'" type="number" step="0.01" placeholder="e.g. 350" value="'+(base.estimatedShippingCost!=null?base.estimatedShippingCost:'')+'"></div>';
   html+='<div><label>Production time (days)</label><input id="cq-days-'+b.id+'" type="number" placeholder="18" value="'+esc(base.days!=null?base.days:'')+'"></div>';
   html+='<div><label>Work scope</label><input id="cq-cat-'+b.id+'" type="text" value="'+esc(base.category||'')+'"></div>';
   var scaleParsed=parseScaleString(base.scale);
@@ -9664,9 +9681,9 @@ function clientQuoteSummary(b,cq){
 }
 window.SRC_saveClientQuote=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
-  var price=parseInt(document.getElementById('cq-price-'+id).value,10);
+  var price=parseMoneyInput(document.getElementById('cq-price-'+id).value);
   var shipEstEl=document.getElementById('cq-shipest-'+id);
-  var estimatedShippingCost=shipEstEl&&shipEstEl.value!==''?parseInt(shipEstEl.value,10):null;
+  var estimatedShippingCost=shipEstEl&&shipEstEl.value!==''?parseMoneyInput(shipEstEl.value):null;
   var days=parseInt(document.getElementById('cq-days-'+id).value,10);
   var category=document.getElementById('cq-cat-'+id).value.trim();
   var scaleIntlEl=document.getElementById('cq-scale-intl-'+id), scaleImpEl=document.getElementById('cq-scale-imp-'+id);
