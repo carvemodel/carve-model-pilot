@@ -1916,8 +1916,13 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
   <div class="modal modal--wide" role="dialog" aria-modal="true" aria-label="Facade material confirmation">
     <div class="modal__head"><h3>Facade material confirmation</h3><button class="modal__x" onclick="closeFacadeMaterialsModal()" aria-label="Close">×</button></div>
     <div class="modal__body">
-      <p class="modal__intro">Vendor uploads an elevation for each side, then pins a photo of the actual material sample onto it.</p>
+      <p class="modal__intro">Vendor adds an elevation for each distinct side of the building -- named however it actually reads (Southeast, Courtyard side, etc) -- then pins a photo of the actual material sample onto it.</p>
       <div class="msample-tabs" id="fmElevationTabs"></div>
+      <div class="msample-tools fm-edit-only" id="fmElevationControls" style="display:none;">
+        <button type="button" class="btn btn--ghost btn--sm" onclick="fmAddElevation()">+ Add elevation</button>
+        <button type="button" class="btn btn--ghost btn--sm" id="fmRenameBtn" onclick="fmRenameElevation()">Rename</button>
+        <button type="button" class="btn btn--ghost btn--sm" id="fmRemoveBtn" onclick="fmRemoveElevation()">Remove</button>
+      </div>
       <div class="msample-upload fm-edit-only" id="fmUploadWrap">
         <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('fmElevationFileInput').click()">Upload/replace this elevation</button>
         <input type="file" id="fmElevationFileInput" accept="image/*" style="display:none;" onchange="fmUploadElevationImage(this)">
@@ -2605,8 +2610,8 @@ var STAGE_CHECKLISTS={
   ],
   'Confirmed Material Samples':[
     'Facade material confirmed',
-    'Landscape material confirmed',
-    'Branding/logo asset confirmed',
+    'Landscape material confirmed (if necessary)',
+    'Branding/logo asset confirmed (if necessary)',
     'Mock-up (if necessary)'
   ]
 };
@@ -2647,13 +2652,39 @@ window.designFilesChecklistDone=designFilesChecklistDone;
 // either one counts toward landscapeMaterialsDone() below. Facade has no
 // client-facing interaction (client can still open the modal to look, just
 // read-only), matching the original ask.
-var FACADE_ELEVATIONS=['North','South','East','West'];
-window.FACADE_ELEVATIONS=FACADE_ELEVATIONS;
+// Facade elevations used to be a fixed North/South/East/West set -- now
+// they're a per-project, vendor-editable list (fmAddElevation/
+// fmRenameElevation/fmRemoveElevation) so a vendor can label them however
+// the building actually reads (Southeast, Courtyard side, etc). These four
+// are only the STARTING labels seeded the first time a project's facade
+// data is touched; nothing after that assumes these specific names.
+var FACADE_ELEVATION_DEFAULTS=['North','South','East','West'];
+function newFacadeElevation(name){
+  return {id:'fme'+Date.now()+Math.random().toString(36).slice(2,7),name:name,url:null,fileName:null,type:null};
+}
 function ensureMaterialSamples(b){
   if(!b.materialSamples)b.materialSamples={};
   var ms=b.materialSamples;
-  if(!ms.facade)ms.facade={elevations:{},pins:[]};
-  if(!ms.facade.elevations)ms.facade.elevations={};
+  if(!ms.facade)ms.facade={elevations:FACADE_ELEVATION_DEFAULTS.map(newFacadeElevation),pins:[]};
+  // Migrate the old object-keyed shape ({North:{url,name,type}, ...}, with
+  // pins carrying an "elevation" name string) into the array-of-elevations
+  // shape below, re-pointing each pin at the new elevation's id so
+  // existing data (if any was saved before this became editable) survives.
+  if(ms.facade.elevations&&!Array.isArray(ms.facade.elevations)){
+    var legacy=ms.facade.elevations,migrated=[],idByName={};
+    Object.keys(legacy).forEach(function(name){
+      var e=newFacadeElevation(name);
+      var old=legacy[name]||{};
+      e.url=old.url||null;e.fileName=old.name||null;e.type=old.type||null;
+      idByName[name]=e.id;
+      migrated.push(e);
+    });
+    ms.facade.elevations=migrated;
+    (ms.facade.pins||[]).forEach(function(p){
+      if(p&&p.elevation&&!p.elevationId){p.elevationId=idByName[p.elevation]||null;delete p.elevation;}
+    });
+  }
+  if(!ms.facade.elevations)ms.facade.elevations=[];
   if(!ms.facade.pins)ms.facade.pins=[];
   if(!ms.landscape)ms.landscape={plan:null,pins:[]};
   if(!ms.landscape.pins)ms.landscape.pins=[];
@@ -4657,11 +4688,14 @@ window.toggleDesignFileItem=toggleDesignFileItem;
 // the current elevation it applies -- no free-hand leader-line drawing to
 // route or hit-test, the number on the pin matches the number on its
 // callout in the list below. ----
-var fmCurrentElevation='North';
+var fmCurrentElevation=null;
 var fmImg=null,fmAddMode=false,fmPendingSample=null;
 function fmCurrentBrief(){
   var id=document.getElementById('projSelect').value;
   return findBrief(id);
+}
+function fmElevationById(ms,id){
+  return ms.facade.elevations.filter(function(e){return e.id===id;})[0]||null;
 }
 // Shared upload helper -- same __blobUpload/fallback pattern as
 // uploadProjectBoundaryFile, just parameterized by path so both the
@@ -4675,14 +4709,14 @@ function msampleUpload(pathPrefix,f){
 function openFacadeMaterialsModal(){
   var b=fmCurrentBrief();
   if(!b)return;
-  ensureMaterialSamples(b);
+  var ms=ensureMaterialSamples(b);
   var modal=document.getElementById('facadeMaterialsModal');
   if(!modal)return;
-  // Land on the first elevation that already has an image, or North by
-  // default, so opening the modal shows something useful right away.
-  var ms=ensureMaterialSamples(b);
-  var withImage=FACADE_ELEVATIONS.filter(function(name){return !!ms.facade.elevations[name];})[0];
-  fmCurrentElevation=withImage||'North';
+  // Land on the first elevation that already has an image, or the first
+  // elevation in the list, so opening the modal shows something useful
+  // right away.
+  var withImage=ms.facade.elevations.filter(function(e){return !!e.url;})[0];
+  fmCurrentElevation=(withImage||ms.facade.elevations[0]||{}).id||null;
   fmAddMode=false;fmPendingSample=null;
   modal.hidden=false;
   renderFacadeMaterialsModal(b);
@@ -4694,13 +4728,77 @@ function closeFacadeMaterialsModal(){
   fmAddMode=false;fmPendingSample=null;
 }
 window.closeFacadeMaterialsModal=closeFacadeMaterialsModal;
-function fmSelectElevation(name){
-  fmCurrentElevation=name;
+function fmSelectElevation(id){
+  fmCurrentElevation=id;
   fmAddMode=false;fmPendingSample=null;
   var b=fmCurrentBrief();
   if(b)renderFacadeMaterialsModal(b);
 }
 window.fmSelectElevation=fmSelectElevation;
+// The vendor isn't locked to North/South/East/West -- a facade can have
+// any number of distinct sides, named however actually reads on this
+// building (Southeast, Courtyard side, etc). Add/rename/remove all act
+// through here; pins reference elevationId so renaming one never orphans
+// the samples already pinned to it.
+function fmAddElevation(){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var b=fmCurrentBrief();
+  if(!b)return;
+  var name=prompt('Name this elevation (e.g. Southeast, Courtyard side):');
+  if(name==null)return;
+  name=name.trim();
+  if(!name)return;
+  var ms=ensureMaterialSamples(b);
+  var elev=newFacadeElevation(name);
+  ms.facade.elevations.push(elev);
+  logProjectEvent(b,'Added a "'+name+'" facade elevation on "'+b.title+'"');
+  fmCurrentElevation=elev.id;
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+  renderFacadeMaterialsModal(b);
+}
+window.fmAddElevation=fmAddElevation;
+function fmRenameElevation(){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var b=fmCurrentBrief();
+  if(!b)return;
+  var ms=ensureMaterialSamples(b);
+  var elev=fmElevationById(ms,fmCurrentElevation);
+  if(!elev)return;
+  var name=prompt('Rename this elevation:',elev.name);
+  if(name==null)return;
+  name=name.trim();
+  if(!name)return;
+  var oldName=elev.name;
+  elev.name=name;
+  logProjectEvent(b,'Renamed facade elevation "'+oldName+'" to "'+name+'" on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+  renderFacadeMaterialsModal(b);
+}
+window.fmRenameElevation=fmRenameElevation;
+function fmRemoveElevation(){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var b=fmCurrentBrief();
+  if(!b)return;
+  var ms=ensureMaterialSamples(b);
+  var elev=fmElevationById(ms,fmCurrentElevation);
+  if(!elev)return;
+  var pinCount=ms.facade.pins.filter(function(p){return p.elevationId===elev.id;}).length;
+  var msg='Remove the "'+elev.name+'" elevation?'+(pinCount?(' This also removes '+pinCount+' material sample pin'+(pinCount===1?'':'s')+' on it.'):'');
+  if(!confirm(msg))return;
+  ms.facade.elevations=ms.facade.elevations.filter(function(e){return e.id!==elev.id;});
+  ms.facade.pins=ms.facade.pins.filter(function(p){return p.elevationId!==elev.id;});
+  logProjectEvent(b,'Removed the "'+elev.name+'" facade elevation on "'+b.title+'"');
+  fmCurrentElevation=(ms.facade.elevations[0]||{}).id||null;
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+  renderFacadeMaterialsModal(b);
+}
+window.fmRemoveElevation=fmRemoveElevation;
 function fmDrawElevation(canvas,ctx,pins){
   if(!fmImg)return;
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -4720,26 +4818,38 @@ function renderFacadeMaterialsModal(b){
   var ms=ensureMaterialSamples(b);
   var role=document.body.dataset.role;
   var canEdit=role==='factory'||role==='prodtech';
+  var elevations=ms.facade.elevations;
+  if(!fmCurrentElevation||!fmElevationById(ms,fmCurrentElevation)){
+    fmCurrentElevation=(elevations[0]||{}).id||null;
+  }
   var tabs=document.getElementById('fmElevationTabs');
   if(tabs){
-    tabs.innerHTML=FACADE_ELEVATIONS.map(function(name){
-      var has=!!ms.facade.elevations[name];
-      var on=name===fmCurrentElevation;
-      return '<button type="button" class="btn '+(on?'btn--primary':'btn--ghost')+' btn--sm" onclick="fmSelectElevation(\''+name+'\')">'+esc(name)+(has?' ✓':'')+'</button>';
+    tabs.innerHTML=elevations.map(function(e){
+      var has=!!e.url;
+      var on=e.id===fmCurrentElevation;
+      return '<button type="button" class="btn '+(on?'btn--primary':'btn--ghost')+' btn--sm" onclick="fmSelectElevation(\''+e.id+'\')">'+esc(e.name)+(has?' ✓':'')+'</button>';
     }).join('');
   }
-  var elevData=ms.facade.elevations[fmCurrentElevation];
-  var pins=ms.facade.pins.filter(function(p){return p.elevation===fmCurrentElevation;});
+  var elevControls=document.getElementById('fmElevationControls');
+  if(elevControls)elevControls.style.display=canEdit?'flex':'none';
+  var renameBtn=document.getElementById('fmRenameBtn'),removeBtn=document.getElementById('fmRemoveBtn');
+  if(renameBtn)renameBtn.disabled=!fmCurrentElevation;
+  if(removeBtn)removeBtn.disabled=!fmCurrentElevation;
+  var elevData=fmElevationById(ms,fmCurrentElevation);
+  var pins=fmCurrentElevation?ms.facade.pins.filter(function(p){return p.elevationId===fmCurrentElevation;}):[];
   var stage=document.getElementById('fmStage');
   var tools=document.getElementById('fmTools');
   var uploadBtn=document.getElementById('fmUploadWrap');
   if(uploadBtn){
+    uploadBtn.style.display=(canEdit&&elevData)?'flex':'none';
     var btn=uploadBtn.querySelector('button');
-    if(btn)btn.textContent=elevData?('Replace '+fmCurrentElevation+' elevation'):('Upload '+fmCurrentElevation+' elevation');
+    if(btn&&elevData)btn.textContent=elevData.url?('Replace '+elevData.name+' elevation'):('Upload '+elevData.name+' elevation');
   }
-  if(!elevData){
+  if(!elevData||!elevData.url){
     if(stage)stage.classList.remove('on');
     if(tools)tools.style.display='none';
+    var list0=document.getElementById('fmPinList');
+    if(list0)list0.innerHTML=elevations.length?'<div style="color:var(--cm-text-subtle);font-size:0.85rem;">Upload a photo of this elevation to start pinning samples.</div>':'<div style="color:var(--cm-text-subtle);font-size:0.85rem;">No elevations yet -- add one to get started.</div>';
     return;
   }
   if(tools)tools.style.display=canEdit?'flex':'none';
@@ -4761,12 +4871,13 @@ function renderFacadeMaterialsModal(b){
       if(!newB)return;
       var newMs=ensureMaterialSamples(newB);
       newMs.facade.pins.push({
-        id:'fmp'+Date.now(),elevation:fmCurrentElevation,x:x,y:y,
+        id:'fmp'+Date.now(),elevationId:fmCurrentElevation,x:x,y:y,
         sampleUrl:fmPendingSample.url,sampleName:fmPendingSample.name,
         addedBy:(typeof currentActorLabel==='function')?currentActorLabel(newB):role,
         addedAt:new Date().toISOString().slice(0,10)
       });
-      logProjectEvent(newB,'Pinned a facade material sample on the '+fmCurrentElevation+' elevation of "'+newB.title+'"');
+      var newElev=fmElevationById(newMs,fmCurrentElevation);
+      logProjectEvent(newB,'Pinned a facade material sample on the '+(newElev?newElev.name:'')+' elevation of "'+newB.title+'"');
       fmAddMode=false;fmPendingSample=null;
       if(typeof saveSRC==='function')saveSRC({changedBriefIds:[newB.id]});
       renderProjectOverview(newB);
@@ -4802,9 +4913,11 @@ function fmUploadElevationImage(input){
   var f=input.files&&input.files[0];
   if(!f)return;
   var ms=ensureMaterialSamples(b);
-  msampleUpload('facade/'+b.id+'/'+fmCurrentElevation,f).then(function(url){
-    ms.facade.elevations[fmCurrentElevation]={name:f.name,url:url,type:f.type};
-    logProjectEvent(b,'Uploaded '+fmCurrentElevation+' elevation on "'+b.title+'"');
+  var elev=fmElevationById(ms,fmCurrentElevation);
+  if(!elev){alert('Add an elevation first.');input.value='';return;}
+  msampleUpload('facade/'+b.id+'/'+elev.id,f).then(function(url){
+    elev.url=url;elev.fileName=f.name;elev.type=f.type;
+    logProjectEvent(b,'Uploaded '+elev.name+' elevation on "'+b.title+'"');
     if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
     renderProjectOverview(b);
     renderFacadeMaterialsModal(b);
@@ -4821,7 +4934,8 @@ function fmStartAddPin(){
   var b=fmCurrentBrief();
   if(!b)return;
   var ms=ensureMaterialSamples(b);
-  if(!ms.facade.elevations[fmCurrentElevation]){alert('Upload this elevation first.');return;}
+  var elev=fmElevationById(ms,fmCurrentElevation);
+  if(!elev||!elev.url){alert('Upload this elevation first.');return;}
   document.getElementById('fmSampleFileInput').click();
 }
 window.fmStartAddPin=fmStartAddPin;
