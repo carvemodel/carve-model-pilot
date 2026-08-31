@@ -2739,8 +2739,24 @@ function landscapeMaterialsDone(b){
 }
 window.landscapeMaterialsDone=landscapeMaterialsDone;
 function getProjectStartDate(b){
+  // A manual Start override (Carve Admin explicitly typing a date into the
+  // pencil-edit field, see setProjectStart) always wins outright -- same
+  // "override always wins once set" rule as productionCompletionOverride/
+  // targetDeliveryOverride elsewhere in this file.
+  if(b&&b.startDate)return b.startDate;
+  // Otherwise, don't derive/show a Start date at all until Project Kick
+  // Off's whole checklist (scale & boundary confirmed, design files
+  // cleared, deposit received) genuinely reads done -- see
+  // projectKickOffDone (defined further down, alongside
+  // checklistItemDone). A deposit landing, or even just the brief having
+  // been sent, isn't the same as the project having actually kicked off,
+  // and every date this file computes downstream of Start (production
+  // completion, target delivery, every stage's own estimated range in
+  // journeyStageRange) would otherwise imply a real schedule before one
+  // genuinely exists.
+  if(!(typeof projectKickOffDone==='function')||!projectKickOffDone(b))return null;
   var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
-  return b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt||null;
+  return depositPaidAt||b.sentDate||b.leadReceivedAt||null;
 }
 // The production time actually agreed with the client is whatever was
 // quoted in the "Finalize quote for client" form (b.clientQuote.days) --
@@ -4471,6 +4487,19 @@ function checklistItemDone(b,stageName,itemIndex){
   return !!state[itemIndex];
 }
 window.checklistItemDone=checklistItemDone;
+// Whether ALL THREE Project Kick Off items (scale/boundary confirmed,
+// design files cleared, deposit received) currently read done -- the gate
+// getProjectStartDate() (an earlier <script> block) uses before it'll
+// derive/show a Start date at all. Kept here, next to checklistItemDone,
+// so the two can never drift apart about what "done" means per item.
+function projectKickOffDone(b){
+  if(!b)return false;
+  for(var i=0;i<3;i++){
+    if(!checklistItemDone(b,'Project Kick Off',i))return false;
+  }
+  return true;
+}
+window.projectKickOffDone=projectKickOffDone;
 // The onclick JS for a checklist item row, or null for a non-interactive
 // row. Project Kick Off's three items each route to their own dedicated
 // place instead of the generic toggle (see checklistItemDone for how each
