@@ -999,6 +999,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   <span class="mock__k">Email</span>
                   <div style="display:flex;align-items:center;gap:0.6rem;">
                     <div class="mock__v" id="projInfoContactEmail" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm" id="ceEmailCopyBtn" onclick="copyProjectEmail(this)" title="Copy email" style="display:none;">Copy</button>
                     <button type="button" class="btn btn--ghost btn--sm client-edit-only" id="ceEmailBtn" onclick="toggleClientFieldEdit('email')">Edit</button>
                   </div>
                   <div class="client-edit-only" id="ceEmailWrap" hidden style="margin-top:0.5rem;max-width:280px;">
@@ -2441,6 +2442,18 @@ function copyVal(v,btn){
   try{navigator.clipboard.writeText(v);}catch(e){}
   var t=btn.textContent;btn.textContent='Copied';setTimeout(function(){btn.textContent=t;},1400);
 }
+// Project information's read-only Email display (projInfoContactEmail) --
+// a one-click alternative to click-drag highlighting for anyone who just
+// wants the address on their clipboard, same copyVal() feedback pattern
+// as the Zelle tag/account/routing numbers on the payment modal.
+function copyProjectEmail(btn){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  var email=b&&b.client&&b.client.Email;
+  if(!email)return;
+  copyVal(email,btn);
+}
+window.copyProjectEmail=copyProjectEmail;
 function payMark(){
   document.querySelector('#payModal .paymethods').style.display='none';
   document.getElementById('payZelle').hidden=true;
@@ -3107,7 +3120,8 @@ function toggleClientFieldEdit(field){
   var wrap=document.getElementById(meta.wrap);
   var btn=document.getElementById(meta.btn);
   if(!wrap)return;
-  if(wrap.hidden){
+  var opening=wrap.hidden;
+  if(opening){
     var id=document.getElementById('projSelect').value;
     var b=findBrief(id);
     var c=(b&&b.client)||{};
@@ -3116,6 +3130,18 @@ function toggleClientFieldEdit(field){
   }
   wrap.hidden=!wrap.hidden;
   if(btn)btn.textContent=wrap.hidden?'Edit':'Cancel';
+  // Focus + select-all the instant the field opens for editing -- an
+  // un-focused text input shows no visible selection/caret at all, which
+  // read as "highlighting is disabled" on the email field even though
+  // nothing was actually blocking selection (no user-select:none, no
+  // selection-blocking handler anywhere in this file -- confirmed both
+  // times this was investigated). This puts the whole current value into
+  // an active, visibly-highlighted selection with no click-drag needed --
+  // ready to copy, or just start typing to replace it outright.
+  if(opening){
+    var openedInput=document.getElementById(meta.input);
+    if(openedInput)setTimeout(function(){openedInput.focus();openedInput.select();},0);
+  }
 }
 window.toggleClientFieldEdit=toggleClientFieldEdit;
 // Project information's spec fields (Use case/Scale/Materials/Presentation
@@ -5434,6 +5460,8 @@ function renderProjectAdminPanel(b){
   setText('projInfoContactName',c.Name||'—');
   setText('projInfoContactEmail',c.Email||'—');
   setText('projInfoContactPhone',c.Phone||'—');
+  var emailCopyBtn=document.getElementById('ceEmailCopyBtn');
+  if(emailCopyBtn)emailCopyBtn.style.display=c.Email?'':'none';
   var wrap=document.getElementById('projInfoActionsWrap');
   if(wrap){
     if(b.deliveredAt){
