@@ -6445,6 +6445,28 @@ function deleteClientContact(coId,contactId){
   if(typeof renderClients==='function')renderClients(document.body.dataset.role);
 }
 window.deleteClientContact=deleteClientContact;
+// Finds a contact by email ANYWHERE across all companies -- not just
+// within one already-guessed company bucket. A client's second inquiry
+// sometimes has a slightly different or blank company name (a typo, or
+// they just left the field out that time), and matching by (company name,
+// email) instead of by email alone used to silently file that as a
+// brand-new person under a brand-new company -- leaving a real duplicate
+// row that syncClientProjectFromBrief could never attach a project value
+// to (only one of the two records could ever be "the" match for that
+// email, so the other always showed $0), and that "+ Assign account"
+// would then prefill from whichever (often the wrong, emptier) one got
+// clicked.
+function findClientContactByEmail(email){
+  if(!email)return null;
+  var lower=email.toLowerCase();
+  var found=null;
+  COMPANIES.forEach(function(c){
+    var contact=c.contacts.filter(function(ct){return ct.email&&ct.email.toLowerCase()===lower;})[0];
+    if(contact)found={company:c,contact:contact};
+  });
+  return found;
+}
+window.findClientContactByEmail=findClientContactByEmail;
 /* Auto-list a submitted brief's contact under Clients — no portal account yet,
    just a record so Carve Admin can find them and click "+ Assign account". */
 function ensureClientContact(l){
@@ -6454,25 +6476,26 @@ function ensureClientContact(l){
   var companyName=(l.client.Company&&l.client.Company!=='—')?l.client.Company:'Independent / Unlisted';
   var email=l.client.Email;
   var phone=l.client.Phone||'';
-  var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
-  if(!co){co={id:'co'+Date.now()+Math.random().toString(36).slice(2,6),name:companyName,parentId:null,rep:null,contacts:[]};COMPANIES.push(co);}
   // Note: lastActivityAt is intentionally NOT touched here. It means "last time this
   // client signed into the studio portal" (see recordClientActivity, called from
   // enterSession), not "last time they submitted a brief" — a client who hasn't been
   // granted an account yet has never logged in, so it should stay unset (shows "—").
-  var existing=co.contacts.filter(function(c){return c.email&&c.email.toLowerCase()===email.toLowerCase();})[0];
-  if(existing){
+  var match=findClientContactByEmail(email);
+  if(match){
     // This runs on every live-sync poll (every 5s), so guard against re-counting
     // the same lead each time it re-syncs — only increment the first time we see
     // a given lead id for this contact.
+    var existing=match.contact;
     existing.processedLeadIds=existing.processedLeadIds||[];
     if(!l.id||existing.processedLeadIds.indexOf(l.id)===-1){
       if(l.id)existing.processedLeadIds.push(l.id);
       existing.quoteRequests=(existing.quoteRequests||0)+1;
     }
-  }else{
-    co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:null,processedLeadIds:l.id?[l.id]:[]});
+    return;
   }
+  var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
+  if(!co){co={id:'co'+Date.now()+Math.random().toString(36).slice(2,6),name:companyName,parentId:null,rep:null,contacts:[]};COMPANIES.push(co);}
+  co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:null,processedLeadIds:l.id?[l.id]:[]});
 }
 // COMPANIES (the Client Contact / Clients tab) is rebuilt from scratch on
 // every page load — it's never itself persisted, only ever derived here. It
@@ -6507,11 +6530,9 @@ function syncClientsFromLeads(){
 // live-sync poll, so this stays current without any extra wiring.
 function syncClientProjectFromBrief(b){
   if(!b||!b.client||!b.client.Email||b.status!=='awarded')return;
-  var email=b.client.Email.toLowerCase();
-  var co=COMPANIES.filter(function(c){return c.contacts.some(function(ct){return ct.email&&ct.email.toLowerCase()===email;});})[0];
-  if(!co)return;
-  var contact=co.contacts.filter(function(ct){return ct.email&&ct.email.toLowerCase()===email;})[0];
-  if(!contact)return;
+  var match=findClientContactByEmail(b.client.Email);
+  if(!match)return;
+  var contact=match.contact;
   var inv=b.clientQuote&&b.clientQuote.invoice;
   var value=(b.clientQuote&&b.clientQuote.price!=null)?b.clientQuote.price:0;
   var paid=0;
