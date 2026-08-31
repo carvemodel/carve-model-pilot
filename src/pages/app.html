@@ -4575,7 +4575,14 @@ function renderScaleBoundaryModal(b){
     }else if(confirmedAt){
       confirmWrap.innerHTML='<div style="color:var(--cm-text-strong);font-size:0.88rem;">✓ Confirmed on '+esc(confirmedAt)+'</div>';
     }else{
-      confirmWrap.innerHTML='<label class="taxcheck" style="padding:0;"><input type="checkbox" onclick="confirmScaleBoundary()"><span class="ck"></span><span>I\'ve reviewed and confirm the scale and boundary map are correct</span></label>';
+      // Made deliberately harder to do by accident: this is the client
+      // signing off on the exact scale and boundary production will
+      // fabricate against, so it's a prominent button + a two-step
+      // confirm() chain (same pattern as clientRequestPauseProject)
+      // instead of a quiet, easy-to-miss checkbox -- with the real
+      // consequence spelled out up front, not just in the confirm dialog.
+      confirmWrap.innerHTML='<div class="notice" style="margin-bottom:0.8rem;border-color:var(--cm-border-strong);">Once approved, Carve may begin fabrication against this exact scale and boundary map. Any deviation from it after approval will require a change order.</div>'+
+        '<button type="button" class="btn btn--primary" onclick="confirmScaleBoundary()">Approve scale &amp; boundary map</button>';
     }
   }else{
     confirmWrap.innerHTML=confirmedAt?('<div style="color:var(--cm-text-strong);font-size:0.88rem;">✓ Client confirmed on '+esc(confirmedAt)+'</div>'):('<div style="color:var(--cm-text-subtle);font-size:0.85rem;">Awaiting client confirmation'+(ready?'':' — scale and boundary map still needed')+'.</div>');
@@ -4620,6 +4627,11 @@ window.saveScaleBoundaryScale=saveScaleBoundaryScale;
 // entered are correct -- separate from Owner/Client Manager just entering
 // the data. checklistItemDone() won't read this item as complete until
 // both the data is present AND the client has explicitly confirmed it.
+// Two-step confirm() chain, same pattern as clientRequestPauseProject --
+// this is the client signing off on the exact scale/boundary production
+// will fabricate against, so it's deliberately harder to trigger by
+// accident than a single click, and the second step spells out the real
+// consequence rather than a generic "are you sure".
 function confirmScaleBoundary(){
   if(document.body.dataset.role!=='client')return;
   var id=document.getElementById('projSelect').value;
@@ -4629,6 +4641,8 @@ function confirmScaleBoundary(){
   var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
   var boundary=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
   if(!scale||!boundary)return;
+  if(!confirm('Approve the scale and boundary map for "'+b.title+'"?'))return;
+  if(!confirm('By clicking Approve, Carve may start fabrication and any deviation from the original scale/boundary will require a change order. Approve now?'))return;
   b.scaleBoundaryConfirmedAt=new Date().toISOString().slice(0,10);
   logProjectEvent(b,'Confirmed scale and boundary map on "'+b.title+'"');
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
