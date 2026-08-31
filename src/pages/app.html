@@ -999,6 +999,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   <span class="mock__k">Email</span>
                   <div style="display:flex;align-items:center;gap:0.6rem;">
                     <div class="mock__v" id="projInfoContactEmail" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm" id="ceEmailCopyBtn" onclick="copyProjectEmail(this)" title="Copy email" style="display:none;">Copy</button>
                     <button type="button" class="btn btn--ghost btn--sm client-edit-only" id="ceEmailBtn" onclick="toggleClientFieldEdit('email')">Edit</button>
                   </div>
                   <div class="client-edit-only" id="ceEmailWrap" hidden style="margin-top:0.5rem;max-width:280px;">
@@ -1919,9 +1920,20 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <p class="modal__intro">Vendor adds an elevation for each distinct side of the building -- named however it actually reads (Southeast, Courtyard side, etc) -- then pins a photo of the actual material sample onto it.</p>
       <div class="msample-tabs" id="fmElevationTabs"></div>
       <div class="msample-tools fm-edit-only" id="fmElevationControls" style="display:none;">
-        <button type="button" class="btn btn--ghost btn--sm" onclick="fmAddElevation()">+ Add elevation</button>
+        <button type="button" class="btn btn--ghost btn--sm" onclick="fmShowAddElevationPicker()">+ Add elevation</button>
         <button type="button" class="btn btn--ghost btn--sm" id="fmRenameBtn" onclick="fmRenameElevation()">Rename</button>
         <button type="button" class="btn btn--ghost btn--sm" id="fmRemoveBtn" onclick="fmRemoveElevation()">Remove</button>
+      </div>
+      <div class="msample-tools fm-edit-only" id="fmAddElevationPicker" style="display:none;">
+        <select id="fmElevationPreset" onchange="fmElevationPresetChanged()">
+          <option value="">Choose an elevation…</option>
+          <option>North</option><option>Northeast</option><option>East</option><option>Southeast</option>
+          <option>South</option><option>Southwest</option><option>West</option><option>Northwest</option>
+          <option value="__other__">Other (type your own)…</option>
+        </select>
+        <input type="text" id="fmElevationCustomName" placeholder="Elevation name" style="display:none;max-width:160px;">
+        <button type="button" class="btn btn--primary btn--sm" onclick="fmConfirmAddElevation()">Add</button>
+        <button type="button" class="btn btn--ghost btn--sm" onclick="fmCancelAddElevation()">Cancel</button>
       </div>
       <div class="msample-upload fm-edit-only" id="fmUploadWrap">
         <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('fmElevationFileInput').click()">Upload/replace this elevation</button>
@@ -2430,6 +2442,18 @@ function copyVal(v,btn){
   try{navigator.clipboard.writeText(v);}catch(e){}
   var t=btn.textContent;btn.textContent='Copied';setTimeout(function(){btn.textContent=t;},1400);
 }
+// Project information's read-only Email display (projInfoContactEmail) --
+// a one-click alternative to click-drag highlighting for anyone who just
+// wants the address on their clipboard, same copyVal() feedback pattern
+// as the Zelle tag/account/routing numbers on the payment modal.
+function copyProjectEmail(btn){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  var email=b&&b.client&&b.client.Email;
+  if(!email)return;
+  copyVal(email,btn);
+}
+window.copyProjectEmail=copyProjectEmail;
 function payMark(){
   document.querySelector('#payModal .paymethods').style.display='none';
   document.getElementById('payZelle').hidden=true;
@@ -2728,8 +2752,24 @@ function landscapeMaterialsDone(b){
 }
 window.landscapeMaterialsDone=landscapeMaterialsDone;
 function getProjectStartDate(b){
+  // A manual Start override (Carve Admin explicitly typing a date into the
+  // pencil-edit field, see setProjectStart) always wins outright -- same
+  // "override always wins once set" rule as productionCompletionOverride/
+  // targetDeliveryOverride elsewhere in this file.
+  if(b&&b.startDate)return b.startDate;
+  // Otherwise, don't derive/show a Start date at all until Project Kick
+  // Off's whole checklist (scale & boundary confirmed, design files
+  // cleared, deposit received) genuinely reads done -- see
+  // projectKickOffDone (defined further down, alongside
+  // checklistItemDone). A deposit landing, or even just the brief having
+  // been sent, isn't the same as the project having actually kicked off,
+  // and every date this file computes downstream of Start (production
+  // completion, target delivery, every stage's own estimated range in
+  // journeyStageRange) would otherwise imply a real schedule before one
+  // genuinely exists.
+  if(!(typeof projectKickOffDone==='function')||!projectKickOffDone(b))return null;
   var depositPaidAt=b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositPaidAt;
-  return b.startDate||depositPaidAt||b.sentDate||b.leadReceivedAt||null;
+  return depositPaidAt||b.sentDate||b.leadReceivedAt||null;
 }
 // The production time actually agreed with the client is whatever was
 // quoted in the "Finalize quote for client" form (b.clientQuote.days) --
@@ -3080,7 +3120,8 @@ function toggleClientFieldEdit(field){
   var wrap=document.getElementById(meta.wrap);
   var btn=document.getElementById(meta.btn);
   if(!wrap)return;
-  if(wrap.hidden){
+  var opening=wrap.hidden;
+  if(opening){
     var id=document.getElementById('projSelect').value;
     var b=findBrief(id);
     var c=(b&&b.client)||{};
@@ -3089,6 +3130,18 @@ function toggleClientFieldEdit(field){
   }
   wrap.hidden=!wrap.hidden;
   if(btn)btn.textContent=wrap.hidden?'Edit':'Cancel';
+  // Focus + select-all the instant the field opens for editing -- an
+  // un-focused text input shows no visible selection/caret at all, which
+  // read as "highlighting is disabled" on the email field even though
+  // nothing was actually blocking selection (no user-select:none, no
+  // selection-blocking handler anywhere in this file -- confirmed both
+  // times this was investigated). This puts the whole current value into
+  // an active, visibly-highlighted selection with no click-drag needed --
+  // ready to copy, or just start typing to replace it outright.
+  if(opening){
+    var openedInput=document.getElementById(meta.input);
+    if(openedInput)setTimeout(function(){openedInput.focus();openedInput.select();},0);
+  }
 }
 window.toggleClientFieldEdit=toggleClientFieldEdit;
 // Project information's spec fields (Use case/Scale/Materials/Presentation
@@ -4381,7 +4434,7 @@ function renderProjectOverview(b){
   if(boundaryWrap){
     var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
     var boundaryFile=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
-    var bLine=(boundaryFile&&typeof boundaryFileLine==='function')?boundaryFileLine({boundaryFile:boundaryFile}):'';
+    var bLine=(boundaryFile&&typeof boundaryFileLine==='function')?boundaryFileLine({boundaryFile:boundaryFile},'Boundary Map'):'';
     boundaryWrap.innerHTML=bLine||'—';
   }
 
@@ -4460,6 +4513,19 @@ function checklistItemDone(b,stageName,itemIndex){
   return !!state[itemIndex];
 }
 window.checklistItemDone=checklistItemDone;
+// Whether ALL THREE Project Kick Off items (scale/boundary confirmed,
+// design files cleared, deposit received) currently read done -- the gate
+// getProjectStartDate() (an earlier <script> block) uses before it'll
+// derive/show a Start date at all. Kept here, next to checklistItemDone,
+// so the two can never drift apart about what "done" means per item.
+function projectKickOffDone(b){
+  if(!b)return false;
+  for(var i=0;i<3;i++){
+    if(!checklistItemDone(b,'Project Kick Off',i))return false;
+  }
+  return true;
+}
+window.projectKickOffDone=projectKickOffDone;
 // The onclick JS for a checklist item row, or null for a non-interactive
 // row. Project Kick Off's three items each route to their own dedicated
 // place instead of the generic toggle (see checklistItemDone for how each
@@ -4563,7 +4629,7 @@ function renderScaleBoundaryModal(b){
   var scaleInput=document.getElementById('sbScaleInput');
   if(scaleInput)scaleInput.value=scale||'';
   var boundaryDisp=document.getElementById('sbBoundaryDisplay');
-  if(boundaryDisp)boundaryDisp.innerHTML=boundary&&typeof boundaryFileLine==='function'?(boundaryFileLine({boundaryFile:boundary})||'Not uploaded yet'):'Not uploaded yet';
+  if(boundaryDisp)boundaryDisp.innerHTML=boundary&&typeof boundaryFileLine==='function'?(boundaryFileLine({boundaryFile:boundary},'Boundary Map')||'Not uploaded yet'):'Not uploaded yet';
   var confirmWrap=document.getElementById('sbConfirmSection');
   if(!confirmWrap)return;
   var role=document.body.dataset.role;
@@ -4575,7 +4641,14 @@ function renderScaleBoundaryModal(b){
     }else if(confirmedAt){
       confirmWrap.innerHTML='<div style="color:var(--cm-text-strong);font-size:0.88rem;">✓ Confirmed on '+esc(confirmedAt)+'</div>';
     }else{
-      confirmWrap.innerHTML='<label class="taxcheck" style="padding:0;"><input type="checkbox" onclick="confirmScaleBoundary()"><span class="ck"></span><span>I\'ve reviewed and confirm the scale and boundary map are correct</span></label>';
+      // Made deliberately harder to do by accident: this is the client
+      // signing off on the exact scale and boundary production will
+      // fabricate against, so it's a prominent button + a two-step
+      // confirm() chain (same pattern as clientRequestPauseProject)
+      // instead of a quiet, easy-to-miss checkbox -- with the real
+      // consequence spelled out up front, not just in the confirm dialog.
+      confirmWrap.innerHTML='<div class="notice" style="margin-bottom:0.8rem;border-color:var(--cm-border-strong);">Once approved, Carve may begin fabrication against this exact scale and boundary map. Any deviation from it after approval will require a change order.</div>'+
+        '<button type="button" class="btn btn--primary" onclick="confirmScaleBoundary()">Approve scale &amp; boundary map</button>';
     }
   }else{
     confirmWrap.innerHTML=confirmedAt?('<div style="color:var(--cm-text-strong);font-size:0.88rem;">✓ Client confirmed on '+esc(confirmedAt)+'</div>'):('<div style="color:var(--cm-text-subtle);font-size:0.85rem;">Awaiting client confirmation'+(ready?'':' — scale and boundary map still needed')+'.</div>');
@@ -4620,6 +4693,11 @@ window.saveScaleBoundaryScale=saveScaleBoundaryScale;
 // entered are correct -- separate from Owner/Client Manager just entering
 // the data. checklistItemDone() won't read this item as complete until
 // both the data is present AND the client has explicitly confirmed it.
+// Two-step confirm() chain, same pattern as clientRequestPauseProject --
+// this is the client signing off on the exact scale/boundary production
+// will fabricate against, so it's deliberately harder to trigger by
+// accident than a single click, and the second step spells out the real
+// consequence rather than a generic "are you sure".
 function confirmScaleBoundary(){
   if(document.body.dataset.role!=='client')return;
   var id=document.getElementById('projSelect').value;
@@ -4629,6 +4707,8 @@ function confirmScaleBoundary(){
   var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
   var boundary=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
   if(!scale||!boundary)return;
+  if(!confirm('Approve the scale and boundary map for "'+b.title+'"?'))return;
+  if(!confirm('By clicking Approve, Carve may start fabrication and any deviation from the original scale/boundary will require a change order. Approve now?'))return;
   b.scaleBoundaryConfirmedAt=new Date().toISOString().slice(0,10);
   logProjectEvent(b,'Confirmed scale and boundary map on "'+b.title+'"');
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
@@ -4710,6 +4790,21 @@ function fmCurrentBrief(){
 function fmElevationById(ms,id){
   return ms.facade.elevations.filter(function(e){return e.id===id;})[0]||null;
 }
+// A poll (see pullSourcing) can replace a vendor's local brief object
+// between "open the modal" and "click an action button" -- if that
+// happens while the facade elevations were only seeded in memory (not
+// yet saved), the replacement copy gets reseeded with brand-new random
+// ids and fmCurrentElevation (still pointing at the old ids) goes stale.
+// Rather than let every action guard fail with a confusing "add an
+// elevation first" when elevations plainly exist, resolve against
+// whatever elevations are actually on the current ms, healing
+// fmCurrentElevation (and syncing the tabs) in the process.
+function fmResolveCurrentElevation(ms){
+  var elev=fmElevationById(ms,fmCurrentElevation);
+  if(elev)return elev;
+  fmCurrentElevation=(ms.facade.elevations[0]||{}).id||null;
+  return fmElevationById(ms,fmCurrentElevation);
+}
 // Shared upload helper -- same __blobUpload/fallback pattern as
 // uploadProjectBoundaryFile, just parameterized by path so both the
 // facade and landscape modals (elevations, site plan, and every sample
@@ -4722,6 +4817,7 @@ function msampleUpload(pathPrefix,f){
 function openFacadeMaterialsModal(){
   var b=fmCurrentBrief();
   if(!b)return;
+  var wasSeeded=!!(b.materialSamples&&b.materialSamples.facade&&b.materialSamples.facade.seeded);
   var ms=ensureMaterialSamples(b);
   var modal=document.getElementById('facadeMaterialsModal');
   if(!modal)return;
@@ -4731,14 +4827,28 @@ function openFacadeMaterialsModal(){
   var withImage=ms.facade.elevations.filter(function(e){return !!e.url;})[0];
   fmCurrentElevation=(withImage||ms.facade.elevations[0]||{}).id||null;
   fmAddMode=false;fmPendingSample=null;
+  if(typeof fmCancelAddElevation==='function')fmCancelAddElevation();
   modal.hidden=false;
   renderFacadeMaterialsModal(b);
+  // ensureMaterialSamples() just seeded the default elevations (North/
+  // South/East/West) into memory only -- if this isn't saved before the
+  // next poll runs, a vendor (factory) session's poll REPLACES its local
+  // briefs wholesale with the server's copy (see pullSourcing's
+  // isScopedPull branch), discarding this in-memory seed. The next call to
+  // ensureMaterialSamples would then reseed from scratch with brand-new
+  // random elevation ids, orphaning fmCurrentElevation and making
+  // fmUploadElevationImage's "Add an elevation first" guard fire even
+  // though elevations visibly exist in the tabs -- persist the seed
+  // immediately so the ids that made it into the DOM are the same ones the
+  // server (and the next poll) echo back.
+  if(!wasSeeded&&typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
 }
 window.openFacadeMaterialsModal=openFacadeMaterialsModal;
 function closeFacadeMaterialsModal(){
   var modal=document.getElementById('facadeMaterialsModal');
   if(modal)modal.hidden=true;
   fmAddMode=false;fmPendingSample=null;
+  if(typeof fmCancelAddElevation==='function')fmCancelAddElevation();
 }
 window.closeFacadeMaterialsModal=closeFacadeMaterialsModal;
 function fmSelectElevation(id){
@@ -4753,25 +4863,63 @@ window.fmSelectElevation=fmSelectElevation;
 // building (Southeast, Courtyard side, etc). Add/rename/remove all act
 // through here; pins reference elevationId so renaming one never orphans
 // the samples already pinned to it.
-function fmAddElevation(){
+// "+ Add elevation" opens a small preset picker (8 compass points, or a
+// free-text "Other") instead of a bare prompt() -- most projects just need
+// a standard compass direction, so offering them as one click removes the
+// need to type/spell them consistently across every project.
+function fmShowAddElevationPicker(){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var picker=document.getElementById('fmAddElevationPicker');
+  var controls=document.getElementById('fmElevationControls');
+  if(!picker)return;
+  var sel=document.getElementById('fmElevationPreset');
+  var custom=document.getElementById('fmElevationCustomName');
+  if(sel)sel.value='';
+  if(custom){custom.value='';custom.style.display='none';}
+  picker.style.display='flex';
+  if(controls)controls.style.display='none';
+}
+window.fmShowAddElevationPicker=fmShowAddElevationPicker;
+function fmCancelAddElevation(){
+  var picker=document.getElementById('fmAddElevationPicker');
+  var controls=document.getElementById('fmElevationControls');
+  if(picker)picker.style.display='none';
+  if(controls)controls.style.display='flex';
+}
+window.fmCancelAddElevation=fmCancelAddElevation;
+function fmElevationPresetChanged(){
+  var sel=document.getElementById('fmElevationPreset');
+  var custom=document.getElementById('fmElevationCustomName');
+  if(!sel||!custom)return;
+  if(sel.value==='__other__'){
+    custom.style.display='inline-block';
+    custom.focus();
+  }else{
+    custom.style.display='none';
+  }
+}
+window.fmElevationPresetChanged=fmElevationPresetChanged;
+function fmConfirmAddElevation(){
   var role=document.body.dataset.role;
   if(role!=='factory'&&role!=='prodtech')return;
   var b=fmCurrentBrief();
   if(!b)return;
-  var name=prompt('Name this elevation (e.g. Southeast, Courtyard side):');
-  if(name==null)return;
-  name=name.trim();
-  if(!name)return;
+  var sel=document.getElementById('fmElevationPreset');
+  var custom=document.getElementById('fmElevationCustomName');
+  var name=sel&&sel.value==='__other__'?(custom?custom.value.trim():''):(sel?sel.value:'');
+  if(!name){alert('Choose an elevation, or pick "Other" and name it.');return;}
   var ms=ensureMaterialSamples(b);
   var elev=newFacadeElevation(name);
   ms.facade.elevations.push(elev);
   logProjectEvent(b,'Added a "'+name+'" facade elevation on "'+b.title+'"');
   fmCurrentElevation=elev.id;
+  fmCancelAddElevation();
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   renderProjectOverview(b);
   renderFacadeMaterialsModal(b);
 }
-window.fmAddElevation=fmAddElevation;
+window.fmConfirmAddElevation=fmConfirmAddElevation;
 function fmRenameElevation(){
   var role=document.body.dataset.role;
   if(role!=='factory'&&role!=='prodtech')return;
@@ -4926,8 +5074,9 @@ function fmUploadElevationImage(input){
   var f=input.files&&input.files[0];
   if(!f)return;
   var ms=ensureMaterialSamples(b);
-  var elev=fmElevationById(ms,fmCurrentElevation);
+  var elev=fmResolveCurrentElevation(ms);
   if(!elev){alert('Add an elevation first.');input.value='';return;}
+  renderFacadeMaterialsModal(b);
   msampleUpload('facade/'+b.id+'/'+elev.id,f).then(function(url){
     elev.url=url;elev.fileName=f.name;elev.type=f.type;
     logProjectEvent(b,'Uploaded '+elev.name+' elevation on "'+b.title+'"');
@@ -4947,7 +5096,7 @@ function fmStartAddPin(){
   var b=fmCurrentBrief();
   if(!b)return;
   var ms=ensureMaterialSamples(b);
-  var elev=fmElevationById(ms,fmCurrentElevation);
+  var elev=fmResolveCurrentElevation(ms);
   if(!elev||!elev.url){alert('Upload this elevation first.');return;}
   document.getElementById('fmSampleFileInput').click();
 }
@@ -5311,6 +5460,8 @@ function renderProjectAdminPanel(b){
   setText('projInfoContactName',c.Name||'—');
   setText('projInfoContactEmail',c.Email||'—');
   setText('projInfoContactPhone',c.Phone||'—');
+  var emailCopyBtn=document.getElementById('ceEmailCopyBtn');
+  if(emailCopyBtn)emailCopyBtn.style.display=c.Email?'':'none';
   var wrap=document.getElementById('projInfoActionsWrap');
   if(wrap){
     if(b.deliveredAt){
@@ -5686,7 +5837,7 @@ function editProjectPrice(){
   var current=b.clientQuote.price;
   var next=prompt('Project price -- agreed with client (USD) -- for "'+b.title+'":',current!=null?current:'');
   if(next==null)return;
-  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  next=parseMoneyInput(next);
   if(!next||next<=0){alert('Enter a valid price greater than 0.');return;}
   b.clientQuote.price=next;
   logProjectEvent(b,'Project price updated to $'+next.toLocaleString('en-US'));
@@ -5705,7 +5856,7 @@ function editVendorPrice(){
   var current=wq.price;
   var next=prompt('Vendor price -- agreed with vendor (USD) -- for "'+b.title+'":',current!=null?current:'');
   if(next==null)return;
-  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  next=parseMoneyInput(next);
   if(!next||next<=0){alert('Enter a valid price greater than 0.');return;}
   wq.price=next;
   logProjectEvent(b,'Vendor price updated to $'+next.toLocaleString('en-US'));
@@ -5730,7 +5881,7 @@ function editEstimatedShipping(){
   var current=b.clientQuote.estimatedShippingCost;
   var next=prompt('Estimated shipping cost (USD, internal only) for "'+b.title+'":',current!=null?current:'');
   if(next==null)return;
-  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  next=parseMoneyInput(next);
   if(isNaN(next)||next<0){alert('Enter a valid amount, 0 or more.');return;}
   b.clientQuote.estimatedShippingCost=next;
   logProjectEvent(b,'Estimated shipping cost set to $'+next.toLocaleString('en-US'));
@@ -5745,7 +5896,7 @@ function editActualShipping(){
   var current=b.actualShippingCost;
   var next=prompt('Actual shipping cost (USD, internal only) for "'+b.title+'":',current!=null?current:'');
   if(next==null)return;
-  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  next=parseMoneyInput(next);
   if(isNaN(next)||next<0){alert('Enter a valid amount, 0 or more.');return;}
   b.actualShippingCost=next;
   logProjectEvent(b,'Actual shipping cost set to $'+next.toLocaleString('en-US'));
@@ -6445,6 +6596,28 @@ function deleteClientContact(coId,contactId){
   if(typeof renderClients==='function')renderClients(document.body.dataset.role);
 }
 window.deleteClientContact=deleteClientContact;
+// Finds a contact by email ANYWHERE across all companies -- not just
+// within one already-guessed company bucket. A client's second inquiry
+// sometimes has a slightly different or blank company name (a typo, or
+// they just left the field out that time), and matching by (company name,
+// email) instead of by email alone used to silently file that as a
+// brand-new person under a brand-new company -- leaving a real duplicate
+// row that syncClientProjectFromBrief could never attach a project value
+// to (only one of the two records could ever be "the" match for that
+// email, so the other always showed $0), and that "+ Assign account"
+// would then prefill from whichever (often the wrong, emptier) one got
+// clicked.
+function findClientContactByEmail(email){
+  if(!email)return null;
+  var lower=email.toLowerCase();
+  var found=null;
+  COMPANIES.forEach(function(c){
+    var contact=c.contacts.filter(function(ct){return ct.email&&ct.email.toLowerCase()===lower;})[0];
+    if(contact)found={company:c,contact:contact};
+  });
+  return found;
+}
+window.findClientContactByEmail=findClientContactByEmail;
 /* Auto-list a submitted brief's contact under Clients — no portal account yet,
    just a record so Carve Admin can find them and click "+ Assign account". */
 function ensureClientContact(l){
@@ -6454,25 +6627,26 @@ function ensureClientContact(l){
   var companyName=(l.client.Company&&l.client.Company!=='—')?l.client.Company:'Independent / Unlisted';
   var email=l.client.Email;
   var phone=l.client.Phone||'';
-  var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
-  if(!co){co={id:'co'+Date.now()+Math.random().toString(36).slice(2,6),name:companyName,parentId:null,rep:null,contacts:[]};COMPANIES.push(co);}
   // Note: lastActivityAt is intentionally NOT touched here. It means "last time this
   // client signed into the studio portal" (see recordClientActivity, called from
   // enterSession), not "last time they submitted a brief" — a client who hasn't been
   // granted an account yet has never logged in, so it should stay unset (shows "—").
-  var existing=co.contacts.filter(function(c){return c.email&&c.email.toLowerCase()===email.toLowerCase();})[0];
-  if(existing){
+  var match=findClientContactByEmail(email);
+  if(match){
     // This runs on every live-sync poll (every 5s), so guard against re-counting
     // the same lead each time it re-syncs — only increment the first time we see
     // a given lead id for this contact.
+    var existing=match.contact;
     existing.processedLeadIds=existing.processedLeadIds||[];
     if(!l.id||existing.processedLeadIds.indexOf(l.id)===-1){
       if(l.id)existing.processedLeadIds.push(l.id);
       existing.quoteRequests=(existing.quoteRequests||0)+1;
     }
-  }else{
-    co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:null,processedLeadIds:l.id?[l.id]:[]});
+    return;
   }
+  var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
+  if(!co){co={id:'co'+Date.now()+Math.random().toString(36).slice(2,6),name:companyName,parentId:null,rep:null,contacts:[]};COMPANIES.push(co);}
+  co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:null,processedLeadIds:l.id?[l.id]:[]});
 }
 // COMPANIES (the Client Contact / Clients tab) is rebuilt from scratch on
 // every page load — it's never itself persisted, only ever derived here. It
@@ -6507,11 +6681,9 @@ function syncClientsFromLeads(){
 // live-sync poll, so this stays current without any extra wiring.
 function syncClientProjectFromBrief(b){
   if(!b||!b.client||!b.client.Email||b.status!=='awarded')return;
-  var email=b.client.Email.toLowerCase();
-  var co=COMPANIES.filter(function(c){return c.contacts.some(function(ct){return ct.email&&ct.email.toLowerCase()===email;});})[0];
-  if(!co)return;
-  var contact=co.contacts.filter(function(ct){return ct.email&&ct.email.toLowerCase()===email;})[0];
-  if(!contact)return;
+  var match=findClientContactByEmail(b.client.Email);
+  if(!match)return;
+  var contact=match.contact;
   var inv=b.clientQuote&&b.clientQuote.invoice;
   var value=(b.clientQuote&&b.clientQuote.price!=null)?b.clientQuote.price:0;
   var paid=0;
@@ -8373,6 +8545,23 @@ function rmbToUsd(rmb){return rmb==null?null:Math.round(rmb/RMB_PER_USD);}
 window.rmbToUsd=rmbToUsd; // exposed -- renderProjectPricingPanel/projectRowHtml (earlier <script> blocks) convert the vendor-paid RMB figure to its USD equivalent
 function moneyRMB(n){return n==null?'—':'¥'+Math.round(n).toLocaleString('en-US');}
 function money(n){return n==null?'—':'$'+n.toLocaleString('en-US');}
+// Parses a user-typed dollar amount into a number rounded to the cent --
+// tolerant of a leading "$", thousands commas, and stray whitespace (all
+// stripped before parsing) so a price typed as "$3,200.20" or "3200.20"
+// both come out to exactly 3200.2. Used anywhere Carve Admin enters a
+// client- or vendor-facing price by hand (Finalize quote for client, the
+// Project/Vendor price pencil-edit prompts, shipping cost, invoice amount
+// corrections) so cents never get silently dropped the way a bare
+// parseInt (or a regex that strips the decimal point along with commas)
+// used to.
+function parseMoneyInput(v){
+  if(v==null)return NaN;
+  var cleaned=String(v).replace(/[^0-9.\-]/g,'');
+  var n=parseFloat(cleaned);
+  if(isNaN(n))return NaN;
+  return Math.round(n*100)/100;
+}
+window.parseMoneyInput=parseMoneyInput;
 function shop(id){return SHOPS.filter(function(s){return s.id===id;})[0];}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 // downloadInvoice() / SRC_generateQuotationPDF() live in an earlier <script> tag,
@@ -8685,15 +8874,23 @@ function closeImageLightbox(){
   if(img)img.src='';
 }
 window.closeImageLightbox=closeImageLightbox;
-function boundaryFileLine(q){
+// labelOverride replaces the VISIBLE name (alt text / lightbox caption /
+// the 📎 chip label) without touching the actual download filename --
+// used by Project information and the Scale & boundary modal to always
+// read "Boundary Map" there regardless of whatever the vendor's own
+// uploaded file happened to be called, while the vendor's own quote
+// cards and Carve Admin's shop-to-shop comparison (where the real
+// filename is genuinely useful context) are left showing it as-is.
+function boundaryFileLine(q,labelOverride){
   if(!q.boundaryFile)return '';
+  var label=labelOverride||q.boundaryFile.name;
   var sizeStr=q.boundaryFile.size?(q.boundaryFile.size/1024/1024>=1?(q.boundaryFile.size/1024/1024).toFixed(1)+' MB':Math.round(q.boundaryFile.size/1024)+' KB'):'';
   var isImg=isImageBoundaryFile(q.boundaryFile)&&q.boundaryFile.url;
-  var thumb=isImg?('<img src="'+esc(q.boundaryFile.url)+'" alt="'+esc(q.boundaryFile.name)+'" onclick="openImageLightbox(\''+esc(q.boundaryFile.url)+'\',\''+esc(q.boundaryFile.name)+'\')" style="display:block;max-width:220px;max-height:160px;border-radius:var(--r-sm);border:1px solid var(--cm-border);cursor:zoom-in;margin-top:0.5rem;object-fit:cover;">'):'';
+  var thumb=isImg?('<img src="'+esc(q.boundaryFile.url)+'" alt="'+esc(label)+'" onclick="openImageLightbox(\''+esc(q.boundaryFile.url)+'\',\''+esc(label)+'\')" style="display:block;max-width:220px;max-height:160px;border-radius:var(--r-sm);border:1px solid var(--cm-border);cursor:zoom-in;margin-top:0.5rem;object-fit:cover;">'):'';
   if(q.boundaryFile.url){
-    return thumb+'<a class="filechip filechip--link" href="'+esc(q.boundaryFile.url)+'" target="_blank" rel="noopener" download="'+esc(q.boundaryFile.name)+'" style="margin-top:0.5rem;">📎 '+esc(q.boundaryFile.name)+' <span class="filechip__sz">'+sizeStr+'</span> ↓</a>';
+    return thumb+'<a class="filechip filechip--link" href="'+esc(q.boundaryFile.url)+'" target="_blank" rel="noopener" download="'+esc(q.boundaryFile.name)+'" style="margin-top:0.5rem;">📎 '+esc(label)+' <span class="filechip__sz">'+sizeStr+'</span> ↓</a>';
   }
-  return '<div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;font-size:0.8rem;color:var(--cm-text-muted);"><span style="font-family:var(--font-mono);">📎</span>'+esc(q.boundaryFile.name)+'<span style="color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.72rem;">'+sizeStr+'</span></div>';
+  return '<div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;font-size:0.8rem;color:var(--cm-text-muted);"><span style="font-family:var(--font-mono);">📎</span>'+esc(label)+'<span style="color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.72rem;">'+sizeStr+'</span></div>';
 }
 window.boundaryFileLine=boundaryFileLine; // exposed so Project information (an earlier <script> block) can show the vendor's uploaded boundary map
 function specBits(b){return Object.keys(b.brief).map(function(k){return '<div><b>'+k+'</b>'+esc(b.brief[k])+'</div>';}).join('');}
@@ -9511,7 +9708,7 @@ window.SRC_editInvoiceAmount=function(bid,which){
   var current=which==='deposit'?inv.depositAmt:inv.balanceAmt;
   var next=prompt('Correct the '+(which==='deposit'?'deposit':'balance')+' amount (USD) on "'+b.title+'" -- this should be the price agreed with the client, not the vendor:',current!=null?current:'');
   if(next==null)return;
-  next=parseInt(String(next).replace(/[^0-9]/g,''),10);
+  next=parseMoneyInput(next);
   if(!next||next<=0){alert('Enter a valid amount greater than 0.');return;}
   if(which==='deposit')inv.depositAmt=next; else inv.balanceAmt=next;
   logProjectEvent(b,(which==='deposit'?'Deposit':'Balance')+' invoice amount corrected to $'+next.toLocaleString('en-US'));
@@ -9609,8 +9806,8 @@ function clientQuoteSection(b){
   html+='<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);margin-bottom:0.9rem;">Based on — '+esc(srcLabel)+': '+moneyRMB(srcQ.priceRMB)+' <span style="opacity:0.7;">(≈ '+money(srcQ.price)+')</span> · '+ (srcQ.days||'—') +' days. Pick a different option above to change the basis.</div>';
   if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Not yet awarded to production — '+esc(shop(basisShop(b)).name)+' has not been notified. You can still finalize and send this price to the client now.</div>';
   html+='<div class="qform2">';
-  html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" placeholder="e.g. 3200" value="'+(base.price!=null?base.price:'')+'"></div>';
-  html+='<div><label>Est. shipping cost (USD) <span class="opt">internal only</span></label><input id="cq-shipest-'+b.id+'" type="number" placeholder="e.g. 350" value="'+(base.estimatedShippingCost!=null?base.estimatedShippingCost:'')+'"></div>';
+  html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" step="0.01" placeholder="e.g. 3200.50" value="'+(base.price!=null?base.price:'')+'"></div>';
+  html+='<div><label>Est. shipping cost (USD) <span class="opt">internal only</span></label><input id="cq-shipest-'+b.id+'" type="number" step="0.01" placeholder="e.g. 350" value="'+(base.estimatedShippingCost!=null?base.estimatedShippingCost:'')+'"></div>';
   html+='<div><label>Production time (days)</label><input id="cq-days-'+b.id+'" type="number" placeholder="18" value="'+esc(base.days!=null?base.days:'')+'"></div>';
   html+='<div><label>Work scope</label><input id="cq-cat-'+b.id+'" type="text" value="'+esc(base.category||'')+'"></div>';
   var scaleParsed=parseScaleString(base.scale);
@@ -9664,9 +9861,9 @@ function clientQuoteSummary(b,cq){
 }
 window.SRC_saveClientQuote=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
-  var price=parseInt(document.getElementById('cq-price-'+id).value,10);
+  var price=parseMoneyInput(document.getElementById('cq-price-'+id).value);
   var shipEstEl=document.getElementById('cq-shipest-'+id);
-  var estimatedShippingCost=shipEstEl&&shipEstEl.value!==''?parseInt(shipEstEl.value,10):null;
+  var estimatedShippingCost=shipEstEl&&shipEstEl.value!==''?parseMoneyInput(shipEstEl.value):null;
   var days=parseInt(document.getElementById('cq-days-'+id).value,10);
   var category=document.getElementById('cq-cat-'+id).value.trim();
   var scaleIntlEl=document.getElementById('cq-scale-intl-'+id), scaleImpEl=document.getElementById('cq-scale-imp-'+id);
