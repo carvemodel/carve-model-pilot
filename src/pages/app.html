@@ -1919,9 +1919,20 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <p class="modal__intro">Vendor adds an elevation for each distinct side of the building -- named however it actually reads (Southeast, Courtyard side, etc) -- then pins a photo of the actual material sample onto it.</p>
       <div class="msample-tabs" id="fmElevationTabs"></div>
       <div class="msample-tools fm-edit-only" id="fmElevationControls" style="display:none;">
-        <button type="button" class="btn btn--ghost btn--sm" onclick="fmAddElevation()">+ Add elevation</button>
+        <button type="button" class="btn btn--ghost btn--sm" onclick="fmShowAddElevationPicker()">+ Add elevation</button>
         <button type="button" class="btn btn--ghost btn--sm" id="fmRenameBtn" onclick="fmRenameElevation()">Rename</button>
         <button type="button" class="btn btn--ghost btn--sm" id="fmRemoveBtn" onclick="fmRemoveElevation()">Remove</button>
+      </div>
+      <div class="msample-tools fm-edit-only" id="fmAddElevationPicker" style="display:none;">
+        <select id="fmElevationPreset" onchange="fmElevationPresetChanged()">
+          <option value="">Choose an elevation…</option>
+          <option>North</option><option>Northeast</option><option>East</option><option>Southeast</option>
+          <option>South</option><option>Southwest</option><option>West</option><option>Northwest</option>
+          <option value="__other__">Other (type your own)…</option>
+        </select>
+        <input type="text" id="fmElevationCustomName" placeholder="Elevation name" style="display:none;max-width:160px;">
+        <button type="button" class="btn btn--primary btn--sm" onclick="fmConfirmAddElevation()">Add</button>
+        <button type="button" class="btn btn--ghost btn--sm" onclick="fmCancelAddElevation()">Cancel</button>
       </div>
       <div class="msample-upload fm-edit-only" id="fmUploadWrap">
         <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('fmElevationFileInput').click()">Upload/replace this elevation</button>
@@ -4381,7 +4392,7 @@ function renderProjectOverview(b){
   if(boundaryWrap){
     var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
     var boundaryFile=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
-    var bLine=(boundaryFile&&typeof boundaryFileLine==='function')?boundaryFileLine({boundaryFile:boundaryFile}):'';
+    var bLine=(boundaryFile&&typeof boundaryFileLine==='function')?boundaryFileLine({boundaryFile:boundaryFile},'Boundary Map'):'';
     boundaryWrap.innerHTML=bLine||'—';
   }
 
@@ -4563,7 +4574,7 @@ function renderScaleBoundaryModal(b){
   var scaleInput=document.getElementById('sbScaleInput');
   if(scaleInput)scaleInput.value=scale||'';
   var boundaryDisp=document.getElementById('sbBoundaryDisplay');
-  if(boundaryDisp)boundaryDisp.innerHTML=boundary&&typeof boundaryFileLine==='function'?(boundaryFileLine({boundaryFile:boundary})||'Not uploaded yet'):'Not uploaded yet';
+  if(boundaryDisp)boundaryDisp.innerHTML=boundary&&typeof boundaryFileLine==='function'?(boundaryFileLine({boundaryFile:boundary},'Boundary Map')||'Not uploaded yet'):'Not uploaded yet';
   var confirmWrap=document.getElementById('sbConfirmSection');
   if(!confirmWrap)return;
   var role=document.body.dataset.role;
@@ -4724,6 +4735,21 @@ function fmCurrentBrief(){
 function fmElevationById(ms,id){
   return ms.facade.elevations.filter(function(e){return e.id===id;})[0]||null;
 }
+// A poll (see pullSourcing) can replace a vendor's local brief object
+// between "open the modal" and "click an action button" -- if that
+// happens while the facade elevations were only seeded in memory (not
+// yet saved), the replacement copy gets reseeded with brand-new random
+// ids and fmCurrentElevation (still pointing at the old ids) goes stale.
+// Rather than let every action guard fail with a confusing "add an
+// elevation first" when elevations plainly exist, resolve against
+// whatever elevations are actually on the current ms, healing
+// fmCurrentElevation (and syncing the tabs) in the process.
+function fmResolveCurrentElevation(ms){
+  var elev=fmElevationById(ms,fmCurrentElevation);
+  if(elev)return elev;
+  fmCurrentElevation=(ms.facade.elevations[0]||{}).id||null;
+  return fmElevationById(ms,fmCurrentElevation);
+}
 // Shared upload helper -- same __blobUpload/fallback pattern as
 // uploadProjectBoundaryFile, just parameterized by path so both the
 // facade and landscape modals (elevations, site plan, and every sample
@@ -4736,6 +4762,7 @@ function msampleUpload(pathPrefix,f){
 function openFacadeMaterialsModal(){
   var b=fmCurrentBrief();
   if(!b)return;
+  var wasSeeded=!!(b.materialSamples&&b.materialSamples.facade&&b.materialSamples.facade.seeded);
   var ms=ensureMaterialSamples(b);
   var modal=document.getElementById('facadeMaterialsModal');
   if(!modal)return;
@@ -4747,6 +4774,18 @@ function openFacadeMaterialsModal(){
   fmAddMode=false;fmPendingSample=null;
   modal.hidden=false;
   renderFacadeMaterialsModal(b);
+  // ensureMaterialSamples() just seeded the default elevations (North/
+  // South/East/West) into memory only -- if this isn't saved before the
+  // next poll runs, a vendor (factory) session's poll REPLACES its local
+  // briefs wholesale with the server's copy (see pullSourcing's
+  // isScopedPull branch), discarding this in-memory seed. The next call to
+  // ensureMaterialSamples would then reseed from scratch with brand-new
+  // random elevation ids, orphaning fmCurrentElevation and making
+  // fmUploadElevationImage's "Add an elevation first" guard fire even
+  // though elevations visibly exist in the tabs -- persist the seed
+  // immediately so the ids that made it into the DOM are the same ones the
+  // server (and the next poll) echo back.
+  if(!wasSeeded&&typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
 }
 window.openFacadeMaterialsModal=openFacadeMaterialsModal;
 function closeFacadeMaterialsModal(){
@@ -4940,8 +4979,9 @@ function fmUploadElevationImage(input){
   var f=input.files&&input.files[0];
   if(!f)return;
   var ms=ensureMaterialSamples(b);
-  var elev=fmElevationById(ms,fmCurrentElevation);
+  var elev=fmResolveCurrentElevation(ms);
   if(!elev){alert('Add an elevation first.');input.value='';return;}
+  renderFacadeMaterialsModal(b);
   msampleUpload('facade/'+b.id+'/'+elev.id,f).then(function(url){
     elev.url=url;elev.fileName=f.name;elev.type=f.type;
     logProjectEvent(b,'Uploaded '+elev.name+' elevation on "'+b.title+'"');
@@ -4961,7 +5001,7 @@ function fmStartAddPin(){
   var b=fmCurrentBrief();
   if(!b)return;
   var ms=ensureMaterialSamples(b);
-  var elev=fmElevationById(ms,fmCurrentElevation);
+  var elev=fmResolveCurrentElevation(ms);
   if(!elev||!elev.url){alert('Upload this elevation first.');return;}
   document.getElementById('fmSampleFileInput').click();
 }
@@ -8737,15 +8777,23 @@ function closeImageLightbox(){
   if(img)img.src='';
 }
 window.closeImageLightbox=closeImageLightbox;
-function boundaryFileLine(q){
+// labelOverride replaces the VISIBLE name (alt text / lightbox caption /
+// the 📎 chip label) without touching the actual download filename --
+// used by Project information and the Scale & boundary modal to always
+// read "Boundary Map" there regardless of whatever the vendor's own
+// uploaded file happened to be called, while the vendor's own quote
+// cards and Carve Admin's shop-to-shop comparison (where the real
+// filename is genuinely useful context) are left showing it as-is.
+function boundaryFileLine(q,labelOverride){
   if(!q.boundaryFile)return '';
+  var label=labelOverride||q.boundaryFile.name;
   var sizeStr=q.boundaryFile.size?(q.boundaryFile.size/1024/1024>=1?(q.boundaryFile.size/1024/1024).toFixed(1)+' MB':Math.round(q.boundaryFile.size/1024)+' KB'):'';
   var isImg=isImageBoundaryFile(q.boundaryFile)&&q.boundaryFile.url;
-  var thumb=isImg?('<img src="'+esc(q.boundaryFile.url)+'" alt="'+esc(q.boundaryFile.name)+'" onclick="openImageLightbox(\''+esc(q.boundaryFile.url)+'\',\''+esc(q.boundaryFile.name)+'\')" style="display:block;max-width:220px;max-height:160px;border-radius:var(--r-sm);border:1px solid var(--cm-border);cursor:zoom-in;margin-top:0.5rem;object-fit:cover;">'):'';
+  var thumb=isImg?('<img src="'+esc(q.boundaryFile.url)+'" alt="'+esc(label)+'" onclick="openImageLightbox(\''+esc(q.boundaryFile.url)+'\',\''+esc(label)+'\')" style="display:block;max-width:220px;max-height:160px;border-radius:var(--r-sm);border:1px solid var(--cm-border);cursor:zoom-in;margin-top:0.5rem;object-fit:cover;">'):'';
   if(q.boundaryFile.url){
-    return thumb+'<a class="filechip filechip--link" href="'+esc(q.boundaryFile.url)+'" target="_blank" rel="noopener" download="'+esc(q.boundaryFile.name)+'" style="margin-top:0.5rem;">📎 '+esc(q.boundaryFile.name)+' <span class="filechip__sz">'+sizeStr+'</span> ↓</a>';
+    return thumb+'<a class="filechip filechip--link" href="'+esc(q.boundaryFile.url)+'" target="_blank" rel="noopener" download="'+esc(q.boundaryFile.name)+'" style="margin-top:0.5rem;">📎 '+esc(label)+' <span class="filechip__sz">'+sizeStr+'</span> ↓</a>';
   }
-  return '<div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;font-size:0.8rem;color:var(--cm-text-muted);"><span style="font-family:var(--font-mono);">📎</span>'+esc(q.boundaryFile.name)+'<span style="color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.72rem;">'+sizeStr+'</span></div>';
+  return '<div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;font-size:0.8rem;color:var(--cm-text-muted);"><span style="font-family:var(--font-mono);">📎</span>'+esc(label)+'<span style="color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.72rem;">'+sizeStr+'</span></div>';
 }
 window.boundaryFileLine=boundaryFileLine; // exposed so Project information (an earlier <script> block) can show the vendor's uploaded boundary map
 function specBits(b){return Object.keys(b.brief).map(function(k){return '<div><b>'+k+'</b>'+esc(b.brief[k])+'</div>';}).join('');}
