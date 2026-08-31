@@ -4772,6 +4772,7 @@ function openFacadeMaterialsModal(){
   var withImage=ms.facade.elevations.filter(function(e){return !!e.url;})[0];
   fmCurrentElevation=(withImage||ms.facade.elevations[0]||{}).id||null;
   fmAddMode=false;fmPendingSample=null;
+  if(typeof fmCancelAddElevation==='function')fmCancelAddElevation();
   modal.hidden=false;
   renderFacadeMaterialsModal(b);
   // ensureMaterialSamples() just seeded the default elevations (North/
@@ -4792,6 +4793,7 @@ function closeFacadeMaterialsModal(){
   var modal=document.getElementById('facadeMaterialsModal');
   if(modal)modal.hidden=true;
   fmAddMode=false;fmPendingSample=null;
+  if(typeof fmCancelAddElevation==='function')fmCancelAddElevation();
 }
 window.closeFacadeMaterialsModal=closeFacadeMaterialsModal;
 function fmSelectElevation(id){
@@ -4806,25 +4808,63 @@ window.fmSelectElevation=fmSelectElevation;
 // building (Southeast, Courtyard side, etc). Add/rename/remove all act
 // through here; pins reference elevationId so renaming one never orphans
 // the samples already pinned to it.
-function fmAddElevation(){
+// "+ Add elevation" opens a small preset picker (8 compass points, or a
+// free-text "Other") instead of a bare prompt() -- most projects just need
+// a standard compass direction, so offering them as one click removes the
+// need to type/spell them consistently across every project.
+function fmShowAddElevationPicker(){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var picker=document.getElementById('fmAddElevationPicker');
+  var controls=document.getElementById('fmElevationControls');
+  if(!picker)return;
+  var sel=document.getElementById('fmElevationPreset');
+  var custom=document.getElementById('fmElevationCustomName');
+  if(sel)sel.value='';
+  if(custom){custom.value='';custom.style.display='none';}
+  picker.style.display='flex';
+  if(controls)controls.style.display='none';
+}
+window.fmShowAddElevationPicker=fmShowAddElevationPicker;
+function fmCancelAddElevation(){
+  var picker=document.getElementById('fmAddElevationPicker');
+  var controls=document.getElementById('fmElevationControls');
+  if(picker)picker.style.display='none';
+  if(controls)controls.style.display='flex';
+}
+window.fmCancelAddElevation=fmCancelAddElevation;
+function fmElevationPresetChanged(){
+  var sel=document.getElementById('fmElevationPreset');
+  var custom=document.getElementById('fmElevationCustomName');
+  if(!sel||!custom)return;
+  if(sel.value==='__other__'){
+    custom.style.display='inline-block';
+    custom.focus();
+  }else{
+    custom.style.display='none';
+  }
+}
+window.fmElevationPresetChanged=fmElevationPresetChanged;
+function fmConfirmAddElevation(){
   var role=document.body.dataset.role;
   if(role!=='factory'&&role!=='prodtech')return;
   var b=fmCurrentBrief();
   if(!b)return;
-  var name=prompt('Name this elevation (e.g. Southeast, Courtyard side):');
-  if(name==null)return;
-  name=name.trim();
-  if(!name)return;
+  var sel=document.getElementById('fmElevationPreset');
+  var custom=document.getElementById('fmElevationCustomName');
+  var name=sel&&sel.value==='__other__'?(custom?custom.value.trim():''):(sel?sel.value:'');
+  if(!name){alert('Choose an elevation, or pick "Other" and name it.');return;}
   var ms=ensureMaterialSamples(b);
   var elev=newFacadeElevation(name);
   ms.facade.elevations.push(elev);
   logProjectEvent(b,'Added a "'+name+'" facade elevation on "'+b.title+'"');
   fmCurrentElevation=elev.id;
+  fmCancelAddElevation();
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   renderProjectOverview(b);
   renderFacadeMaterialsModal(b);
 }
-window.fmAddElevation=fmAddElevation;
+window.fmConfirmAddElevation=fmConfirmAddElevation;
 function fmRenameElevation(){
   var role=document.body.dataset.role;
   if(role!=='factory'&&role!=='prodtech')return;
