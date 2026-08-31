@@ -570,6 +570,49 @@ module.exports = async (req, res) => {
         merged.designFilesChecklist = incomingBrief.designFilesChecklist || currentBrief.designFilesChecklist || null;
         merged.scaleOverride = incomingBrief.scaleOverride != null ? incomingBrief.scaleOverride : (currentBrief.scaleOverride || null);
         merged.boundaryFileOverride = incomingBrief.boundaryFileOverride || currentBrief.boundaryFileOverride || null;
+        // materialSamples (facade elevations/pins + landscape plan/pins, see
+        // ensureMaterialSamples in app.html) grew here after the fields
+        // above were already enumerated -- same "silently appeared to
+        // save, reverted the moment this vendor's next pull replaced their
+        // local copy" bug those were written to fix, just never extended
+        // to cover this one. This is exactly what made facade elevations
+        // (and any uploaded elevation photo) look like they saved
+        // instantly, then come back "Add an elevation first"/"Upload this
+        // elevation first" a poll cycle later -- the vendor's whole
+        // materialSamples payload was being silently dropped here, so the
+        // server never actually had the seeded elevations (or the
+        // uploaded image) to hand back on the next pull.
+        //
+        // Facade is vendor-only edited (only factory/prodtech ever calls
+        // fmAddElevation/fmUploadElevationImage/fmDeletePin etc.), so the
+        // incoming snapshot can simply win outright, same as
+        // designFilesChecklist above. Landscape is NOT vendor-only though
+        // -- the client can add their own comment pin or approve a
+        // vendor's pin directly (see lmApprovePin/lmSamplePicked's
+        // client-origin branch in app.html), so blindly trusting this
+        // vendor's incoming copy could revert a client pin added between
+        // this vendor's last pull and now. Merge landscape.pins by id
+        // instead (union, incoming wins on an id collision) so neither
+        // side's pins get dropped.
+        {
+          const currentMs = currentBrief.materialSamples || null;
+          const incomingMs = incomingBrief.materialSamples || null;
+          if (incomingMs) {
+            const mergedMs = Object.assign({}, incomingMs);
+            if (currentMs && currentMs.landscape) {
+              const currentPins = currentMs.landscape.pins || [];
+              const incomingPins = (incomingMs.landscape && incomingMs.landscape.pins) || [];
+              const incomingPinIds = new Set(incomingPins.map((p) => p && p.id));
+              const keptCurrentPins = currentPins.filter((p) => !p || !incomingPinIds.has(p.id));
+              mergedMs.landscape = Object.assign({}, currentMs.landscape, incomingMs.landscape || {}, {
+                pins: keptCurrentPins.concat(incomingPins)
+              });
+            }
+            merged.materialSamples = mergedMs;
+          } else if (currentMs) {
+            merged.materialSamples = currentMs;
+          }
+        }
         // pendingChanges is additive-only from the vendor's side (they can
         // only ever propose a NEW change, never touch an existing one's
         // status -- see resolvePendingChange, owner/sales only): merge by
