@@ -2677,19 +2677,25 @@ window.designFilesChecklistDone=designFilesChecklistDone;
 // client-facing interaction (client can still open the modal to look, just
 // read-only), matching the original ask.
 // Facade elevations used to be a fixed North/South/East/West set -- now
-// they're a per-project, vendor-editable list (fmAddElevation/
-// fmRenameElevation/fmRemoveElevation) so a vendor can label them however
-// the building actually reads (Southeast, Courtyard side, etc). These four
-// are only the STARTING labels seeded the first time a project's facade
-// data is touched; nothing after that assumes these specific names.
-var FACADE_ELEVATION_DEFAULTS=['North','South','East','West'];
+// they're a per-project, vendor-picked list (fmShowAddElevationPicker/
+// fmConfirmAddElevation/fmRenameElevation/fmRemoveElevation) -- a facade
+// starts with NO elevations at all; the vendor adds exactly the sides this
+// building actually has, one at a time, by picking a compass preset (or
+// "Other" for anything that doesn't fit that scheme, e.g. Courtyard side)
+// from the dropdown. Earlier versions of this auto-seeded North/South/
+// East/West on every project whether or not the vendor wanted all four --
+// that's gone now per direct request ("I don't need South, West, North,
+// East elevation, just give me a dropdown"), and it also removes the
+// entire class of bugs that came from auto-seeding racing a vendor
+// session's poll (see the "Add an elevation first" investigations above)
+// -- there's simply nothing to seed, or re-seed, anymore.
 function newFacadeElevation(name){
   return {id:'fme'+Date.now()+Math.random().toString(36).slice(2,7),name:name,url:null,fileName:null,type:null};
 }
 function ensureMaterialSamples(b){
   if(!b.materialSamples)b.materialSamples={};
   var ms=b.materialSamples;
-  if(!ms.facade)ms.facade={elevations:FACADE_ELEVATION_DEFAULTS.map(newFacadeElevation),pins:[],seeded:true};
+  if(!ms.facade)ms.facade={elevations:[],pins:[]};
   // Migrate the old object-keyed shape ({North:{url,name,type}, ...}, with
   // pins carrying an "elevation" name string) into the array-of-elevations
   // shape below, re-pointing each pin at the new elevation's id so
@@ -2709,19 +2715,6 @@ function ensureMaterialSamples(b){
     });
   }
   if(!ms.facade.elevations)ms.facade.elevations=[];
-  // Any facade object that predates the vendor-editable elevations list --
-  // including one that only ever got created empty by someone opening the
-  // modal to look before anything was uploaded/pinned -- won't have
-  // "seeded" set. Give it the same 4 starting labels a brand new project
-  // gets, once, rather than leaving the vendor stuck with zero elevations
-  // and only "Add elevation" (easy to miss the first time) to get back to
-  // a usable starting point. Once seeded, a later intentional removal down
-  // to zero elevations is left alone -- this only fires the very first
-  // time.
-  if(!ms.facade.seeded){
-    if(ms.facade.elevations.length===0)ms.facade.elevations=FACADE_ELEVATION_DEFAULTS.map(newFacadeElevation);
-    ms.facade.seeded=true;
-  }
   if(!ms.facade.pins)ms.facade.pins=[];
   if(!ms.landscape)ms.landscape={plan:null,pins:[]};
   if(!ms.landscape.pins)ms.landscape.pins=[];
@@ -4817,31 +4810,22 @@ function msampleUpload(pathPrefix,f){
 function openFacadeMaterialsModal(){
   var b=fmCurrentBrief();
   if(!b)return;
-  var wasSeeded=!!(b.materialSamples&&b.materialSamples.facade&&b.materialSamples.facade.seeded);
   var ms=ensureMaterialSamples(b);
   var modal=document.getElementById('facadeMaterialsModal');
   if(!modal)return;
   // Land on the first elevation that already has an image, or the first
   // elevation in the list, so opening the modal shows something useful
-  // right away.
+  // right away. A brand-new project's facade has no elevations at all
+  // (see ensureMaterialSamples) -- this is just null until the vendor
+  // adds one via the dropdown, which is exactly the empty state
+  // renderFacadeMaterialsModal's "No elevations yet -- add one to get
+  // started" message is for.
   var withImage=ms.facade.elevations.filter(function(e){return !!e.url;})[0];
   fmCurrentElevation=(withImage||ms.facade.elevations[0]||{}).id||null;
   fmAddMode=false;fmPendingSample=null;
   if(typeof fmCancelAddElevation==='function')fmCancelAddElevation();
   modal.hidden=false;
   renderFacadeMaterialsModal(b);
-  // ensureMaterialSamples() just seeded the default elevations (North/
-  // South/East/West) into memory only -- if this isn't saved before the
-  // next poll runs, a vendor (factory) session's poll REPLACES its local
-  // briefs wholesale with the server's copy (see pullSourcing's
-  // isScopedPull branch), discarding this in-memory seed. The next call to
-  // ensureMaterialSamples would then reseed from scratch with brand-new
-  // random elevation ids, orphaning fmCurrentElevation and making
-  // fmUploadElevationImage's "Add an elevation first" guard fire even
-  // though elevations visibly exist in the tabs -- persist the seed
-  // immediately so the ids that made it into the DOM are the same ones the
-  // server (and the next poll) echo back.
-  if(!wasSeeded&&typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
 }
 window.openFacadeMaterialsModal=openFacadeMaterialsModal;
 function closeFacadeMaterialsModal(){
@@ -4918,6 +4902,12 @@ function fmConfirmAddElevation(){
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   renderProjectOverview(b);
   renderFacadeMaterialsModal(b);
+  // Picking the elevation is step 1 of one continuous action, not a
+  // separate task from uploading its photo -- go straight into the file
+  // picker for it instead of leaving the vendor to separately notice and
+  // click "Upload/replace this elevation" afterward.
+  var fileInput=document.getElementById('fmElevationFileInput');
+  if(fileInput)fileInput.click();
 }
 window.fmConfirmAddElevation=fmConfirmAddElevation;
 function fmRenameElevation(){
