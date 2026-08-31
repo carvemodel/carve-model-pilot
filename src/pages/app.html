@@ -2665,7 +2665,7 @@ function newFacadeElevation(name){
 function ensureMaterialSamples(b){
   if(!b.materialSamples)b.materialSamples={};
   var ms=b.materialSamples;
-  if(!ms.facade)ms.facade={elevations:FACADE_ELEVATION_DEFAULTS.map(newFacadeElevation),pins:[]};
+  if(!ms.facade)ms.facade={elevations:FACADE_ELEVATION_DEFAULTS.map(newFacadeElevation),pins:[],seeded:true};
   // Migrate the old object-keyed shape ({North:{url,name,type}, ...}, with
   // pins carrying an "elevation" name string) into the array-of-elevations
   // shape below, re-pointing each pin at the new elevation's id so
@@ -2685,6 +2685,19 @@ function ensureMaterialSamples(b){
     });
   }
   if(!ms.facade.elevations)ms.facade.elevations=[];
+  // Any facade object that predates the vendor-editable elevations list --
+  // including one that only ever got created empty by someone opening the
+  // modal to look before anything was uploaded/pinned -- won't have
+  // "seeded" set. Give it the same 4 starting labels a brand new project
+  // gets, once, rather than leaving the vendor stuck with zero elevations
+  // and only "Add elevation" (easy to miss the first time) to get back to
+  // a usable starting point. Once seeded, a later intentional removal down
+  // to zero elevations is left alone -- this only fires the very first
+  // time.
+  if(!ms.facade.seeded){
+    if(ms.facade.elevations.length===0)ms.facade.elevations=FACADE_ELEVATION_DEFAULTS.map(newFacadeElevation);
+    ms.facade.seeded=true;
+  }
   if(!ms.facade.pins)ms.facade.pins=[];
   if(!ms.landscape)ms.landscape={plan:null,pins:[]};
   if(!ms.landscape.pins)ms.landscape.pins=[];
