@@ -1918,6 +1918,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
     <div class="modal__head"><h3>Facade material confirmation</h3><button class="modal__x" onclick="closeFacadeMaterialsModal()" aria-label="Close">×</button></div>
     <div class="modal__body">
       <p class="modal__intro">Vendor adds an elevation for each distinct side of the building -- named however it actually reads (Southeast, Courtyard side, etc) -- then pins a photo of the actual material sample onto it.</p>
+      <label class="msample-tools fm-edit-only" id="fmNaWrap" style="display:none;cursor:pointer;font-size:0.85rem;color:var(--cm-text-subtle);gap:6px;align-items:center;"><input type="checkbox" id="fmNaCheckbox" onchange="toggleMaterialSampleNA(0)"> Not applicable to this project</label>
       <div class="msample-tabs" id="fmElevationTabs"></div>
       <div class="msample-tools fm-edit-only" id="fmElevationControls" style="display:none;">
         <button type="button" class="btn btn--ghost btn--sm" onclick="fmShowAddElevationPicker()">+ Add elevation</button>
@@ -1964,6 +1965,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
     <div class="modal__head"><h3>Landscape material confirmation</h3><button class="modal__x" onclick="closeLandscapeMaterialsModal()" aria-label="Close">×</button></div>
     <div class="modal__body">
       <p class="modal__intro" id="lmIntro">Vendor uploads the site plan or rendering, then pins a photo of the actual material sample onto it.</p>
+      <label class="msample-tools lm-edit-only" id="lmNaWrap" style="display:none;cursor:pointer;font-size:0.85rem;color:var(--cm-text-subtle);gap:6px;align-items:center;"><input type="checkbox" id="lmNaCheckbox" onchange="toggleMaterialSampleNA(1)"> Not applicable to this project</label>
       <div class="msample-upload lm-edit-only" id="lmUploadWrap">
         <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('lmPlanFileInput').click()">Upload/replace site plan</button>
         <input type="file" id="lmPlanFileInput" accept="image/*" style="display:none;" onchange="lmUploadPlanImage(this)">
@@ -2744,6 +2746,44 @@ function landscapeMaterialsDone(b){
   return clientAddedOwn||clientApprovedOne;
 }
 window.landscapeMaterialsDone=landscapeMaterialsDone;
+// Vendor-only escape hatch for the two Confirmed Material Samples items
+// that otherwise have no way to ever read "done" on a project that
+// genuinely has no facade or no landscape component (a product prototype,
+// a film miniature, an art maquette, etc). Mirrors toggleDesignFileItem's
+// pending<->not-applicable cycle, just scoped to these two specific items
+// via b.stageChecklist['Confirmed Material Samples'][itemIndex] rather
+// than a dedicated array, since nothing else uses that slot for these two
+// indices (checklistItemDone normally computes them from real
+// facade/landscape data instead -- see its own 'na' check). Refuses to
+// mark something not applicable if it already has real samples on it --
+// remove those first, so N/A can't silently hide already-done work.
+function toggleMaterialSampleNA(itemIndex){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech')return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var stageName='Confirmed Material Samples';
+  if(!b.stageChecklist)b.stageChecklist={};
+  if(!b.stageChecklist[stageName])b.stageChecklist[stageName]=[];
+  var cur=b.stageChecklist[stageName][itemIndex];
+  var label=itemIndex===0?'Facade material':'Landscape material';
+  var next;
+  if(cur==='na'){
+    next=undefined;
+  }else{
+    var hasReal=itemIndex===0?facadeMaterialsDone(b):landscapeMaterialsDone(b);
+    if(hasReal){alert('Remove the existing material sample pins first if this no longer applies.');return;}
+    next='na';
+  }
+  b.stageChecklist[stageName][itemIndex]=next;
+  logProjectEvent(b,(next==='na'?'Marked "':'Un-marked "')+label+'" as not applicable on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+  if(itemIndex===0){if(typeof renderFacadeMaterialsModal==='function')renderFacadeMaterialsModal(b);}
+  else{if(typeof renderLandscapeMaterialsModal==='function')renderLandscapeMaterialsModal(b);}
+}
+window.toggleMaterialSampleNA=toggleMaterialSampleNA;
 function getProjectStartDate(b){
   // A manual Start override (Carve Admin explicitly typing a date into the
   // pencil-edit field, see setProjectStart) always wins outright -- same
@@ -4295,9 +4335,10 @@ function renderProjectOverview(b){
       jChecklist.innerHTML=checklistItems.map(function(label,i){
         if(!checklistItemVisible(stageName,i,curChecklistRole))return '';
         var done=checklistItemDone(b,stageName,i);
+        var na=done==='na';
         var action=checklistItemAction(stageName,i,curChecklistRole);
-        return '<div class="stagecheck'+(done?' done':'')+'"'+(action?(' onclick="'+action+'"'):'')+'>'+
-          '<span class="stagecheck__box">'+(done?'✓':'')+'</span>'+
+        return '<div class="stagecheck'+(done?' done':'')+(na?' stagecheck--na':'')+'"'+(action?(' onclick="'+action+'"'):'')+'>'+
+          '<span class="stagecheck__box">'+(na?'N/A':(done?'✓':''))+'</span>'+
           '<span class="stagecheck__label">'+esc(label)+'</span>'+
         '</div>';
       }).join('');
@@ -4499,8 +4540,15 @@ function checklistItemDone(b,stageName,itemIndex){
     if(itemIndex===2)return !!(b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositStatus==='paid');
   }
   if(stageName==='Confirmed Material Samples'){
-    if(itemIndex===0)return (typeof facadeMaterialsDone==='function')?facadeMaterialsDone(b):false;
-    if(itemIndex===1)return (typeof landscapeMaterialsDone==='function')?landscapeMaterialsDone(b):false;
+    var cmsState=(b.stageChecklist&&b.stageChecklist[stageName])||[];
+    if(itemIndex===0){
+      if(cmsState[0]==='na')return 'na';
+      return (typeof facadeMaterialsDone==='function')?facadeMaterialsDone(b):false;
+    }
+    if(itemIndex===1){
+      if(cmsState[1]==='na')return 'na';
+      return (typeof landscapeMaterialsDone==='function')?landscapeMaterialsDone(b):false;
+    }
   }
   var state=(b.stageChecklist&&b.stageChecklist[stageName])||[];
   return !!state[itemIndex];
@@ -4969,6 +5017,26 @@ function renderFacadeMaterialsModal(b){
   var ms=ensureMaterialSamples(b);
   var role=document.body.dataset.role;
   var canEdit=role==='factory'||role==='prodtech';
+  // "Not applicable to this project" (see toggleMaterialSampleNA) -- not
+  // every project has a facade at all (a product prototype, say), so the
+  // vendor can flag this item instead of being stuck unable to ever check
+  // it off. Sync the checkbox for whoever can see it, then short-circuit
+  // the rest of this render entirely while it's set -- nothing to show.
+  var cmsState=(b.stageChecklist&&b.stageChecklist['Confirmed Material Samples'])||[];
+  var fmNa=cmsState[0]==='na';
+  var fmNaWrap=document.getElementById('fmNaWrap'),fmNaCheckbox=document.getElementById('fmNaCheckbox');
+  if(fmNaWrap)fmNaWrap.style.display=canEdit?'flex':'none';
+  if(fmNaCheckbox)fmNaCheckbox.checked=fmNa;
+  if(fmNa){
+    var naTabs=document.getElementById('fmElevationTabs');if(naTabs)naTabs.innerHTML='';
+    var naElevControls=document.getElementById('fmElevationControls');if(naElevControls)naElevControls.style.display='none';
+    var naUploadWrap=document.getElementById('fmUploadWrap');if(naUploadWrap)naUploadWrap.style.display='none';
+    var naTools=document.getElementById('fmTools');if(naTools)naTools.style.display='none';
+    var naStage=document.getElementById('fmStage');if(naStage)naStage.classList.remove('on');
+    var naList=document.getElementById('fmPinList');
+    if(naList)naList.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.85rem;">Marked as not applicable to this project.</div>';
+    return;
+  }
   var elevations=ms.facade.elevations;
   if(!fmCurrentElevation||!fmElevationById(ms,fmCurrentElevation)){
     fmCurrentElevation=(elevations[0]||{}).id||null;
@@ -5042,6 +5110,8 @@ function renderFacadeMaterialsModal(b){
   var list=document.getElementById('fmPinList');
   if(list){
     list.innerHTML=pins.length?pins.map(function(p,i){
+      var canLabelEdit=canEdit||role==='sales';
+      var renameBtn=canLabelEdit?('<button type="button" class="btn btn--ghost btn--sm" onclick="fmRenamePin(\''+p.id+'\')">Rename</button>'):'';
       var delBtn=canEdit?('<button type="button" class="btn btn--ghost btn--sm" onclick="fmDeletePin(\''+p.id+'\')">Remove</button>'):'';
       return '<div class="msample-item">'+
         '<div class="msample-item__num">'+(i+1)+'</div>'+
@@ -5049,7 +5119,7 @@ function renderFacadeMaterialsModal(b){
         '<div class="msample-item__body">'+
           '<div class="msample-item__label">'+esc(p.sampleName||'Material sample')+'</div>'+
           '<div class="msample-item__meta">'+esc(p.addedBy||'')+' · '+esc(p.addedAt||'')+'</div>'+
-          '<div class="msample-item__actions">'+delBtn+'</div>'+
+          '<div class="msample-item__actions">'+renameBtn+' '+delBtn+'</div>'+
         '</div>'+
       '</div>';
     }).join(''):'<div style="color:var(--cm-text-subtle);font-size:0.85rem;">No material samples pinned to this elevation yet.</div>';
@@ -5143,6 +5213,25 @@ function fmDeletePin(id){
   renderFacadeMaterialsModal(b);
 }
 window.fmDeletePin=fmDeletePin;
+function fmRenamePin(id){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech'&&role!=='sales')return;
+  var b=fmCurrentBrief();
+  if(!b)return;
+  var ms=ensureMaterialSamples(b);
+  var pin=ms.facade.pins.filter(function(p){return p.id===id;})[0];
+  if(!pin)return;
+  var name=prompt('Label this material sample:',pin.sampleName||'');
+  if(name==null)return;
+  name=name.trim();
+  var oldName=pin.sampleName;
+  pin.sampleName=name;
+  logProjectEvent(b,'Relabeled a facade material sample pin from "'+(oldName||'Material sample')+'" to "'+(name||'Material sample')+'" on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+  renderFacadeMaterialsModal(b);
+}
+window.fmRenamePin=fmRenamePin;
 
 // ---- Landscape material confirmation modal (Confirmed Material Samples
 // checklist item #1) -- same pin+callout mechanics as facade, but a single
@@ -5196,6 +5285,22 @@ function renderLandscapeMaterialsModal(b){
   var role=document.body.dataset.role;
   var canEditVendor=role==='factory'||role==='prodtech';
   var isClient=role==='client';
+  // Same rationale as facade's fmNa (see renderFacadeMaterialsModal) --
+  // not every project has a landscape component either.
+  var cmsStateLm=(b.stageChecklist&&b.stageChecklist['Confirmed Material Samples'])||[];
+  var lmNa=cmsStateLm[1]==='na';
+  var lmNaWrap=document.getElementById('lmNaWrap'),lmNaCheckbox=document.getElementById('lmNaCheckbox');
+  if(lmNaWrap)lmNaWrap.style.display=canEditVendor?'flex':'none';
+  if(lmNaCheckbox)lmNaCheckbox.checked=lmNa;
+  if(lmNa){
+    var naUploadWrapLm=document.getElementById('lmUploadWrap');if(naUploadWrapLm)naUploadWrapLm.style.display='none';
+    var naToolsLm=document.getElementById('lmTools');if(naToolsLm)naToolsLm.style.display='none';
+    var naClientToolsLm=document.getElementById('lmClientTools');if(naClientToolsLm)naClientToolsLm.style.display='none';
+    var naStageLm=document.getElementById('lmStage');if(naStageLm)naStageLm.classList.remove('on');
+    var naListLm=document.getElementById('lmPinList');
+    if(naListLm)naListLm.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.85rem;">Marked as not applicable to this project.</div>';
+    return;
+  }
   var plan=ms.landscape.plan;
   var pins=ms.landscape.pins;
   var uploadBtn=document.getElementById('lmUploadWrap');
@@ -5276,6 +5381,7 @@ function renderLandscapeMaterialsModal(b){
         }else if(isClient){
           actions='<button type="button" class="btn btn--primary btn--sm" onclick="lmApprovePin(\''+p.id+'\')">Approve</button>';
         }
+        if(canEditVendor||role==='sales')actions+=' <button type="button" class="btn btn--ghost btn--sm" onclick="lmRenamePin(\''+p.id+'\')">Rename</button>';
         if(canEditVendor)actions+=' <button type="button" class="btn btn--ghost btn--sm" onclick="lmDeletePin(\''+p.id+'\')">Remove</button>';
       }else if(isClient){
         actions='<button type="button" class="btn btn--ghost btn--sm" onclick="lmDeletePin(\''+p.id+'\')">Remove</button>';
@@ -5393,6 +5499,25 @@ function lmDeletePin(id){
   renderLandscapeMaterialsModal(b);
 }
 window.lmDeletePin=lmDeletePin;
+function lmRenamePin(id){
+  var role=document.body.dataset.role;
+  if(role!=='factory'&&role!=='prodtech'&&role!=='sales')return;
+  var b=lmCurrentBrief();
+  if(!b)return;
+  var ms=ensureMaterialSamples(b);
+  var pin=ms.landscape.pins.filter(function(p){return p.id===id;})[0];
+  if(!pin||pin.origin!=='vendor')return;
+  var name=prompt('Label this material sample:',pin.sampleName||'');
+  if(name==null)return;
+  name=name.trim();
+  var oldName=pin.sampleName;
+  pin.sampleName=name;
+  logProjectEvent(b,'Relabeled a landscape material sample pin from "'+(oldName||'Material sample')+'" to "'+(name||'Material sample')+'" on "'+b.title+'"');
+  if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+  renderProjectOverview(b);
+  renderLandscapeMaterialsModal(b);
+}
+window.lmRenamePin=lmRenamePin;
 // ---- Request a change (factory/prodtech -> Client Manager/Owner) ----
 // Delivery address is deliberately left off this list -- the vendor side
 // never sees that field at all (see the cid-only wrapper on it), so there's
