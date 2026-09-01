@@ -10905,6 +10905,36 @@ function pullSourcing(){
       // it. Nothing is lost: the next poll (POLL_MS later) picks up the
       // now-settled server state once every pending save has landed.
       if(isScopedPull&&(window.__srcPendingSaves>0||(window.__srcSaveGen||0)>srcPullSeenSaveGen))return;
+      // Belt-and-suspenders beyond the pendingSaves/saveGen guard above:
+      // those two only catch a stale response using CLIENT-side dispatch
+      // order (did a save start/finish relative to when this poll's own
+      // request went out). That's not actually enough -- two independent
+      // HTTP requests have no guaranteed server-side ordering just because
+      // of when the browser fired them. saveSRC()'s POST carries this
+      // vendor's ENTIRE local payload (bigger than a poll's GET) and can
+      // easily still be mid-flight, or land on Redis, in either order
+      // relative to a GET dispatched moments later -- so a poll whose
+      // request technically went out "after" a save started can still read
+      // Redis before that save's write actually commits (confirmed live:
+      // reproduced this exact case with both guards above already in place
+      // and passing). materialSamples (facade elevations/pins + landscape
+      // plan/pins) is exclusively authored by THIS vendor session -- nobody
+      // else ever writes it -- so local can never legitimately be missing
+      // something the server has without a save already in flight to fix
+      // that (caught above), and the reverse (server missing something
+      // local already has) is exactly this race. Simplest fix that doesn't
+      // depend on getting timing right at all: for any brief this pull is
+      // about to replace, carry the LOCAL materialSamples forward onto the
+      // incoming copy instead of trusting whatever this particular GET
+      // happened to catch mid-flight.
+      if(isScopedPull){
+        var srcLocalBriefsById={};
+        (SDB.briefs||[]).forEach(function(lb){if(lb&&lb.id)srcLocalBriefsById[lb.id]=lb;});
+        (data.briefs||[]).forEach(function(ib){
+          var lb=ib&&ib.id?srcLocalBriefsById[ib.id]:null;
+          if(lb&&lb.materialSamples)ib.materialSamples=lb.materialSamples;
+        });
+      }
       SDB.briefs=mergeSrcList(isScopedPull?[]:SDB.briefs,data.briefs||[],srcPendingDeleteBriefIds);
       SDB.leads=mergeSrcList(isScopedPull?[]:SDB.leads,data.leads||[],srcPendingDeleteLeadIds);
       // vendors/team now sync the same way — see reconcileVendorsIntoShops()

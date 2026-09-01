@@ -375,6 +375,19 @@ function vendorSafeBrief(b, shopId, team, isPrimary) {
     targetDeliveryOverride: b.targetDeliveryOverride || null,
     scaleOverride: b.scaleOverride || null,
     boundaryFileOverride: b.boundaryFileOverride || null,
+    // Facade/landscape material samples (elevations, pins, site plan) --
+    // exclusively vendor-authored (see vendorScopedBriefUpdate's own
+    // comment on this same field for the POST side, which already carries
+    // it through). This GET-side allowlist never included it, so a
+    // factory session's own poll -- the one thing driving its local copy
+    // of every other field -- had no way to see its own previously-saved
+    // elevations/pins on a fresh load or a different device/tab, and
+    // (worse) a factory-scoped pull's replace-not-merge policy in
+    // app.html (isScopedPull) meant this missing field overwrote whatever
+    // elevations were already in memory with nothing, reproducing "Add an
+    // elevation first"/"Upload this elevation first" on literally every
+    // poll, not just a mistimed one.
+    materialSamples: b.materialSamples || null,
     // Whether Carve has paid the VENDOR's 50% deposit / 100% balance so far
     // -- the mirror image of clientQuote.invoice (which tracks the CLIENT's
     // payments to Carve), but this one is Carve-Admin/Client-Manager-entered
