@@ -97,10 +97,13 @@ const canonical = SITE + (canonicalPath === '/' ? '/' : canonicalPath);
     gtag('event', 'click_to_call', {
       phone_number: link.getAttribute('href').replace('tel:', ''),
       page_path: window.location.pathname
-      // TODO: once a Google Ads "click-to-call" conversion action exists,
-      // add send_to:'AW-XXXXXXXXX/label' here (or fire a second
-      // gtag('event','conversion',{send_to:...}) call) to make this the
-      // secondary Ads conversion per the tracking spec.
+    });
+    // "Website Click to Call" Google Ads conversion action (Contacts goal,
+    // secondary action, source: Website, manual event) -- fires alongside
+    // the GA4 event above so click-to-call reports as the secondary Ads
+    // conversion while Submit Lead Form remains the only primary one.
+    gtag('event', 'conversion', {
+      send_to: 'AW-16810390124/geEzCNOR-9AbEOzk6M8-'
     });
   });
 </script>
