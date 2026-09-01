@@ -426,6 +426,8 @@ body.vendor-no-price .vendor-price-only,body.vendor-no-price .vendor-invoice-onl
 .stagecheck[onclick]:hover .stagecheck__box{border-color:var(--cm-silver);}
 .stagecheck.stagecheck--na .stagecheck__box{font-size:0.5rem;font-weight:var(--w-semibold);background:var(--cm-ink-800);color:var(--cm-text-muted);}
 .stagecheck.stagecheck--na .stagecheck__label{color:var(--cm-text-muted);}
+.stagecheck__na{flex:none;margin-left:auto;font-size:0.72rem;color:var(--cm-text-subtle);background:none;border:1px solid var(--cm-border-strong);border-radius:4px;padding:0.15rem 0.5rem;cursor:pointer;}
+.stagecheck__na:hover{border-color:var(--cm-silver);color:var(--cm-text-strong);}
 .journey__now b,.journey__next b{color:var(--cm-text);}
 .journey__next{border-left:1px solid var(--cm-line-faint);padding-left:1rem;}
 
@@ -1132,7 +1134,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     <div class="mock__v" id="projInfoBoundaryWrap" style="flex:1;">—</div>
                     <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" onclick="document.getElementById('projInfoBoundaryFileInput').click()">Upload</button>
                   </div>
-                  <input type="file" id="projInfoBoundaryFileInput" style="display:none;" onchange="uploadProjectBoundaryFile(this)">
+                  <input type="file" id="projInfoBoundaryFileInput" accept="image/*" style="display:none;" onchange="uploadProjectBoundaryFile(this)">
                 </div>
                 <div class="proj-actions-only" id="projInfoActionsWrap" style="display:flex;gap:0.5rem;padding-top:0.2rem;"></div>
                 <div class="proj-cancel client-only" id="projPauseWrap">
@@ -1879,7 +1881,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div id="sbBoundaryDisplay" style="margin:0.3rem 0 0.6rem;">—</div>
         <div class="sb-edit-only">
           <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('sbBoundaryFileInput').click()">Upload</button>
-          <input type="file" id="sbBoundaryFileInput" style="display:none;" onchange="uploadProjectBoundaryFile(this)">
+          <input type="file" id="sbBoundaryFileInput" accept="image/*" style="display:none;" onchange="uploadProjectBoundaryFile(this)">
         </div>
       </div>
       <div id="sbConfirmSection" style="margin-top:0.8rem;padding-top:0.9rem;border-top:1px solid var(--cm-line-faint);"></div>
@@ -2746,42 +2748,69 @@ function landscapeMaterialsDone(b){
   return clientAddedOwn||clientApprovedOne;
 }
 window.landscapeMaterialsDone=landscapeMaterialsDone;
-// Vendor-only escape hatch for the two Confirmed Material Samples items
-// that otherwise have no way to ever read "done" on a project that
-// genuinely has no facade or no landscape component (a product prototype,
-// a film miniature, an art maquette, etc). Mirrors toggleDesignFileItem's
-// pending<->not-applicable cycle, just scoped to these two specific items
-// via b.stageChecklist['Confirmed Material Samples'][itemIndex] rather
-// than a dedicated array, since nothing else uses that slot for these two
-// indices (checklistItemDone normally computes them from real
-// facade/landscape data instead -- see its own 'na' check). Refuses to
-// mark something not applicable if it already has real samples on it --
-// remove those first, so N/A can't silently hide already-done work.
-function toggleMaterialSampleNA(itemIndex){
+// Whether CURRENT viewer is allowed to flag a given checklist item not
+// applicable to this project. Every item on every stage is Client
+// Manager's call (same population that can already check items off via
+// toggleStageChecklistItem) -- plus the vendor specifically for the two
+// Confirmed Material Samples items about their own facade/landscape work,
+// since they're the only ones who'd actually know a project has neither.
+function checklistItemNAAllowed(stageName,itemIndex,role){
+  if(role==='sales')return true;
+  if(stageName==='Confirmed Material Samples'&&(itemIndex===0||itemIndex===1)&&(role==='factory'||role==='prodtech'))return true;
+  return false;
+}
+window.checklistItemNAAllowed=checklistItemNAAllowed;
+// Generic "not applicable to this project" escape hatch for ANY checklist
+// item on ANY stage -- not every project has a facade, a landscape
+// component, branding, a mock-up, or even a scale/boundary or deposit line
+// that applies exactly as written, so whoever owns that item (see
+// checklistItemNAAllowed) can flag it instead of being stuck unable to
+// ever check it off. Mirrors toggleDesignFileItem's pending<->not-
+// applicable cycle. Stored in the same b.stageChecklist[stageName][i] slot
+// checklistItemDone already reads state[itemIndex] from for the generic
+// fallback, and short-circuited on ahead of every item's own real-data
+// logic (see checklistItemDone's own top-of-function 'na' check). Refuses
+// to mark something not applicable if it already reads genuinely done --
+// clear that first, so N/A can't silently hide already-done work.
+function toggleChecklistItemNA(stageName,itemIndex){
   var role=document.body.dataset.role;
-  if(role!=='factory'&&role!=='prodtech')return;
+  if(!checklistItemNAAllowed(stageName,itemIndex,role))return;
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
-  if(!b)return;
-  var stageName='Confirmed Material Samples';
+  if(!b||b.deliveredAt)return;
+  var items=(typeof STAGE_CHECKLISTS!=='undefined')?STAGE_CHECKLISTS[stageName]:null;
+  if(!items||!items[itemIndex])return;
   if(!b.stageChecklist)b.stageChecklist={};
   if(!b.stageChecklist[stageName])b.stageChecklist[stageName]=[];
   var cur=b.stageChecklist[stageName][itemIndex];
-  var label=itemIndex===0?'Facade material':'Landscape material';
+  var label=items[itemIndex];
   var next;
   if(cur==='na'){
     next=undefined;
   }else{
-    var hasReal=itemIndex===0?facadeMaterialsDone(b):landscapeMaterialsDone(b);
-    if(hasReal){alert('Remove the existing material sample pins first if this no longer applies.');return;}
+    // Refuse to hide already-done work -- if this item currently reads
+    // strictly true (whether from its own real-data logic, like
+    // facadeMaterialsDone, or the plain stored toggle for a generic item),
+    // clear that first instead of silently masking it with N/A.
+    if(checklistItemDone(b,stageName,itemIndex)===true){
+      alert('This item already reads complete -- undo that first if it no longer applies.');
+      return;
+    }
     next='na';
   }
   b.stageChecklist[stageName][itemIndex]=next;
   logProjectEvent(b,(next==='na'?'Marked "':'Un-marked "')+label+'" as not applicable on "'+b.title+'"');
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   renderProjectOverview(b);
-  if(itemIndex===0){if(typeof renderFacadeMaterialsModal==='function')renderFacadeMaterialsModal(b);}
-  else{if(typeof renderLandscapeMaterialsModal==='function')renderLandscapeMaterialsModal(b);}
+  if(stageName==='Confirmed Material Samples'&&itemIndex===0){if(typeof renderFacadeMaterialsModal==='function')renderFacadeMaterialsModal(b);}
+  if(stageName==='Confirmed Material Samples'&&itemIndex===1){if(typeof renderLandscapeMaterialsModal==='function')renderLandscapeMaterialsModal(b);}
+}
+window.toggleChecklistItemNA=toggleChecklistItemNA;
+// Thin wrapper kept around so the facade/landscape modals' existing
+// checkbox handlers (onchange="toggleMaterialSampleNA(0/1)") keep working
+// unchanged -- the real logic now lives in the generic function above.
+function toggleMaterialSampleNA(itemIndex){
+  toggleChecklistItemNA('Confirmed Material Samples',itemIndex);
 }
 window.toggleMaterialSampleNA=toggleMaterialSampleNA;
 function getProjectStartDate(b){
@@ -3334,6 +3363,7 @@ function uploadProjectBoundaryFile(input){
   if(!b)return;
   var f=input.files&&input.files[0];
   if(!f)return;
+  if(!/^image\//.test(f.type)){alert('Please upload an image (PNG or JPG) for the boundary map. For a PDF, take a screenshot of the page.');input.value='';return;}
   var wrap=document.getElementById('projInfoBoundaryWrap');
   var sizeStr=f.size/1024/1024>=1?(f.size/1024/1024).toFixed(1)+' MB':Math.round(f.size/1024)+' KB';
   if(wrap)wrap.textContent='Uploading '+f.name+' ('+sizeStr+')…';
@@ -3356,6 +3386,74 @@ function uploadProjectBoundaryFile(input){
   input.value='';
 }
 window.uploadProjectBoundaryFile=uploadProjectBoundaryFile;
+// Small "Rotate 90°/180°" control shown next to the Boundary Map preview
+// (Project information + the Scale & boundary modal -- see
+// renderProjectOverview/renderScaleBoundaryModal) whenever there's an
+// image to rotate and the current viewer is allowed to touch it. Not
+// shown for a PDF's filename chip (nothing to rotate) or for the client
+// (view-only on this field).
+function boundaryRotateButtonsHtml(b){
+  var role=document.body.dataset.role;
+  if(role!=='owner'&&role!=='sales'&&role!=='factory')return '';
+  var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
+  var boundaryFile=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
+  if(!boundaryFile||!boundaryFile.url)return '';
+  if(typeof isImageBoundaryFile==='function'&&!isImageBoundaryFile(boundaryFile))return '';
+  return '<div style="display:flex;gap:0.4rem;margin-top:0.5rem;">'+
+    '<button type="button" class="btn btn--ghost btn--sm" onclick="rotateProjectBoundaryFile(90)">Rotate 90\u00b0</button>'+
+    '<button type="button" class="btn btn--ghost btn--sm" onclick="rotateProjectBoundaryFile(180)">Rotate 180\u00b0</button>'+
+  '</div>';
+}
+window.boundaryRotateButtonsHtml=boundaryRotateButtonsHtml;
+// Rotates the current boundary map image in place, 90\u00b0 clockwise or
+// 180\u00b0 -- vendor site plans/photos often come in sideways or upside
+// down, and until now the only fix was asking for a fresh re-upload.
+// Re-uploads the rotated result through the same shared upload helper
+// msampleUpload (an earlier <script> block, see facade/landscape material
+// samples) uses, then replaces b.boundaryFileOverride with the new URL --
+// same "new file invalidates whatever the client previously confirmed"
+// rule as a fresh upload (see uploadProjectBoundaryFile above).
+function rotateProjectBoundaryFile(degrees){
+  var role=document.body.dataset.role;
+  if(role!=='owner'&&role!=='sales'&&role!=='factory')return;
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b)return;
+  var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
+  var boundaryFile=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
+  if(!boundaryFile||!boundaryFile.url)return;
+  if(typeof isImageBoundaryFile==='function'&&!isImageBoundaryFile(boundaryFile)){alert('Only an image boundary map can be rotated here.');return;}
+  var img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=function(){
+    var swap=(degrees%180)!==0;
+    var canvas=document.createElement('canvas');
+    canvas.width=swap?img.height:img.width;
+    canvas.height=swap?img.width:img.height;
+    var ctx=canvas.getContext('2d');
+    ctx.translate(canvas.width/2,canvas.height/2);
+    ctx.rotate(degrees*Math.PI/180);
+    ctx.drawImage(img,-img.width/2,-img.height/2);
+    canvas.toBlob(function(blob){
+      if(!blob){alert('Could not rotate this image. Please try re-uploading it instead.');return;}
+      var newFile=new File([blob],boundaryFile.name||'boundary.jpg',{type:'image/jpeg'});
+      (typeof msampleUpload==='function'?msampleUpload('boundary/'+b.id,newFile):Promise.reject(new Error('upload helper unavailable'))).then(function(url){
+        b.boundaryFileOverride={name:boundaryFile.name,size:blob.size,url:url,type:'image/jpeg'};
+        b.scaleBoundaryConfirmedAt=null;
+        logProjectEvent(b,'Rotated boundary map '+degrees+'\u00b0 on "'+b.title+'"');
+        if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
+        renderProjectOverview(b);
+        if(typeof renderScaleBoundaryModal==='function')renderScaleBoundaryModal(b);
+      }).catch(function(err){
+        console.error('Boundary map rotate-upload failed',err);
+        alert('Rotate failed. Please try again.');
+      });
+    },'image/jpeg',0.9);
+  };
+  img.onerror=function(){alert('Could not load this image to rotate it -- it may need to be re-uploaded.');};
+  img.src=boundaryFile.url;
+}
+window.rotateProjectBoundaryFile=rotateProjectBoundaryFile;
 // Same pencil-toggle pattern for Start/Agreed production time/Target
 // production completion/Target delivery -- the value shows as plain text
 // (everyone sees it) and a pencil (owner+sales only, see
@@ -4337,9 +4435,11 @@ function renderProjectOverview(b){
         var done=checklistItemDone(b,stageName,i);
         var na=done==='na';
         var action=checklistItemAction(stageName,i,curChecklistRole);
+        var naBtn=(typeof checklistItemNAAllowed==='function'&&checklistItemNAAllowed(stageName,i,curChecklistRole))?
+          ('<button type="button" class="stagecheck__na" onclick="event.stopPropagation();toggleChecklistItemNA(\''+stageName+'\','+i+')">'+(na?'Undo N/A':'N/A')+'</button>'):'';
         return '<div class="stagecheck'+(done?' done':'')+(na?' stagecheck--na':'')+'"'+(action?(' onclick="'+action+'"'):'')+'>'+
           '<span class="stagecheck__box">'+(na?'N/A':(done?'✓':''))+'</span>'+
-          '<span class="stagecheck__label">'+esc(label)+'</span>'+
+          '<span class="stagecheck__label">'+esc(label)+'</span>'+naBtn+
         '</div>';
       }).join('');
     }
@@ -4469,7 +4569,7 @@ function renderProjectOverview(b){
     var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
     var boundaryFile=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
     var bLine=(boundaryFile&&typeof boundaryFileLine==='function')?boundaryFileLine({boundaryFile:boundaryFile},'Boundary Map'):'';
-    boundaryWrap.innerHTML=bLine||'—';
+    boundaryWrap.innerHTML=(bLine||'—')+(typeof boundaryRotateButtonsHtml==='function'?boundaryRotateButtonsHtml(b):'');
   }
 
   var actWrap=document.getElementById('ovActivityList');
@@ -4529,6 +4629,14 @@ window.renderProjectOverview=renderProjectOverview;
 // render loop and advanceProjectStage()'s gate call this so they can never
 // disagree about what's actually complete.
 function checklistItemDone(b,stageName,itemIndex){
+  // See toggleChecklistItemNA -- ANY checklist item on ANY stage can be
+  // flagged not applicable to this particular project (a deposit waiver,
+  // no facade/landscape component, branding not part of scope, etc).
+  // Checked first, ahead of every item's own real-data logic below, since
+  // once it's set there's nothing left to compute -- this item simply
+  // isn't part of this project.
+  var naState=(b.stageChecklist&&b.stageChecklist[stageName])||[];
+  if(naState[itemIndex]==='na')return 'na';
   if(stageName==='Project Kick Off'){
     if(itemIndex===0){
       var scale=(typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null;
@@ -4540,18 +4648,11 @@ function checklistItemDone(b,stageName,itemIndex){
     if(itemIndex===2)return !!(b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositStatus==='paid');
   }
   if(stageName==='Confirmed Material Samples'){
-    var cmsState=(b.stageChecklist&&b.stageChecklist[stageName])||[];
-    if(itemIndex===0){
-      if(cmsState[0]==='na')return 'na';
-      return (typeof facadeMaterialsDone==='function')?facadeMaterialsDone(b):false;
-    }
-    if(itemIndex===1){
-      if(cmsState[1]==='na')return 'na';
-      return (typeof landscapeMaterialsDone==='function')?landscapeMaterialsDone(b):false;
-    }
+    if(itemIndex===0)return (typeof facadeMaterialsDone==='function')?facadeMaterialsDone(b):false;
+    if(itemIndex===1)return (typeof landscapeMaterialsDone==='function')?landscapeMaterialsDone(b):false;
   }
   var state=(b.stageChecklist&&b.stageChecklist[stageName])||[];
-  return !!state[itemIndex];
+  return state[itemIndex]||false;
 }
 window.checklistItemDone=checklistItemDone;
 // Whether ALL THREE Project Kick Off items (scale/boundary confirmed,
@@ -4670,7 +4771,7 @@ function renderScaleBoundaryModal(b){
   var scaleInput=document.getElementById('sbScaleInput');
   if(scaleInput)scaleInput.value=scale||'';
   var boundaryDisp=document.getElementById('sbBoundaryDisplay');
-  if(boundaryDisp)boundaryDisp.innerHTML=boundary&&typeof boundaryFileLine==='function'?(boundaryFileLine({boundaryFile:boundary},'Boundary Map')||'Not uploaded yet'):'Not uploaded yet';
+  if(boundaryDisp)boundaryDisp.innerHTML=(boundary&&typeof boundaryFileLine==='function'?(boundaryFileLine({boundaryFile:boundary},'Boundary Map')||'Not uploaded yet'):'Not uploaded yet')+(typeof boundaryRotateButtonsHtml==='function'?boundaryRotateButtonsHtml(b):'');
   var confirmWrap=document.getElementById('sbConfirmSection');
   if(!confirmWrap)return;
   var role=document.body.dataset.role;
@@ -5083,7 +5184,12 @@ function renderFacadeMaterialsModal(b){
     var scale=Math.min(1,maxW/img.width);
     canvas.width=img.width*scale;canvas.height=img.height*scale;
     canvas.onclick=function(e){
-      if(!fmAddMode||!fmPendingSample)return;
+      if(!fmAddMode||!fmPendingSample){
+        // Not placing a pin right now -- a plain click just views the
+        // elevation photo full-size instead of doing nothing.
+        if(typeof openImageLightbox==='function')openImageLightbox(elevData.url,elevData.name);
+        return;
+      }
       var r=canvas.getBoundingClientRect();
       var x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
       var newB=fmCurrentBrief();
@@ -5115,7 +5221,7 @@ function renderFacadeMaterialsModal(b){
       var delBtn=canEdit?('<button type="button" class="btn btn--ghost btn--sm" onclick="fmDeletePin(\''+p.id+'\')">Remove</button>'):'';
       return '<div class="msample-item">'+
         '<div class="msample-item__num">'+(i+1)+'</div>'+
-        '<img class="msample-item__thumb" src="'+esc(p.sampleUrl)+'" alt="">'+
+        '<img class="msample-item__thumb" src="'+esc(p.sampleUrl)+'" alt="'+esc(p.sampleName||'Material sample')+'" style="cursor:zoom-in;" onclick="openImageLightbox(this.src,this.alt)">'+
         '<div class="msample-item__body">'+
           '<div class="msample-item__label">'+esc(p.sampleName||'Material sample')+'</div>'+
           '<div class="msample-item__meta">'+esc(p.addedBy||'')+' · '+esc(p.addedAt||'')+'</div>'+
@@ -5330,7 +5436,12 @@ function renderLandscapeMaterialsModal(b){
     var scale=Math.min(1,maxW/img.width);
     canvas.width=img.width*scale;canvas.height=img.height*scale;
     canvas.onclick=function(e){
-      if(!lmAddMode)return;
+      if(!lmAddMode){
+        // Not placing a pin/note right now -- a plain click just views
+        // the site plan full-size instead of doing nothing.
+        if(typeof openImageLightbox==='function')openImageLightbox(plan,'Site plan');
+        return;
+      }
       var r=canvas.getBoundingClientRect();
       var x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
       var newB=lmCurrentBrief();
@@ -5372,7 +5483,7 @@ function renderLandscapeMaterialsModal(b){
   if(list){
     list.innerHTML=pins.length?pins.map(function(p,i){
       var isClientPin=p.origin==='client';
-      var thumb=isClientPin?'':('<img class="msample-item__thumb" src="'+esc(p.sampleUrl)+'" alt="">');
+      var thumb=isClientPin?'':('<img class="msample-item__thumb" src="'+esc(p.sampleUrl)+'" alt="'+esc(p.sampleName||'Material sample')+'" style="cursor:zoom-in;" onclick="openImageLightbox(this.src,this.alt)">');
       var label=isClientPin?esc(p.note||''):esc(p.sampleName||'Material sample');
       var actions='';
       if(!isClientPin){
@@ -9024,6 +9135,7 @@ function isImageBoundaryFile(bf){
   if(bf.type)return bf.type.indexOf('image/')===0;
   return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(bf.name||'');
 }
+window.isImageBoundaryFile=isImageBoundaryFile; // exposed -- boundaryRotateButtonsHtml/rotateProjectBoundaryFile (an earlier <script> block) need to know whether there's actually an image to rotate
 function openImageLightbox(url,name){
   var img=document.getElementById('imgLightboxImg');
   var cap=document.getElementById('imgLightboxCaption');
