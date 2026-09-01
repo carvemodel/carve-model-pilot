@@ -2250,15 +2250,15 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
         <!-- Conditional: scope boundary (context / masterplan / topography / interior-with-surroundings only) -->
         <div class="scope" id="al-scopeBlock" hidden>
-          <div class="scope__head"><h4>Mark your scope boundary</h4><span class="tagm">Required for this model type</span></div>
-          <p class="hint">This model type includes surrounding context — upload a site plan or aerial, then click to outline the area that should be included in the model.</p>
+          <div class="scope__head"><h4>Mark your scope boundary</h4><span class="tagm">Recommended for this model type</span></div>
+          <p class="hint">This model type includes surrounding context — upload a site plan or aerial, then click to outline the area that should be included in the model. Optional, but it helps the vendor quote accurately.</p>
           <div class="scope__upload">
             <div class="reqfiles" onclick="document.getElementById('al-planInput').click()">
               <strong style="display:block;color:var(--cm-text);margin-bottom:0.3rem;">Upload a site plan or aerial</strong>
               Drag an image here, or click to browse
               <span class="sub" style="display:block;font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);margin-top:0.5rem;">PNG / JPG / PDF page · a screenshot is fine</span>
             </div>
-            <input id="al-planInput" type="file" accept="image/*" hidden onchange="alLoadPlan(this.files)">
+            <input id="al-planInput" type="file" accept="image/*,application/pdf" hidden onchange="alLoadPlan(this.files)">
           </div>
           <div class="scope__stage" id="al-planStage">
             <canvas id="al-planCanvas"></canvas>
@@ -2266,6 +2266,8 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
           <div class="scope__tools" id="al-planTools" style="display:none;">
             <button type="button" class="btn btn--ghost btn--sm" onclick="alUndoPoint()">Undo point</button>
             <button type="button" class="btn btn--ghost btn--sm" onclick="alClearScope()">Clear</button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="alRotatePlan(90)">Rotate 90°</button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="alRotatePlan(180)">Rotate 180°</button>
             <button type="button" class="btn btn--ghost btn--sm" onclick="alChangePlan()">Replace image</button>
             <span class="scope__count" id="al-ptCount">0 points</span>
           </div>
@@ -6643,19 +6645,28 @@ function onALTypeChange(){
   document.getElementById('al-scopeBlock').hidden=!needsScope;
 }
 /* ---- Scope boundary canvas tool (Add lead — mirrors public quote form) ---- */
-var alPlanImg=null,alPoints=[],alCanvas,alCtx,alScale=1;
+var alPlanImg=null,alPoints=[],alCanvas,alCtx,alScale=1,alRotation=0;
+// Routes to the right loader depending on what got picked -- a plain
+// image goes straight to the canvas, a PDF gets its first page rendered
+// to an image first (see alLoadPlanFromPdf), and anything else is refused
+// with a clear message instead of failing silently.
 function alLoadPlan(files){
   if(!files||!files.length)return;
-  var f=files[0];if(!/^image\//.test(f.type)){alert('Please upload an image (PNG or JPG). For a PDF, take a screenshot of the page.');return;}
-  var url=URL.createObjectURL(f);
+  var f=files[0];
+  if(/^image\//.test(f.type)){alLoadPlanFromUrl(URL.createObjectURL(f));return;}
+  if(f.type==='application/pdf'||/\.pdf$/i.test(f.name||'')){alLoadPlanFromPdf(f);return;}
+  alert('Please upload an image (PNG/JPG) or a PDF of the site plan.');
+}
+// Shared by both a plain image upload and a PDF's rendered first page --
+// from here on, marking/rotating/submitting the scope boundary works the
+// same regardless of which kind of file it started as.
+function alLoadPlanFromUrl(url){
   var img=new Image();
   img.onload=function(){
-    alPlanImg=img;alPoints=[];
+    alPlanImg=img;alPoints=[];alRotation=0;
     alCanvas=document.getElementById('al-planCanvas');alCtx=alCanvas.getContext('2d');
     var stage=document.getElementById('al-planStage');stage.classList.add('on');
-    var maxW=stage.clientWidth||520;
-    alScale=Math.min(1,maxW/img.width);
-    alCanvas.width=img.width*alScale;alCanvas.height=img.height*alScale;
+    alApplyPlanSize();
     document.querySelector('#al-scopeBlock .reqfiles').style.display='none';
     document.getElementById('al-planTools').style.display='flex';
     alCanvas.onclick=function(e){
@@ -6665,11 +6676,94 @@ function alLoadPlan(files){
     };
     alDrawScope();
   };
+  img.onerror=function(){alert('Could not load that file as an image.');};
   img.src=url;
 }
+// pdf.js is only ever fetched the first time a PDF is actually uploaded
+// here (most leads never hit this path) -- loaded on demand from cdnjs,
+// the same CDN already used for other library code across the site.
+var alPdfjsPromise=null;
+function alGetPdfjs(){
+  if(!alPdfjsPromise){
+    alPdfjsPromise=import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.min.mjs').then(function(mod){
+      mod.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.worker.min.mjs';
+      return mod;
+    });
+  }
+  return alPdfjsPromise;
+}
+// Renders page 1 of an uploaded PDF site plan to an offscreen canvas at a
+// resolution decent enough to mark a boundary on, then feeds the result
+// into alLoadPlanFromUrl -- same path a plain image upload already takes.
+function alLoadPlanFromPdf(f){
+  var drop=document.querySelector('#al-scopeBlock .reqfiles');
+  var originalHtml=drop?drop.innerHTML:null;
+  if(drop)drop.innerHTML='<strong style="display:block;color:var(--cm-text);">Reading PDF\u2026</strong>';
+  var reader=new FileReader();
+  reader.onload=function(){
+    alGetPdfjs().then(function(pdfjsLib){
+      return pdfjsLib.getDocument({data:reader.result}).promise;
+    }).then(function(pdf){
+      return pdf.getPage(1);
+    }).then(function(page){
+      var baseViewport=page.getViewport({scale:1});
+      var targetW=1600; // decent resolution for marking a boundary without going overboard
+      var renderScale=Math.min(3,targetW/baseViewport.width);
+      var viewport=page.getViewport({scale:renderScale});
+      var offCanvas=document.createElement('canvas');
+      offCanvas.width=viewport.width;offCanvas.height=viewport.height;
+      return page.render({canvasContext:offCanvas.getContext('2d'),viewport:viewport}).promise.then(function(){
+        return offCanvas.toDataURL('image/jpeg',0.92);
+      });
+    }).then(function(dataUrl){
+      if(drop)drop.innerHTML=originalHtml;
+      alLoadPlanFromUrl(dataUrl);
+    }).catch(function(err){
+      console.error('PDF site plan render failed',err);
+      if(drop)drop.innerHTML=originalHtml;
+      alert('Could not read that PDF. Please try a different file, or upload a screenshot of the page instead.');
+    });
+  };
+  reader.onerror=function(){
+    if(drop)drop.innerHTML=originalHtml;
+    alert('Could not read that PDF. Please try again.');
+  };
+  reader.readAsArrayBuffer(f);
+}
+// Canvas size accounting for the current rotation -- swaps width/height
+// for a 90°/270° orientation so the plan always fills the stage the
+// same way an unrotated image would.
+function alApplyPlanSize(){
+  var stage=document.getElementById('al-planStage');
+  var maxW=stage.clientWidth||520;
+  var swapped=(alRotation===90||alRotation===270);
+  var natW=swapped?alPlanImg.height:alPlanImg.width;
+  var natH=swapped?alPlanImg.width:alPlanImg.height;
+  alScale=Math.min(1,maxW/natW);
+  alCanvas.width=natW*alScale;
+  alCanvas.height=natH*alScale;
+}
+// Rotates the loaded plan image 90°/180° in place -- site plans/aerials
+// often come in sideways or upside-down. Clears any points already marked
+// (their canvas-space coordinates wouldn't line up with the image in its
+// new orientation) rather than trying to remap them -- simpler, and
+// re-marking a handful of points only takes a moment.
+function alRotatePlan(degrees){
+  if(!alPlanImg)return;
+  alRotation=(alRotation+degrees+360)%360;
+  alPoints=[];
+  alApplyPlanSize();
+  alDrawScope();
+}
+window.alRotatePlan=alRotatePlan;
 function alDrawScope(){
+  alCtx.save();
   alCtx.clearRect(0,0,alCanvas.width,alCanvas.height);
-  alCtx.drawImage(alPlanImg,0,0,alCanvas.width,alCanvas.height);
+  alCtx.translate(alCanvas.width/2,alCanvas.height/2);
+  alCtx.rotate(alRotation*Math.PI/180);
+  var drawW=alPlanImg.width*alScale,drawH=alPlanImg.height*alScale;
+  alCtx.drawImage(alPlanImg,-drawW/2,-drawH/2,drawW,drawH);
+  alCtx.restore();
   if(alPoints.length){
     alCtx.beginPath();alCtx.moveTo(alPoints[0].x,alPoints[0].y);
     for(var i=1;i<alPoints.length;i++)alCtx.lineTo(alPoints[i].x,alPoints[i].y);
@@ -6687,7 +6781,7 @@ function alDrawScope(){
 function alUndoPoint(){alPoints.pop();if(alPlanImg)alDrawScope();}
 function alClearScope(){alPoints=[];if(alPlanImg)alDrawScope();}
 function alChangePlan(){
-  alPlanImg=null;alPoints=[];
+  alPlanImg=null;alPoints=[];alRotation=0;
   var stage=document.getElementById('al-planStage');if(stage)stage.classList.remove('on');
   var tools=document.getElementById('al-planTools');if(tools)tools.style.display='none';
   var drop=document.querySelector('#al-scopeBlock .reqfiles');if(drop)drop.style.display='';
@@ -7000,8 +7094,6 @@ function createLead(e){
   var sizeCheck=document.getElementById('al-size').value.trim();
   if(!scaleIntlCheck&&!scaleImpCheck&&!sizeCheck){alert('Please provide either a scale or a desired model size to continue.');return false;}
   if(!document.getElementById('al-quantity').value.trim()){alert('Please enter the number of exact models to continue.');return false;}
-  var needsScope=!document.getElementById('al-scopeBlock').hidden;
-  if(needsScope&&!alPlanImg){alert('This model type includes surrounding context — please upload a site plan or aerial and mark the scope boundary before continuing.');return false;}
   var contact=document.getElementById('al-contact').value.trim()||'(name not given)';
   var contactTitle=document.getElementById('al-title').value.trim();
   var company=document.getElementById('al-company').value.trim();
