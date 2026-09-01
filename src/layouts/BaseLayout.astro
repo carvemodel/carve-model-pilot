@@ -58,15 +58,51 @@ const canonical = SITE + (canonicalPath === '/' ? '/' : canonicalPath);
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
 
-<!-- GA4 + Google Ads account-level tag. The contact_form conversion fire
-     itself (AW-16810390124/4mVjCKWR6ucaEOzk6M8-) lives in contact.astro. -->
+<!-- GA4 + Google Ads account-level tag. One GA4 property (G-GWS8BLWWST), one
+     gtag implementation, loaded once here site-wide (never duplicated per
+     page). Gated to the real production domain(s) so localhost, Vercel
+     preview URLs, and any other pre-launch/QA host never send hits to the
+     live GA4 property or Google Ads conversions -- update PROD_HOSTS when
+     the physical-model.com domain cutover goes live (see
+     MIGRATION_SEPTEMBER_2.md). The contact_form conversion fire itself
+     (AW-16810390124/4mVjCKWR6ucaEOzk6M8-) lives in contact.astro/thank-you.astro;
+     the click-to-call GA4 event fires below and is ready to carry a second
+     Ads conversion label once one exists. -->
+<script is:inline>
+  (function(){
+    var PROD_HOSTS = ['physical-model.com', 'www.physical-model.com'];
+    window.__CM_ANALYTICS_ENABLED__ = PROD_HOSTS.indexOf(window.location.hostname) !== -1;
+  })();
+</script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GWS8BLWWST"></script>
 <script is:inline>
   window.dataLayer = window.dataLayer || [];
   function gtag(){ dataLayer.push(arguments); }
-  gtag('js', new Date());
-  gtag('config', 'G-GWS8BLWWST');
-  gtag('config', 'AW-16810390124');
+  if (window.__CM_ANALYTICS_ENABLED__) {
+    gtag('js', new Date());
+    gtag('config', 'G-GWS8BLWWST');
+    gtag('config', 'AW-16810390124');
+  }
+</script>
+
+<!-- Click-to-call tracking (secondary conversion per the tracking spec).
+     Fires a GA4 event for every tel: link on the site (footer + contact
+     page) via delegation, so it works regardless of when/where the link
+     is added. Gated by the same production-only flag above. -->
+<script is:inline>
+  document.addEventListener('click', function(e){
+    var link = e.target.closest && e.target.closest('a[href^="tel:"]');
+    if (!link) return;
+    if (!window.__CM_ANALYTICS_ENABLED__ || typeof gtag !== 'function') return;
+    gtag('event', 'click_to_call', {
+      phone_number: link.getAttribute('href').replace('tel:', ''),
+      page_path: window.location.pathname
+      // TODO: once a Google Ads "click-to-call" conversion action exists,
+      // add send_to:'AW-XXXXXXXXX/label' here (or fire a second
+      // gtag('event','conversion',{send_to:...}) call) to make this the
+      // secondary Ads conversion per the tracking spec.
+    });
+  });
 </script>
 
 <!-- First-touch attribution capture (site-wide, runs on every page). Only

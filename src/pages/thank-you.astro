@@ -58,7 +58,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     if(!raw)return;
     sessionStorage.removeItem(KEY);
     var data=JSON.parse(raw);
-    if(typeof gtag!=='function')return;
+    if(typeof gtag!=='function'||!window.__CM_ANALYTICS_ENABLED__)return;
     gtag('event','contact_form',{form_id:'quoteForm',form_name:'Contact — Preliminary Estimate',transaction_id:data.leadId});
     if(data.sendTo){
       gtag('event','conversion',{send_to:data.sendTo,transaction_id:data.leadId});
