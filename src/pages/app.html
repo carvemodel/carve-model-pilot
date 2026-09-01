@@ -8765,6 +8765,14 @@ function saveSRC(opts){
     // than risk clobbering an in-flight write, picking it back up cleanly
     // on the next poll once every outstanding save has actually landed.
     window.__srcPendingSaves=(window.__srcPendingSaves||0)+1;
+    // A poll's GET can be sent BEFORE this save even starts and not resolve
+    // until AFTER this save has already landed -- by then __srcPendingSaves
+    // is back to 0, so the check above alone doesn't catch it. A monotonic
+    // counter (bumped every time a save starts) lets pullSourcing() compare
+    // "has any save started since MY request went out" without relying on
+    // wall-clock timestamps, which can tie at millisecond resolution for
+    // two calls made back-to-back in the same tick.
+    window.__srcSaveGen=(window.__srcSaveGen||0)+1;
 
     // The server now merges this save into whatever's already stored rather than
     // overwriting it outright (so a tab with a stale in-memory copy can't wipe out
@@ -10848,6 +10856,12 @@ function sourcingQuery(){
 var srcPullGen=0;
 function pullSourcing(){
   var srcPullMyGen=++srcPullGen;
+  // Captured before the request goes out, not when its response arrives --
+  // see saveSRC()'s own comment on window.__srcSaveGen. If that counter has
+  // moved on by the time this response is processed, some save started
+  // after this poll was already sent, so this response can only reflect
+  // pre-save data no matter when it happens to arrive.
+  var srcPullSeenSaveGen=window.__srcSaveGen||0;
   return fetch('/api/sourcing'+sourcingQuery()).then(function(r){
     // A factory-role pull sends a token; the server 401s if it doesn't
     // verify (expired, invalid, or a session from before tokens existed).
@@ -10890,7 +10904,7 @@ function pullSourcing(){
       // cycle's data replacement while one is outstanding rather than risk
       // it. Nothing is lost: the next poll (POLL_MS later) picks up the
       // now-settled server state once every pending save has landed.
-      if(isScopedPull&&window.__srcPendingSaves>0)return;
+      if(isScopedPull&&(window.__srcPendingSaves>0||(window.__srcSaveGen||0)>srcPullSeenSaveGen))return;
       SDB.briefs=mergeSrcList(isScopedPull?[]:SDB.briefs,data.briefs||[],srcPendingDeleteBriefIds);
       SDB.leads=mergeSrcList(isScopedPull?[]:SDB.leads,data.leads||[],srcPendingDeleteLeadIds);
       // vendors/team now sync the same way — see reconcileVendorsIntoShops()
