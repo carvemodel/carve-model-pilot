@@ -5066,13 +5066,31 @@ function fmUploadElevationImage(input){
   var ms=ensureMaterialSamples(b);
   var elev=fmResolveCurrentElevation(ms);
   if(!elev){alert('Add an elevation first.');input.value='';return;}
+  var briefId=b.id,elevId=elev.id;
   renderFacadeMaterialsModal(b);
-  msampleUpload('facade/'+b.id+'/'+elev.id,f).then(function(url){
-    elev.url=url;elev.fileName=f.name;elev.type=f.type;
-    logProjectEvent(b,'Uploaded '+elev.name+' elevation on "'+b.title+'"');
-    if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-    renderProjectOverview(b);
-    renderFacadeMaterialsModal(b);
+  msampleUpload('facade/'+briefId+'/'+elevId,f).then(function(url){
+    // Re-resolve the brief/elevation fresh by id instead of trusting the
+    // `b`/`elev` closures captured above -- msampleUpload is a real
+    // network round-trip, and a vendor session's poll can REPLACE
+    // SDB.briefs wholesale while it's in flight (see pullSourcing's
+    // isScopedPull branch). If that happens mid-upload, mutating the old
+    // `elev` writes into an object that's already been discarded from
+    // SDB.briefs -- invisible to the rest of the app, and never actually
+    // sent by the saveSRC() call right after (it serializes the CURRENT
+    // SDB.briefs, not this stale `b`). That silently-lost write is
+    // exactly what kept surfacing as "Upload this elevation first" on the
+    // very next action, right after uploading. Re-fetching by id here
+    // guarantees the url lands on whatever's actually current.
+    var freshB=(typeof findBrief==='function')?findBrief(briefId):null;
+    if(!freshB)return;
+    var freshMs=ensureMaterialSamples(freshB);
+    var freshElev=fmElevationById(freshMs,elevId);
+    if(!freshElev)return;
+    freshElev.url=url;freshElev.fileName=f.name;freshElev.type=f.type;
+    logProjectEvent(freshB,'Uploaded '+freshElev.name+' elevation on "'+freshB.title+'"');
+    if(typeof saveSRC==='function')saveSRC({changedBriefIds:[freshB.id]});
+    renderProjectOverview(freshB);
+    renderFacadeMaterialsModal(freshB);
   }).catch(function(err){
     console.error('Elevation upload failed',f.name,err);
     alert('Upload failed. Please try again.');
@@ -5282,13 +5300,19 @@ function lmUploadPlanImage(input){
   if(!b)return;
   var f=input.files&&input.files[0];
   if(!f)return;
-  var ms=ensureMaterialSamples(b);
-  msampleUpload('landscape/'+b.id,f).then(function(url){
-    ms.landscape.plan={name:f.name,url:url,type:f.type};
-    logProjectEvent(b,'Uploaded landscape site plan on "'+b.title+'"');
-    if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
-    renderProjectOverview(b);
-    renderLandscapeMaterialsModal(b);
+  var briefId=b.id;
+  msampleUpload('landscape/'+briefId,f).then(function(url){
+    // Same re-resolve-by-id fix as fmUploadElevationImage above -- a poll
+    // mid-upload can replace SDB.briefs and orphan the `b`/`ms` closures
+    // captured before this network round-trip started.
+    var freshB=(typeof findBrief==='function')?findBrief(briefId):null;
+    if(!freshB)return;
+    var freshMs=ensureMaterialSamples(freshB);
+    freshMs.landscape.plan={name:f.name,url:url,type:f.type};
+    logProjectEvent(freshB,'Uploaded landscape site plan on "'+freshB.title+'"');
+    if(typeof saveSRC==='function')saveSRC({changedBriefIds:[freshB.id]});
+    renderProjectOverview(freshB);
+    renderLandscapeMaterialsModal(freshB);
   }).catch(function(err){
     console.error('Site plan upload failed',f.name,err);
     alert('Upload failed. Please try again.');
