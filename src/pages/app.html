@@ -8750,6 +8750,22 @@ function loadSRC(){try{var r=localStorage.getItem(SKEY);if(r){var d=JSON.parse(r
 function saveSRC(opts){
   try{localStorage.setItem(SKEY,JSON.stringify(SDB));}catch(e){}
   if(apiReady){
+    // pullSourcing()'s factory-session branch REPLACES SDB.briefs wholesale
+    // with whatever a poll's GET just returned (see its own comment on
+    // isScopedPull) -- correct for keeping a stale/leaked shop's data from
+    // lingering, but dangerous the instant a poll's GET races a save's own
+    // POST that hasn't reached the server yet: the GET can read Redis
+    // before this save's write lands, so the poll would overwrite this
+    // tab's freshly-added local data (a facade elevation, an uploaded
+    // photo, a pin) with the pre-save snapshot, discarding it -- exactly
+    // the mechanism behind "Add/Upload this elevation first" firing right
+    // after doing precisely that. window.__srcPendingSaves counts saves
+    // that have been sent but not yet confirmed by the server; pullSourcing
+    // checks it and skips this cycle's destructive replace entirely rather
+    // than risk clobbering an in-flight write, picking it back up cleanly
+    // on the next poll once every outstanding save has actually landed.
+    window.__srcPendingSaves=(window.__srcPendingSaves||0)+1;
+
     // The server now merges this save into whatever's already stored rather than
     // overwriting it outright (so a tab with a stale in-memory copy can't wipe out
     // a lead/brief another tab or a client submission added in the meantime). An
@@ -8806,8 +8822,12 @@ function saveSRC(opts){
             if(typeof window.forceReLogin==='function')window.forceReLogin('POST /api/sourcing ('+payload.role+'): '+(d&&d.error?d.error:'401'));
           });
         }
+        window.__srcPendingSaves=Math.max(0,(window.__srcPendingSaves||1)-1);
       })
-      .catch(function(e){console.error('Sourcing API sync failed:',e);});
+      .catch(function(e){
+        console.error('Sourcing API sync failed:',e);
+        window.__srcPendingSaves=Math.max(0,(window.__srcPendingSaves||1)-1);
+      });
   }
 }
 window.saveSRC=saveSRC;
@@ -10864,6 +10884,13 @@ function pullSourcing(){
       // whatever was already cached.
       var scopedSess=(typeof currentSession==='function')?currentSession():null;
       var isScopedPull=!!(scopedSess&&scopedSess.role==='factory');
+      // See saveSRC()'s own comment on window.__srcPendingSaves -- a
+      // factory session's replace-not-merge pull is exactly the case that
+      // can silently discard a save still in flight, so skip this entire
+      // cycle's data replacement while one is outstanding rather than risk
+      // it. Nothing is lost: the next poll (POLL_MS later) picks up the
+      // now-settled server state once every pending save has landed.
+      if(isScopedPull&&window.__srcPendingSaves>0)return;
       SDB.briefs=mergeSrcList(isScopedPull?[]:SDB.briefs,data.briefs||[],srcPendingDeleteBriefIds);
       SDB.leads=mergeSrcList(isScopedPull?[]:SDB.leads,data.leads||[],srcPendingDeleteLeadIds);
       // vendors/team now sync the same way — see reconcileVendorsIntoShops()
