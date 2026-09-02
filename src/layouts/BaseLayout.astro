@@ -132,6 +132,24 @@ const canonical = SITE + (canonicalPath === '/' ? '/' : canonicalPath);
 })();
 </script>
 
+<!-- Basic deterrent against casual photo downloading: blocks the
+     right-click "Save image as..." menu and drag-out-of-browser on <img>
+     elements site-wide. This can't stop a determined visitor (screenshots
+     always work, and browser dev tools can inspect any image URL), but it
+     removes the two most common casual paths to grabbing a full-res copy
+     of a portfolio photo without disrupting normal browsing -- text
+     selection, links, and buttons are untouched, and this only ever fires
+     on real <img> tags, not the CSS background-image plates used
+     elsewhere on the site. -->
+<script is:inline>
+  document.addEventListener('contextmenu', function(e){
+    if (e.target && e.target.tagName === 'IMG') e.preventDefault();
+  });
+  document.addEventListener('dragstart', function(e){
+    if (e.target && e.target.tagName === 'IMG') e.preventDefault();
+  });
+</script>
+
 <slot name="head" />
 </head>
 <body>

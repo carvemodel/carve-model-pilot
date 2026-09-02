@@ -2229,11 +2229,11 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
         <div class="efield-row">
           <div class="efield"><label for="al-project">Project / building name</label><input id="al-project" type="text" required placeholder="Westbrook Tower"></div>
-          <div class="efield"><label for="al-location">Project location</label><input id="al-location" type="text" placeholder="Denver, CO"></div>
+          <div class="efield"><label for="al-location">Project location <span class="optional">(optional)</span></label><input id="al-location" type="text" placeholder="Denver, CO"></div>
         </div>
         <div class="efield-row">
           <div class="efield"><label for="al-country">Project country <span class="optional">(optional)</span></label><input id="al-country" type="text" placeholder="e.g. United States"></div>
-          <div class="efield"><label for="al-delivery-location">Delivery location <span class="optional">(if different)</span></label><input id="al-delivery-location" type="text" placeholder="e.g. same as project, or a different address"></div>
+          <div class="efield"><label for="al-delivery-location">Delivery location</label><input id="al-delivery-location" type="text" placeholder="e.g. Austin, TX" required></div>
         </div>
         <div class="efield-row">
           <div class="efield"><label for="al-delivery-country">Delivery country <span class="optional">(optional)</span></label><input id="al-delivery-country" type="text" placeholder="e.g. United States"></div>
@@ -7157,6 +7157,7 @@ function createLead(e){
   var location=document.getElementById('al-location').value.trim();
   var country=document.getElementById('al-country').value.trim();
   var deliveryLocation=document.getElementById('al-delivery-location').value.trim();
+  if(!deliveryLocation){alert('Please enter a delivery location.');return false;}
   var deliveryCountry=document.getElementById('al-delivery-country').value.trim();
   var useVal=document.getElementById('al-use').value;
   var source=document.getElementById('al-source').value;
