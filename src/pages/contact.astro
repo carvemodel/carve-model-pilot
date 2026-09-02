@@ -191,6 +191,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <span class="projtitle__v" id="projTitleVal"></span>
           </div>
         </div>
+        <div class="row2">
+          <div class="field"><label for="projloc">Project location <span class="optional">(city / region)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA" oninput="updateProjTitle()"></div>
+          <div class="field"><label for="projcountry">Project country <span class="optional">(optional)</span></label><input id="projcountry" name="projcountry" type="text" placeholder="e.g. United States"></div>
+        </div>
         <div class="field"><label for="quantity">Number of exact models</label>
           <input id="quantity" name="quantity" type="number" min="1" step="1" value="1" required>
           <div class="hint">Defaults to 1. Need a model with different specs? Submit a separate inquiry.</div>
@@ -331,10 +335,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
         <div class="row2">
           <div class="field"><label for="phone">Phone <span class="optional">(optional)</span></label><input id="phone" name="phone" type="tel" placeholder="(555) 000-0000" oninput="formatPhoneInput(this)"><div class="hint" id="phoneHint" style="display:none;color:#e0a860;">That doesn't look like a complete phone number — double check it, or leave it blank.</div></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label for="projloc">Project location <span class="optional">(city / region)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA" oninput="updateProjTitle()"></div>
-          <div class="field"><label for="projcountry">Project country <span class="optional">(optional)</span></label><input id="projcountry" name="projcountry" type="text" placeholder="e.g. United States"></div>
         </div>
         <div class="row2">
           <div class="field"><label for="deliveryloc">Delivery location <span class="optional">(if different)</span></label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX"></div>
