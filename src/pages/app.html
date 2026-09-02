@@ -2101,6 +2101,18 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         <div class="efield"><label for="rq-size">Approx. model size <span class="optional">(if no scale — L × W × H)</span></label>
           <input id="rq-size" type="text" placeholder='e.g. 36" × 24" × 18"  or  90 × 60 × 45 cm'>
         </div>
+        <div class="efield"><label for="rq-material">Preferred material / finish <span class="optional">(optional)</span></label>
+          <select id="rq-material">
+            <option value="">Not specified</option>
+            <option>Full Color ABS / Realistic Visualization</option>
+            <option>Monochromatic ABS / Massing</option>
+            <option>Clear Acrylic</option>
+            <option>ABS with Wood Veneer</option>
+            <option>Hardwood</option>
+            <option>Foam</option>
+            <option>Wrought Iron</option>
+          </select>
+        </div>
         <div class="efield"><label>Special requirements <span class="optional">(select any that apply)</span></label>
           <div class="checks" id="rq-extras">
             <label><input type="checkbox" value="No Base"><span class="ck"></span><span>No Base <span class="optional">(models include a base by default)</span></span></label>
@@ -2110,7 +2122,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <label><input type="checkbox" value="Split into Sections (transport / access)"><span class="ck"></span><span>Split into Sections (transport / access)</span></label>
             <label><input type="checkbox" value="Display Stand / Plinth"><span class="ck"></span><span>Display Stand / Plinth</span></label>
             <label><input type="checkbox" value="Customized Protective Travel Case"><span class="ck"></span><span>Customized Protective Travel Case</span></label>
-            <label><input type="checkbox" value="Furniture"><span class="ck"></span><span>Furniture</span></label>
+            <label><input type="checkbox" value="Furniture / Equipment"><span class="ck"></span><span>Furniture / Equipment</span></label>
             <label><input type="checkbox" value="Interior Finishes"><span class="ck"></span><span>Interior Finishes</span></label>
             <label><input type="checkbox" value="Removable Roof / Levels"><span class="ck"></span><span>Removable Roof / Levels</span></label>
           </div>
@@ -2297,6 +2309,10 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
         </div>
         <div class="efield"><label for="al-size">Approx. model size <span class="optional">(if no scale)</span></label>
           <input id="al-size" type="text" placeholder='e.g. 36" × 24" × 18"  or  90 × 60 × 45 cm'>
+        </div>
+        <div class="efield"><label for="al-material">Preferred material / finish <span class="optional">(optional)</span></label>
+          <select id="al-material"><option value="">Not specified</option></select>
+          <div class="hint">A starting point for the quote — the vendor may suggest alternatives.</div>
         </div>
         <div class="efield"><label>Special requirements <span class="optional">(select any that apply)</span></label>
           <div class="checks" id="al-extras-wrap"></div>
@@ -6447,6 +6463,7 @@ function requestAnother(){
   document.getElementById('reqForm').hidden=false;
   document.getElementById('reqDone').hidden=true;
   ['rq-project','rq-location','rq-scale','rq-size','rq-notes','rq-dropbox'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
+  var rqMatEl=document.getElementById('rq-material');if(rqMatEl)rqMatEl.value='';
   document.querySelectorAll('#rq-extras input').forEach(function(c){c.checked=false;});
   var rqFi=document.getElementById('rq-file-input');if(rqFi)rqFi.value='';
   rqPickedFiles=[];rqRenderFiles();
@@ -6486,6 +6503,8 @@ function submitReq(){
   var timeline=document.getElementById('rq-timeline').value;
   var size=document.getElementById('rq-size').value.trim();
   var extras=[];document.querySelectorAll('#rq-extras input:checked').forEach(function(cb){extras.push(cb.value);});
+  var rqMaterialEl=document.getElementById('rq-material');
+  var preferredMaterial=rqMaterialEl?(rqMaterialEl.value||null):null;
   var notes=document.getElementById('rq-notes').value.trim()||'(no additional notes)';
   var dropboxLink=document.getElementById('rq-dropbox').value.trim();
   var srcBrief=findBrief(document.getElementById('projSelect').value)||(typeof myClientBriefs==='function'?(myClientBriefs()[0]||null):null);
@@ -6520,6 +6539,7 @@ function submitReq(){
       timeline:timeline||'Not specified',
       deliveryTo:location||'Not specified',
       extras:extras,
+      preferredMaterial:preferredMaterial,
       notes:notes,
       files:uploadedFiles,
       filelink:dropboxLink?[dropboxLink]:null,
@@ -6591,6 +6611,11 @@ function openAddLead(){
   if(extraWrap&&!extraWrap.childElementCount){
     (window.SPECIAL_REQS||[]).forEach(function(r){var lab=document.createElement('label');lab.innerHTML='<input type="checkbox" name="al-extras" value="'+esc(r)+'"'+(r==='Surrounding Landscape / Site Context'?' id="al-landscapeChk" onchange="onALTypeChange()"':'')+'><span class="ck"></span><span>'+esc(r)+'</span>';extraWrap.appendChild(lab);});
   }
+  var matSel=document.getElementById('al-material');
+  if(matSel&&matSel.options.length<2){
+    (window.MODEL_MATERIALS||[]).forEach(function(m){var o=document.createElement('option');o.value=m;o.textContent=m;matSel.appendChild(o);});
+  }
+  if(matSel)matSel.value='';
   document.querySelectorAll('input[name="al-extras"]').forEach(function(cb){cb.checked=false;});
   var useSel=document.getElementById('al-use');if(useSel)useSel.value='';
   alChangePlan();
@@ -7146,6 +7171,8 @@ function createLead(e){
   var quantity=document.getElementById('al-quantity').value.trim();
   var timeline=document.getElementById('al-timeline').value;
   var extras=[]; document.querySelectorAll('input[name="al-extras"]:checked').forEach(function(cb){extras.push(cb.value);});
+  var preferredMaterialEl=document.getElementById('al-material');
+  var preferredMaterial=preferredMaterialEl?(preferredMaterialEl.value||null):null;
   var boundaryMap=null;
   if(alCanvas&&alPlanImg){
     try{boundaryMap=alCanvas.toDataURL('image/jpeg',0.75);}catch(err){}
@@ -7194,6 +7221,7 @@ function createLead(e){
       timeline:timeline||'Not specified',
       deliveryTo:(deliveryLocation||location||'Not specified')+(deliveryCountry?(', '+deliveryCountry):(!deliveryLocation&&country?(', '+country):'')),
       extras:extras,
+      preferredMaterial:preferredMaterial,
       notes:notes,
       files:uploadedFiles,
       filelink:dropboxLinks.length?dropboxLinks:null,
@@ -8053,7 +8081,7 @@ function downloadInvoice(bid,which){
   if(!scopeBullets.length)scopeBullets.push('Per specification agreed with Carve Model');
 
   var exclusionCandidates=[
-    {label:'Interior furniture, fixtures &amp; equipment',keys:['Furniture','Interior Finishes']},
+    {label:'Interior furniture, fixtures &amp; equipment',keys:['Furniture / Equipment','Interior Finishes']},
     {label:'Lighting',keys:['Interior Lighting','External Lighting']},
     {label:'Model stand',keys:['Display Stand / Plinth']}
   ];
@@ -8657,7 +8685,7 @@ function showLoginGate(){
 var SHOPS=[{id:'northpoint',name:'Bohai Model',loc:'Shanghai, CN',av:'BM'}];
 window.SHOPS=SHOPS; // exposed so Team & Access "+ Add vendor" can register new shops
 var TECHS=[{id:'sam',name:'Sam Cole',av:'SC'},{id:'rosa',name:'Rosa Lim',av:'RL'}];
-var SPECIAL_REQS=['Surrounding Landscape / Site Context','No Base','Engraved Base','Interior Lighting','External Lighting','Split into Sections (transport / access)','Display Stand / Plinth','Customized Protective Travel Case','Furniture','Interior Finishes','Removable Roof / Levels'];
+var SPECIAL_REQS=['Surrounding Landscape / Site Context','No Base','Engraved Base','Interior Lighting','External Lighting','Split into Sections (transport / access)','Display Stand / Plinth','Customized Protective Travel Case','Furniture / Equipment','Interior Finishes','Removable Roof / Levels'];
 var MODEL_MATERIALS=['Full Color ABS / Realistic Visualization','Monochromatic ABS / Massing','Clear Acrylic','ABS with Wood Veneer','Hardwood','Foam','Wrought Iron'];
 var BASE_MATERIALS=['Plywood','Foam','Wrought Iron'];
 window.SPECIAL_REQS=SPECIAL_REQS; window.MODEL_MATERIALS=MODEL_MATERIALS; window.BASE_MATERIALS=BASE_MATERIALS;
@@ -10889,6 +10917,7 @@ window.SRC_renderLeads=function(){
         '<div><span class="mock__k">Files</span><div class="lc-v">'+((l.files&&l.files.length)?(l.files.length+' uploaded'):(lLinks.length?(lLinks.length>1?(lLinks.length+' links shared'):'Link shared'):'None'))+'</div></div>'+
         '<div><span class="mock__k">Delivery to</span><div class="lc-v">'+esc(l.deliveryTo)+'</div></div>'+
         (l.intendedUse?('<div><span class="mock__k">Intended use</span><div class="lc-v">'+esc(l.intendedUse)+'</div></div>'):'')+
+        (l.preferredMaterial?('<div><span class="mock__k">Preferred material</span><div class="lc-v">'+esc(l.preferredMaterial)+'</div></div>'):'')+
       '</div>'+
       (l.extras&&l.extras.length?('<div class="leadcard__note"><span class="mock__k">Special requirements</span><p>'+esc(l.extras.join(' \u00b7 '))+'</p></div>'):'')+
       '<div class="leadcard__note"><span class="mock__k">Project details</span><p>'+esc(l.notes)+'</p></div>'+

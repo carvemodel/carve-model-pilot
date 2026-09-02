@@ -225,6 +225,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <input id="modelsize" name="modelsize" type="text" placeholder='e.g. 36" L × 24" W × 18" H  or  90 × 60 × 45 cm'>
           <div class="hint">Tell us how big you want the finished model and we'll work out the scale that fits.</div>
         </div>
+        <div class="field"><label for="material">Preferred material / finish <span class="optional">(optional)</span></label>
+          <select id="material" name="material">
+            <option value="">Not specified</option>
+            <option>Full Color ABS / Realistic Visualization</option>
+            <option>Monochromatic ABS / Massing</option>
+            <option>Clear Acrylic</option>
+            <option>ABS with Wood Veneer</option>
+            <option>Hardwood</option>
+            <option>Foam</option>
+            <option>Wrought Iron</option>
+          </select>
+          <div class="hint">A starting point for your quote — we'll confirm what best fits your budget and use case.</div>
+        </div>
         <div class="field"><label>Special requirements <span class="optional">(select any that apply)</span></label>
           <div class="checks">
             <label><input type="checkbox" name="extras" value="Surrounding Landscape / Site Context" id="landscapeChk" onchange="onTypeChange()"><span class="ck"></span><span>Surrounding Landscape / Site Context</span></label>
@@ -235,7 +248,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <label><input type="checkbox" name="extras" value="Split into Sections (transport / access)"><span class="ck"></span><span>Split into Sections (transport / access)</span></label>
             <label><input type="checkbox" name="extras" value="Display Stand / Plinth"><span class="ck"></span><span>Display Stand / Plinth</span></label>
             <label data-tip="For repeated air travel only, carry-on or checked-in — models ship via crate by default."><input type="checkbox" name="extras" value="Customized Protective Travel Case"><span class="ck"></span><span>Customized Protective Travel Case</span></label>
-            <label><input type="checkbox" name="extras" value="Furniture"><span class="ck"></span><span>Furniture</span></label>
+            <label><input type="checkbox" name="extras" value="Furniture / Equipment"><span class="ck"></span><span>Furniture / Equipment</span></label>
             <label><input type="checkbox" name="extras" value="Interior Finishes"><span class="ck"></span><span>Interior Finishes</span></label>
             <label><input type="checkbox" name="extras" value="Removable Roof / Levels"><span class="ck"></span><span>Removable Roof / Levels</span></label>
           </div>
@@ -590,7 +603,7 @@ function submitQuote(e){
   var projcountry=(document.getElementById('projcountry').value||'').trim();
   var title=projloc?(projname+' — '+projloc):projname;
   var name=(document.getElementById('name').value||'').trim()||'(name not given)';
-  var title=(document.getElementById('title').value||'').trim();
+  var jobTitle=(document.getElementById('title').value||'').trim();
   var company=(document.getElementById('company').value||'').trim();
   var phone=(document.getElementById('phone').value||'').trim();
   var deliveryloc=(document.getElementById('deliveryloc').value||'').trim();
@@ -607,6 +620,7 @@ function submitQuote(e){
   if(pendingLink)addLink(); // capture anything still sitting in the box, not yet added
   var filelinks=pickedLinks.slice();
   var useVal=(document.getElementById('use').value||'').trim();
+  var preferredMaterial=(document.getElementById('material').value||'').trim()||null;
   var boundaryMap=null;
   if(typeof canvas!=='undefined'&&canvas&&planImg){
     try{boundaryMap=canvas.toDataURL('image/jpeg',0.75);}catch(err){}
@@ -650,13 +664,14 @@ function submitQuote(e){
       title:title,
       type:type,
       intendedUse:useVal||null,
-      client:{Name:name,Title:title||null,Company:company||'—',Email:email.value.trim(),Phone:phone||''},
+      client:{Name:name,Title:jobTitle||null,Company:company||'—',Email:email.value.trim(),Phone:phone||''},
       scale:scale||'Not specified',
       modelsize:modelsize||'Not specified',
       quantity:quantity||'1',
       timeline:deadline||'Not specified',
       deliveryTo:(deliveryloc||projloc||'Not specified')+(deliverycountry?(', '+deliverycountry):(!deliveryloc&&projcountry?(', '+projcountry):'')),
       extras:extras,
+      preferredMaterial:preferredMaterial,
       notes:message||'(no additional notes)',
       files:uploadedFiles,
       filelink:filelinks.length?filelinks:null,
