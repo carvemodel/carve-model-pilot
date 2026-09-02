@@ -2123,6 +2123,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <input id="rq-file-input" type="file" multiple style="display:none;" onchange="reqFilesPicked(this)">
             <span id="rq-files-label">Drop files or click to upload — CAD, PDF, Rhino, images.</span>
           </div>
+          <div id="rq-file-list" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;"></div>
         </div>
         <div class="efield"><label for="rq-dropbox">Or share a file link <span class="optional">(Dropbox, Drive, WeTransfer)</span></label>
           <input id="rq-dropbox" type="url" placeholder="https://www.dropbox.com/…">
@@ -2308,6 +2309,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
             <input id="al-file-input" type="file" multiple style="display:none;" onchange="alFilesPicked(this)">
             <span id="al-files-label">Drop files or click to upload — CAD, PDF, Rhino, renderings, reference photos, 3D digital models.</span>
           </div>
+          <div id="al-file-list" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;"></div>
         </div>
         <div class="efield"><label for="al-dropbox">Or share a file link <span class="optional">(Dropbox, Drive, WeTransfer — add as many as you need)</span></label>
           <div id="al-link-list" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.5rem;"></div>
@@ -6446,14 +6448,27 @@ function requestAnother(){
   document.getElementById('reqDone').hidden=true;
   ['rq-project','rq-location','rq-scale','rq-size','rq-notes','rq-dropbox'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
   document.querySelectorAll('#rq-extras input').forEach(function(c){c.checked=false;});
-  document.getElementById('rq-files-label').textContent='Drop files or click to upload — CAD, PDF, Rhino, images.';
+  var rqFi=document.getElementById('rq-file-input');if(rqFi)rqFi.value='';
+  rqPickedFiles=[];rqRenderFiles();
   document.getElementById('reqModal').hidden=false;
 }
 function closeReq(){ document.getElementById('reqModal').hidden=true; }
+var rqPickedFiles=[];
 function reqFilesPicked(input){
-  var n=input.files?input.files.length:0;
-  document.getElementById('rq-files-label').textContent=n?(n+' file'+(n>1?'s':'')+' attached — '+[].map.call(input.files,function(f){return f.name;}).slice(0,3).join(', ')+(n>3?'…':'')):'Drop files or click to upload.';
+  var files=input.files?[].slice.call(input.files):[];
+  files.forEach(function(f){rqPickedFiles.push(f);});
+  input.value='';
+  rqRenderFiles();
 }
+function rqRenderFiles(){
+  var c=document.getElementById('rq-file-list');
+  if(c)c.innerHTML=rqPickedFiles.map(function(f,i){
+    return '<span class="filechip">'+esc(f.name)+'<button type="button" onclick="rqRemoveFile('+i+')" aria-label="Remove" style="background:none;border:0;color:var(--cm-text-subtle);cursor:pointer;font-size:0.95rem;line-height:1;padding:0;margin-left:0.4rem;">×</button></span>';
+  }).join('');
+  var label=document.getElementById('rq-files-label');
+  if(label)label.textContent=rqPickedFiles.length?(rqPickedFiles.length+' file'+(rqPickedFiles.length>1?'s':'')+' attached'):'Drop files or click to upload — CAD, PDF, Rhino, images.';
+}
+window.rqRemoveFile=function(i){rqPickedFiles.splice(i,1);rqRenderFiles();};
 // Returning-client "Request another model" -- writes a REAL lead (source:
 // "Returning client") into the studio inbox, carrying the signed-in
 // account's own contact/company details forward automatically (pulled off
@@ -6477,8 +6492,7 @@ function submitReq(){
   var c=(srcBrief&&srcBrief.client)||{};
   var id='L'+Date.now();
   var today=new Date().toISOString().slice(0,10);
-  var fi=document.getElementById('rq-file-input');
-  var pickedFiles=fi&&fi.files?[].slice.call(fi.files):[];
+  var pickedFiles=rqPickedFiles.slice();
   var sendBtn=document.querySelector('#reqForm .btn--primary');
   if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Sending…';}
 
@@ -6571,7 +6585,7 @@ function openAddLead(){
   document.getElementById('al-quantity').value='1';
   document.getElementById('al-type-select').value='';
   var fi=document.getElementById('al-file-input');if(fi)fi.value='';
-  document.getElementById('al-files-label').textContent='Drop files or click to upload — CAD, PDF, Rhino, renderings, reference photos, 3D digital models.';
+  alPickedFiles=[];alRenderFiles();
   alPickedLinks=[];alRenderLinks();
   var extraWrap=document.getElementById('al-extras-wrap');
   if(extraWrap&&!extraWrap.childElementCount){
@@ -7078,10 +7092,25 @@ function alAddLink(){
   el.value='';
   alRenderLinks();
 }
+var alPickedFiles=[];
+// Files accumulate across multiple picks (clicking the drop zone again
+// ADDS more files, matching what alPickedLinks already does for links)
+// rather than replacing the selection each time.
 function alFilesPicked(input){
-  var n=input.files?input.files.length:0;
-  document.getElementById('al-files-label').textContent=n?(n+' file'+(n>1?'s':'')+' attached — '+[].map.call(input.files,function(f){return f.name;}).slice(0,3).join(', ')+(n>3?'…':'')):'Drop files or click to upload — CAD, PDF, Rhino, renderings, reference photos, 3D digital models.';
+  var files=input.files?[].slice.call(input.files):[];
+  files.forEach(function(f){alPickedFiles.push(f);});
+  input.value=''; // clear so picking the exact same file again still fires onchange
+  alRenderFiles();
 }
+function alRenderFiles(){
+  var c=document.getElementById('al-file-list');
+  if(c)c.innerHTML=alPickedFiles.map(function(f,i){
+    return '<span class="filechip">'+esc(f.name)+'<button type="button" onclick="alRemoveFile('+i+')" aria-label="Remove" style="background:none;border:0;color:var(--cm-text-subtle);cursor:pointer;font-size:0.95rem;line-height:1;padding:0;margin-left:0.4rem;">×</button></span>';
+  }).join('');
+  var label=document.getElementById('al-files-label');
+  if(label)label.textContent=alPickedFiles.length?(alPickedFiles.length+' file'+(alPickedFiles.length>1?'s':'')+' attached'):'Drop files or click to upload — CAD, PDF, Rhino, renderings, reference photos, 3D digital models.';
+}
+window.alRemoveFile=function(i){alPickedFiles.splice(i,1);alRenderFiles();};
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function createLead(e){
   e.preventDefault();
@@ -7121,8 +7150,7 @@ function createLead(e){
   if(alCanvas&&alPlanImg){
     try{boundaryMap=alCanvas.toDataURL('image/jpeg',0.75);}catch(err){}
   }
-  var fi=document.getElementById('al-file-input');
-  var pickedFiles=fi&&fi.files?[].slice.call(fi.files):[];
+  var pickedFiles=alPickedFiles.slice();
   var title=project+(location?' — '+location+(country?', '+country:''):'');
   var id='L'+Date.now();
   var today=new Date().toISOString().slice(0,10);
@@ -10998,9 +11026,17 @@ window.convertLead=function(id){
   if(!admins.length){
     list.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.86rem;">No production admin accounts set up yet.</div>';
   }else{
+    // Nothing pre-checked -- this used to always default-check whichever
+    // vendor happened to be first in PRODUCTION_ADMINS (in practice,
+    // always Bohai Model, the original vendor), so it was easy to send a
+    // quote request to an irrelevant shop by accident just by clicking
+    // through without noticing the checkbox. Confirming with zero boxes
+    // checked already shows an alert (see SRC_confirmSendLead) asking to
+    // pick at least one, so leaving all of them unchecked costs nothing
+    // and makes the choice deliberate every time.
     list.innerHTML=admins.map(function(a,idx){
       return '<label style="display:flex;align-items:center;gap:0.7rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.7rem 0.9rem;cursor:pointer;">'+
-        '<input type="checkbox" class="sendlead-chk" value="'+esc(a.shopId)+'"'+(idx===0?' checked':'')+' style="accent-color:var(--cm-silver);">'+
+        '<input type="checkbox" class="sendlead-chk" value="'+esc(a.shopId)+'" style="accent-color:var(--cm-silver);">'+
         '<span><b style="color:var(--cm-text-strong);">'+esc(a.name)+'</b><br><span style="font-size:0.82rem;color:var(--cm-text-subtle);">'+esc(a.company)+'</span></span>'+
       '</label>';
     }).join('');
@@ -11026,9 +11062,10 @@ window.SRC_inviteMoreVendors=function(briefId){
   if(!admins.length){
     list.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.86rem;">Every registered production shop has already been invited to this project.</div>';
   }else{
+    // Same reasoning as convertLead() above -- no default-checked box.
     list.innerHTML=admins.map(function(a,idx){
       return '<label style="display:flex;align-items:center;gap:0.7rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.7rem 0.9rem;cursor:pointer;">'+
-        '<input type="checkbox" class="sendlead-chk" value="'+esc(a.shopId)+'"'+(idx===0?' checked':'')+' style="accent-color:var(--cm-silver);">'+
+        '<input type="checkbox" class="sendlead-chk" value="'+esc(a.shopId)+'" style="accent-color:var(--cm-silver);">'+
         '<span><b style="color:var(--cm-text-strong);">'+esc(a.name)+'</b><br><span style="font-size:0.82rem;color:var(--cm-text-subtle);">'+esc(a.company)+'</span></span>'+
       '</label>';
     }).join('');
