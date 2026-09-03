@@ -61,6 +61,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     if(data.sendTo){
       gtag('event','conversion',{send_to:data.sendTo,transaction_id:data.leadId});
     }
+    // OpenAI Ads pixel conversion event -- fires alongside the Google Ads
+    // conversion above. window.oaiq is only defined when the pixel loaded
+    // (production host, see BaseLayout.astro), so this is a no-op on
+    // local/preview. event_id is the same lead id the server-side
+    // Conversions API call uses (see api/sourcing.js) so OpenAI can
+    // de-duplicate the two lead_created events for the same lead.
+    if(typeof window.oaiq==='function'){
+      window.oaiq('measure','lead_created',{type:'customer_action'},{event_id:String(data.leadId)});
+    }
   }catch(e){}
 })();
 </script>
