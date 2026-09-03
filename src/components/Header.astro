@@ -7,7 +7,7 @@ const { active } = Astro.props;
 const cur = (name: string) => (active === name ? 'page' : undefined);
 ---
 <header class="site-header"><div class="container nav">
-  <a class="nav__brand" href="/" aria-label="Carve Model home"><img src="/assets/logo-lockup.png" alt="Carve Model" width="1171" height="487" decoding="async"></a>
+  <a class="nav__brand" href="/" aria-label="Carve Model home"><img src="/assets/logo-lockup.png" alt="Carve Model"></a>
   <nav aria-label="Primary"><ul class="nav__links">
     <li><a href="/scale-model-services" aria-current={cur('services')}>Services</a></li>
     <li><a href="/model-making-process" aria-current={cur('process')}>Process</a></li>

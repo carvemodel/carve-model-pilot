@@ -220,5 +220,5 @@ image-slot{display:block;background:var(--cm-ink-850);border:1px solid var(--cm-
 .spec-table .r .l{color:var(--cm-text);font-weight:var(--w-medium);}
 .spec-table .r .v{font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-silver);text-align:right;white-space:nowrap;}
 .callout{margin-top:2rem;background:rgba(182,182,182,0.07);border:1px solid var(--cm-border);border-left:2px solid var(--cm-silver);padding:1.2rem 1.4rem;border-radius:var(--r-sm);color:var(--cm-gray-200);font-size:1rem;line-height:1.6;}
-.callout strong{color:var(--cm-text-strong);font-weight:var(--w-semibold);}
+.callout strong{color:var(--cm-text-strong);}
 .article-foot{margin-top:3.5rem;padding-top:2rem;border-top:1px solid var(--cm-line-faint);}
