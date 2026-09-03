@@ -74,6 +74,32 @@ const canonical = SITE + (canonicalPath === '/' ? '/' : canonicalPath);
     window.__CM_ANALYTICS_ENABLED__ = PROD_HOSTS.indexOf(window.location.hostname) !== -1;
   })();
 </script>
+<!-- OpenAI Ads Measurement Pixel. Loaded only on the production domain so
+     local development and Vercel preview deployments never send data into
+     the live ad account. The SDK captures OpenAI's oppref click reference on
+     the landing page and associates it with the lead_created event fired on
+     /thank-you. Browser pixel only for now -- no server-side Conversions API
+     call (that needs OPENAI_ADS_API_KEY, which is intentionally not wired up
+     yet; see the Conversions API note if/when that's added later). -->
+<script is:inline>
+  (function(w,d,s,u){
+    if(!w.__CM_ANALYTICS_ENABLED__||w.oaiq)return;
+    var q=function(){q.q.push(arguments)};
+    q.q=[];
+    w.oaiq=q;
+    var j=d.createElement(s);
+    j.async=true;
+    j.src=u;
+    var f=d.getElementsByTagName(s)[0];
+    f.parentNode.insertBefore(j,f);
+  })(window,document,'script','https://bzrcdn.openai.com/sdk/oaiq.min.js');
+  if(window.__CM_ANALYTICS_ENABLED__&&typeof window.oaiq==='function'){
+    window.oaiq('init',{
+      pixelId:'4R4qF8nLNG8BVEeTFwTduh',
+      debug:new URLSearchParams(window.location.search).get('oai_debug')==='1'
+    });
+  }
+</script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GWS8BLWWST"></script>
 <script is:inline>
   window.dataLayer = window.dataLayer || [];
@@ -120,9 +146,17 @@ const canonical = SITE + (canonicalPath === '/' ? '/' : canonicalPath);
     var KEY='cm_attribution';
     if(sessionStorage.getItem(KEY))return;
     var p=new URLSearchParams(location.search);
+    var oppref=p.get('oppref') || '';
+    var gclid=p.get('gclid') || '';
+    var utmSource=p.get('utm_source') || '';
+    var channel=oppref ? 'ChatGPT Ads' :
+      (gclid ? 'Google Ads' :
+      (utmSource ? utmSource : (document.referrer ? 'Referral' : 'Direct')));
     sessionStorage.setItem(KEY, JSON.stringify({
-      gclid: p.get('gclid') || '',
-      utmSource: p.get('utm_source') || '',
+      channel: channel,
+      oppref: oppref,
+      gclid: gclid,
+      utmSource: utmSource,
       utmMedium: p.get('utm_medium') || '',
       utmCampaign: p.get('utm_campaign') || '',
       landingPage: location.href,
