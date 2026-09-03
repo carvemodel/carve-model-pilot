@@ -64,7 +64,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .needlist li{position:relative;padding-left:1.2rem;font-size:0.86rem;color:var(--cm-text);}
 .needlist li::before{content:"";position:absolute;left:0;top:0.55em;width:6px;height:6px;background:var(--cm-silver);}
 .needlist__note{font-size:0.78rem;color:var(--cm-text-subtle);line-height:1.5;margin-top:0.85rem;}
-.needlist__note strong{color:var(--cm-text);}
+.needlist__note strong{color:var(--cm-text);font-weight:var(--w-semibold);}
 @media(max-width:480px){.needlist ul{grid-template-columns:1fr;}}
 .orlink{display:flex;align-items:center;gap:0.8rem;margin:1rem 0 0.8rem;color:var(--cm-text-subtle);}
 .orlink::before,.orlink::after{content:"";flex:1;height:1px;background:var(--cm-line-faint);}
@@ -100,7 +100,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 /* file dropzone */
 .drop{border:1.5px dashed var(--cm-border-strong);border-radius:var(--r-sm);padding:1.4rem;text-align:center;color:var(--cm-text-muted);font-size:0.88rem;transition:0.18s;cursor:pointer;}
 .drop:hover,.drop.over{border-color:var(--cm-silver);color:var(--cm-text);background:var(--cm-ink-850);}
-.drop strong{color:var(--cm-text);display:block;margin-bottom:0.3rem;}
+.drop strong{color:var(--cm-text);display:block;margin-bottom:0.3rem;font-weight:var(--w-semibold);}
 .drop .sub{display:block;font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.02em;color:var(--cm-text-subtle);margin-top:0.5rem;}
 .filelist{list-style:none;padding:0;margin:0.8rem 0 0;display:flex;flex-direction:column;gap:0.5rem;}
 .filelist li{display:flex;align-items:center;gap:0.7rem;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.55rem 0.7rem;font-size:0.82rem;color:var(--cm-text);}
