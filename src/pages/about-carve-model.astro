@@ -34,7 +34,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
 @media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
 .page-hero__visual{position:relative;}
-.page-hero__visual .hero-photo{display:block;width:100%;aspect-ratio:4/3;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
+.page-hero__visual .hero-photo{display:block;width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);object-fit:cover;object-position:50% center;}
 .page-hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .page-hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .page-hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
