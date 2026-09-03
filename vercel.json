@@ -46,6 +46,18 @@
   ],
   "headers": [
     {
+      "source": "/image-slot.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }
+      ]
+    },
+    {
+      "source": "/site.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }
+      ]
+    },
+    {
       "source": "/rss.xml",
       "headers": [
         { "key": "Content-Type", "value": "application/rss+xml; charset=utf-8" }
