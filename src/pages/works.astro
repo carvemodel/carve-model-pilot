@@ -172,7 +172,7 @@ if (process.env.REDIS_URL) {
             ))}
           </div>
           {p.imageUrl
-            ? <img src={p.imageUrl} alt={p.name} style={`aspect-ratio:${ratio};object-fit:cover;`} loading="lazy" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} data-case-study-url={p.caseStudyUrl || ''} onclick="openLightbox(this)" />
+            ? <img src={p.imageUrl} alt={p.name} style={`aspect-ratio:${ratio};object-fit:cover;`} width={p.imageWidth || undefined} height={p.imageHeight || undefined} loading="lazy" decoding="async" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} data-case-study-url={p.caseStudyUrl || ''} onclick="openLightbox(this)" />
             : <image-slot id={p.id} placeholder="Drop project photo" style={`aspect-ratio:${ratio};`}></image-slot>}
           <span class="corner tl"></span><span class="corner br"></span>
           <span class="slot-label">{label}</span>
