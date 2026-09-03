@@ -130,6 +130,54 @@ async function sendNotificationEmail(subject, html, toOverride) {
   }
 }
 
+// ── OpenAI Ads server-side Conversions API ─────────────────────────────────
+// Complements the client-side oaiq pixel (fired in thank-you.astro): posts
+// the same lead_created event directly from the server, so the conversion
+// is still recorded even if the visitor's browser blocked the pixel/script
+// (ad blockers, Safari ITP, etc.). Uses the lead's own id as the event id --
+// the SAME id the browser pixel call passes as event_id -- so OpenAI can
+// de-duplicate the two lead_created events for one lead into a single
+// counted conversion.
+//   OPENAI_ADS_API_KEY  required -- an Ads Conversions API key from the
+//                        OpenAI Ads dashboard (NOT a regular OpenAI API
+//                        key). Set as a Vercel Production env var only --
+//                        never committed to the repo or sent to the
+//                        browser. If unset, this is silently skipped
+//                        (logged) so the underlying save never fails
+//                        because of ads config.
+const OPENAI_ADS_PIXEL_ID = '4R4qF8nLNG8BVEeTFwTduh';
+
+async function sendOpenAiConversionEvent(lead) {
+  const apiKey = process.env.OPENAI_ADS_API_KEY;
+  if (!apiKey) {
+    console.warn('OPENAI_ADS_API_KEY not set — skipping OpenAI Ads conversion event for lead', lead && lead.id);
+    return;
+  }
+  try {
+    const res = await fetch('https://bzr.openai.com/v1/events?pid=' + OPENAI_ADS_PIXEL_ID, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        validate_only: false,
+        events: [{
+          id: String(lead.id),
+          type: 'lead_created',
+          timestamp_ms: lead.receivedAtISO ? Date.parse(lead.receivedAtISO) : Date.now(),
+          source_url: 'https://www.physical-model.com/thank-you',
+          action_source: 'web',
+          data: { type: 'customer_action' },
+        }],
+      }),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.error('OpenAI Ads conversion event failed:', res.status, text);
+    }
+  } catch (err) {
+    console.error('OpenAI Ads conversion event error:', err);
+  }
+}
+
 async function sendLeadNotification(lead) {
   const c = lead.client || {};
   const html =
@@ -789,6 +837,7 @@ module.exports = async (req, res) => {
       ));
       const notifications = [
         ...claimedLeads.map((l) => sendLeadNotification(l)),
+        ...claimedLeads.map((l) => sendOpenAiConversionEvent(l)),
         ...claimedQuotes.map((q) => sendQuoteNotification(q)),
         ...claimedChangeRequests.map((c) => sendChangeRequestNotification(c)),
       ];
