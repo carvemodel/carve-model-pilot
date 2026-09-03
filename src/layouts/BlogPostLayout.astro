@@ -148,7 +148,7 @@ const {
         </div>
       </div>
     </div>
-  ) : coverImage ? <><span class="corner tl"></span><span class="corner br"></span><img src={coverImage} alt={heading} style={coverAspectRatio ? `aspect-ratio:${coverAspectRatio};` : undefined} />{coverCaption && <span class="slot-label">{coverCaption}</span>}</> : <image-slot id={coverId} placeholder="Drop article image"></image-slot>}</div>}
+  ) : coverImage ? <><span class="corner tl"></span><span class="corner br"></span><img src={coverImage} alt={heading} style={coverAspectRatio ? `aspect-ratio:${coverAspectRatio};` : undefined} width="1200" height="600" decoding="async" />{coverCaption && <span class="slot-label">{coverCaption}</span>}</> : <image-slot id={coverId} placeholder="Drop article image"></image-slot>}</div>}
 </div></section>
 <section class="section" style={`padding-top:${hideCover ? 'clamp(1rem,1.6vw,1.4rem)' : 'clamp(2.5rem,4vw,3.5rem)'};`}><div class="container narrow">
   <div class="prose">
