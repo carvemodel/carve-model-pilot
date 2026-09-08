@@ -6677,6 +6677,30 @@ window.openLeadVariation=function(id){
   alRenderLinks();
   document.getElementById('al-contact').focus();
 };
+/* Open the Add Lead modal pre-filled from an existing Clients-tab contact --
+   same idea as openLeadVariation() above, but sourced from a client record
+   instead of a past lead. Used by the "+ Add lead" button on each contact
+   row in the Clients tab, so Carve Admin/Client Manager can start a new
+   enquiry for a client who already has an account without retyping their
+   details. The new lead is tied back to this same contact automatically:
+   ensureClientContact() (called from createLead()) matches on email, so it
+   just increments this contact's existing quoteRequests count rather than
+   creating a duplicate client record. */
+window.openAddLeadForContact=function(companyId,contactId){
+  var co=(window.COMPANIES||[]).filter(function(x){return x.id===companyId;})[0];
+  if(!co){alert('Could not find that company.');return;}
+  var ct=co.contacts.filter(function(x){return x.id===contactId;})[0];
+  if(!ct){alert('Could not find that contact.');return;}
+  openAddLead();
+  document.getElementById('addLeadTitle').textContent='Add a lead for '+ct.name;
+  document.getElementById('addLeadIntro').textContent='Client details are pre-filled from '+co.name+' \u2014 fill in the new project\'s requirements below, then save. It joins the leads inbox like any other enquiry.';
+  document.getElementById('al-contact').value=ct.name||'';
+  document.getElementById('al-title').value=ct.title||'';
+  document.getElementById('al-company').value=(co.name!=='Independent / Unlisted')?co.name:'';
+  document.getElementById('al-email').value=ct.email||'';
+  document.getElementById('al-phone').value=ct.phone||'';
+  document.getElementById('al-project').focus();
+};
 function onALTypeChange(){
   var v=document.getElementById('al-type-select').value||'';
   var landscapeChk=document.getElementById('al-landscapeChk');
@@ -7545,6 +7569,7 @@ function renderCompanyCard(co,repName){
       '<div class="cc-contact__top"><div><div class="cc-v">'+esc(c.name)+(c.title?(', '+esc(c.title)):'')+'</div><div class="cc-m">'+esc(c.email)+(c.phone?(' · '+esc(c.phone)):'')+'</div></div>'+
       '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'+
       (c.hasAccount===false?'<button class="btn btn--primary btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">+ Assign account</button>':'<button class="btn btn--ghost btn--sm" onclick="openAddClient(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Edit contact</button>')+
+      '<button class="btn btn--ghost btn--sm" onclick="openAddLeadForContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">+ Add lead</button>'+
       // "Log in as" this contact's own portal account -- reuses the same
       // real, server-verified impersonateAccount(email,role,name) Team &
       // Access already uses for staff/vendor accounts (see api/auth.js's
