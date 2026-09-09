@@ -6110,13 +6110,48 @@ function editProjectPrice(){
   next=parseMoneyInput(next);
   if(!next||next<=0){alert('Enter a valid price greater than 0.');return;}
   b.clientQuote.price=next;
-  logProjectEvent(b,'Project price updated to $'+next.toLocaleString('en-US'));
+  var invAdjusted=syncInvoiceAmountsToPrice(b);
+  logProjectEvent(b,'Project price updated to $'+next.toLocaleString('en-US')+(invAdjusted?' (invoice amount'+(invAdjusted.both?'s':'')+' updated to match)':''));
   saveSRC({changedBriefIds:[b.id]});
   if(window.syncClientsFromLeads)window.syncClientsFromLeads();
   renderProjectOverview(b);
   if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
 }
 window.editProjectPrice=editProjectPrice;
+// Keeps an already-issued invoice's deposit/balance amounts in sync
+// whenever editProjectPrice() corrects b.clientQuote.price AFTER the
+// invoice was generated -- e.g. ensureClientInvoice() ran once off a
+// price that was later found to be the vendor's cost instead of the real
+// client-agreed number (see editProjectPrice's own comment above), so the
+// invoice was issued at the wrong amount and, being an "already issued"
+// invoice, ensureClientInvoice() itself will never touch it again.
+// Money already marked paid is never rewritten -- only the portion(s)
+// still due are recalculated, so the invoice total always tracks the
+// current agreed price without ever silently changing what a payment
+// already collected was actually for. Returns a small summary of what
+// changed (or false if there was no invoice to reconcile) purely so the
+// caller can mention it in the activity-log line.
+function syncInvoiceAmountsToPrice(b){
+  var inv=b.clientQuote&&b.clientQuote.invoice;
+  if(!inv)return false;
+  var total=b.clientQuote.price;
+  var depositPaid=(inv.depositStatus||'due')==='paid';
+  var balancePaid=(inv.balanceStatus||'due')==='paid';
+  if(depositPaid&&balancePaid)return false; // fully paid -- nothing left to reconcile
+  var oldDep=inv.depositAmt||0, oldBal=inv.balanceAmt||0;
+  if(depositPaid){
+    inv.balanceAmt=Math.max(0,total-oldDep);
+  }else if(balancePaid){
+    inv.depositAmt=Math.max(0,total-oldBal);
+  }else{
+    inv.depositAmt=Math.round(total/2);
+    inv.balanceAmt=total-inv.depositAmt;
+  }
+  var changed=(inv.depositAmt!==oldDep)||(inv.balanceAmt!==oldBal);
+  return changed?{both:!depositPaid&&!balancePaid}:false;
+}
+window.syncInvoiceAmountsToPrice=syncInvoiceAmountsToPrice;
 function editVendorPrice(){
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
