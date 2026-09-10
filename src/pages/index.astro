@@ -46,6 +46,7 @@ if (process.env.REDIS_URL) {
 >
 <Fragment slot="head">
 <meta name="robots" content="index,follow">
+<link rel="preload" as="image" href="/assets/hero-photo-900.avif" type="image/avif" fetchpriority="high">
 <script type="application/ld+json" is:inline set:html={`{
   "@context": "https://schema.org",
   "@graph": [
@@ -335,7 +336,7 @@ if (process.env.REDIS_URL) {
         <picture>
           <source type="image/avif" srcset="/assets/hero-photo-480.avif 480w, /assets/hero-photo-900.avif 900w, /assets/hero-photo-1600.avif 1600w" sizes="(max-width:900px) 440px, 57.5vw">
           <source type="image/webp" srcset="/assets/hero-photo-480.webp 480w, /assets/hero-photo-900.webp 900w, /assets/hero-photo-1600.webp 1600w" sizes="(max-width:900px) 440px, 57.5vw">
-          <img class="hero-photo" src="/assets/hero-photo-1600.webp" alt="Carve Model architectural scale model" width="1600" height="900" fetchpriority="high" loading="eager" decoding="async">
+          <img class="hero-photo" src="/assets/hero-photo-1600.webp" alt="Carve Model architectural scale model" width="1600" height="900" fetchpriority="high" loading="eager">
         </picture>
         <span class="slot-label">Mixed Use Development · 1:144 · ABS</span>
         <div class="hero__spec">
