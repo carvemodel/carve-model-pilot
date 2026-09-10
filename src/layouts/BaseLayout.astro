@@ -1,6 +1,13 @@
 ---
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import fs from 'node:fs';
+
+// public/styles.css is inlined directly into <head> (see below) instead of
+// linked, since the whole file is well under 9KB gzipped -- this saves a
+// render-blocking request on every .astro page. The physical file stays in
+// public/ for the raw Studio Portal tool pages that still link it directly.
+const criticalCSS = fs.readFileSync(new URL('../../public/styles.css', import.meta.url), 'utf-8');
 
 interface Props {
   title: string;
@@ -54,9 +61,20 @@ const canonical = SITE + (canonicalPath === '/' ? '/' : canonicalPath);
 <meta name="twitter:description" content={description}>
 <meta name="twitter:image" content={ogImage}>
 <link rel="icon" type="image/png" href="/assets/logo-mark.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css">
+<link rel="preload" href="/fonts/montserrat-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/hanken-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Self-hosted fonts. Each family ships as a single variable-weight WOFF2
+   (latin subset only), so one @font-face per family with a weight range
+   covers every weight actually used on the site -- no unused weights,
+   no Google Fonts round trip. font-display:swap avoids invisible text
+   while these load. */
+@font-face{font-family:"Montserrat";font-style:normal;font-weight:600 800;font-display:swap;src:url("/fonts/montserrat-latin.woff2") format("woff2");}
+@font-face{font-family:"Hanken Grotesk";font-style:normal;font-weight:400 600;font-display:swap;src:url("/fonts/hanken-latin.woff2") format("woff2");}
+@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:400 500;font-display:swap;src:url("/fonts/jetbrains-mono-latin.woff2") format("woff2");}
+</style>
+<style set:html={criticalCSS}></style>
 
 <!-- GA4 + Google Ads account-level tag. One GA4 property (G-GWS8BLWWST), one
      gtag implementation, loaded once here site-wide (never duplicated per
