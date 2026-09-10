@@ -5,6 +5,13 @@ import sitemap from '@astrojs/sitemap';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://www.physical-model.com',
+  build: {
+    // Inline Astro's own per-page/component scoped CSS bundles (e.g. the
+    // homepage hero's <style> block) directly into each page instead of
+    // extracting them to a separate linked .css file -- avoids an extra
+    // render-blocking request for critical above-the-fold styles.
+    inlineStylesheets: 'always',
+  },
   integrations: [
     sitemap({
       // RSS feed, /login, and the studio-portal tool pages aren't content
