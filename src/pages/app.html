@@ -5765,8 +5765,14 @@ function renderProjectInvoicePanel(b){
   var hasInvoice=!!(b.clientQuote&&b.clientQuote.invoice);
   if(hasInvoice&&typeof window.invoiceLineAdmin==='function'){
     var inv=b.clientQuote.invoice;
-    wrap.innerHTML=window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
-      window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery');
+    var isSingleInvoice=!inv.balanceId;
+    // Only offer to collapse deposit+balance into one invoice while both
+    // are still untouched -- see combineInvoiceIntoOne()'s own guard for
+    // why this can't run once either side has a payment/report on it.
+    var canCombine=!isSingleInvoice&&(inv.depositStatus||'due')==='due'&&(inv.balanceStatus||'due')==='due';
+    wrap.innerHTML=window.invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,(isSingleInvoice?'Payment in full':'Deposit · 50%')+' · issued '+inv.issuedDate)+
+      (isSingleInvoice?'':window.invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery'))+
+      (canCombine?'<div style="text-align:right;margin-top:0.6rem;"><button type="button" class="btn btn--ghost btn--sm owner-only" onclick="combineInvoiceIntoOne()" title="Replace the deposit + balance invoices with a single invoice for the full amount -- Carve Admin only">Combine into one invoice</button></div>':'');
   }else{
     wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.86rem;padding:0.7rem 0;">Invoice not issued yet — it\'s generated automatically once this project has a client price.</div>';
   }
@@ -6110,13 +6116,82 @@ function editProjectPrice(){
   next=parseMoneyInput(next);
   if(!next||next<=0){alert('Enter a valid price greater than 0.');return;}
   b.clientQuote.price=next;
-  logProjectEvent(b,'Project price updated to $'+next.toLocaleString('en-US'));
+  var invAdjusted=syncInvoiceAmountsToPrice(b);
+  logProjectEvent(b,'Project price updated to $'+next.toLocaleString('en-US')+(invAdjusted?' (invoice amount'+(invAdjusted.both?'s':'')+' updated to match)':''));
   saveSRC({changedBriefIds:[b.id]});
   if(window.syncClientsFromLeads)window.syncClientsFromLeads();
   renderProjectOverview(b);
   if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
 }
 window.editProjectPrice=editProjectPrice;
+// Keeps an already-issued invoice's deposit/balance amounts in sync
+// whenever editProjectPrice() corrects b.clientQuote.price AFTER the
+// invoice was generated -- e.g. ensureClientInvoice() ran once off a
+// price that was later found to be the vendor's cost instead of the real
+// client-agreed number (see editProjectPrice's own comment above), so the
+// invoice was issued at the wrong amount and, being an "already issued"
+// invoice, ensureClientInvoice() itself will never touch it again.
+// Money already marked paid is never rewritten -- only the portion(s)
+// still due are recalculated, so the invoice total always tracks the
+// current agreed price without ever silently changing what a payment
+// already collected was actually for. Returns a small summary of what
+// changed (or false if there was no invoice to reconcile) purely so the
+// caller can mention it in the activity-log line.
+function syncInvoiceAmountsToPrice(b){
+  var inv=b.clientQuote&&b.clientQuote.invoice;
+  if(!inv)return false;
+  var total=b.clientQuote.price;
+  var depositPaid=(inv.depositStatus||'due')==='paid';
+  var balancePaid=(inv.balanceStatus||'due')==='paid';
+  if(depositPaid&&balancePaid)return false; // fully paid -- nothing left to reconcile
+  var oldDep=inv.depositAmt||0, oldBal=inv.balanceAmt||0;
+  if(depositPaid){
+    inv.balanceAmt=Math.max(0,total-oldDep);
+  }else if(balancePaid){
+    inv.depositAmt=Math.max(0,total-oldBal);
+  }else{
+    inv.depositAmt=Math.round(total/2);
+    inv.balanceAmt=total-inv.depositAmt;
+  }
+  var changed=(inv.depositAmt!==oldDep)||(inv.balanceAmt!==oldBal);
+  return changed?{both:!depositPaid&&!balancePaid}:false;
+}
+window.syncInvoiceAmountsToPrice=syncInvoiceAmountsToPrice;
+// One-time corrective action for a project that was invoiced on the old
+// 50/50 split (either because that was the only option at the time, or
+// the payment plan was chosen by mistake) but should really have a single
+// invoice for the full amount. Only safe to run while nothing has been
+// paid or reported yet on either side -- once real money has moved
+// against a specific invoice number, collapsing it away would orphan
+// that payment record, so this refuses instead. Sets paymentPlan='full'
+// going forward too, so if the price is corrected later,
+// syncInvoiceAmountsToPrice() keeps treating it as a single invoice.
+function combineInvoiceIntoOne(){
+  var id=document.getElementById('projSelect').value;
+  var b=findBrief(id);
+  if(!b||!b.clientQuote||!b.clientQuote.invoice){alert('This project doesn\'t have an issued invoice yet.');return;}
+  var inv=b.clientQuote.invoice;
+  if(!inv.balanceId){alert('This project already has a single invoice.');return;}
+  var depositTouched=(inv.depositStatus||'due')!=='due';
+  var balanceTouched=(inv.balanceStatus||'due')!=='due';
+  if(depositTouched||balanceTouched){alert('A payment has already been recorded on this invoice, so the deposit and balance can\'t be safely combined. Contact your developer if this still needs to change.');return;}
+  if(!confirm('Combine the deposit ('+fmtUsd(inv.depositAmt)+') and balance ('+fmtUsd(inv.balanceAmt)+') for "'+b.title+'" into a single '+fmtUsd(b.clientQuote.price)+' invoice? Invoice '+inv.balanceId+' will be removed; '+inv.depositId+' becomes the one invoice for the full amount.')) return;
+  var removedBalanceId=inv.balanceId;
+  b.clientQuote.paymentPlan='full';
+  inv.depositAmt=b.clientQuote.price;
+  inv.balanceAmt=0;
+  inv.balanceId=null;
+  inv.balanceStatus='paid';
+  delete inv.balancePaidAt;delete inv.balanceReportedAt;delete inv.balanceReportedMethod;
+  logProjectEvent(b,'Combined invoices '+inv.depositId+' + '+removedBalanceId+' into one invoice for '+fmtUsd(inv.depositAmt));
+  saveSRC({changedBriefIds:[b.id]});
+  if(window.syncClientsFromLeads)window.syncClientsFromLeads();
+  renderProjectOverview(b);
+  if(typeof renderAwardedProjects==='function')renderAwardedProjects();
+  if(typeof renderPhase1Invoice==='function')renderPhase1Invoice();
+}
+window.combineInvoiceIntoOne=combineInvoiceIntoOne;
 function editVendorPrice(){
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
@@ -6309,6 +6384,7 @@ function clientInvoiceLinesHtml(b){
   // degrade to "$0" here, never crash the render (see the call site's own
   // comment on why a throw here used to break navigation for every role).
   var dep=inv.depositAmt||0, bal=inv.balanceAmt||0;
+  var isSingleInvoice=!inv.balanceId; // 100%-upfront payment plan -- see ensureClientInvoice()
   var issuedFmt=inv.issuedDate?new Date(inv.issuedDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
   var depStatus=inv.depositStatus||'due', balStatus=inv.balanceStatus||'due';
   var depChipClass=depStatus==='paid'?'chip done':'chip await';
@@ -6317,8 +6393,8 @@ function clientInvoiceLinesHtml(b){
   var balChipStyle=balStatus==='paid'?'':'background:rgba(255,255,255,0.04);color:var(--cm-text-subtle);border:1px solid var(--cm-border-strong);';
   var depPayBtn=depStatus==='due'?('<a class="btn btn--primary btn--sm client-only" style="margin-left:0.5rem;" href="#" onclick="openPay(\''+b.id+'\',\'deposit\',\''+inv.depositId+'\',\'$'+dep.toLocaleString('en-US')+'\');return false;">Pay now</a>'):'';
   var depConfirmBtn=depStatus==='reported'?('<button class="btn btn--primary btn--sm finance-edit" style="margin-left:0.5rem;" onclick="confirmPayment(\''+b.id+'\',\'deposit\')">Confirm payment received</button>'):'';
-  var depBanner=depStatus==='reported'?('<div class="paybanner finance-edit"><span class="paybanner__dot"></span><div><b>Client reported a deposit payment</b>'+(inv.depositReportedMethod?(' via '+esc(inv.depositReportedMethod)):'')+'. Verify it has landed in the bank, then confirm — that starts the production clock.</div></div>'):'';
-  var depDesc='Deposit · 50% to begin fabrication · issued '+issuedFmt+(depStatus==='paid'&&inv.depositPaidAt?(' · paid '+inv.depositPaidAt):'');
+  var depBanner=depStatus==='reported'?('<div class="paybanner finance-edit"><span class="paybanner__dot"></span><div><b>Client reported a '+(isSingleInvoice?'payment':'deposit payment')+'</b>'+(inv.depositReportedMethod?(' via '+esc(inv.depositReportedMethod)):'')+'. Verify it has landed in the bank, then confirm — that starts the production clock.</div></div>'):'';
+  var depDesc=(isSingleInvoice?'Payment in full · due to begin fabrication':'Deposit · 50% to begin fabrication')+' · issued '+issuedFmt+(depStatus==='paid'&&inv.depositPaidAt?(' · paid '+inv.depositPaidAt):'');
   var balDesc='Final balance · due on delivery'+(balStatus==='paid'&&inv.balancePaidAt?(' · paid '+inv.balancePaidAt):'');
   return '<div class="inv">'+
       '<div><div class="id">'+inv.depositId+'</div><div class="desc">'+depDesc+'</div></div>'+
@@ -6328,8 +6404,10 @@ function clientInvoiceLinesHtml(b){
       depPayBtn+depConfirmBtn+
     '</div>'+
     depBanner+
+    (isSingleInvoice?'':(
     '<div class="inv"><div><div class="id">'+inv.balanceId+'</div><div class="desc">'+balDesc+'</div></div><div class="amt">$'+bal.toLocaleString('en-US')+'</div><span class="chip" style="margin-left:1rem;'+balChipStyle+'">'+balChipText+'</span>'+
-      '<button class="btn btn--ghost btn--sm" style="margin-left:1rem;" onclick="downloadInvoice(\''+b.id+'\',\'balance\')">↓ PDF</button></div>';
+      '<button class="btn btn--ghost btn--sm" style="margin-left:1rem;" onclick="downloadInvoice(\''+b.id+'\',\'balance\')">↓ PDF</button></div>'
+    ));
 }
 window.clientInvoiceLinesHtml=clientInvoiceLinesHtml;
 // Client's Invoice tab -- every one of THEIR awarded (non-archived)
@@ -8086,6 +8164,8 @@ function downloadInvoice(bid,which){
   var cq=b.clientQuote, inv=cq.invoice;
   var q=winningQuote(b)||{};
   var isDeposit=which!=='balance';
+  var isSingleInvoice=!inv.balanceId;
+  if(!isDeposit&&isSingleInvoice){alert('This project has a single invoice for the full amount -- there\'s no separate balance invoice.');return;}
   var id=isDeposit?inv.depositId:inv.balanceId;
   var amt=isDeposit?inv.depositAmt:inv.balanceAmt;
   var client=b.client||{};
@@ -8120,12 +8200,16 @@ function downloadInvoice(bid,which){
   if(boundaryUrl)remarksBits.push('per boundary diagram');
   var remarks=remarksBits.length?remarksBits.join(' '):'—';
 
-  var paymentTerms=[
+  var paymentTerms=isSingleInvoice?[
+    fmtUsd(inv.depositAmt)+' — 100% due with this invoice, before fabrication begins.'
+  ]:[
     fmtUsd(inv.depositAmt)+' — 50% due with this invoice.',
     fmtUsd(inv.balanceAmt)+' — remaining balance due upon model approval, before release for shipping.'
   ];
   var duenote;
-  if(isDeposit){
+  if(isSingleInvoice){
+    duenote='Paid in full — no remaining balance.';
+  }else if(isDeposit){
     duenote='Remaining '+fmtUsd2(inv.balanceAmt)+' due upon approval, before shipping.';
   }else{
     var depositPaid=(inv.depositStatus||'due')==='paid';
@@ -8215,7 +8299,7 @@ function downloadInvoice(bid,which){
   var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+esc(id)+'</title><style>'+css+'</style></head><body>'+
 
 '<table class="pdfwrap"><thead><tr><td>'+
-'<div class="hdbar"><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model"><div class="inv-tag"><b>INVOICE</b><span>'+(isDeposit?'DEPOSIT':'BALANCE')+' · No. '+esc(id)+'</span></div></div>'+
+'<div class="hdbar"><img src="'+location.href.replace(/[^\/]*(\?.*)?$/,'')+'/assets/logo-lockup.png" alt="Carve Model"><div class="inv-tag"><b>INVOICE</b><span>'+(isSingleInvoice?'PAYMENT IN FULL':(isDeposit?'DEPOSIT':'BALANCE'))+' · No. '+esc(id)+'</span></div></div>'+
 '<div class="addrbar"><span>1370 Valley Vista Dr. #200, Diamond Bar, CA 91765 · www.physical-model.com</span><span>877-856-6665 · support@physical-model.com</span></div>'+
 '</td></tr></thead>'+
 
@@ -10010,7 +10094,6 @@ function ensureClientInvoice(b){
   if(b.status!=='awarded')return false; // no invoice number, and no invoice, until production is awarded
   if(b.clientQuote.invoice)return false; // already issued — never reassign invoice numbers/amounts
   var total=b.clientQuote.price;
-  var dep=Math.round(total/2), bal=total-dep;
   var today=new Date().toISOString().slice(0,10);
   // b.code stays the project's own general reference number (used elsewhere,
   // e.g. "Confidential · Ref <code>" in Project information) and doubles as
@@ -10021,13 +10104,32 @@ function ensureClientInvoice(b){
   // too so this never collides with b.code or any other invoice issued that
   // day.
   if(!b.code)b.code=nextInvoiceNumber();
-  b.clientQuote.invoice={
-    depositId:b.code,
-    balanceId:nextInvoiceNumber(),
-    depositAmt:dep,balanceAmt:bal,
-    issuedDate:today,
-    depositStatus:'due',balanceStatus:'due'
-  };
+  if(b.clientQuote.paymentPlan==='full'){
+    // Single invoice for the whole amount, due before fabrication begins --
+    // reuses the same depositId/depositStatus lifecycle as the split plan
+    // (so 'deposit received' still correctly starts the project, see
+    // Project Kick Off), just with no second invoice: balanceId stays null
+    // (every render site that shows a balance line checks for that and
+    // skips it entirely) and balanceAmt/-Status are inert zero/'paid' so
+    // aggregate sums elsewhere never treat a nonexistent balance as
+    // outstanding.
+    b.clientQuote.invoice={
+      depositId:b.code,
+      balanceId:null,
+      depositAmt:total,balanceAmt:0,
+      issuedDate:today,
+      depositStatus:'due',balanceStatus:'paid'
+    };
+  }else{
+    var dep=Math.round(total/2), bal=total-dep;
+    b.clientQuote.invoice={
+      depositId:b.code,
+      balanceId:nextInvoiceNumber(),
+      depositAmt:dep,balanceAmt:bal,
+      issuedDate:today,
+      depositStatus:'due',balanceStatus:'due'
+    };
+  }
   return true;
 }
 window.SRC_markInvoicePaid=function(bid,which){
@@ -10237,9 +10339,10 @@ window.SRC_carveInvoices=function(){
   invoiced.sort(function(a,c){return (c.clientQuote.invoice.issuedDate||'').localeCompare(a.clientQuote.invoice.issuedDate||'');});
   invoiced.forEach(function(b){
     var inv=b.clientQuote.invoice;
+    var isSingleInvoice=!inv.balanceId;
     html+='<div class="panel" style="margin-top:1.25rem;"><div class="panel__head"><div><span class="src-card__code">'+esc(b.code||'')+'</span><span class="src-card__t">'+esc(b.title)+'</span></div><span class="mock__k">'+esc((b.client&&b.client.Company)||'')+'</span></div><div class="panel__body">'+
-      invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,'Deposit · 50% · issued '+inv.issuedDate)+
-      invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery')+
+      invoiceLineAdmin(b,'deposit',inv.depositId,inv.depositAmt,inv.depositStatus||'due',inv.depositPaidAt,inv.depositReportedAt,inv.depositReportedMethod,(isSingleInvoice?'Payment in full':'Deposit · 50%')+' · issued '+inv.issuedDate)+
+      (isSingleInvoice?'':invoiceLineAdmin(b,'balance',inv.balanceId,inv.balanceAmt,inv.balanceStatus||'due',inv.balancePaidAt,inv.balanceReportedAt,inv.balanceReportedMethod,'Final balance · due on delivery'))+
       '</div></div>';
   });
   list.innerHTML=html;
@@ -10260,6 +10363,13 @@ function clientQuoteSection(b){
   if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Not yet awarded to production — '+esc(shop(basisShop(b)).name)+' has not been notified. You can still finalize and send this price to the client now.</div>';
   html+='<div class="qform2">';
   html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" step="0.01" placeholder="e.g. 3200.50" value="'+(base.price!=null?base.price:'')+'"></div>';
+  // Payment terms -- 'split' (50% deposit / 50% on delivery, the long-
+  // standing default) or 'full' (a single invoice for the whole amount,
+  // due before fabrication begins). Read by ensureClientInvoice() when
+  // the invoice is actually generated (on award / quote acceptance) --
+  // see SRC_saveClientQuote below for where this gets read and stored.
+  var planIsFull=base.paymentPlan==='full';
+  html+='<div><label>Payment terms</label><select id="cq-plan-'+b.id+'"><option value="split"'+(planIsFull?'':' selected')+'>50% deposit to begin \u00b7 50% on delivery</option><option value="full"'+(planIsFull?' selected':'')+'>100% due upfront (single invoice)</option></select></div>';
   html+='<div><label>Est. shipping cost (USD) <span class="opt">internal only</span></label><input id="cq-shipest-'+b.id+'" type="number" step="0.01" placeholder="e.g. 350" value="'+(base.estimatedShippingCost!=null?base.estimatedShippingCost:'')+'"></div>';
   html+='<div><label>Production time (days)</label><input id="cq-days-'+b.id+'" type="number" placeholder="18" value="'+esc(base.days!=null?base.days:'')+'"></div>';
   html+='<div><label>Work scope</label><input id="cq-cat-'+b.id+'" type="text" value="'+esc(base.category||'')+'"></div>';
@@ -10335,6 +10445,8 @@ window.SRC_saveClientQuote=function(id){
   var extras=[];
   document.querySelectorAll('.cq-extra-'+id+':checked').forEach(function(cb){extras.push(cb.value);});
   var note=document.getElementById('cq-notes-'+id).value.trim();
+  var planEl=document.getElementById('cq-plan-'+id);
+  var paymentPlan=(planEl&&planEl.value==='full')?'full':'split';
   if(!price){alert('Enter the final price to send to the client.');return;}
   var prevComments=(b.clientQuote&&b.clientQuote.clientComments)||[];
   var wasSent=b.clientQuote&&b.clientQuote.sent===false; // resend after Edit & resend, vs. first send
@@ -10342,7 +10454,7 @@ window.SRC_saveClientQuote=function(id){
   // awarded (see SRC_award), since a fee proposal alone doesn't guarantee the
   // project moves forward.
   var prevInvoice=(b.clientQuote&&b.clientQuote.invoice)||null;
-  b.clientQuote={price:price,estimatedShippingCost:isNaN(estimatedShippingCost)?null:estimatedShippingCost,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true,clientComments:prevComments};
+  b.clientQuote={price:price,estimatedShippingCost:isNaN(estimatedShippingCost)?null:estimatedShippingCost,days:days||null,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,note:note,sent:true,clientComments:prevComments,paymentPlan:paymentPlan};
   if(prevInvoice)b.clientQuote.invoice=prevInvoice; // price edited after invoicing — keep the already-issued invoice as-is
   var invoiceCreated=(b.status==='awarded')&&ensureClientInvoice(b);
   saveSRC({changedBriefIds:[b.id]});SRC_render();
