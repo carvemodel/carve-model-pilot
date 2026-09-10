@@ -63,13 +63,16 @@ const canonical = SITE + (canonicalPath === '/' ? '/' : canonicalPath);
 <link rel="icon" type="image/png" href="/assets/logo-mark.png">
 <link rel="preload" href="/fonts/montserrat-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/hanken-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 /* Self-hosted fonts. Each family ships as a single variable-weight WOFF2
    (latin subset only), so one @font-face per family with a weight range
    covers every weight actually used on the site -- no unused weights,
    no Google Fonts round trip. font-display:swap avoids invisible text
-   while these load. */
+   while these load. Only Montserrat (hero headline) and Hanken Grotesk
+   (hero body copy/buttons) are preloaded -- they're the two font files
+   the hero actually needs before first paint. JetBrains Mono only backs
+   small eyebrow/label text in the hero, so it loads normally via
+   @font-face instead of competing for preload bandwidth. */
 @font-face{font-family:"Montserrat";font-style:normal;font-weight:600 800;font-display:swap;src:url("/fonts/montserrat-latin.woff2") format("woff2");}
 @font-face{font-family:"Hanken Grotesk";font-style:normal;font-weight:400 600;font-display:swap;src:url("/fonts/hanken-latin.woff2") format("woff2");}
 @font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:400 500;font-display:swap;src:url("/fonts/jetbrains-mono-latin.woff2") format("woff2");}
