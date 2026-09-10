@@ -83,7 +83,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
     <div class="page-hero__visual reveal">
       <span class="corner tl"></span><span class="corner br"></span>
-      <img class="hero-photo" src="/assets/process-hero.webp" alt="Carve Model architectural scale model" width="1600" height="1200" fetchpriority="high" loading="eager" decoding="async">
+      <picture>
+        <source type="image/avif" srcset="/assets/process-hero-480.avif 480w, /assets/process-hero-900.avif 900w, /assets/process-hero-1600.avif 1600w" sizes="(max-width:900px) 440px, 57.5vw">
+        <source type="image/webp" srcset="/assets/process-hero-480.webp 480w, /assets/process-hero-900.webp 900w, /assets/process-hero-1600.webp 1600w" sizes="(max-width:900px) 440px, 57.5vw">
+        <img class="hero-photo" src="/assets/process-hero-1600.webp" alt="Carve Model architectural scale model" width="1600" height="1200" fetchpriority="high" loading="eager" decoding="async">
+      </picture>
       <span class="slot-label">Mixed Use Development · 1:200 · ABS</span>
       <div class="hero__spec">
         <span class="tick">PROJECTS DELIVERED</span>
