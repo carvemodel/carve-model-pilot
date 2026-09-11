@@ -26,9 +26,10 @@ interface Props {
   footerHeading?: string; // optional override for the bottom CTA heading
   footerText?: string; // optional override for the bottom CTA body text
   footerButtons?: { label: string; href: string }[]; // optional override for the bottom CTA button(s)
+  hideFooterCta?: boolean; // optional: skip the bottom CTA box entirely — for an article that already ends with its own CTA in the body
 }
 const {
-  title, description, slug, metaLabel, publishDate, publishDateISO, lastReviewedDate, lastReviewedDateISO, readTime, heading, headingHtml, lead, leadHtml, leadExtra, leadExtraHtml, coverId, coverImage, coverCaption, coverAspectRatio, coverMockup, hideCover,
+  title, description, slug, metaLabel, publishDate, publishDateISO, lastReviewedDate, lastReviewedDateISO, readTime, heading, headingHtml, lead, leadHtml, leadExtra, leadExtraHtml, coverId, coverImage, coverCaption, coverAspectRatio, coverMockup, hideCover, hideFooterCta,
   footerHeading = 'Planning an architectural model?',
   footerText = "Send us the approximate project dimensions, intended use, available files, and preferred display size. Even if the design is still developing, we can recommend an appropriate starting scale, scope, and level of detail.",
   footerButtons = [{ label: 'Get a Preliminary Estimate →', href: '/contact' }],
@@ -159,12 +160,14 @@ const {
         <p>This guide was prepared by the <a href="/about-carve-model">Carve Model team</a> using our experience defining, coordinating, fabricating, reviewing, packaging, and delivering physical models. Project requirements vary, so recommendations are confirmed during the review of each project.</p>
       </>
     )}
-    <div class="article-foot">
-      <div class="callout" style="border-left-color:var(--cm-silver);">
-        <strong>{footerHeading}</strong> {footerText}
-        <div style="margin-top:1.1rem;display:flex;gap:0.8rem;flex-wrap:wrap;">{footerButtons.map((b, i) => <a class={`btn ${i === 0 ? 'btn--primary' : 'btn--ghost'}`} href={b.href}>{b.label}</a>)}</div>
+    {!hideFooterCta && (
+      <div class="article-foot">
+        <div class="callout" style="border-left-color:var(--cm-silver);">
+          <strong>{footerHeading}</strong> {footerText}
+          <div style="margin-top:1.1rem;display:flex;gap:0.8rem;flex-wrap:wrap;">{footerButtons.map((b, i) => <a class={`btn ${i === 0 ? 'btn--primary' : 'btn--ghost'}`} href={b.href}>{b.label}</a>)}</div>
+        </div>
       </div>
-    </div>
+    )}
   </div>
 </div></section>
 </main>
