@@ -214,6 +214,9 @@ image-slot{display:block;background:var(--cm-ink-850);border:1px solid var(--cm-
 .prose ul{margin-top:1.1rem;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:0.65rem;}
 .prose ul li{position:relative;padding-left:1.3rem;color:var(--cm-gray-300);font-size:1.02rem;line-height:1.6;}
 .prose ul li::before{content:"";position:absolute;left:0;top:0.62em;width:6px;height:6px;background:var(--cm-silver);}
+.prose ol{margin-top:1.1rem;padding-left:0;list-style:none;counter-reset:prose-ol;display:flex;flex-direction:column;gap:0.65rem;}
+.prose ol li{position:relative;padding-left:1.9rem;color:var(--cm-gray-300);font-size:1.02rem;line-height:1.6;counter-increment:prose-ol;}
+.prose ol li::before{content:counter(prose-ol) ".";position:absolute;left:0;top:0;font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-silver);}
 .prose strong{color:var(--cm-text);font-weight:var(--w-semibold);}
 .prose .table-wrap{margin-top:1.8rem;overflow-x:auto;}
 .prose table{width:100%;border-collapse:collapse;min-width:560px;}
