@@ -57,6 +57,21 @@
     { "source": "/blog/tag/model%20making%20process", "destination": "/model-making-process", "statusCode": 301 },
     { "source": "/blog/tag/physical%20model%20fabrication", "destination": "/model-making-process", "statusCode": 301 },
     { "source": "/blog/tag/carve%20model", "destination": "/blog", "statusCode": 301 },
+
+    { "source": "/architectural-scale-models-for-developers-architects-carve-model", "destination": "/architectural-scale-models", "statusCode": 301 },
+    { "source": "/faqs", "destination": "/faq", "statusCode": 301 },
+    { "source": "/blog/tag/imperial\\+vs\\+metric\\+scaling", "destination": "/blog/how-to-choose-architectural-model-scale", "statusCode": 301 },
+    { "source": "/blog/tag/model\\+production\\+timeline", "destination": "/blog/how-long-to-build-architectural-model", "statusCode": 301 },
+    { "source": "/blog/architectural-scale-model-cost", "destination": "/blog/architectural-scale-model-cost-us", "statusCode": 301 },
+    { "source": "/film-models", "destination": "/scale-model-services/film", "statusCode": 301 },
+    { "source": "/projects", "destination": "/works", "statusCode": 301 },
+    { "source": "/quote", "destination": "/contact", "statusCode": 301 },
+    { "source": "/urban-planning", "destination": "/architectural-scale-models", "statusCode": 301 },
+    { "source": "/blog/architectural-scale-model-cost-usa", "destination": "/blog/architectural-scale-model-cost-us", "statusCode": 301 },
+    { "source": "/blog/architecutural-scale-model-cost-us", "destination": "/blog/architectural-scale-model-cost-us", "statusCode": 301 },
+    { "source": "/portfolio", "destination": "/works", "statusCode": 301 },
+    { "source": "/sitemap.xml", "destination": "/sitemap-index.xml", "statusCode": 301 },
+
     { "source": "/blog/tag/architecture%20visualization", "destination": "/blog/physical-models-vs-renderings-animation-ar-vr", "statusCode": 301 },
 
     {
