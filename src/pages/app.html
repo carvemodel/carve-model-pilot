@@ -11357,6 +11357,37 @@ function mergeSrcList(localList,serverList,pendingDeleteIds){
   (serverList||[]).forEach(function(item){if(item&&item.id&&!deleted[item.id]){if(!(item.id in byId))order.push(item.id);byId[item.id]=item;}});
   return order.map(function(id){return byId[id];});
 }
+// COMPANIES (the Clients tab) is the one mergeSrcList caller where each item
+// carries a nested list of its own (company.contacts[]) that mergeSrcList
+// itself doesn't know anything about. For a company id known to BOTH sides
+// (the common case -- companies are rarely brand new), mergeSrcList takes
+// the server's whole company object as-is, contacts array included. If a
+// contact was just added (e.g. ensureClientContact creating a new record
+// for a changed email -- see the "history" comment on seedSRC) or edited
+// locally (saveClientField syncing name/title/phone), and this particular
+// poll's server snapshot predates that save actually landing in Redis (the
+// exact same fire-and-forget race already worked around for
+// briefs[].materialSamples above), the just-added/edited contact silently
+// got wiped back out the moment the next 5s poll landed -- reported live as
+// "the Clients tab still only shows the old email, the new one never shows
+// up." Fix: after mergeSrcList picks which whole company object wins per
+// id, also merge that company's own contacts[] by contact id (same
+// keep-local-only-ids/prefer-server-for-shared-ids rule), instead of
+// trusting whichever single company object mergeSrcList happened to pick to
+// already contain every contact both sides know about.
+function mergeCompanyLists(localList,serverList,pendingDeleteIds){
+  var merged=mergeSrcList(localList,serverList,pendingDeleteIds);
+  var localById={};(localList||[]).forEach(function(co){if(co&&co.id)localById[co.id]=co;});
+  var serverById={};(serverList||[]).forEach(function(co){if(co&&co.id)serverById[co.id]=co;});
+  merged.forEach(function(co){
+    if(!co||!co.id)return;
+    var lc=localById[co.id],sc=serverById[co.id];
+    if(lc&&sc&&lc!==sc){
+      co.contacts=mergeSrcList(lc.contacts,sc.contacts,[]);
+    }
+  });
+  return merged;
+}
 // Once a server snapshot no longer contains a pending-delete id, that delete
 // has propagated — stop excluding it (keeps the list from growing forever).
 function reconcilePendingDeletes(pendingArr,serverList){
@@ -11502,7 +11533,7 @@ function pullSourcing(){
       // other function in the file kept mutating the old COMPANIES object.
       // A factory pull never includes `companies` at all (Clients tab is
       // Owner-only), so isScopedPull naturally clears it for that role.
-      var mergedCompanies=mergeSrcList(isScopedPull?[]:SDB.companies,data.companies||[],srcPendingDeleteCompanyIds);
+      var mergedCompanies=mergeCompanyLists(isScopedPull?[]:SDB.companies,data.companies||[],srcPendingDeleteCompanyIds);
       COMPANIES.length=0;
       Array.prototype.push.apply(COMPANIES,mergedCompanies);
       reconcilePendingDeletes(srcPendingDeleteBriefIds,data.briefs||[]);
