@@ -7062,6 +7062,11 @@ function deleteClientContact(coId,contactId){
   if(!contact)return;
   if(!confirm('Permanently delete the contact record for '+contact.name+' ('+contact.email+')? This cannot be undone.'))return;
   co.contacts=co.contacts.filter(function(c){return c.id!==contactId;});
+  // Track this contact id as pending-deleted regardless of whether it took
+  // the whole company with it -- see srcPendingDeleteContactIds above for
+  // why an untracked single-contact delete could get silently resurrected
+  // by the next poll now that mergeCompanyLists() prefers local contacts.
+  if(window.srcPendingDeleteContactIds)window.srcPendingDeleteContactIds.push(contactId);
   // Splice in place rather than `COMPANIES=COMPANIES.filter(...)` -- that
   // reassignment would point the local COMPANIES variable at a brand-new
   // array while SDB.companies (and anything else holding the old
@@ -9217,7 +9222,18 @@ reconcileVendorsIntoShops();
 // Ids removed locally via deleteLead()/SRC_deleteBrief() but not yet confirmed
 // gone from the server (the delete's saveSRC() call is fire-and-forget — see
 // pullSourcing() below for why this list exists).
-var srcPendingDeleteLeadIds=[], srcPendingDeleteBriefIds=[], srcPendingDeleteVendorIds=[], srcPendingDeleteTeamIds=[], srcPendingDeleteVendorTeamIds=[], srcPendingDeleteCompanyIds=[];
+var srcPendingDeleteLeadIds=[], srcPendingDeleteBriefIds=[], srcPendingDeleteVendorIds=[], srcPendingDeleteTeamIds=[], srcPendingDeleteVendorTeamIds=[], srcPendingDeleteCompanyIds=[],
+  // Contact-level deletes need their own tracking, separate from
+  // srcPendingDeleteCompanyIds (which only ever covers a WHOLE company
+  // being removed, i.e. its last contact just got deleted too). Deleting
+  // one contact out of a company that still has others left was never
+  // tracked at all -- combined with mergeCompanyLists() now preferring
+  // LOCAL over server for any contact id known to both sides (see that
+  // function's own comment for why), an untracked delete would get
+  // silently resurrected by the very next poll: the server's
+  // not-yet-caught-up snapshot still has that contact id, and with
+  // nothing telling the merge to exclude it, it just comes back.
+  srcPendingDeleteContactIds=[];
 // Exposed on window: removeMember()/removeVendor() (Team & Access, an
 // earlier <script> block with no closure access to this IIFE's own
 // variables) push onto these same array objects by reference.
@@ -9225,6 +9241,7 @@ window.srcPendingDeleteVendorIds=srcPendingDeleteVendorIds;
 window.srcPendingDeleteTeamIds=srcPendingDeleteTeamIds;
 window.srcPendingDeleteVendorTeamIds=srcPendingDeleteVendorTeamIds;
 window.srcPendingDeleteCompanyIds=srcPendingDeleteCompanyIds;
+window.srcPendingDeleteContactIds=srcPendingDeleteContactIds;
 // One-time cleanup: briefs sent before Materials/Base were dropped from the
 // client brief still carry those two placeholder keys on disk (local storage
 // or the shared API) — strip them so old data matches what new briefs look
@@ -11375,7 +11392,7 @@ function mergeSrcList(localList,serverList,pendingDeleteIds){
 // keep-local-only-ids/prefer-server-for-shared-ids rule), instead of
 // trusting whichever single company object mergeSrcList happened to pick to
 // already contain every contact both sides know about.
-function mergeCompanyLists(localList,serverList,pendingDeleteIds){
+function mergeCompanyLists(localList,serverList,pendingDeleteIds,pendingDeleteContactIds){
   var merged=mergeSrcList(localList,serverList,pendingDeleteIds);
   var localById={};(localList||[]).forEach(function(co){if(co&&co.id)localById[co.id]=co;});
   var serverById={};(serverList||[]).forEach(function(co){if(co&&co.id)serverById[co.id]=co;});
@@ -11383,7 +11400,27 @@ function mergeCompanyLists(localList,serverList,pendingDeleteIds){
     if(!co||!co.id)return;
     var lc=localById[co.id],sc=serverById[co.id];
     if(lc&&sc&&lc!==sc){
-      co.contacts=mergeSrcList(lc.contacts,sc.contacts,[]);
+      // mergeSrcList(a,b,...) takes b's item for any id present in both a and
+      // b (the second list processed wins the overwrite -- see mergeSrcList's
+      // own byId[item.id]=item loop). Calling it as (local,server) -- like the
+      // very first version of this fix did -- meant that for a contact id
+      // already known to both sides (the normal case right after an edit:
+      // the id doesn't change, only its email/phone/name did), the SERVER's
+      // still-stale copy of that exact contact always won, silently
+      // reverting the edit back to its old value the moment the next 5s poll
+      // landed. That's why an edited email kept reappearing as "only the old
+      // record" instead of a second entry ever showing up: the intended new
+      // contact WAS being created locally, but the *company's whole contacts
+      // array* -- old contact included -- kept getting raced back to the
+      // stale pre-edit snapshot before it was ever visible. Calling it as
+      // (server,local) instead makes LOCAL win for any id known to both
+      // sides, while ids that exist on only one side (a genuinely new
+      // contact just created here, or one created in another admin session
+      // and not yet pulled here) are still kept from whichever side has
+      // them. Companies/contacts are Owner+Client-Manager-only editable (see
+      // client-edit-only in PERM), never touched by a vendor/factory session,
+      // so there's no legitimate concurrent-edit case this trades away.
+      co.contacts=mergeSrcList(sc.contacts,lc.contacts,pendingDeleteContactIds);
     }
   });
   return merged;
@@ -11533,7 +11570,7 @@ function pullSourcing(){
       // other function in the file kept mutating the old COMPANIES object.
       // A factory pull never includes `companies` at all (Clients tab is
       // Owner-only), so isScopedPull naturally clears it for that role.
-      var mergedCompanies=mergeCompanyLists(isScopedPull?[]:SDB.companies,data.companies||[],srcPendingDeleteCompanyIds);
+      var mergedCompanies=mergeCompanyLists(isScopedPull?[]:SDB.companies,data.companies||[],srcPendingDeleteCompanyIds,srcPendingDeleteContactIds);
       COMPANIES.length=0;
       Array.prototype.push.apply(COMPANIES,mergedCompanies);
       reconcilePendingDeletes(srcPendingDeleteBriefIds,data.briefs||[]);
@@ -11542,6 +11579,12 @@ function pullSourcing(){
       reconcilePendingDeletes(srcPendingDeleteTeamIds,data.team||[]);
       reconcilePendingDeletes(srcPendingDeleteVendorTeamIds,data.vendorTeam||[]);
       reconcilePendingDeletes(srcPendingDeleteCompanyIds,data.companies||[]);
+      // Flatten every server company's contacts into one id list -- a
+      // pending-deleted contact id should stop being excluded once none of
+      // the server's own companies still have it, the same "delete has
+      // propagated" rule reconcilePendingDeletes already applies to every
+      // other list above.
+      reconcilePendingDeletes(srcPendingDeleteContactIds,[].concat.apply([],(data.companies||[]).map(function(co){return (co&&co.contacts)||[];})));
       migrateBriefFields(SDB.briefs);
       if(window.reconcileVendorsIntoShops)window.reconcileVendorsIntoShops();
       if(window.syncClientsFromLeads)window.syncClientsFromLeads();
