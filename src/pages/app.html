@@ -7127,6 +7127,16 @@ function ensureClientContact(l){
       if(l.id)existing.processedLeadIds.push(l.id);
       existing.quoteRequests=(existing.quoteRequests||0)+1;
     }
+    // Keep the Clients tab roster in sync with edits made elsewhere (e.g. the
+    // per-project Client information "Edit" pencils on Overview) -- those write
+    // straight to b.client and call syncClientsFromLeads(), but this early
+    // return used to stop right after the quoteRequests bookkeeping above
+    // without ever copying the new name/title/phone back onto the existing
+    // Clients-tab contact record, so edited phone numbers (and name/title
+    // changes) never showed up here even though they'd saved successfully.
+    if(name&&existing.name!==name)existing.name=name;
+    if(existing.title!==title)existing.title=title;
+    if(existing.phone!==phone)existing.phone=phone;
     return;
   }
   var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
