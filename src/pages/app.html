@@ -3545,6 +3545,21 @@ function saveClientField(field){
   if(meta.required&&!val){alert('This field can\'t be empty.');return;}
   var old=b.client||{};
   if((old[meta.prop]||'')===val){toggleClientFieldEdit(field);return;}
+  // Warn before saving an email that already belongs to a DIFFERENT
+  // existing contact -- a typo/paste mistake here previously caused a real
+  // client's Clients-tab card to get silently renamed to a different
+  // client's name, because the two ended up sharing one email address and
+  // everything downstream (matching, "Log in as", project visibility) is
+  // keyed off email alone. This can't fully prevent the collision (the
+  // admin may genuinely mean it, e.g. a shared assistant inbox), but it
+  // stops it from happening silently.
+  if(field==='email'&&val&&typeof findClientContactByEmail==='function'){
+    var emailCollision=findClientContactByEmail(val);
+    if(emailCollision&&emailCollision.contact&&(!old.Email||emailCollision.contact.email.toLowerCase()!==old.Email.toLowerCase())){
+      var collidesWithSelf=old.Email&&emailCollision.contact.email.toLowerCase()===old.Email.toLowerCase();
+      if(!collidesWithSelf&&!confirm(val+' is already on file for a different contact: '+emailCollision.contact.name+' ('+emailCollision.company.name+'). Continue anyway? The two contacts will now share one email address, which means signing in with it shows BOTH of their projects.'))return;
+    }
+  }
   b.client=b.client||{};
   b.client[meta.prop]=val;
   logProjectEvent(b,meta.prop+' updated to '+val+' on "'+b.title+'"');
@@ -7139,9 +7154,31 @@ function ensureClientContact(l){
     // without ever copying the new name/title/phone back onto the existing
     // Clients-tab contact record, so edited phone numbers (and name/title
     // changes) never showed up here even though they'd saved successfully.
-    if(name&&existing.name!==name)existing.name=name;
-    if(existing.title!==title)existing.title=title;
-    if(existing.phone!==phone)existing.phone=phone;
+    //
+    // Guarded on name-similarity before touching ANYTHING, though -- this
+    // match is by email ALONE, and emails collide (a typo/paste mistake
+    // entering a DIFFERENT real client's email) far more easily than two
+    // unrelated people's names happen to match. Live incident that proved
+    // this out: correcting what was believed to be Haven Knight's email on
+    // his own project actually matched Tony Yu's existing Applied Materials
+    // contact by coincidence -- and this sync, as originally written,
+    // silently renamed Tony Yu's real contact card to "Haven Knight,"
+    // leaving Tony Yu's actual email (and every real project on it,
+    // including Epic Center) attached to a card that now displayed someone
+    // else's name. Logging in as that card was really logging in as Tony
+    // Yu's own account. If the existing contact already has a name on file
+    // and it doesn't match the incoming one, treat the whole match as
+    // suspect and skip the sync entirely (not just the name) rather than
+    // silently overwriting a different person's identity -- the legitimate
+    // "same person, only their phone/title changed" case (the original bug
+    // this sync was written for) always has the name staying the same, so
+    // this guard costs that case nothing.
+    var nameLooksLikeSamePerson=!existing.name||!name||existing.name.toLowerCase()===name.toLowerCase();
+    if(nameLooksLikeSamePerson){
+      if(name&&existing.name!==name)existing.name=name;
+      if(existing.title!==title)existing.title=title;
+      if(existing.phone!==phone)existing.phone=phone;
+    }
     return;
   }
   var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
