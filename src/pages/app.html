@@ -3817,8 +3817,23 @@ window.renderVendorProjects=renderVendorProjects;
 // happens.
 function myClientBriefs(){
   if(!window.ME_CLIENT_EMAIL)return [];
+  var cid=window.ME_CLIENT_CONTACT_ID;
   return (SDB.briefs||[]).filter(function(b){
-    return b.client&&b.client.Email&&b.client.Email.toLowerCase()===window.ME_CLIENT_EMAIL;
+    if(!b.client)return false;
+    // Prefer the specific contact record this session IS (set in
+    // enterSession(), from either the exact Clients-tab row an Owner
+    // clicked "Log in as" on, or -- for a real client login -- a best-
+    // effort email lookup) over a raw email string match, whenever both
+    // this brief and this session actually have one. This is what stops a
+    // client from seeing a DIFFERENT client's project in the one scenario
+    // email-matching alone can never handle: two different contacts who
+    // end up sharing one email by mistake. Falls back to the original
+    // email comparison for briefs that predate this field (contactId gets
+    // backfilled onto them the next time syncClientsFromLeads() runs, but
+    // that hasn't necessarily happened yet) or a session with no resolved
+    // contact at all.
+    if(cid&&b.client.contactId)return b.client.contactId===cid;
+    return b.client.Email&&b.client.Email.toLowerCase()===window.ME_CLIENT_EMAIL;
   });
 }
 window.myClientBriefs=myClientBriefs;
@@ -7116,7 +7131,17 @@ function findClientContactByEmail(email){
   if(!email)return null;
   var lower=email.toLowerCase();
   var found=null;
+  // FIRST match wins, not last: if a data-entry mistake ever leaves two
+  // different contacts sharing one email (see the Haven Knight/Tony Yu
+  // incident), COMPANIES is only ever appended to, never reordered, so the
+  // first match is reliably the older/original record -- picking it
+  // deterministically instead of whichever happened to be scanned last
+  // matters because callers (ensureClientContact's contactId stamping,
+  // syncClientProjectFromBrief) use this to decide who a project belongs
+  // to, and a random/order-dependent answer there is exactly what let one
+  // client's real project get attributed to a different client's card.
   COMPANIES.forEach(function(c){
+    if(found)return;
     var contact=c.contacts.filter(function(ct){return ct.email&&ct.email.toLowerCase()===lower;})[0];
     if(contact)found={company:c,contact:contact};
   });
@@ -7142,6 +7167,15 @@ function ensureClientContact(l){
     // the same lead each time it re-syncs — only increment the first time we see
     // a given lead id for this contact.
     var existing=match.contact;
+    // Sticky, set-once attribution of this brief to the specific contact
+    // record it matched -- see myClientBriefs(), which now prefers this
+    // over a raw email comparison so that two DIFFERENT contacts who end up
+    // sharing one email (by mistake) still can't see each other's
+    // projects: each brief is permanently pinned to whichever contact it
+    // FIRST resolved to, so it can never re-attribute itself to a
+    // different contact later just because COMPANIES changed shape or a
+    // later ambiguous lookup happened to answer differently.
+    if(l.client&&!l.client.contactId)l.client.contactId=existing.id;
     existing.processedLeadIds=existing.processedLeadIds||[];
     if(!l.id||existing.processedLeadIds.indexOf(l.id)===-1){
       if(l.id)existing.processedLeadIds.push(l.id);
@@ -7183,7 +7217,9 @@ function ensureClientContact(l){
   }
   var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
   if(!co){co={id:'co'+Date.now()+Math.random().toString(36).slice(2,6),name:companyName,parentId:null,rep:null,contacts:[]};COMPANIES.push(co);}
-  co.contacts.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:null,processedLeadIds:l.id?[l.id]:[]});
+  var newContact={id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:null,processedLeadIds:l.id?[l.id]:[]};
+  co.contacts.push(newContact);
+  if(l.client&&!l.client.contactId)l.client.contactId=newContact.id;
 }
 // COMPANIES (the Client Contact / Clients tab) is rebuilt from scratch on
 // every page load — it's never itself persisted, only ever derived here. It
@@ -7707,7 +7743,7 @@ function renderCompanyCard(co,repName){
       // contact actually has a portal account (c.hasAccount!==false) and
       // only Owner gets it here -- Client Manager doesn't have impersonation
       // rights server-side either.
-      ((isOwnerView&&c.hasAccount!==false)?('<button class="btn btn--ghost btn--sm" onclick="impersonateAccount(\''+esc(c.email)+'\',\'client\',\''+esc(c.name)+'\')">Log in as</button>'):'')+
+      ((isOwnerView&&c.hasAccount!==false)?('<button class="btn btn--ghost btn--sm" onclick="impersonateAccount(\''+esc(c.email)+'\',\'client\',\''+esc(c.name)+'\',\''+esc(c.id)+'\')">Log in as</button>'):'')+
       '<button class="btn btn--ghost btn--sm" onclick="openLinkContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Link to another company</button>'+
       (isOwnerView?('<button class="btn btn--ghost btn--sm btn--danger" onclick="deleteClientContact(\''+esc(co.id)+'\',\''+esc(c.id)+'\')">Delete</button>'):'')+
       '</div></div>'+
@@ -8562,7 +8598,7 @@ function attemptLogin(){
       err.hidden=false;
     });
 }
-function enterSession(role,email,name){
+function enterSession(role,email,name,contactId){
   document.getElementById('loginGate').style.display='none';
   var lbl=document.getElementById('sessionLabel');
   if(lbl)lbl.textContent='Signed in \u00b7 '+email;
@@ -8623,6 +8659,27 @@ function enterSession(role,email,name){
   // email (b.client.Email), the same way ME_TEAM_MEMBER_ID/OUR_SHOP scope
   // a vendor session to their own shop's projects.
   window.ME_CLIENT_EMAIL=(role==='client'&&email)?email.toLowerCase():null;
+  // Which specific Clients-tab contact record this session IS, if
+  // resolvable -- the id itself, when passed in directly (e.g. Owner
+  // clicked "Log in as" on one exact row), is unambiguous and always wins.
+  // Otherwise, best-effort resolve it from the email so an ordinary client
+  // login still narrows to one contact whenever that email only belongs to
+  // one. myClientBriefs() prefers matching on this over a raw email
+  // comparison -- see the comment there for why: it's what keeps two
+  // different contacts who end up sharing one email (by mistake) from
+  // being able to see each other's projects.
+  if(role==='client'&&email){
+    if(contactId){
+      window.ME_CLIENT_CONTACT_ID=contactId;
+    }else if(typeof findClientContactByEmail==='function'){
+      var selfMatch=findClientContactByEmail(email);
+      window.ME_CLIENT_CONTACT_ID=(selfMatch&&selfMatch.contact)?selfMatch.contact.id:null;
+    }else{
+      window.ME_CLIENT_CONTACT_ID=null;
+    }
+  }else{
+    window.ME_CLIENT_CONTACT_ID=null;
+  }
   setRole(role);
   // Real invited accounts carry a real name \u2014 show it instead of the fixed
   // per-role demo persona from ROLE_INFO (setRole() just set those fields).
@@ -8702,7 +8759,7 @@ function logOutSession(){
    stashed under IMPERSONATE_KEY so "Return to my account" can restore it
    exactly, and the banner (shown via enterSession() above) makes it obvious
    which account is active the whole time. */
-function impersonateAccount(email,role,name){
+function impersonateAccount(email,role,name,contactId){
   if(!email||!role)return;
   if(!confirm('Log in as '+(name||email)+'? You\u2019ll see exactly what they see, and can return to your own account at any time from the banner at the top.'))return;
   var mine=currentSession();
@@ -8722,7 +8779,14 @@ function impersonateAccount(email,role,name){
         return;
       }
       if(mine){try{localStorage.setItem(IMPERSONATE_KEY,JSON.stringify(mine));}catch(e){}}
-      localStorage.setItem(SESSION_KEY,JSON.stringify({email:res.data.email,role:res.data.role,name:res.data.name||null,token:res.data.token}));
+      // contactId (the exact Clients-tab row this "Log in as" was clicked
+      // from, when applicable -- see the button's onclick) rides along in
+      // the persisted session so it survives the reload() right below and
+      // enterSession() can set window.ME_CLIENT_CONTACT_ID from it on
+      // restore, unambiguously, instead of re-deriving it from email (see
+      // findClientContactByEmail's own comment on why that can't always be
+      // trusted to pick the right contact when two share one email).
+      localStorage.setItem(SESSION_KEY,JSON.stringify({email:res.data.email,role:res.data.role,name:res.data.name||null,token:res.data.token,contactId:contactId||null}));
       location.reload();
     })
     .catch(function(){alert('Could not reach the server. Check your connection and try again.');});
@@ -8834,7 +8898,7 @@ function showLoginGate(){
       // token — api/sourcing.js now requires one to trust any role claim, so
       // treat a token-less stored session as expired and require a fresh
       // login rather than silently letting every role-gated call fail closed.
-      if(s&&s.role&&s.email&&s.token){enterSession(s.role,s.email,s.name);return;}
+      if(s&&s.role&&s.email&&s.token){enterSession(s.role,s.email,s.name,s.contactId);return;}
     }catch(e){}
     showLoginGate();
   });
