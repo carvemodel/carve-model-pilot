@@ -6421,21 +6421,21 @@ function clientInvoiceLinesHtml(b){
   var depChipText=depStatus==='paid'?'Paid':(depStatus==='reported'?'Payment reported':'Due');
   var balChipText=balStatus==='paid'?'Paid':'Scheduled';
   var balChipStyle=balStatus==='paid'?'':'background:rgba(255,255,255,0.04);color:var(--cm-text-subtle);border:1px solid var(--cm-border-strong);';
-  var depPayBtn=depStatus==='due'?('<a class="btn btn--primary btn--sm client-only" style="margin-left:0.5rem;" href="#" onclick="openPay(\''+b.id+'\',\'deposit\',\''+inv.depositId+'\',\'$'+dep.toLocaleString('en-US')+'\');return false;">Pay now</a>'):'';
+  var depPayBtn=depStatus==='due'?('<a class="btn btn--primary btn--sm client-only" style="margin-left:0.5rem;" href="#" onclick="openPay(\''+b.id+'\',\'deposit\',\''+inv.depositId+'\',\''+esc(fmtUsd2(dep))+'\');return false;">Pay now</a>'):'';
   var depConfirmBtn=depStatus==='reported'?('<button class="btn btn--primary btn--sm finance-edit" style="margin-left:0.5rem;" onclick="confirmPayment(\''+b.id+'\',\'deposit\')">Confirm payment received</button>'):'';
   var depBanner=depStatus==='reported'?('<div class="paybanner finance-edit"><span class="paybanner__dot"></span><div><b>Client reported a '+(isSingleInvoice?'payment':'deposit payment')+'</b>'+(inv.depositReportedMethod?(' via '+esc(inv.depositReportedMethod)):'')+'. Verify it has landed in the bank, then confirm — that starts the production clock.</div></div>'):'';
   var depDesc=(isSingleInvoice?'Payment in full · due to begin fabrication':'Deposit · 50% to begin fabrication')+' · issued '+issuedFmt+(depStatus==='paid'&&inv.depositPaidAt?(' · paid '+inv.depositPaidAt):'');
   var balDesc='Final balance · due on delivery'+(balStatus==='paid'&&inv.balancePaidAt?(' · paid '+inv.balancePaidAt):'');
   return '<div class="inv">'+
       '<div><div class="id">'+inv.depositId+'</div><div class="desc">'+depDesc+'</div></div>'+
-      '<div class="amt">$'+dep.toLocaleString('en-US')+'</div>'+
+      '<div class="amt">'+fmtUsd2(dep)+'</div>'+
       '<span class="'+depChipClass+'" style="margin-left:1rem;">'+depChipText+'</span>'+
       '<button class="btn btn--ghost btn--sm" style="margin-left:1rem;" onclick="downloadInvoice(\''+b.id+'\',\'deposit\')">↓ PDF</button>'+
       depPayBtn+depConfirmBtn+
     '</div>'+
     depBanner+
     (isSingleInvoice?'':(
-    '<div class="inv"><div><div class="id">'+inv.balanceId+'</div><div class="desc">'+balDesc+'</div></div><div class="amt">$'+bal.toLocaleString('en-US')+'</div><span class="chip" style="margin-left:1rem;'+balChipStyle+'">'+balChipText+'</span>'+
+    '<div class="inv"><div><div class="id">'+inv.balanceId+'</div><div class="desc">'+balDesc+'</div></div><div class="amt">'+fmtUsd2(bal)+'</div><span class="chip" style="margin-left:1rem;'+balChipStyle+'">'+balChipText+'</span>'+
       '<button class="btn btn--ghost btn--sm" style="margin-left:1rem;" onclick="downloadInvoice(\''+b.id+'\',\'balance\')">↓ PDF</button></div>'
     ));
 }
@@ -10426,7 +10426,7 @@ function invoiceLineAdmin(b,which,id,amt,status,paidAt,reportedAt,reportedMethod
   // correct an issued invoice's dollar amount (see SRC_editInvoiceAmount);
   // Client Manager can view but not edit it.
   var isOwner=document.body.dataset.role==='owner';
-  var amtHtml=isOwner?('<span style="cursor:pointer;" onclick="SRC_editInvoiceAmount(\''+b.id+'\',\''+which+'\')" title="Correct this amount -- should be the price agreed with the client, not the vendor">'+money(amt)+' ✎</span>'):money(amt);
+  var amtHtml=isOwner?('<span style="cursor:pointer;" onclick="SRC_editInvoiceAmount(\''+b.id+'\',\''+which+'\')" title="Correct this amount -- should be the price agreed with the client, not the vendor">'+fmtUsd2(amt)+' ✎</span>'):fmtUsd2(amt);
   return '<div class="qline2" style="grid-template-columns:1fr auto auto;border-bottom:1px solid var(--cm-line-faint);align-items:center;">'+
     '<div><div class="id" style="cursor:pointer;" onclick="SRC_editInvoiceId(\''+b.id+'\',\''+which+'\')" title="Click to edit the invoice number">'+esc(id)+' ✎</div><div class="lc" style="font-family:var(--font-mono);">'+esc(desc)+subline+'</div></div>'+
     '<div class="qf-price">'+amtHtml+'</div>'+
