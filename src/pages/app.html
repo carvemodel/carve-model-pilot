@@ -1110,8 +1110,18 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                     <div class="mock__v" id="projInfoPackageSize" style="flex:1;">—</div>
                     <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psPackageSizeBtn" onclick="toggleProjectSpecFieldEdit('packageSize')">Edit</button>
                   </div>
-                  <div class="proj-spec-edit-only" id="psPackageSizeWrap" hidden style="margin-top:0.5rem;max-width:320px;">
-                    <div style="display:grid;grid-template-columns:36px 1fr 1fr 1fr;gap:0.4rem;align-items:center;"><span></span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">L</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">W</span><span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cm-text-subtle);text-align:center;">H</span><span style="font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);">mm</span><input id="psPackageSize-l-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','l','mm')"><input id="psPackageSize-w-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','w','mm')"><input id="psPackageSize-h-mm" type="number" placeholder="mm" oninput="projDimSync('psPackageSize','h','mm')"><span style="font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);">in</span><input id="psPackageSize-l-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','l','in')"><input id="psPackageSize-w-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','w','in')"><input id="psPackageSize-h-in" type="number" step="0.1" placeholder="in" oninput="projDimSync('psPackageSize','h','in')"></div>
+                  <div class="proj-spec-edit-only" id="psPackageSizeWrap" hidden style="margin-top:0.5rem;max-width:420px;">
+                    <!-- A project can ship as more than one physical case, so this
+                         reuses the same generic per-case package-dimensions widget
+                         the vendor quote form and client-quote finalization form
+                         already use (SRC_renderPkgDims/buildPkgDimRow/readPkgDimAt)
+                         instead of the single L/W/H grid Model size above uses --
+                         see toggleProjectSpecFieldEdit's pkgdims branch, which
+                         stamps the current brief's id onto the elements below
+                         (found by class, not id, since this markup is static and
+                         only one project is ever open here at a time). -->
+                    <div><label>Package count</label><input class="pkgn-input" type="number" min="1" placeholder="e.g. 2"></div>
+                    <div class="full pkgdims-container"></div>
                     <button type="button" class="btn btn--primary btn--sm" style="margin-top:0.5rem;" onclick="saveProjectSpecField('packageSize')">Save</button>
                   </div>
                 </div>
@@ -3275,6 +3285,16 @@ function projectSpecValue(b,field){
     return (b.clientQuote&&b.clientQuote.modelDims)||(wq&&wq.modelDims)||null;
   }
   if(field==='packageSize'){
+    // Manual overrides come in two shapes: the current packageSizeOverrideList
+    // (array, one entry per physical case -- lets a project with more than one
+    // package be edited without collapsing everything down to a single size)
+    // and the older packageSizeOverride (a single string, from before
+    // multi-package editing existed). Prefer the list when present; fall back
+    // to the legacy single value so nothing already saved goes blank.
+    if(b.packageSizeOverrideList&&b.packageSizeOverrideList.length){
+      var ovList=b.packageSizeOverrideList;
+      return ovList.map(function(d,i){return ovList.length>1?('#'+(i+1)+' '+d):d;}).join(', ');
+    }
     if(b.packageSizeOverride)return b.packageSizeOverride;
     var pkgDims=(wq&&wq.packageDimsList&&wq.packageDimsList.length)?wq.packageDimsList:(wq&&wq.packageDims?[wq.packageDims]:[]);
     if(!pkgDims.length&&b.clientQuote){
@@ -3309,7 +3329,12 @@ var PROJECT_SPEC_FIELD_META={
   // spec field, in case the quantity changes after intake.
   quantity:{label:'Model quantity',display:'projInfoQuantity',wrap:'psQuantityWrap',btn:'psQuantityBtn',type:'text',input:'psQuantityInput',override:'quantityOverride'},
   modelSize:{label:'Model size',display:'projInfoModelSize',wrap:'psModelSizeWrap',btn:'psModelSizeBtn',type:'dims',prefix:'psModelSize',override:'modelSizeOverride'},
-  packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',type:'dims',prefix:'psPackageSize',override:'packageSizeOverride'},
+  // Package size uses its own 'pkgdims' type (not the shared 'dims' single-
+  // triplet editor modelSize uses) because a project can ship as more than
+  // one physical case -- see SRC_renderPkgDims/buildPkgDimRow/readPkgDimAt,
+  // the same generic per-case widget the vendor quote form and client-quote
+  // finalization form already use, reused here rather than duplicated.
+  packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',type:'pkgdims',prefix:'psPackageSize',override:'packageSizeOverrideList'},
   // The project's own site/building address -- distinct from Delivery
   // address below (where the finished model physically ships to, which can
   // be a different office entirely). Defaults from the location parsed out
@@ -3378,6 +3403,46 @@ function toggleProjectSpecFieldEdit(field){
         if(mmEl)mmEl.value=v!=null?v:'';
         if(inEl)inEl.value=v!=null?(v/25.4).toFixed(1):'';
       });
+    }else if(meta.type==='pkgdims'){
+      // Package size can be more than one physical case, so it reuses the
+      // same generic per-case widget the vendor quote form and client-quote
+      // finalization form already use (SRC_renderPkgDims/buildPkgDimRow/
+      // readPkgDimAt, in a later <script> block -- hence the window.
+      // prefix). That widget keys every element id off a brief id, but
+      // Project information's markup is authored once since only one
+      // project is ever open here at a time -- so there's no bid baked into
+      // the static HTML. Find the placeholder elements by class (stable
+      // across repeated opens) and stamp the real current brief's id onto
+      // them fresh each time this opens, whichever project is selected.
+      var pkgCountEl=wrap.querySelector('.pkgn-input');
+      var pkgDimsWrap=wrap.querySelector('.pkgdims-container');
+      if(pkgCountEl)pkgCountEl.id=meta.prefix+'-pkgn-'+b.id;
+      if(pkgDimsWrap){
+        pkgDimsWrap.id=meta.prefix+'-pkgdims-'+b.id;
+        // This one container is reused across every project (Project
+        // information's markup is static, unlike the vendor/client-quote
+        // forms where a fresh container exists per brief) -- so if a
+        // DIFFERENT project's rows are still sitting in it from a previous
+        // time this was opened, SRC_renderPkgDims's own "preserve what's
+        // mid-typed" logic (prevRows) would mistake those leftover rows for
+        // this project's in-progress edits and seed from them instead of
+        // this project's real data. Clear it before every open so that
+        // never happens -- SRC_renderPkgDims rebuilds the rows fresh right
+        // after anyway.
+        pkgDimsWrap.innerHTML='';
+      }
+      // Seed the package count from whichever source projectSpecValue would
+      // currently be displaying -- the manual override list if one's been
+      // saved already, otherwise however many cases the winning vendor
+      // quote / sent client quote specified.
+      var wq0=(typeof winningQuote==='function')?winningQuote(b):null;
+      var pkgArr=(b.packageSizeOverrideList&&b.packageSizeOverrideList.length)?b.packageSizeOverrideList:
+        ((wq0&&wq0.packageDimsList&&wq0.packageDimsList.length)?wq0.packageDimsList:(wq0&&wq0.packageDims?[wq0.packageDims]:(b.clientQuote&&b.clientQuote.packageDimsList&&b.clientQuote.packageDimsList.length?b.clientQuote.packageDimsList:(b.clientQuote&&b.clientQuote.packageDims?[b.clientQuote.packageDims]:[]))));
+      if(pkgCountEl){
+        pkgCountEl.value=pkgArr.length||1;
+        pkgCountEl.oninput=function(){if(window.SRC_renderPkgDims)window.SRC_renderPkgDims(meta.prefix,b.id);};
+      }
+      if(window.SRC_renderPkgDims)window.SRC_renderPkgDims(meta.prefix,b.id);
     }else{
       var input=document.getElementById(meta.input);
       if(input)input.value=current||'';
@@ -3392,15 +3457,32 @@ function saveProjectSpecField(field){
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
   if(!b)return;
-  var val;
+  var val,logVal;
   if(meta.type==='dims'){
     val=readProjDimTriplet(meta.prefix);
+    logVal=val;
+  }else if(meta.type==='pkgdims'){
+    // Read back however many per-case rows are currently on screen (the
+    // package-count field drives how many SRC_renderPkgDims built -- see
+    // toggleProjectSpecFieldEdit's pkgdims branch) via the same
+    // readPkgDimAt() the vendor quote form and client-quote form use to
+    // read their own identical widget.
+    var pkgCountEl=document.getElementById(meta.prefix+'-pkgn-'+b.id);
+    var pkgN=pkgCountEl?parseInt(pkgCountEl.value,10):0;
+    var list=[];
+    for(var pi=0;pi<(pkgN||0);pi++){
+      var d=window.readPkgDimAt?window.readPkgDimAt(meta.prefix,b.id,pi):'';
+      if(d)list.push(d);
+    }
+    val=list.length?list:null;
+    logVal=list.length?list.map(function(d,i){return list.length>1?('#'+(i+1)+' '+d):d;}).join(', '):'';
   }else{
     var input=document.getElementById(meta.input);
     val=input?input.value.trim():'';
+    logVal=val;
   }
   b[meta.override]=val||null;
-  logProjectEvent(b,meta.label+' updated to '+(val||'—')+' on "'+b.title+'"');
+  logProjectEvent(b,meta.label+' updated to '+(logVal||'—')+' on "'+b.title+'"');
   if(typeof saveSRC==='function')saveSRC({changedBriefIds:[b.id]});
   // renderProjectOverview() already closes every spec-field wrap itself (see
   // the blanket reset loop near the top of that function, same as
@@ -9837,6 +9919,7 @@ function readPkgDimAt(prefix,bid,i){
   var inStr=cmVals.map(function(v){return v==null?'—':(v/2.54).toFixed(1);}).join(' × ');
   return cmStr+' cm ('+inStr+' in)';
 }
+window.readPkgDimAt=readPkgDimAt; // exposed -- Project information's saveProjectSpecField (an earlier <script> block) reads the multi-package widget's rows the same way the vendor quote form and client-quote form do
 window.SRC_renderPkgDims=function(prefix,bid){
   var countEl=document.getElementById(prefix+'-pkgn-'+bid);
   var cnt=parseInt(countEl&&countEl.value,10);
@@ -9854,6 +9937,26 @@ window.SRC_renderPkgDims=function(prefix,bid){
     var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
     var base=(b.clientQuote)||winningQuote(b)||{};
     seedList=base.packageDimsList&&base.packageDimsList.length?base.packageDimsList:(base.packageDims?[base.packageDims]:[]);
+  }else if(prefix==='psPackageSize'){
+    // Project information's Package size field -- same widget, seeded from
+    // whatever projectSpecValue(b,'packageSize') would currently be
+    // displaying: the manual override list if one's been saved, otherwise
+    // however many cases the winning vendor quote / sent client quote
+    // specified. Duplicated here rather than calling projectSpecValue
+    // directly since that function lives in an earlier <script> block with
+    // no closure access to this IIFE.
+    var b3=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+    if(b3){
+      if(b3.packageSizeOverrideList&&b3.packageSizeOverrideList.length){
+        seedList=b3.packageSizeOverrideList;
+      }else{
+        var wq3=(typeof winningQuote==='function')?winningQuote(b3):null;
+        seedList=(wq3&&wq3.packageDimsList&&wq3.packageDimsList.length)?wq3.packageDimsList:(wq3&&wq3.packageDims?[wq3.packageDims]:[]);
+        if((!seedList||!seedList.length)&&b3.clientQuote){
+          seedList=(b3.clientQuote.packageDimsList&&b3.clientQuote.packageDimsList.length)?b3.clientQuote.packageDimsList:(b3.clientQuote.packageDims?[b3.clientQuote.packageDims]:[]);
+        }
+      }
+    }
   }
   wrap.innerHTML='';
   var lbl=document.createElement('label'); lbl.textContent='Package dimensions (per case)'; wrap.appendChild(lbl);
