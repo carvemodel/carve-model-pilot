@@ -10490,7 +10490,21 @@ function clientQuoteSection(b){
   html+='<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);margin-bottom:0.9rem;">Based on — '+esc(srcLabel)+': '+moneyRMB(srcQ.priceRMB)+' <span style="opacity:0.7;">(≈ '+money(srcQ.price)+')</span> · '+ (srcQ.days||'—') +' days. Pick a different option above to change the basis.</div>';
   if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Not yet awarded to production — '+esc(shop(basisShop(b)).name)+' has not been notified. You can still finalize and send this price to the client now.</div>';
   html+='<div class="qform2">';
-  html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" step="0.01" placeholder="e.g. 3200.50" value="'+(base.price!=null?base.price:'')+'"></div>';
+  // Never pre-filled from the vendor's own quote (srcQ.price/base.price) --
+  // only from an existing client quote (cq.price), when editing/resending
+  // one already sent. Every OTHER field on this form intentionally defaults
+  // from the vendor's basis quote (scale/material/dims/days/etc. really do
+  // just mirror what the factory quoted), but price is the one number that
+  // must never silently inherit the vendor's internal cost -- reported
+  // live: an admin went through Award to production -> Send quote to
+  // client without noticing this field already showed a number (the
+  // vendor's own price, with zero markup) and submitted it as-is, so the
+  // client ended up quoted the factory's cost instead of a real price.
+  // Leaving it BLANK when there's no client quote yet forces a deliberate
+  // entry every time -- see SRC_saveClientQuote's own "Enter the final
+  // price to send to the client" guard, which now actually gets exercised
+  // instead of always being satisfied by the vendor-price default.
+  html+='<div><label>Final price to client (USD)</label><input id="cq-price-'+b.id+'" type="number" step="0.01" placeholder="e.g. 3200.50" value="'+(cq&&cq.price!=null?cq.price:'')+'"></div>';
   // Payment terms -- 'split' (50% deposit / 50% on delivery, the long-
   // standing default) or 'full' (a single invoice for the whole amount,
   // due before fabrication begins). Read by ensureClientInvoice() when
