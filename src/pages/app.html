@@ -1572,7 +1572,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
       <div class="notice studio-only" id="clientsNotice" hidden></div>
       <div class="kpis" id="clientsKpis" style="grid-template-columns:repeat(6,1fr);margin-top:0;"></div>
       <div class="panel" style="margin-top:1.25rem;">
-        <div class="panel__head"><h3 id="clientsHeading">Clients</h3><div style="display:flex;align-items:center;gap:0.9rem;"><span class="mock__k" id="clientsCount"></span><select id="clientSortSelect" class="input input--sm" style="width:auto;" onchange="setClientSort(this.value)"><option value="value_desc" selected>Contract Value (High to Low)</option><option value="name_asc">Company name (A-Z)</option></select><button class="btn btn--ghost btn--sm" onclick="exportClientsCSV()">↓ Export to Excel (CSV)</button></div></div>
+        <div class="panel__head"><h3 id="clientsHeading">Clients</h3><div style="display:flex;align-items:center;gap:0.9rem;"><span class="mock__k" id="clientsCount"></span><select id="clientSortSelect" class="input input--sm" style="width:auto;" onchange="setClientSort(this.value)"><option value="value_desc">Contract Value (High to Low)</option><option value="name_asc" selected>Company name (A-Z)</option></select><button class="btn btn--ghost btn--sm" onclick="exportClientsCSV()">↓ Export to Excel (CSV)</button></div></div>
         <div class="panel__body" id="companyList"></div>
       </div>
     </section>
@@ -7022,7 +7022,7 @@ function createClientAccount(e){
     }
   }else{
     var contact={id:'c'+Date.now(),name:name,title:title,email:email,phone:phone,quoteRequests:0,projects:[],hasAccount:true};
-    var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
+    var co=COMPANIES.filter(function(c){return c.name.trim().toLowerCase()===companyName.trim().toLowerCase();})[0];
     rollbackNewContact=contact;
     if(co){co.contacts.push(contact);}
     else{co={id:'co'+Date.now(),name:companyName,parentId:null,rep:rep,contacts:[contact]};COMPANIES.push(co);rollbackNewCompany=co;}
@@ -7129,7 +7129,8 @@ window.deleteClientContact=deleteClientContact;
 // clicked.
 function findClientContactByEmail(email){
   if(!email)return null;
-  var lower=email.toLowerCase();
+  var lower=email.trim().toLowerCase();
+  if(!lower)return null;
   var found=null;
   // FIRST match wins, not last: if a data-entry mistake ever leaves two
   // different contacts sharing one email (see the Haven Knight/Tony Yu
@@ -7142,7 +7143,7 @@ function findClientContactByEmail(email){
   // client's real project get attributed to a different client's card.
   COMPANIES.forEach(function(c){
     if(found)return;
-    var contact=c.contacts.filter(function(ct){return ct.email&&ct.email.toLowerCase()===lower;})[0];
+    var contact=c.contacts.filter(function(ct){return ct.email&&ct.email.trim().toLowerCase()===lower;})[0];
     if(contact)found={company:c,contact:contact};
   });
   return found;
@@ -7152,11 +7153,20 @@ window.findClientContactByEmail=findClientContactByEmail;
    just a record so Carve Admin can find them and click "+ Assign account". */
 function ensureClientContact(l){
   if(!l||!l.client||!l.client.Email)return;
-  var name=l.client.Name||'(name not given)';
-  var title=l.client.Title||'';
-  var companyName=(l.client.Company&&l.client.Company!=='—')?l.client.Company:'Independent / Unlisted';
-  var email=l.client.Email;
-  var phone=l.client.Phone||'';
+  var name=(l.client.Name||'(name not given)').trim()||'(name not given)';
+  var title=(l.client.Title||'').trim();
+  // Trimmed before ever being compared or stored -- a stray leading/
+  // trailing space on the Company or Email field (easy to pick up from a
+  // copy-paste, or a form that doesn't trim on submit) used to make the
+  // exact-string company match below, and the exact-string email match in
+  // findClientContactByEmail, silently fail for what is really the same
+  // company/person, creating a second Clients-tab entry that looked like a
+  // duplicate rather than actually being a new one.
+  var rawCompany=(l.client.Company||'').trim();
+  var companyName=(rawCompany&&rawCompany!=='—')?rawCompany:'Independent / Unlisted';
+  var email=(l.client.Email||'').trim();
+  var phone=(l.client.Phone||'').trim();
+  if(!email)return;
   // Note: lastActivityAt is intentionally NOT touched here. It means "last time this
   // client signed into the studio portal" (see recordClientActivity, called from
   // enterSession), not "last time they submitted a brief" — a client who hasn't been
@@ -7215,7 +7225,7 @@ function ensureClientContact(l){
     }
     return;
   }
-  var co=COMPANIES.filter(function(c){return c.name.toLowerCase()===companyName.toLowerCase();})[0];
+  var co=COMPANIES.filter(function(c){return c.name.trim().toLowerCase()===companyName.trim().toLowerCase();})[0];
   if(!co){co={id:'co'+Date.now()+Math.random().toString(36).slice(2,6),name:companyName,parentId:null,rep:null,contacts:[]};COMPANIES.push(co);}
   var newContact={id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:name,title:title,email:email,phone:phone,quoteRequests:1,projects:[],hasAccount:false,lastActivityAt:null,processedLeadIds:l.id?[l.id]:[]};
   co.contacts.push(newContact);
@@ -7813,11 +7823,10 @@ function exportClientsCSV(){
   setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
 }
 function scopeClients(role){renderClients(role);}
-// Company name (A-Z) or Contract Value (High to Low) for the Clients tab
-// card list -- see the <select id="clientSortSelect"> in the Clients tab
-// panel head and the cards.sort() call inside renderClients(). Contract
-// Value High-to-Low is the default (most valuable accounts surface first).
-var clientSort='value_desc';
+// Company name (A-Z, the default) or Contract Value (High to Low) for the
+// Clients tab card list -- see the <select id="clientSortSelect"> in the
+// Clients tab panel head and the cards.sort() call inside renderClients().
+var clientSort='name_asc';
 function setClientSort(val){
   clientSort=val;
   renderClients(document.body.dataset.role);
