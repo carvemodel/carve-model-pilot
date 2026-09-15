@@ -3127,7 +3127,25 @@ function computeTimelinePct(b){
 }
 window.computeTimelinePct=computeTimelinePct;
 function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
-function awardedBriefs(){return (window.SDB.briefs||[]).filter(function(b){return b.status==='awarded';});}
+// A brief only counts as a real, visible "project" (Owner's Projects tab,
+// Client Manager's My Projects, the project picker/#projSelect dropdown)
+// once BOTH it's been awarded to a shop AND a client quote has actually
+// been sent (b.clientQuote.sent) -- b.status flips to 'awarded' the
+// instant "Award to production" is clicked, which used to be enough on
+// its own, but Award and "Send quote to client" are two separate buttons
+// on the same Finalize-quote form in Sourcing & Quotes, and an admin
+// often clicks Award first, then still needs to fill in the price and
+// other details before sending. Requiring only b.status==='awarded' made
+// the project jump into Projects immediately after that first click, with
+// no price entered yet -- reported live as "the project should stay in
+// quotes ... only when I entered everything". The brief still shows in
+// Sourcing & Quotes the whole time regardless (that tab's own categorization
+// is untouched), and the vendor's own "awarded to your shop" visibility
+// (renderVendorProjects) is intentionally untouched too, since the shop
+// needs to know immediately to start planning production -- this gate is
+// specifically about when the STUDIO/CLIENT side starts treating it as a
+// live project, not about when production itself can begin.
+function awardedBriefs(){return (window.SDB.briefs||[]).filter(function(b){return b.status==='awarded'&&b.clientQuote&&b.clientQuote.sent;});}
 function findBrief(id){return (window.SDB.briefs||[]).filter(function(b){return b.id===id;})[0];}
 var _pendingAssignBriefId=null;
 function assignManagerOptions(selectedEmail){
@@ -3872,7 +3890,10 @@ window.myClientBriefs=myClientBriefs;
 function renderClientProjectList(){
   var wrap=document.getElementById('clientProjectsListWrap');
   if(!wrap)return;
-  var mine=(typeof myClientBriefs==='function'?myClientBriefs():[]).filter(function(b){return b.status==='awarded'&&!b.archived;});
+  // Same "awarded AND quoted" gate as awardedBriefs() -- a client shouldn't
+  // see "your project has started" before they've actually been sent a
+  // price to review/accept.
+  var mine=(typeof myClientBriefs==='function'?myClientBriefs():[]).filter(function(b){return b.status==='awarded'&&b.clientQuote&&b.clientQuote.sent&&!b.archived;});
   if(!mine.length){
     wrap.innerHTML='<div style="color:var(--cm-text-subtle);font-size:0.9rem;">You don\'t have any projects with Carve Model yet.</div>';
     return;
