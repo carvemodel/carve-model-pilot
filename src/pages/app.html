@@ -1081,6 +1081,19 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
                   </div>
                 </div>
                 <div>
+                  <span class="mock__k">Model quantity</span>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div class="mock__v" id="projInfoQuantity" style="flex:1;">—</div>
+                    <button type="button" class="btn btn--ghost btn--sm proj-spec-edit-only" id="psQuantityBtn" onclick="toggleProjectSpecFieldEdit('quantity')">Edit</button>
+                  </div>
+                  <div class="proj-spec-edit-only" id="psQuantityWrap" hidden style="margin-top:0.5rem;max-width:280px;">
+                    <div style="display:flex;gap:0.5rem;">
+                      <input type="number" min="1" step="1" id="psQuantityInput" placeholder="e.g. 1" style="flex:1;">
+                      <button type="button" class="btn btn--primary btn--sm" onclick="saveProjectSpecField('quantity')">Save</button>
+                    </div>
+                  </div>
+                </div>
+                <div>
                   <span class="mock__k">Model size</span>
                   <div style="display:flex;align-items:center;gap:0.6rem;">
                     <div class="mock__v" id="projInfoModelSize" style="flex:1;">—</div>
@@ -3251,6 +3264,7 @@ function projectSpecValue(b,field){
     }
     return pkgDims.length?pkgDims.map(function(d,i){return pkgDims.length>1?('#'+(i+1)+' '+d):d;}).join(', '):null;
   }
+  if(field==='quantity')return b.quantityOverride||(b.brief&&b.brief['Quantity'])||null;
   if(field==='projectAddress')return b.projectAddressOverride||(b.brief&&b.brief['Project location'])||null;
   if(field==='deliveryAddress')return b.deliveryAddressOverride||(b.client&&b.client.Address)||(b.brief&&b.brief['Delivery location'])||null;
   return null;
@@ -3267,6 +3281,15 @@ var PROJECT_SPEC_FIELD_META={
   // quotation form uses (MODEL_MATERIALS, exposed on window) -- pulled live
   // at edit-open time rather than duplicated here, so the two stay in sync.
   material:{label:'Materials & presentation',display:'projInfoMaterial',wrap:'psMaterialWrap',btn:'psMaterialBtn',type:'select',input:'psMaterialInput',override:'materialOverride'},
+  // How many copies of the model this project is for -- captured at lead
+  // intake (the Add Lead modal's "Number of exact models" field, al-quantity)
+  // and carried onto b.brief['Quantity'] when the lead converts to a brief
+  // (see SRC_confirmSendLead), but that raw brief bag is only ever shown to
+  // vendors -- it never surfaced anywhere on the client/Owner/Client Manager-
+  // facing Project information panel, so a multi-unit order looked
+  // identical to a single one here. Editable the same way as every other
+  // spec field, in case the quantity changes after intake.
+  quantity:{label:'Model quantity',display:'projInfoQuantity',wrap:'psQuantityWrap',btn:'psQuantityBtn',type:'text',input:'psQuantityInput',override:'quantityOverride'},
   modelSize:{label:'Model size',display:'projInfoModelSize',wrap:'psModelSizeWrap',btn:'psModelSizeBtn',type:'dims',prefix:'psModelSize',override:'modelSizeOverride'},
   packageSize:{label:'Package size',display:'projInfoPackageSize',wrap:'psPackageSizeWrap',btn:'psPackageSizeBtn',type:'dims',prefix:'psPackageSize',override:'packageSizeOverride'},
   // The project's own site/building address -- distinct from Delivery
@@ -5689,7 +5712,7 @@ window.lmRenamePin=lmRenamePin;
 // way. Kept as one list rather than a separate
 // client-facing one since the fields that matter (scale, use case, dates,
 // address...) are the same regardless of who's asking.
-var CHANGE_REQUEST_FIELD_OPTIONS=['Use case','Scale','Materials & presentation','Model size','Package size','Project address','Boundary map','Start date','Target production completion','Target delivery','Other'];
+var CHANGE_REQUEST_FIELD_OPTIONS=['Use case','Scale','Materials & presentation','Model quantity','Model size','Package size','Project address','Boundary map','Start date','Target production completion','Target delivery','Other'];
 window.CHANGE_REQUEST_FIELD_OPTIONS=CHANGE_REQUEST_FIELD_OPTIONS;
 function openRequestChangeModal(){
   var role=document.body.dataset.role;
