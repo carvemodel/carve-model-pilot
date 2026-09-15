@@ -10446,8 +10446,36 @@ window.SRC_editInvoiceAmount=function(bid,which){
   if(next==null)return;
   next=parseMoneyInput(next);
   if(!next||next<=0){alert('Enter a valid amount greater than 0.');return;}
-  if(which==='deposit')inv.depositAmt=next; else inv.balanceAmt=next;
-  logProjectEvent(b,(which==='deposit'?'Deposit':'Balance')+' invoice amount corrected to $'+next.toLocaleString('en-US'));
+  // Correcting one side of a split invoice used to leave the other side
+  // exactly where it was, so depositAmt+balanceAmt could drift away from
+  // the actual agreed price (b.clientQuote.price) the moment you fixed
+  // just one of the two numbers -- reported live: "once I change the
+  // first invoice cost, the second one should automatically convert to
+  // remaining balance." Whichever side is edited, the OTHER side now
+  // auto-recalculates to price-minus-the-edited-amount, same
+  // floor-at-$0 behavior syncInvoiceAmountsToPrice() already uses for the
+  // equivalent case (correcting the price itself, rather than one
+  // invoice line directly) -- except a side that's already been marked
+  // paid is left untouched, since that number represents money actually
+  // collected and shouldn't silently change after the fact. Doesn't apply
+  // to a single-invoice (100%-upfront) plan at all -- there's no second
+  // line to adjust.
+  var isSplit=!!inv.balanceId;
+  var autoAdjusted=null;
+  if(which==='deposit'){
+    inv.depositAmt=next;
+    if(isSplit&&(inv.balanceStatus||'due')!=='paid'&&b.clientQuote.price!=null){
+      inv.balanceAmt=Math.max(0,b.clientQuote.price-next);
+      autoAdjusted='balance';
+    }
+  }else{
+    inv.balanceAmt=next;
+    if(isSplit&&(inv.depositStatus||'due')!=='paid'&&b.clientQuote.price!=null){
+      inv.depositAmt=Math.max(0,b.clientQuote.price-next);
+      autoAdjusted='deposit';
+    }
+  }
+  logProjectEvent(b,(which==='deposit'?'Deposit':'Balance')+' invoice amount corrected to $'+next.toLocaleString('en-US')+(autoAdjusted?(' ('+autoAdjusted+' automatically updated to the remaining $'+(autoAdjusted==='balance'?inv.balanceAmt:inv.depositAmt).toLocaleString('en-US')+')'):''));
   saveSRC({changedBriefIds:[b.id]});
   if(window.syncClientsFromLeads)window.syncClientsFromLeads();
   if(window.SRC_render)SRC_render();
