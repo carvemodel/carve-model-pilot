@@ -1,7 +1,7 @@
 // Vercel serverless function — shared read/write store for the Sourcing & Quotes data
-// (leads + briefs). Lives on the SAME domain as the site (carvecreation.com), so it is
-// reachable for every user regardless of location/network — no separate third-party
-// domain to whitelist or get blocked.
+// (leads + briefs). Lives on the SAME domain as the site (www.physical-model.com), so
+// it is reachable for every user regardless of location/network — no separate
+// third-party domain to whitelist or get blocked.
 //
 // Backed by the Redis database connected to this project (env var REDIS_URL, injected
 // automatically by Vercel when you connected "carve-sourcing-kv" to this project).
@@ -81,7 +81,7 @@ function getClient() {
 //                      verified in Resend, or sends will fail — defaults to
 //                      Resend's own onboarding@resend.dev sandbox sender,
 //                      which works with no domain setup but is best swapped
-//                      for a carvecreation.com address once that domain is
+//                      for a physical-model.com address once that domain is
 //                      verified in the Resend dashboard.
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
@@ -189,7 +189,7 @@ async function sendLeadNotification(lead) {
       ['Scale', lead.scale], ['Model size', lead.modelsize], ['Quantity', lead.quantity],
       ['Timeline', lead.timeline], ['Deliver to', lead.deliveryTo], ['Notes', lead.notes],
     ]) +
-    '<p style="margin-top:16px;"><a href="https://www.carvecreation.com/login">Open Studio Portal →</a></p>' +
+    '<p style="margin-top:16px;"><a href="https://www.physical-model.com/login">Open Studio Portal →</a></p>' +
     '</div>';
   await sendNotificationEmail('New lead: ' + (lead.title || c.Name || 'Untitled project'), html);
 }
@@ -213,7 +213,7 @@ async function sendQuoteNotification(entry) {
       ['Base', quote.base], ['Model dimensions', quote.modelDims],
       ['Packages', quote.packages], ['Note', quote.note],
     ]) +
-    '<p style="margin-top:16px;"><a href="https://www.carvecreation.com/login">Open Studio Portal →</a></p>' +
+    '<p style="margin-top:16px;"><a href="https://www.physical-model.com/login">Open Studio Portal →</a></p>' +
     '</div>';
   await sendNotificationEmail(
     'New quote from ' + shopName + ': ' + (brief.title || brief.id),
@@ -237,7 +237,7 @@ async function sendChangeRequestNotification(entry) {
       ['Project', brief.title], ['Reference', brief.code], ['Field', change.field],
       ['Details', change.note], ['Requested by', change.requestedBy], ['Date', change.requestedAt],
     ]) +
-    '<p style="margin-top:16px;"><a href="https://www.carvecreation.com/login">Open Studio Portal →</a></p>' +
+    '<p style="margin-top:16px;"><a href="https://www.physical-model.com/login">Open Studio Portal →</a></p>' +
     '</div>';
   const subject = 'Change requested on "' + (brief.title || brief.id) + '": ' + (change.field || 'Other');
   const adminTo = process.env.LEAD_NOTIFY_TO || 'support@physical-model.com';
