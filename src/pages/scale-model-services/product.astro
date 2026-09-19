@@ -13,6 +13,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","@id":"https://www.physical-model.com/scale-model-services/product#service","url":"https://www.physical-model.com/scale-model-services/product","name":"Product Prototypes & Mockups","serviceType":"Product prototypes and physical mockups","provider":{"@id":"https://www.physical-model.com/#organization"},"areaServed":[{"@type":"Country","name":"United States"},{"@type":"Country","name":"Canada"}]}`} />
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"BreadcrumbList","@id":"https://www.physical-model.com/scale-model-services/product#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.physical-model.com/"},{"@type":"ListItem","position":2,"name":"Services","item":"https://www.physical-model.com/scale-model-services"},{"@type":"ListItem","position":3,"name":"Product Prototypes & Mockups","item":"https://www.physical-model.com/scale-model-services/product"}]}`} />
+<script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"FAQPage","@id":"https://www.physical-model.com/scale-model-services/product#faq","mainEntity":[{"@type":"Question","name":"Can you create a prototype if we do not have a finished 3D model?","acceptedAnswer":{"@type":"Answer","text":"Yes. We can begin with sketches, drawings, photographs, renderings, AI-generated images, reference products, or partially developed CAD files. If fabrication-ready geometry does not exist, we will identify the additional information and separately scoped digital model development required before physical production."}},{"@type":"Question","name":"What is the difference between an appearance prototype and a functional prototype?","acceptedAnswer":{"@type":"Answer","text":"An appearance prototype is primarily built to evaluate or present form, proportion, color, material, and finish. A functional prototype is developed to test specific physical requirements such as assembly, connections, movement, fit, access, or fabrication feasibility. A prototype may combine both purposes when clearly defined at the beginning of the project."}},{"@type":"Question","name":"What materials and fabrication methods can you use?","acceptedAnswer":{"@type":"Answer","text":"Materials and production methods are selected according to what the prototype must demonstrate. Depending on the project, we may use ABS, resin, acrylic, wood, metal, foam, printed components, custom finishes, CNC machining, laser cutting, 3D printing, painting, and hand assembly. Material recommendations are made after reviewing the intended use, appearance, handling, and performance requirements."}},{"@type":"Question","name":"How are product prototype pricing and schedules determined?","acceptedAnswer":{"@type":"Answer","text":"Pricing and lead time depend on the prototype's dimensions, geometry, function, materials, finish quality, number of components, source information, testing requirements, quantity, and deadline. After reviewing the available files and intended purpose, we provide a preliminary estimate and identify any design development required before fabrication."}}]}`} />
 <style>
 .breadcrumb{padding-top:1.6rem;}
 .breadcrumb a{font-family:var(--font-mono);font-size:0.78rem;letter-spacing:0.04em;color:var(--cm-text-subtle);transition:color var(--dur-2);}
@@ -66,6 +67,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .svc-split .svc-checklist,.svc-split .lead-p{max-width:none;}
 .svc-split__media image-slot{width:100%;height:auto;aspect-ratio:4/5;border-radius:var(--r-sm);}
 @media(max-width:900px){.svc-split{grid-template-columns:1fr;}.svc-split__media{order:-1;max-width:440px;}}
+.svc-faq{max-width:68ch;}
+.svc-faq .faq-list{border-top:1px solid var(--cm-line-faint);margin-top:1.8rem;}
+.svc-faq .faq-item{border-bottom:1px solid var(--cm-line-faint);}
+.svc-faq .faq-item summary{list-style:none;cursor:pointer;padding:1.3rem 0;display:flex;justify-content:space-between;gap:2rem;align-items:center;font-family:var(--font-display);font-weight:var(--w-semibold);font-size:1.05rem;color:var(--cm-text-strong);}
+.svc-faq .faq-item summary::-webkit-details-marker{display:none;}
+.svc-faq .faq-item .pm{position:relative;width:16px;height:16px;flex:none;}
+.svc-faq .faq-item .pm::before,.svc-faq .faq-item .pm::after{content:"";position:absolute;background:var(--cm-silver);transition:transform var(--dur-3);}
+.svc-faq .faq-item .pm::before{top:7.5px;left:0;width:16px;height:1.5px;}
+.svc-faq .faq-item .pm::after{top:0;left:7.5px;width:1.5px;height:16px;}
+.svc-faq .faq-item[open] .pm::after{transform:scaleY(0);}
+.svc-faq .faq-item p{margin-top:0;padding:0 0 1.3rem;color:var(--cm-text-muted);}
 </style>
 </Fragment>
 
@@ -218,6 +230,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <div class="svc-step"><span class="svc-step__n">06</span><p>Fabricate, assemble, finish, and test the defined features</p></div>
     <div class="svc-step"><span class="svc-step__n">07</span><p>Package and deliver the completed prototype</p></div>
   </div>
+</div></section>
+
+<section class="svc-section" style="border-bottom:0;"><div class="container">
+  <span class="eyebrow">FAQ</span>
+  <h2>Common product prototype questions.</h2>
+  <div class="svc-faq">
+    <div class="faq-list">
+      <details class="faq-item"><summary>Can you create a prototype if we do not have a finished 3D model? <span class="pm"></span></summary><p>Yes. We can begin with sketches, drawings, photographs, renderings, AI-generated images, reference products, or partially developed CAD files. If fabrication-ready geometry does not exist, we will identify the additional information and separately scoped digital model development required before physical production.</p></details>
+      <details class="faq-item"><summary>What is the difference between an appearance prototype and a functional prototype? <span class="pm"></span></summary><p>An appearance prototype is primarily built to evaluate or present form, proportion, color, material, and finish. A functional prototype is developed to test specific physical requirements such as assembly, connections, movement, fit, access, or fabrication feasibility. A prototype may combine both purposes when clearly defined at the beginning of the project.</p></details>
+      <details class="faq-item"><summary>What materials and fabrication methods can you use? <span class="pm"></span></summary><p>Materials and production methods are selected according to what the prototype must demonstrate. Depending on the project, we may use ABS, resin, acrylic, wood, metal, foam, printed components, custom finishes, CNC machining, laser cutting, 3D printing, painting, and hand assembly. Material recommendations are made after reviewing the intended use, appearance, handling, and performance requirements.</p></details>
+      <details class="faq-item"><summary>How are product prototype pricing and schedules determined? <span class="pm"></span></summary><p>Pricing and lead time depend on the prototype's dimensions, geometry, function, materials, finish quality, number of components, source information, testing requirements, quantity, and deadline. After reviewing the available files and intended purpose, we provide a preliminary estimate and identify any design development required before fabrication.</p></details>
+    </div>
+  </div>
+  <p class="svc-note"><a href="/faq">See all frequently asked questions →</a></p>
 </div></section>
 
 <section class="section"><div class="container">
