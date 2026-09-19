@@ -56,6 +56,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     if(!raw)return;
     sessionStorage.removeItem(KEY);
     var data=JSON.parse(raw);
+
+    // Google Tag Assistant is used to validate the production conversion
+    // flow, but those QA submissions are not customer inquiries. The
+    // site-wide first-touch record preserves the launch referrer, so suppress
+    // every advertising/analytics conversion when the session originated
+    // from Tag Assistant. The lead itself remains saved normally for end-to-
+    // end QA; only measurement is excluded.
+    var attribution={};
+    try{attribution=JSON.parse(sessionStorage.getItem('cm_attribution')||'{}');}catch(e){}
+    var attributionReferrer=String(attribution.referrer||'');
+    if(/(^|\\.)tagassistant\\.google\\.com(?:[\\/:]|$)/i.test(attributionReferrer))return;
+
     if(typeof gtag!=='function'||!window.__CM_ANALYTICS_ENABLED__)return;
     gtag('event','contact_form',{form_id:'quoteForm',form_name:'Contact — Preliminary Estimate',transaction_id:data.leadId});
     if(data.sendTo){
