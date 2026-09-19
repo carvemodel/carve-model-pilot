@@ -19,6 +19,7 @@ export default defineConfig({
       filter: (page) =>
         !page.endsWith('/rss.xml') &&
         !page.includes('/login') &&
+        !page.includes('/blog/carve-studio-portal-partner-testing') &&
         !page.includes('/app') &&
         !page.includes('/quotation') &&
         !page.includes('/factory-sourcing') &&
