@@ -9,6 +9,21 @@
     }
   });
 
+  // Mobile "Services" submenu expand/collapse -- kept separate from the
+  // Services link itself (a <button>, not part of the <a>) so the link
+  // stays directly tappable to go to /scale-model-services while this
+  // toggles the four service pages open/closed underneath it.
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-mobile-expand]');
+    if (!b) return;
+    var panel = document.getElementById(b.getAttribute('aria-controls'));
+    if (!panel) return;
+    var willOpen = panel.hidden;
+    panel.hidden = !willOpen;
+    b.setAttribute('aria-expanded', String(willOpen));
+    b.classList.toggle('is-open', willOpen);
+  });
+
   // Scroll reveal
   var io;
   function initReveal() {

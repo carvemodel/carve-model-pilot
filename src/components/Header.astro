@@ -9,7 +9,17 @@ const cur = (name: string) => (active === name ? 'page' : undefined);
 <header class="site-header"><div class="container nav">
   <a class="nav__brand" href="/" aria-label="Carve Model home"><img src="/assets/logo-lockup.webp" alt="Carve Model" width="164" height="68" decoding="async"></a>
   <nav aria-label="Primary"><ul class="nav__links">
-    <li><a href="/scale-model-services" aria-current={cur('services')}>Services</a></li>
+    <li class="nav__item--dropdown">
+      <a href="/scale-model-services" aria-current={cur('services')} aria-haspopup="true">Services <span class="nav__caret" aria-hidden="true">▾</span></a>
+      <div class="nav__dropdown">
+        <ul>
+          <li><a href="/architectural-scale-models">Architectural &amp; Real Estate Models</a></li>
+          <li><a href="/scale-model-services/product">Product Prototypes &amp; Mockups</a></li>
+          <li><a href="/scale-model-services/film">Film &amp; Commercial Miniatures</a></li>
+          <li><a href="/scale-model-services/art">Art Maquettes &amp; Prototypes</a></li>
+        </ul>
+      </div>
+    </li>
     <li><a href="/model-making-process" aria-current={cur('process')}>Process</a></li>
     <li><a href="/works" aria-current={cur('works')}>Works</a></li>
     <li><a href="/about-carve-model" aria-current={cur('about')}>About</a></li>
@@ -27,7 +37,16 @@ const cur = (name: string) => (active === name ? 'page' : undefined);
   </div>
 </div>
 <div class="mobile-menu" id="mobileMenu">
-  <a href="/scale-model-services">Services</a>
+  <div class="mobile-menu__row">
+    <a href="/scale-model-services">Services</a>
+    <button type="button" class="mobile-menu__expand" aria-expanded="false" aria-controls="mobileServicesSub" data-mobile-expand aria-label="Toggle Services submenu"><span class="nav__caret" aria-hidden="true">▾</span></button>
+  </div>
+  <div class="mobile-menu__subgroup" id="mobileServicesSub" hidden>
+    <a class="mobile-menu__sub" href="/architectural-scale-models">Architectural &amp; Real Estate Models</a>
+    <a class="mobile-menu__sub" href="/scale-model-services/product">Product Prototypes &amp; Mockups</a>
+    <a class="mobile-menu__sub" href="/scale-model-services/film">Film &amp; Commercial Miniatures</a>
+    <a class="mobile-menu__sub" href="/scale-model-services/art">Art Maquettes &amp; Prototypes</a>
+  </div>
   <a href="/model-making-process">Process</a>
   <a href="/works">Works</a>
   <a href="/about-carve-model">About</a>
