@@ -27,9 +27,10 @@ interface Props {
   footerText?: string; // optional override for the bottom CTA body text
   footerButtons?: { label: string; href: string }[]; // optional override for the bottom CTA button(s)
   hideFooterCta?: boolean; // optional: skip the bottom CTA box entirely — for an article that already ends with its own CTA in the body
+  robotsNoIndex?: boolean; // optional: exclude internal or temporary posts from search indexing
 }
 const {
-  title, description, slug, metaLabel, publishDate, publishDateISO, lastReviewedDate, lastReviewedDateISO, readTime, heading, headingHtml, lead, leadHtml, leadExtra, leadExtraHtml, coverId, coverImage, coverCaption, coverAspectRatio, coverMockup, hideCover, hideFooterCta,
+  title, description, slug, metaLabel, publishDate, publishDateISO, lastReviewedDate, lastReviewedDateISO, readTime, heading, headingHtml, lead, leadHtml, leadExtra, leadExtraHtml, coverId, coverImage, coverCaption, coverAspectRatio, coverMockup, hideCover, hideFooterCta, robotsNoIndex = false,
   footerHeading = 'Planning an architectural model?',
   footerText = "Send us the approximate project dimensions, intended use, available files, and preferred display size. Even if the design is still developing, we can recommend an appropriate starting scale, scope, and level of detail.",
   footerButtons = [{ label: 'Get a Preliminary Estimate →', href: '/contact' }],
@@ -73,6 +74,7 @@ const {
   ogImage={coverImage ? `https://www.physical-model.com${coverImage}` : undefined}
   active="blog"
   imageSlot={true}
+  robotsNoIndex={robotsNoIndex}
 >
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={JSON.stringify({
