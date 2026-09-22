@@ -3841,8 +3841,8 @@ function projectRowHtml(b){
   var vendorPriceHidden=document.body.classList.contains('vendor-no-price');
   if(role==='factory'&&!vendorPriceHidden){
     var wq=(typeof winningQuote==='function')?winningQuote(b):null;
-    if(wq&&wq.priceRMB!=null){
-      metaBits.push('Quoted: '+moneyRMB(wq.priceRMB)+(wq.price!=null?(' (≈ $'+wq.price.toLocaleString('en-US')+')'):''));
+    if(wq&&wq.price!=null){
+      metaBits.push('Quoted: '+fmtUsd(wq.price)+(wq.priceRMB!=null?(' (≈ '+moneyRMB(wq.priceRMB)+')'):''));
       metaBits.push('Paid: '+esc(vendorPaymentStatusLabel(b)));
     }
   }else if(role!=='prodtech'&&role!=='factory'){
@@ -5970,11 +5970,11 @@ function renderProjectPricingPanel(b){
   // Same two numbers, re-shown to the vendor side itself (see vendor-price-only/
   // vendor-days-only in PERM) -- "your quoted price" IS "how much Carve pays
   // you" for this project, there's no separate vendor-payment figure tracked.
-  // Shown RMB-first here (the currency the vendor actually quoted in and
-  // thinks in), with the USD figure Carve pays alongside as a secondary
-  // "≈" conversion -- same ordering used everywhere else a vendor's own
-  // quote is displayed (e.g. the Quotes tab's own quote card).
-  setText('kpiVendorQuotedPrice',(wq&&wq.priceRMB!=null)?(moneyRMB(wq.priceRMB)+' (≈ '+fmtUsd(vendorPrice)+')'):(vendorPrice!=null?fmtUsd(vendorPrice):'—'));
+  // Shown USD-first here (the currency the vendor now actually quotes in and
+  // gets paid in), with the RMB figure alongside as a secondary "≈"
+  // conversion -- same ordering used everywhere else a vendor's own quote
+  // is displayed (e.g. the Quotes tab's own quote card).
+  setText('kpiVendorQuotedPrice',(vendorPrice!=null)?(fmtUsd(vendorPrice)+(wq&&wq.priceRMB!=null?(' (≈ '+moneyRMB(wq.priceRMB)+')'):'')):'—');
   setText('kpiVendorQuotedDays',(wq&&wq.days!=null)?(wq.days+' day'+(wq.days===1?'':'s')):'—');
   setText('kpiProfitPct',(profit!=null&&clientPrice)?(Math.round((profit/clientPrice)*1000)/10)+'% margin':'');
   renderShippingCostCard(b);
@@ -5993,7 +5993,7 @@ function renderVendorPaymentPanel(b){
   if(!wrap)return;
   if(!b)return;
   var wq=(typeof winningQuote==='function')?winningQuote(b):null;
-  setText('vpQuoted',(wq&&wq.priceRMB!=null)?(moneyRMB(wq.priceRMB)+(wq.price!=null?(' (≈ '+fmtUsd(wq.price)+')'):'')):'—');
+  setText('vpQuoted',(wq&&wq.price!=null)?(fmtUsd(wq.price)+(wq.priceRMB!=null?(' (≈ '+moneyRMB(wq.priceRMB)+')'):'')):'—');
   var inv=b.vendorInvoice||{};
   setText('vpDepositStatus',inv.depositStatus==='paid'?('Paid'+(inv.depositPaidAt?(' · '+fmtDateShort(inv.depositPaidAt)):'')):'Not yet paid');
   setText('vpBalanceStatus',inv.balanceStatus==='paid'?('Paid'+(inv.balancePaidAt?(' · '+fmtDateShort(inv.balancePaidAt)):'')):'Not yet paid');
@@ -6084,25 +6084,25 @@ function renderVendorFinance(){
     wrap.innerHTML='<div class="panel"><div class="panel__body"><div style="color:var(--cm-text-subtle);font-size:0.9rem;">No awarded projects in this period.</div></div></div>';
     return;
   }
-  var totalRMB=0, receivedRMB=0;
+  var totalUsd=0, receivedUsd=0;
   mine.forEach(function(b){
     var wq=(typeof winningQuote==='function')?winningQuote(b):null;
-    var priceRMB=(wq&&wq.priceRMB)||0;
-    totalRMB+=priceRMB;
+    var price=(wq&&wq.price)||0;
+    totalUsd+=price;
     var inv=b.vendorInvoice||{};
-    if(inv.balanceStatus==='paid')receivedRMB+=priceRMB;
-    else if(inv.depositStatus==='paid')receivedRMB+=priceRMB/2;
+    if(inv.balanceStatus==='paid')receivedUsd+=price;
+    else if(inv.depositStatus==='paid')receivedUsd+=price/2;
   });
   var html='<div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
     '<div class="kpi"><span class="mock__k">Awarded projects</span><div class="big">'+mine.length+'</div></div>'+
-    '<div class="kpi"><span class="mock__k">Total quoted</span><div class="big">'+moneyRMB(totalRMB)+'</div></div>'+
-    '<div class="kpi"><span class="mock__k">Received so far</span><div class="big">'+moneyRMB(receivedRMB)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Total quoted</span><div class="big">'+fmtUsd(totalUsd)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Received so far</span><div class="big">'+fmtUsd(receivedUsd)+'</div></div>'+
   '</div>';
   mine.sort(function(a,c){return (c.awardedAt||c.sentDate||'').localeCompare(a.awardedAt||a.sentDate||'');});
   html+='<div class="panel" style="margin-top:1.25rem;"><div class="panel__head"><h3>Awarded projects</h3></div><div class="panel__body">'+
     mine.map(function(b){
       var wq=(typeof winningQuote==='function')?winningQuote(b):null;
-      var quotedTxt=(wq&&wq.priceRMB!=null)?(moneyRMB(wq.priceRMB)+(wq.price!=null?(' (≈ $'+wq.price.toLocaleString('en-US')+')'):'')):'—';
+      var quotedTxt=(wq&&wq.price!=null)?(fmtUsd(wq.price)+(wq.priceRMB!=null?(' (≈ '+moneyRMB(wq.priceRMB)+')'):'')):'—';
       return '<div class="qline2" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><div class="qf-name"><div class="nm">'+esc(b.title)+'</div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">'+quotedTxt+'</div><div></div><div style="text-align:right;">'+esc((typeof vendorPaymentStatusLabel==='function')?vendorPaymentStatusLabel(b):'')+'</div></div>';
     }).join('')+
   '</div></div>';
@@ -6149,12 +6149,13 @@ function inCfRange(dateStr){
 }
 // Studio-wide amounts owed to Carve's vendors, mirroring vendorPaymentStatusLabel()/
 // the per-project Vendor Payment panel (b.vendorInvoice) but rolled up across every
-// awarded project, in the same RMB-primary/USD-approx format the vendor's own
-// Finance tab (renderVendorFinance) already uses -- that's the vendor's real
-// invoiced currency, so it stays primary here too rather than being converted away.
-function vendorAmountTxt(rmb,usdApprox){
-  if(!rmb)return moneyRMB(0);
-  return moneyRMB(rmb)+(usdApprox!=null?(' (≈ '+fmtUsd(usdApprox)+')'):'');
+// awarded project, in the same USD-primary/RMB-approx format the vendor's own
+// Finance tab (renderVendorFinance) already uses -- vendors now quote and get
+// paid in USD, so that's the authoritative figure; RMB is shown only as an
+// informational reference.
+function vendorAmountTxt(usd,rmbApprox){
+  if(!usd)return fmtUsd(0);
+  return fmtUsd(usd)+(rmbApprox!=null?(' (≈ '+moneyRMB(rmbApprox)+')'):'');
 }
 function renderCarveFinance(){
   var wrap=document.getElementById('carveFinanceList');
@@ -6189,9 +6190,9 @@ function renderCarveFinance(){
     '<div class="kpi"><span class="mock__k">Outstanding from client</span><div class="big">'+fmtUsd(totalUsd-receivedUsd)+'</div></div>'+
   '</div>';
   html+='<div class="mock__k" style="margin:1.25rem 0 0.6rem;">Vendor payables</div><div class="kpis" style="grid-template-columns:repeat(3,1fr);">'+
-    '<div class="kpi"><span class="mock__k">Total payable</span><div class="big">'+vendorAmountTxt(payableRMB,payableUsd)+'</div></div>'+
-    '<div class="kpi"><span class="mock__k">Paid so far</span><div class="big">'+vendorAmountTxt(paidRMB,paidUsd)+'</div></div>'+
-    '<div class="kpi"><span class="mock__k">Remaining</span><div class="big">'+vendorAmountTxt(payableRMB-paidRMB,payableUsd-paidUsd)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Total payable</span><div class="big">'+vendorAmountTxt(payableUsd,payableRMB)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Paid so far</span><div class="big">'+vendorAmountTxt(paidUsd,paidRMB)+'</div></div>'+
+    '<div class="kpi"><span class="mock__k">Remaining</span><div class="big">'+vendorAmountTxt(payableUsd-paidUsd,payableRMB-paidRMB)+'</div></div>'+
   '</div>';
   mine.sort(function(a,c){return (c.awardedAt||c.sentDate||'').localeCompare(a.awardedAt||a.sentDate||'');});
   html+='<div class="panel" style="margin-top:1.25rem;"><div class="panel__head"><h3>Awarded projects</h3></div><div class="panel__body">'+
@@ -6208,9 +6209,9 @@ function renderCarveFinance(){
       return '<div class="qline2" style="cursor:pointer;" onclick="openProject(\''+esc(b.id)+'\')"><div class="qf-name"><div class="nm">'+esc(b.title)+'</div><div class="mock__k">'+esc(c.Company||'—')+'</div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">'+priceTxt+'</div><div></div><div style="text-align:right;">'+esc(paymentStatusLabel(b))+'</div>'+
         '<div style="grid-column:1/-1;margin-top:0.6rem;padding-top:0.6rem;border-top:1px dashed var(--cm-line-faint);display:flex;flex-wrap:wrap;gap:1.2rem;font-size:0.8rem;color:var(--cm-text-subtle);">'+
           '<span>Vendor: <span style="color:var(--cm-text);">'+esc(vendorRec?vendorRec.name:'—')+'</span></span>'+
-          '<span>Payable: <span style="color:var(--cm-text);">'+vendorAmountTxt(vRmb,vUsd)+'</span></span>'+
-          '<span>Paid: <span style="color:var(--cm-text);">'+vendorAmountTxt(vPaidRmb,vPaidUsd)+'</span></span>'+
-          '<span>Remaining: <span style="color:var(--cm-text);">'+vendorAmountTxt(vRmb-vPaidRmb,vUsd-vPaidUsd)+'</span></span>'+
+          '<span>Payable: <span style="color:var(--cm-text);">'+vendorAmountTxt(vUsd,vRmb)+'</span></span>'+
+          '<span>Paid: <span style="color:var(--cm-text);">'+vendorAmountTxt(vPaidUsd,vPaidRmb)+'</span></span>'+
+          '<span>Remaining: <span style="color:var(--cm-text);">'+vendorAmountTxt(vUsd-vPaidUsd,vRmb-vPaidRmb)+'</span></span>'+
           '<span>Vendor payment: <span style="color:var(--cm-text);">'+esc(vendorPaymentStatusLabel(b))+'</span></span>'+
         '</div>'+
       '</div>';
@@ -8632,7 +8633,7 @@ window.SRC_generateQuotationPDF=function(bid,shopId,variantIndex){
 '<div><div class="b">Production shop</div>'+esc(shopName)+(shopLoc?('<br>'+esc(shopLoc)):'')+'</div>'+
 '<div style="text-align:right"><div class="b">Quotation</div>No. '+esc(refNo)+'<br>'+today+'</div></div>'+
 '<div class="sec"><h3>Quote</h3><table><tr><th>Item</th><th class="r">Cost</th><th class="r">Production time</th></tr>'+
-'<tr><td>'+esc(b.title)+'</td><td class="r">'+moneyRMB(q.priceRMB)+' (≈ '+fmtUsd(q.price)+')</td><td class="r">'+esc(q.days)+' days</td></tr></table></div>'+
+'<tr><td>'+esc(b.title)+'</td><td class="r">'+fmtUsd(q.price)+' (≈ '+moneyRMB(q.priceRMB)+')</td><td class="r">'+esc(q.days)+' days</td></tr></table></div>'+
 (specRows.length?('<div class="sec"><h3>Specification</h3><table>'+specRows.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td class="r">'+esc(r[1])+'</td></tr>';}).join('')+'</table></div>'):'')+
 (q.note?('<div class="sec"><h3>Notes</h3><p>'+esc(q.note)+'</p></div>'):'')+
 '</body></html>';
@@ -9073,7 +9074,7 @@ window.OUR_SHOP=OUR_SHOP; // mirrored -- renderVendorProjects() (an earlier <scr
 window.SRC_setShop=function(id){OUR_SHOP=id||'';window.OUR_SHOP=OUR_SHOP;};
 var ME_TECH='sam';                    // Production Technician identity
 window.ME_TECH=ME_TECH; // mirrored for the same reason as window.OUR_SHOP above -- never reassigned, so a one-time mirror is enough
-var RMB_PER_USD=7.2;                  // demo FX rate — production shops quote in RMB, Carve sees USD
+var RMB_PER_USD=7.2;                  // demo FX rate — vendor quotes are now entered and calculated in USD; RMB is kept only as an informational reference (see usdToRmb/SRC_syncCostRmb)
 var SRC_PENDING_BFILE={};             // holds boundary-file metadata picked but not yet submitted, keyed by "<prefix>-<briefId>"
 var SRC_BFILE_UPLOADING={};           // true while a boundary file's upload is still in flight, same keys as above
 var SRC_OPEN_VARIATION={};            // briefId -> true while a shop's "add variation" form is open
@@ -9291,7 +9292,7 @@ function unsuccessfulNoteReadonly(q){
 }
 function collapsedSummaryLine(b,q,won,lost,inProd,quoteUnsuccessful){
   var flag=(q&&q.carveNote)?'⚑ Carve requested changes — ':'';
-  var qLine=q?('<span style="color:var(--cm-text-strong);font-size:1.05em;">'+moneyRMB(q.priceRMB)+' (≈ '+money(q.price)+') · '+q.days+' days</span>'):'';
+  var qLine=q?('<span style="color:var(--cm-text-strong);font-size:1.05em;">'+money(q.price)+' (≈ '+moneyRMB(q.priceRMB)+') · '+q.days+' days</span>'):'';
   if(inProd)return flag+'In production'+(b.assignedTech?(' · assigned to '+TECHS.filter(function(t){return t.id===b.assignedTech;})[0].name):'')+(qLine?(' · '+qLine):'');
   if(won)return flag+'Awarded to you'+(qLine?(' — '+qLine):'')+' — assign a technician to proceed to production.';
   if(lost)return 'Awarded to another shop.';
@@ -9301,6 +9302,12 @@ function collapsedSummaryLine(b,q,won,lost,inProd,quoteUnsuccessful){
 }
 
 function rmbToUsd(rmb){return rmb==null?null:Math.round(rmb/RMB_PER_USD);}
+// The reverse of rmbToUsd -- used to compute the informational RMB
+// reference figure from the USD value a vendor now actually types into the
+// Cost field (see quoteFormFields/collectQuoteFormData), and to keep
+// rmbToUsd itself around for any already-recorded quote that still carries
+// its original priceRMB as the authoritative figure.
+function usdToRmb(usd){return usd==null?null:Math.round(usd*RMB_PER_USD);}
 window.rmbToUsd=rmbToUsd; // exposed -- renderProjectPricingPanel/projectRowHtml (earlier <script> blocks) convert the vendor-paid RMB figure to its USD equivalent
 function moneyRMB(n){return n==null?'—':'¥'+Math.round(n).toLocaleString('en-US');}
 function money(n){return n==null?'—':'$'+n.toLocaleString('en-US');}
@@ -9340,6 +9347,16 @@ window.SRC_syncDim=function(prefix,bid,dim,fromUnit){
     var v2=parseFloat(inEl.value);
     mmEl.value=isNaN(v2)?'':Math.round(v2*25.4);
   }
+};
+// Live RMB-equivalent hint under the vendor's Cost (USD) field -- purely
+// informational (the USD value is what actually gets stored/calculated,
+// see collectQuoteFormData), for shops that still think in RMB while typing.
+window.SRC_syncCostRmb=function(prefix,bid){
+  var idp=prefix+'-';
+  var usdEl=document.getElementById(idp+'p-'+bid), hint=document.getElementById(idp+'p-rmb-'+bid);
+  if(!usdEl||!hint)return;
+  var usd=parseFloat(usdEl.value);
+  hint.textContent=isNaN(usd)?'≈ ¥— RMB':('≈ '+moneyRMB(usdToRmb(usd))+' RMB');
 };
 var STANDARD_FRACTIONS=[[3,'3"'],[2,'2"'],[1.5,'1 1/2"'],[1,'1"'],[0.75,'3/4"'],[0.5,'1/2"'],[0.375,'3/8"'],[0.25,'1/4"'],[0.1875,'3/16"'],[0.125,'1/8"'],[0.09375,'3/32"'],[0.0625,'1/16"'],[0.03125,'1/32"'],[0.015625,'1/64"'],[0.0078125,'1/128"']];
 function inchesToFractionLabel(inches){
@@ -9726,7 +9743,12 @@ function quoteFormFields(prefix,bid,b){
   var scaleParsed=parseScaleString(briefScale);
   var idp=prefix+'-';
   var html='';
-  html+='<div><label>Cost (¥ RMB)</label><input id="'+idp+'p-'+bid+'" type="number" placeholder="e.g. 14000"></div>';
+  // Vendors now type their cost directly in USD -- the currency Carve
+  // actually calculates and pays in -- with a live RMB-equivalent shown
+  // underneath purely as a conversion helper for shops that still think in
+  // RMB (see SRC_syncCostRmb). collectQuoteFormData() reads this field as
+  // the authoritative price and derives priceRMB from it for reference.
+  html+='<div><label>Cost (USD)</label><input id="'+idp+'p-'+bid+'" type="number" step="0.01" placeholder="e.g. 1950.00" oninput="SRC_syncCostRmb(\''+prefix+'\',\''+bid+'\')"><div id="'+idp+'p-rmb-'+bid+'" style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);margin-top:0.35rem;">≈ ¥— RMB</div></div>';
   html+='<div><label>Production time (days)</label><input id="'+idp+'d-'+bid+'" type="number" placeholder="18"></div>';
   html+='<div><label>Work scope</label><select id="'+idp+'cat-'+bid+'"><option value="">Match client brief'+(briefCat?': '+esc(briefCat):'')+'</option>'+MODEL_CATEGORIES.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div>';
   html+='<div class="full"><label>Scale</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">'+
@@ -9755,10 +9777,10 @@ function quoteFormFields(prefix,bid,b){
 }
 function collectQuoteFormData(prefix,bid,b){
   var idp=prefix+'-';
-  var rmbEl=document.getElementById(idp+'p-'+bid), dEl=document.getElementById(idp+'d-'+bid);
-  if(!rmbEl||!dEl)return null;
-  var rmb=parseInt(rmbEl.value,10), d=parseInt(dEl.value,10);
-  if(!rmb||!d)return null;
+  var usdEl=document.getElementById(idp+'p-'+bid), dEl=document.getElementById(idp+'d-'+bid);
+  if(!usdEl||!dEl)return null;
+  var usd=parseFloat(usdEl.value), d=parseInt(dEl.value,10);
+  if(!usd||!d)return null;
   var category=document.getElementById(idp+'cat-'+bid).value||((b.brief&&b.brief['Model type'])||'');
   var scaleIntlEl=document.getElementById(idp+'scale-intl-'+bid), scaleImpEl=document.getElementById(idp+'scale-imp-'+bid);
   var scaleIntl=scaleIntlEl?scaleIntlEl.value.trim():'', scaleImp=scaleImpEl?scaleImpEl.value.trim():'';
@@ -9777,7 +9799,10 @@ function collectQuoteFormData(prefix,bid,b){
   document.querySelectorAll('.'+idp+'extra-'+bid+':checked').forEach(function(cb){extras.push(cb.value);});
   var note=document.getElementById(idp+'n-'+bid).value.trim();
   var bfile=SRC_PENDING_BFILE[prefix+'-'+bid]||null;
-  return {priceRMB:rmb,price:rmbToUsd(rmb),days:d,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,boundaryFile:bfile,note:note};
+  // priceRMB is now the DERIVED figure (kept for the many existing displays
+  // that still show it as a secondary "≈" reference) -- price (USD) is what
+  // the vendor actually entered and what every calculation is based on.
+  return {priceRMB:usdToRmb(usd),price:usd,days:d,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,boundaryFile:bfile,note:note};
 }
 
 // Boundary-file label text for a given "<prefix>-<bid>" key, derived from
@@ -10036,6 +10061,16 @@ function srcRestorePkgDims(containerId,draft){
   // Pass 2: the rebuild above just created fresh, empty per-case dimension
   // inputs (with stable ids — see buildPkgDimRow) — restore into those too.
   srcRestoreDraft(draft);
+  // Pass 3: srcRestoreDraft only sets .value on the restored Cost (USD)
+  // input, it never fires an 'input' event -- so the live RMB-equivalent
+  // hint underneath (see quoteFormFields/SRC_syncCostRmb) would otherwise
+  // stay stuck on its empty placeholder after a background-poll re-render
+  // restores a vendor's in-progress typed value. Resync it explicitly here.
+  container.querySelectorAll('input[id*="-p-"]').forEach(function(pEl){
+    var m=pEl.id.match(/^(.+)-p-(.+)$/);
+    if(!m||!window.SRC_syncCostRmb)return;
+    window.SRC_syncCostRmb(m[1],m[2]);
+  });
 }
 function setSrcBody(html){
   var draft=srcCaptureDraft();
@@ -10307,7 +10342,7 @@ function renderCarveAdminBriefDetail(b){
           '</div>';
         }
         html+='<div class="qline2'+(q.unsuccessful?' qline2--unsuccessful':'')+'"><div class="qf-name"><span class="av">'+s.av+'</span><div><div class="nm">'+(admin?admin.name:s.name)+(isVariant&&q.label?(' <span style="color:var(--cm-text-subtle);font-weight:var(--w-regular);">— '+esc(q.label)+'</span>'):'')+(low?'<span class="lowtag">Lowest</span>':'')+'</div><div class="lc">'+(admin?admin.company:s.loc)+(isVariant?' · Variation':'')+'</div></div></div>'+
-          '<div class="qf-price">'+(q.priceRMB?moneyRMB(q.priceRMB):money(q.price))+(q.priceRMB?'<div style="font-family:var(--font-mono);font-weight:var(--w-regular);font-size:0.62rem;color:var(--cm-text-subtle);margin-top:2px;">≈ '+money(q.price)+'</div>':'')+'</div><div class="qf-days">'+q.days+' days</div>'+
+          '<div class="qf-price">'+money(q.price)+(q.priceRMB?'<div style="font-family:var(--font-mono);font-weight:var(--w-regular);font-size:0.62rem;color:var(--cm-text-subtle);margin-top:2px;">≈ '+moneyRMB(q.priceRMB)+'</div>':'')+'</div><div class="qf-days">'+q.days+' days</div>'+
           '<div style="text-align:right;">'+actionHtml+'</div>'+
           quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+unsuccessfulNoteReadonly(q)+carveCommentBlock(b,s.id,opt.variantIndex,q)+'</div>';
       });
@@ -10671,7 +10706,7 @@ function clientQuoteSection(b){
   var srcLabel=shop(basisShop(b)).name+(srcQ.label?(' — '+srcQ.label):'');
   var confirmed=b.status==='awarded';
   var html='<div class="panel src-card" style="margin-top:1rem;border-color:var(--cm-border-strong);"><div class="panel__head"><h3>Finalize quote for client</h3><span class="k">Carve Admin only</span></div><div class="panel__body">';
-  html+='<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);margin-bottom:0.9rem;">Based on — '+esc(srcLabel)+': '+moneyRMB(srcQ.priceRMB)+' <span style="opacity:0.7;">(≈ '+money(srcQ.price)+')</span> · '+ (srcQ.days||'—') +' days. Pick a different option above to change the basis.</div>';
+  html+='<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--cm-text-subtle);margin-bottom:0.9rem;">Based on — '+esc(srcLabel)+': '+money(srcQ.price)+' <span style="opacity:0.7;">(≈ '+moneyRMB(srcQ.priceRMB)+')</span> · '+ (srcQ.days||'—') +' days. Pick a different option above to change the basis.</div>';
   if(!confirmed)html+='<div class="notice" style="margin-bottom:0.9rem;">Not yet awarded to production — '+esc(shop(basisShop(b)).name)+' has not been notified. You can still finalize and send this price to the client now.</div>';
   html+='<div class="qform2">';
   // Never pre-filled from the vendor's own quote (srcQ.price/base.price) --
@@ -11039,7 +11074,7 @@ function renderProdAdminDetail(b){
     var wq=winningQuote(b);
     if(wq){
       html+='<div style="margin-top:0.2rem;">'+
-        '<div class="qline2"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm" style="font-size:0.95rem;">'+moneyRMB(wq.priceRMB)+'</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-text-strong);">'+wq.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">≈ '+money(wq.price)+'</div><div></div><div></div>'+quoteSpecLine(wq,b)+extrasLine(wq)+boundaryFileLine(wq)+(wq.note?'<div class="qf-note">'+esc(wq.note)+'</div>':'')+carveNoteReadonly(wq)+'</div></div>';
+        '<div class="qline2"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm" style="font-size:0.95rem;">'+money(wq.price)+'</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-text-strong);">'+wq.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">≈ '+moneyRMB(wq.priceRMB)+'</div><div></div><div></div>'+quoteSpecLine(wq,b)+extrasLine(wq)+boundaryFileLine(wq)+(wq.note?'<div class="qf-note">'+esc(wq.note)+'</div>':'')+carveNoteReadonly(wq)+'</div></div>';
     }
     if(inProd){
       var techName=TECHS.filter(function(t){return t.id===b.assignedTech;})[0].name;
@@ -11059,10 +11094,10 @@ function renderProdAdminDetail(b){
     html+='<div style="font-size:0.84rem;color:var(--cm-text-muted);margin-top:0.6rem;">Awarded to another shop. Thanks for quoting — we’ll keep you in the loop.</div>';
   }else if(quoteUnsuccessful){
     html+='<div style="margin-top:0.2rem;">'+
-      '<div class="qline2 qline2--unsuccessful"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm" style="font-size:0.95rem;">'+moneyRMB(q.priceRMB)+'</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-text-strong);">'+q.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">≈ '+money(q.price)+'</div><div></div><div></div>'+quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+unsuccessfulNoteReadonly(q)+'</div></div>';
+      '<div class="qline2 qline2--unsuccessful"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm" style="font-size:0.95rem;">'+money(q.price)+'</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-text-strong);">'+q.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">≈ '+moneyRMB(q.priceRMB)+'</div><div></div><div></div>'+quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+unsuccessfulNoteReadonly(q)+'</div></div>';
   }else if(q){
     html+='<div style="margin-top:0.2rem;">'+
-      '<div class="qline2"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm" style="font-size:0.95rem;">'+moneyRMB(q.priceRMB)+'</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-text-strong);">'+q.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">≈ '+money(q.price)+'</div><div></div><div style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_unquote(\''+b.id+'\')">Revise</button></div>'+quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+carveNoteReadonly(q)+'</div></div>';
+      '<div class="qline2"><div class="qf-name"><span class="av">'+shop(OUR_SHOP).av+'</span><div><div class="nm" style="font-size:0.95rem;">'+money(q.price)+'</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-text-strong);">'+q.days+' days</div></div></div><div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-strong);">≈ '+moneyRMB(q.priceRMB)+'</div><div></div><div style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_unquote(\''+b.id+'\')">Revise</button></div>'+quoteSpecLine(q,b)+extrasLine(q)+boundaryFileLine(q)+(q.note?'<div class="qf-note">'+esc(q.note)+'</div>':'')+carveNoteReadonly(q)+'</div></div>';
   }else{
     html+='<div class="qform2">'+quoteFormFields('src',b.id,b)+
       '<div class="full" style="text-align:right;"><button class="btn btn--ghost btn--fill-hover btn--sm" onclick="SRC_quote(\''+b.id+'\')">Send quote to Carve</button></div></div>';
