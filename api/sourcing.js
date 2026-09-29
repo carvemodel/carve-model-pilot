@@ -196,10 +196,15 @@ async function sendLeadNotification(lead) {
 
 // entry: { brief, shopId, quote, variationLabel } — variationLabel is set
 // only for a variation quote (SRC_addVariation), null for the primary quote
-// (SRC_quote).
-async function sendQuoteNotification(entry) {
+// (SRC_quote). vendors is the live vendor roster (data.vendors) so the
+// email shows the vendor's real shop name instead of falling back to the
+// raw auto-generated id (e.g. "v1790264756032") for any vendor added
+// through the actual "+ Add vendor" flow — SHOP_NAMES only ever covered a
+// couple of legacy demo shops that predate the vendors roster.
+async function sendQuoteNotification(entry, vendors) {
   const { brief, shopId, quote, variationLabel } = entry;
-  const shopName = SHOP_NAMES[shopId] || shopId;
+  const vendor = (vendors || []).find((v) => v && v.id === shopId);
+  const shopName = (vendor && vendor.name) || SHOP_NAMES[shopId] || shopId;
   const kind = variationLabel ? ('Variation quote — ' + variationLabel) : 'Quote';
   const html =
     '<div style="font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#111;">' +
@@ -838,7 +843,7 @@ module.exports = async (req, res) => {
       const notifications = [
         ...claimedLeads.map((l) => sendLeadNotification(l)),
         ...claimedLeads.map((l) => sendOpenAiConversionEvent(l)),
-        ...claimedQuotes.map((q) => sendQuoteNotification(q)),
+        ...claimedQuotes.map((q) => sendQuoteNotification(q, data.vendors)),
         ...claimedChangeRequests.map((c) => sendChangeRequestNotification(c)),
       ];
       if (notifications.length) {
