@@ -3160,6 +3160,17 @@ function findBrief(id){return (window.SDB.briefs||[]).filter(function(b){return 
 var _pendingAssignBriefId=null;
 function assignManagerOptions(selectedEmail){
   var managers=((window.SDB&&window.SDB.team)||[]).filter(function(m){return m.role==='sales';});
+  // Defensive de-dup by email: pre-existing duplicate roster rows (e.g. the
+  // same person added twice) should never show up twice in this picker --
+  // createTeamMember now blocks creating new duplicates, but this keeps the
+  // picker correct even if duplicate data already exists.
+  var seenEmails={};
+  managers=managers.filter(function(m){
+    var key=(m.email||'').toLowerCase();
+    if(key&&seenEmails[key])return false;
+    if(key)seenEmails[key]=true;
+    return true;
+  });
   return '<option value="">— Unassigned —</option>'+managers.map(function(m){
     var chosen=(selectedEmail&&m.email&&selectedEmail.toLowerCase()===m.email.toLowerCase())?' selected':'';
     return '<option value="'+esc(m.email)+'"'+chosen+'>'+esc(m.name)+'</option>';
@@ -4238,6 +4249,18 @@ function createTeamMember(e){
   var role=document.getElementById('memRole').value;
   if(!name||!email||!role)return false;
   window.SDB.team=window.SDB.team||[];
+  // Guard against duplicate roster entries -- the /api/team-invite
+  // EMAIL_TAKEN check below only catches an email that already has a real
+  // login account, so it never fires for the seeded default "you" record
+  // (t_cm_charles) or any other roster entry that was added without ever
+  // completing an invite. Without this, re-adding the same email (e.g. the
+  // Owner adding themselves a second time) silently created two rows with
+  // the same name/email that were indistinguishable everywhere a manager
+  // list is rendered, including the Client Manager picker on Award.
+  if(window.SDB.team.some(function(t){return t&&t.email&&t.email.toLowerCase()===email.toLowerCase();})){
+    alert(email+' is already on the team roster. Remove the existing entry first if you need to re-invite them.');
+    return false;
+  }
   window.SDB.team.push({id:'t'+Date.now(),name:name,email:email,role:role});
   if(typeof saveSRC==='function')saveSRC();
   renderTeam();
