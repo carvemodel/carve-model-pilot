@@ -3538,8 +3538,12 @@ window.uploadProjectBoundaryFile=uploadProjectBoundaryFile;
 function boundaryRotateButtonsHtml(b){
   var role=document.body.dataset.role;
   if(role!=='owner'&&role!=='sales'&&role!=='factory')return '';
-  var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
-  var boundaryFile=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
+  // Rotating always writes a single b.boundaryFileOverride (see
+  // rotateProjectBoundaryFile) regardless of how many files the vendor
+  // attached -- so this button only ever needs to know about ONE
+  // currently-effective file: the override if set, else the first of the
+  // vendor's own (possibly multiple) files.
+  var boundaryFile=(typeof projectBoundaryFiles==='function'?projectBoundaryFiles(b):[])[0]||null;
   if(!boundaryFile||!boundaryFile.url)return '';
   if(typeof isImageBoundaryFile==='function'&&!isImageBoundaryFile(boundaryFile))return '';
   return '<div style="display:flex;gap:0.4rem;margin-top:0.5rem;">'+
@@ -3562,8 +3566,11 @@ function rotateProjectBoundaryFile(degrees){
   var id=document.getElementById('projSelect').value;
   var b=findBrief(id);
   if(!b)return;
-  var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
-  var boundaryFile=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
+  // Same single-effective-file reasoning as boundaryRotateButtonsHtml above
+  // -- rotating replaces b.boundaryFileOverride wholesale, so if the vendor
+  // attached several files and there's no override yet, rotating always
+  // starts from (and then overrides) just the first one.
+  var boundaryFile=(typeof projectBoundaryFiles==='function'?projectBoundaryFiles(b):[])[0]||null;
   if(!boundaryFile||!boundaryFile.url)return;
   if(typeof isImageBoundaryFile==='function'&&!isImageBoundaryFile(boundaryFile)){alert('Only an image boundary map can be rotated here.');return;}
   var img=new Image();
@@ -4742,9 +4749,12 @@ function renderProjectOverview(b){
   // Project information.
   var boundaryWrap=document.getElementById('projInfoBoundaryWrap');
   if(boundaryWrap){
-    var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
-    var boundaryFile=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
-    var bLine=(boundaryFile&&typeof boundaryFileLine==='function')?boundaryFileLine({boundaryFile:boundaryFile},'Boundary Map'):'';
+    // A vendor can attach more than one file (see projectBoundaryFiles) --
+    // shown here as a plain list, all labeled "Boundary Map" for
+    // consistency with how this panel has always presented it regardless
+    // of the vendor's own filenames.
+    var boundaryFiles=(typeof projectBoundaryFiles==='function')?projectBoundaryFiles(b):[];
+    var bLine=(boundaryFiles.length&&typeof boundaryFileLine==='function')?boundaryFileLine({boundaryFiles:boundaryFiles},'Boundary Map'):'';
     boundaryWrap.innerHTML=(bLine||'—')+(typeof boundaryRotateButtonsHtml==='function'?boundaryRotateButtonsHtml(b):'');
   }
 
@@ -4816,9 +4826,8 @@ function checklistItemDone(b,stageName,itemIndex){
   if(stageName==='Project Kick Off'){
     if(itemIndex===0){
       var scale=(typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null;
-      var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
-      var boundary=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
-      return !!scale&&!!boundary&&!!b.scaleBoundaryConfirmedAt;
+      var boundaryFiles=(typeof projectBoundaryFiles==='function')?projectBoundaryFiles(b):[];
+      return !!scale&&!!boundaryFiles.length&&!!b.scaleBoundaryConfirmedAt;
     }
     if(itemIndex===1)return (typeof designFilesChecklistDone==='function')?designFilesChecklistDone(b):false;
     if(itemIndex===2)return !!(b.clientQuote&&b.clientQuote.invoice&&b.clientQuote.invoice.depositStatus==='paid');
@@ -4940,18 +4949,17 @@ function renderScaleBoundaryModal(b){
   var modal=document.getElementById('scaleBoundaryModal');
   if(!modal||modal.hidden||!b)return;
   var scale=(typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null;
-  var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
-  var boundary=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
+  var boundaryFiles=(typeof projectBoundaryFiles==='function')?projectBoundaryFiles(b):[];
   var scaleDisp=document.getElementById('sbScaleDisplay');
   if(scaleDisp)scaleDisp.textContent=scale||'Not set yet';
   var scaleInput=document.getElementById('sbScaleInput');
   if(scaleInput)scaleInput.value=scale||'';
   var boundaryDisp=document.getElementById('sbBoundaryDisplay');
-  if(boundaryDisp)boundaryDisp.innerHTML=(boundary&&typeof boundaryFileLine==='function'?(boundaryFileLine({boundaryFile:boundary},'Boundary Map')||'Not uploaded yet'):'Not uploaded yet')+(typeof boundaryRotateButtonsHtml==='function'?boundaryRotateButtonsHtml(b):'');
+  if(boundaryDisp)boundaryDisp.innerHTML=(boundaryFiles.length&&typeof boundaryFileLine==='function'?(boundaryFileLine({boundaryFiles:boundaryFiles},'Boundary Map')||'Not uploaded yet'):'Not uploaded yet')+(typeof boundaryRotateButtonsHtml==='function'?boundaryRotateButtonsHtml(b):'');
   var confirmWrap=document.getElementById('sbConfirmSection');
   if(!confirmWrap)return;
   var role=document.body.dataset.role;
-  var ready=!!scale&&!!boundary;
+  var ready=!!scale&&!!boundaryFiles.length;
   var confirmedAt=b.scaleBoundaryConfirmedAt;
   if(role==='client'){
     if(!ready){
@@ -5022,9 +5030,8 @@ function confirmScaleBoundary(){
   var b=findBrief(id);
   if(!b)return;
   var scale=(typeof projectSpecValue==='function')?projectSpecValue(b,'scale'):null;
-  var wqb=(typeof winningQuote==='function')?winningQuote(b):null;
-  var boundary=b.boundaryFileOverride||(wqb&&wqb.boundaryFile)||null;
-  if(!scale||!boundary)return;
+  var boundaryFiles=(typeof projectBoundaryFiles==='function')?projectBoundaryFiles(b):[];
+  if(!scale||!boundaryFiles.length)return;
   if(!confirm('Approve the scale and boundary map for "'+b.title+'"?'))return;
   if(!confirm('By clicking Approve, Carve may start fabrication and any deviation from the original scale/boundary will require a change order. Approve now?'))return;
   b.scaleBoundaryConfirmedAt=new Date().toISOString().slice(0,10);
@@ -8398,7 +8405,11 @@ function downloadInvoice(bid,which){
 
   var itemTitle=(b.brief&&b.brief['Model type'])||cq.category||'Architectural Scale Model';
   var itemSub=[cq.material||null,cq.base?(cq.base+' base'):null].filter(function(x){return x;}).join(' · ');
-  var boundaryUrl=q.boundaryFile&&q.boundaryFile.url?q.boundaryFile.url:null;
+  // A vendor can attach more than one boundary file to their quote (e.g. a
+  // layout plus an elevation) -- embed every one that actually uploaded
+  // successfully, not just the first.
+  var boundaryFiles=(typeof boundaryFilesOf==='function'?boundaryFilesOf(q):[]).filter(function(f){return f&&f.url;});
+  var boundaryUrl=boundaryFiles.length?boundaryFiles[0].url:null;
   var deliverTo=client.Address||(b.brief&&b.brief['Delivery location'])||'';
 
   var scopeBullets=[];
@@ -8549,8 +8560,12 @@ function downloadInvoice(bid,which){
 
 '<div class="sec"><h3>Scope Excludes</h3><div class="excludebox">'+exclusions.join(' · ')+'</div></div>'+
 
-(boundaryUrl?(
-'<div class="sec"><h3>Model Boundary</h3><div class="boundary-wrap"><img src="'+esc(boundaryUrl)+'" alt="Model boundary diagram"></div>'+
+(boundaryFiles.length?(
+'<div class="sec"><h3>Model Boundary</h3>'+
+boundaryFiles.map(function(bf){
+  return '<div class="boundary-wrap"><img src="'+esc(bf.url)+'" alt="'+esc(bf.label||bf.name||'Model boundary diagram')+'"></div>'+
+    (bf.label?('<div class="boundary-cap">'+esc(bf.label)+'</div>'):'');
+}).join('')+
 '<div class="boundary-cap">'+(cq.modelDims?('Model size '+esc(cq.modelDims)+'. '):'')+'Model fabricated to the limits shown above.</div>'+
 '</div>'
 ):'')+
@@ -9075,7 +9090,7 @@ window.SRC_setShop=function(id){OUR_SHOP=id||'';window.OUR_SHOP=OUR_SHOP;};
 var ME_TECH='sam';                    // Production Technician identity
 window.ME_TECH=ME_TECH; // mirrored for the same reason as window.OUR_SHOP above -- never reassigned, so a one-time mirror is enough
 var RMB_PER_USD=7.2;                  // demo FX rate — vendor quotes are now entered and calculated in USD; RMB is kept only as an informational reference (see usdToRmb/SRC_syncCostRmb)
-var SRC_PENDING_BFILE={};             // holds boundary-file metadata picked but not yet submitted, keyed by "<prefix>-<briefId>"
+var SRC_PENDING_BFILES={};            // holds an ARRAY of boundary-file metadata picked but not yet submitted (a vendor can attach more than one -- e.g. a layout plus an elevation), keyed by "<prefix>-<briefId>"
 var SRC_BFILE_UPLOADING={};           // true while a boundary file's upload is still in flight, same keys as above
 var SRC_OPEN_VARIATION={};            // briefId -> true while a shop's "add variation" form is open
 var SRC_SHOW_UNSUCCESSFUL_QUOTES={};  // briefId -> true/false; per-brief toggle to reveal quotes marked unsuccessful
@@ -9663,6 +9678,35 @@ function extrasLine(q){
   if(!q.extras||!q.extras.length)return '';
   return '<div class="qf-extras"><div class="qf-extras__label">Special requirements</div><div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.02em;color:var(--cm-gray-100);">'+q.extras.map(function(x){return esc(x);}).join(' · ')+'</div></div>';
 }
+// Vendors can now attach more than one boundary file to a quote (e.g. a
+// layout plus an elevation) -- see the "+ Add boundary file" widget in
+// quoteFormFields/SRC_boundaryFilePicked, which writes obj.boundaryFiles
+// (an array of {name,size,url,type,label}). Any quote submitted before this
+// existed still only has the old singular obj.boundaryFile, so every read
+// site goes through this instead of touching either field directly, and
+// keeps working for both old and new quotes with no migration needed.
+function boundaryFilesOf(obj){
+  if(!obj)return [];
+  if(Array.isArray(obj.boundaryFiles)&&obj.boundaryFiles.length)return obj.boundaryFiles;
+  if(obj.boundaryFile)return [obj.boundaryFile];
+  return [];
+}
+window.boundaryFilesOf=boundaryFilesOf; // exposed -- renderProjectOverview/checklistItemDone/renderScaleBoundaryModal/confirmScaleBoundary/uploadProjectBoundaryFile/rotateProjectBoundaryFile (earlier <script> blocks) all need this
+// The boundary file(s) actually shown for a PROJECT (as opposed to a single
+// vendor's quote): b.boundaryFileOverride (Carve staff's manual override,
+// Owner/Client Manager only -- see uploadProjectBoundaryFile) always wins
+// over whatever the awarded vendor attached to their winning quote, same
+// precedence used everywhere in Project information. The override itself
+// stays a single file for now; the array only ever has more than one entry
+// when it's falling through to the vendor's own (possibly multi-file)
+// upload.
+function projectBoundaryFiles(b){
+  if(!b)return [];
+  if(b.boundaryFileOverride)return [b.boundaryFileOverride];
+  var wq=(typeof winningQuote==='function')?winningQuote(b):null;
+  return wq?boundaryFilesOf(wq):[];
+}
+window.projectBoundaryFiles=projectBoundaryFiles; // exposed -- same earlier-<script>-block call sites as boundaryFilesOf above
 // Whether a boundary file should render as an inline image thumbnail rather
 // than just a filename chip -- prefers the stored MIME type (set at upload
 // time by both SRC_boundaryFilePicked and uploadProjectBoundaryFile), and
@@ -9698,16 +9742,26 @@ window.closeImageLightbox=closeImageLightbox;
 // uploaded file happened to be called, while the vendor's own quote
 // cards and Carve Admin's shop-to-shop comparison (where the real
 // filename is genuinely useful context) are left showing it as-is.
-function boundaryFileLine(q,labelOverride){
-  if(!q.boundaryFile)return '';
-  var label=labelOverride||q.boundaryFile.name;
-  var sizeStr=q.boundaryFile.size?(q.boundaryFile.size/1024/1024>=1?(q.boundaryFile.size/1024/1024).toFixed(1)+' MB':Math.round(q.boundaryFile.size/1024)+' KB'):'';
-  var isImg=isImageBoundaryFile(q.boundaryFile)&&q.boundaryFile.url;
-  var thumb=isImg?('<img src="'+esc(q.boundaryFile.url)+'" alt="'+esc(label)+'" onclick="openImageLightbox(\''+esc(q.boundaryFile.url)+'\',\''+esc(label)+'\')" style="display:block;max-width:220px;max-height:160px;border-radius:var(--r-sm);border:1px solid var(--cm-border);cursor:zoom-in;margin-top:0.5rem;object-fit:cover;">'):'';
-  if(q.boundaryFile.url){
-    return thumb+'<a class="filechip filechip--link" href="'+esc(q.boundaryFile.url)+'" target="_blank" rel="noopener" download="'+esc(q.boundaryFile.name)+'" style="margin-top:0.5rem;">📎 '+esc(label)+' <span class="filechip__sz">'+sizeStr+'</span> ↓</a>';
+function boundaryFileOneLine(bf,label){
+  var sizeStr=bf.size?(bf.size/1024/1024>=1?(bf.size/1024/1024).toFixed(1)+' MB':Math.round(bf.size/1024)+' KB'):'';
+  var isImg=isImageBoundaryFile(bf)&&bf.url;
+  var thumb=isImg?('<img src="'+esc(bf.url)+'" alt="'+esc(label)+'" onclick="openImageLightbox(\''+esc(bf.url)+'\',\''+esc(label)+'\')" style="display:block;max-width:220px;max-height:160px;border-radius:var(--r-sm);border:1px solid var(--cm-border);cursor:zoom-in;margin-top:0.5rem;object-fit:cover;">'):'';
+  if(bf.url){
+    return thumb+'<a class="filechip filechip--link" href="'+esc(bf.url)+'" target="_blank" rel="noopener" download="'+esc(bf.name)+'" style="margin-top:0.5rem;">📎 '+esc(label)+' <span class="filechip__sz">'+sizeStr+'</span> ↓</a>';
   }
   return '<div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;font-size:0.8rem;color:var(--cm-text-muted);"><span style="font-family:var(--font-mono);">📎</span>'+esc(label)+'<span style="color:var(--cm-text-subtle);font-family:var(--font-mono);font-size:0.72rem;">'+sizeStr+'</span></div>';
+}
+// labelOverride (see below) forces every file's VISIBLE label to the same
+// fixed text (used by Project information/the Scale & boundary modal, which
+// always just say "Boundary Map" regardless of how many files or what the
+// vendor named/labeled them) -- everywhere else, each file shows its own
+// per-file label (see SRC_setBoundaryFileLabel) falling back to its
+// filename, since a vendor with a "Layout" and an "Elevation" file wants
+// those distinguished, not both captioned identically.
+function boundaryFileLine(q,labelOverride){
+  var files=boundaryFilesOf(q);
+  if(!files.length)return '';
+  return files.map(function(bf){return boundaryFileOneLine(bf,labelOverride||bf.label||bf.name);}).join('');
 }
 window.boundaryFileLine=boundaryFileLine; // exposed so Project information (an earlier <script> block) can show the vendor's uploaded boundary map
 function specBits(b){return Object.keys(b.brief).map(function(k){return '<div><b>'+k+'</b>'+esc(b.brief[k])+'</div>';}).join('');}
@@ -9762,7 +9816,15 @@ function quoteFormFields(prefix,bid,b){
     '<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">mm</span><input id="'+idp+'l-mm-'+bid+'" type="number" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'l\',\'mm\')"><input id="'+idp+'w-mm-'+bid+'" type="number" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'w\',\'mm\')"><input id="'+idp+'h-mm-'+bid+'" type="number" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'h\',\'mm\')">'+
     '<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">in</span><input id="'+idp+'l-in-'+bid+'" type="number" step="0.1" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'l\',\'in\')"><input id="'+idp+'w-in-'+bid+'" type="number" step="0.1" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'w\',\'in\')"><input id="'+idp+'h-in-'+bid+'" type="number" step="0.1" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'h\',\'in\')">'+
   '</div></div>';
-  html+='<div class="full"><label>Model Boundary Image</label>'+
+  // A vendor can attach more than one boundary file (e.g. a layout plus an
+  // elevation) -- SRC_renderBoundaryFiles populates the list below into
+  // this initially-empty container; it's always called right after this
+  // form's HTML lands in the DOM (see srcRestorePkgDims, which fires on
+  // every render of a quote form, not just draft-restores) so an
+  // already-added file list survives a background-poll re-render the same
+  // way in-progress typed field values do.
+  html+='<div class="full"><label>Model Boundary Image(s)</label>'+
+    '<div id="'+idp+'bfiles-'+bid+'"></div>'+
     '<div class="reqfiles" onclick="document.getElementById(\''+idp+'bfile-'+bid+'\').click()">'+
       '<input id="'+idp+'bfile-'+bid+'" type="file" style="display:none;" onchange="SRC_boundaryFilePicked(\''+prefix+'\',\''+bid+'\',this)">'+
       '<span id="'+idp+'bfile-label-'+bid+'">'+bfileLabelText(prefix+'-'+bid)+'</span>'+
@@ -9798,59 +9860,98 @@ function collectQuoteFormData(prefix,bid,b){
   var extras=[];
   document.querySelectorAll('.'+idp+'extra-'+bid+':checked').forEach(function(cb){extras.push(cb.value);});
   var note=document.getElementById(idp+'n-'+bid).value.trim();
-  var bfile=SRC_PENDING_BFILE[prefix+'-'+bid]||null;
+  var bfiles=SRC_PENDING_BFILES[prefix+'-'+bid]||[];
   // priceRMB is now the DERIVED figure (kept for the many existing displays
   // that still show it as a secondary "≈" reference) -- price (USD) is what
   // the vendor actually entered and what every calculation is based on.
-  return {priceRMB:usdToRmb(usd),price:usd,days:d,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,boundaryFile:bfile,note:note};
+  return {priceRMB:usdToRmb(usd),price:usd,days:d,category:category,scale:scale,material:material,base:base,modelDims:mdim,packages:pkgn||null,packageDimsList:pkgDimsList,extras:extras,boundaryFiles:bfiles,note:note};
 }
 
-// Boundary-file label text for a given "<prefix>-<bid>" key, derived from
-// current upload state — used both right after a pick/upload finishes AND
-// whenever the form itself gets rebuilt (e.g. a poll-triggered re-render).
-// Without this, the label always fell back to the blank placeholder on
-// rebuild, so an already-uploaded file looked like it had vanished even
-// though SRC_PENDING_BFILE still had it and the quote would have submitted
-// correctly.
+// Boundary-file "+ Add" widget label text for a given "<prefix>-<bid>" key
+// -- derived from current upload state, used both right after a pick/
+// upload finishes AND whenever the form itself gets rebuilt (e.g. a
+// poll-triggered re-render). Already-added files are listed separately
+// above this widget (see SRC_renderBoundaryFiles), so this only ever needs
+// to reflect "nothing added yet" / "add another" / mid-upload / a failure
+// on the file most recently picked -- not the full list.
 function bfileLabelText(key){
   if(SRC_BFILE_UPLOADING[key])return 'Uploading…';
-  var f=SRC_PENDING_BFILE[key];
-  if(f&&f.name){
-    var sizeStr=f.size?(f.size/1024/1024>=1?(f.size/1024/1024).toFixed(1)+' MB':Math.round(f.size/1024)+' KB'):'';
-    return esc(f.name)+(sizeStr?' · '+sizeStr:'')+(f.url?'':' — upload failed, try again');
-  }
-  return 'Drop a file or click to upload';
+  var files=SRC_PENDING_BFILES[key]||[];
+  var failed=files.filter(function(f){return !f.url;});
+  if(failed.length)return esc(failed[failed.length-1].name)+' — upload failed, try again';
+  return files.length?'+ Add another file':'Drop a file or click to upload';
 }
+// Re-renders the "already added" boundary-file list for a given quote form
+// (prefix+bid) from SRC_PENDING_BFILES -- called right after a file finishes
+// uploading, after a file is removed, and from srcRestorePkgDims on every
+// render of the form (including the very first, where the list is simply
+// empty) so this stays in sync the same way the rest of the quote form's
+// in-progress state does.
+window.SRC_renderBoundaryFiles=function(prefix,bid){
+  var key=prefix+'-'+bid;
+  var wrap=document.getElementById(prefix+'-bfiles-'+bid);
+  if(!wrap)return;
+  var files=SRC_PENDING_BFILES[key]||[];
+  wrap.innerHTML=files.map(function(f,i){
+    var line=(typeof boundaryFileOneLine==='function')?boundaryFileOneLine(f,f.label||f.name):esc(f.name);
+    return '<div style="display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0.6rem;padding-bottom:0.6rem;border-bottom:1px dashed var(--cm-line-faint);">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<input type="text" value="'+esc(f.label||'')+'" placeholder="Label (e.g. Layout, Elevation)" oninput="SRC_setBoundaryFileLabel(\''+prefix+'\',\''+bid+'\','+i+',this.value)" style="width:100%;margin-bottom:0.3rem;">'+
+        line+
+      '</div>'+
+      '<button type="button" class="btn btn--ghost btn--sm" onclick="SRC_removeBoundaryFile(\''+prefix+'\',\''+bid+'\','+i+')">Remove</button>'+
+    '</div>';
+  }).join('');
+};
+// Sets a per-file caption without touching the file itself or re-fetching
+// anything -- purely local state, persisted into the quote once submitted
+// via collectQuoteFormData's boundaryFiles array.
+window.SRC_setBoundaryFileLabel=function(prefix,bid,idx,value){
+  var files=SRC_PENDING_BFILES[prefix+'-'+bid];
+  if(!files||!files[idx])return;
+  files[idx].label=value;
+};
+window.SRC_removeBoundaryFile=function(prefix,bid,idx){
+  var key=prefix+'-'+bid;
+  var files=SRC_PENDING_BFILES[key];
+  if(!files||!files[idx])return;
+  files.splice(idx,1);
+  window.SRC_renderBoundaryFiles(prefix,bid);
+  var lbl=document.getElementById(prefix+'-bfile-label-'+bid);
+  if(lbl)lbl.textContent=bfileLabelText(key);
+};
 window.SRC_boundaryFilePicked=function(prefix,bid,input){
   var key=prefix+'-'+bid;
   var f=input.files&&input.files[0];
   var lbl=document.getElementById(prefix+'-bfile-label-'+bid);
-  if(!f){
-    SRC_PENDING_BFILE[key]=null;
-    delete SRC_BFILE_UPLOADING[key];
-    if(lbl)lbl.textContent='Drop a file or click to upload';
-    return;
-  }
+  if(!f)return;
   var sizeStr=f.size/1024/1024>=1?(f.size/1024/1024).toFixed(1)+' MB':Math.round(f.size/1024)+' KB';
   // This used to only remember {name,size} locally and never actually upload
   // the file anywhere — meaning Carve Admin could never open or download it,
   // no matter what. Upload it for real now, the same way Add Lead does.
   SRC_BFILE_UPLOADING[key]=true;
   if(lbl)lbl.textContent='Uploading '+f.name+' ('+sizeStr+')…';
+  // Reset the file input immediately so picking the same file twice in a
+  // row (e.g. after removing it) still fires a change event.
+  input.value='';
   var uploadPromise=window.__blobUpload
     ? window.__blobUpload('quotes/'+key+'/'+Date.now()+'-'+f.name,f,{access:'public',handleUploadUrl:'/api/upload',multipart:true}).then(function(blob){return blob.url;})
     : fetch('/api/upload?path=quotes/'+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream','X-File-Name':encodeURIComponent(f.name)},body:f}).then(function(r){if(!r.ok)throw new Error('Upload failed: '+r.status);return r.json();}).then(function(data){return data.url;});
   uploadPromise.then(function(url){
-    SRC_PENDING_BFILE[key]={name:f.name,size:f.size,url:url,type:f.type};
     delete SRC_BFILE_UPLOADING[key];
+    SRC_PENDING_BFILES[key]=SRC_PENDING_BFILES[key]||[];
+    SRC_PENDING_BFILES[key].push({name:f.name,size:f.size,url:url,type:f.type,label:''});
+    window.SRC_renderBoundaryFiles(prefix,bid);
     var lbl2=document.getElementById(prefix+'-bfile-label-'+bid);
-    if(lbl2)lbl2.textContent=f.name+' · '+sizeStr;
+    if(lbl2)lbl2.textContent=bfileLabelText(key);
   }).catch(function(err){
     console.error('Boundary file upload failed',f.name,err);
-    SRC_PENDING_BFILE[key]={name:f.name,size:f.size,url:null,type:f.type};
     delete SRC_BFILE_UPLOADING[key];
+    SRC_PENDING_BFILES[key]=SRC_PENDING_BFILES[key]||[];
+    SRC_PENDING_BFILES[key].push({name:f.name,size:f.size,url:null,type:f.type,label:''});
+    window.SRC_renderBoundaryFiles(prefix,bid);
     var lbl3=document.getElementById(prefix+'-bfile-label-'+bid);
-    if(lbl3)lbl3.textContent=f.name+' · '+sizeStr+' — upload failed, try again';
+    if(lbl3)lbl3.textContent=bfileLabelText(key);
   });
 };
 window.parseScaleString=parseScaleString; // exposed -- called from the Add Lead admin form's scale auto-fill (an earlier <script> block)
@@ -10070,6 +10171,17 @@ function srcRestorePkgDims(containerId,draft){
     var m=pEl.id.match(/^(.+)-p-(.+)$/);
     if(!m||!window.SRC_syncCostRmb)return;
     window.SRC_syncCostRmb(m[1],m[2]);
+  });
+  // Pass 4: the boundary-file list container (see quoteFormFields) always
+  // starts empty in the freshly-rendered HTML string -- SRC_PENDING_BFILES
+  // is what actually remembers what's been added, so it has to be
+  // re-rendered into the DOM here every time, exactly like the package
+  // dimension rows above. Runs on the very first render too (the list is
+  // simply empty then), not just on a restore-after-poll.
+  container.querySelectorAll('div[id*="-bfiles-"]').forEach(function(bwEl){
+    var m=bwEl.id.match(/^(.+)-bfiles-(.+)$/);
+    if(!m||!window.SRC_renderBoundaryFiles)return;
+    window.SRC_renderBoundaryFiles(m[1],m[2]);
   });
 }
 function setSrcBody(html){
@@ -11247,7 +11359,7 @@ window.SRC_addVariation=function(bid){
   if(!b.variations[OUR_SHOP])b.variations[OUR_SHOP]=[];
   b.variations[OUR_SHOP].push(data);
   logHistory(b,OUR_SHOP,data,'Submitted variation');
-  delete SRC_PENDING_BFILE['varnew-'+bid];
+  delete SRC_PENDING_BFILES['varnew-'+bid];
   delete SRC_OPEN_VARIATION[bid];
   saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
@@ -11272,7 +11384,7 @@ window.SRC_quote=function(id){
   data.quotedAt=new Date().toISOString().slice(0,10);
   b.quotes[OUR_SHOP]=data;
   logHistory(b,OUR_SHOP,data,'Submitted');
-  delete SRC_PENDING_BFILE['src-'+id];
+  delete SRC_PENDING_BFILES['src-'+id];
   // changedBriefIds tells the server this save is intentionally updating this
   // exact brief, so it can never be overwritten by some OTHER save elsewhere
   // in the app whose local copy hadn't caught up yet (see mergeById in
