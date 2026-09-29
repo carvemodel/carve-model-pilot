@@ -9792,29 +9792,49 @@ function productionBrief(b){
 /* ---- Shared quote-form field builder — used for both a shop's primary quote and any variation quote.
    prefix namespaces every field id (e.g. "src" for primary, "varnew" for a new variation). ---- */
 function quoteFormFields(prefix,bid,b){
-  var briefScale=(b.brief&&b.brief['Scale'])||'';
+  // Revise flow: SRC_unquote/SRC_reviseVariation stash the discarded quote
+  // (or variation) onto the brief as quoteRevisionSeed/variationRevisionSeed
+  // right before deleting it, so the freshly reopened blank form below can
+  // prefill every field from what the vendor already entered instead of
+  // making them retype everything. Only 'src' (primary quote) and 'varnew'
+  // (a variation quote) ever carry a seed; any other caller simply sees
+  // seed===null and this renders exactly as it always has.
+  var seed=(prefix==='src'?b.quoteRevisionSeed:(prefix==='varnew'?b.variationRevisionSeed:null))||null;
+  var briefScale=(seed&&seed.scale)||(b.brief&&b.brief['Scale'])||'';
   var briefCat=(b.brief&&b.brief['Model type'])||'';
   var scaleParsed=parseScaleString(briefScale);
+  var seedDims=(seed&&seed.modelDims)?parseModelDimsString(seed.modelDims):null;
   var idp=prefix+'-';
   var html='';
+  // A revise seed's boundary files are only copied into the pending-upload
+  // list ONCE (the very first render after the quote was reopened) -- once
+  // that key exists in SRC_PENDING_BFILES at all (even as an empty array,
+  // e.g. the vendor removed every seeded file), later re-renders leave it
+  // alone rather than re-adding files the vendor deliberately removed. This
+  // mirrors SRC_renderPkgDims's own prevRows-over-seedList precedence for
+  // the same reason.
+  if(seed&&!(idp+bid in SRC_PENDING_BFILES)){
+    var seedBFiles=boundaryFilesOf(seed);
+    if(seedBFiles.length)SRC_PENDING_BFILES[idp+bid]=seedBFiles.map(function(f){return {name:f.name,size:f.size,url:f.url,type:f.type,label:f.label};});
+  }
   // Vendors now type their cost directly in USD -- the currency Carve
   // actually calculates and pays in -- with a live RMB-equivalent shown
   // underneath purely as a conversion helper for shops that still think in
   // RMB (see SRC_syncCostRmb). collectQuoteFormData() reads this field as
   // the authoritative price and derives priceRMB from it for reference.
-  html+='<div><label>Cost (USD)</label><input id="'+idp+'p-'+bid+'" type="number" step="0.01" placeholder="e.g. 1950.00" oninput="SRC_syncCostRmb(\''+prefix+'\',\''+bid+'\')"><div id="'+idp+'p-rmb-'+bid+'" style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);margin-top:0.35rem;">≈ ¥— RMB</div></div>';
-  html+='<div><label>Production time (days)</label><input id="'+idp+'d-'+bid+'" type="number" placeholder="18"></div>';
-  html+='<div><label>Work scope</label><select id="'+idp+'cat-'+bid+'"><option value="">Match client brief'+(briefCat?': '+esc(briefCat):'')+'</option>'+MODEL_CATEGORIES.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div>';
+  html+='<div><label>Cost (USD)</label><input id="'+idp+'p-'+bid+'" type="number" step="0.01" value="'+(seed&&seed.price!=null?esc(seed.price):'')+'" placeholder="e.g. 1950.00" oninput="SRC_syncCostRmb(\''+prefix+'\',\''+bid+'\')"><div id="'+idp+'p-rmb-'+bid+'" style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);margin-top:0.35rem;">'+(seed&&seed.price!=null?('≈ '+moneyRMB(usdToRmb(seed.price))+' RMB'):'≈ ¥— RMB')+'</div></div>';
+  html+='<div><label>Production time (days)</label><input id="'+idp+'d-'+bid+'" type="number" value="'+(seed&&seed.days!=null?esc(seed.days):'')+'" placeholder="18"></div>';
+  html+='<div><label>Work scope</label><select id="'+idp+'cat-'+bid+'"><option value="">Match client brief'+(briefCat?': '+esc(briefCat):'')+'</option>'+MODEL_CATEGORIES.map(function(m){return '<option value="'+esc(m)+'"'+(seed&&seed.category===m?' selected':'')+'>'+esc(m)+'</option>';}).join('')+'</select></div>';
   html+='<div class="full"><label>Scale</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">'+
     '<div style="display:flex;align-items:center;gap:0.3rem;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.86rem;">1:</span><input id="'+idp+'scale-intl-'+bid+'" type="number" value="'+esc(scaleParsed.intl)+'" placeholder="96"></div>'+
     '<div style="display:flex;align-items:center;gap:0.3rem;"><input id="'+idp+'scale-imp-'+bid+'" type="text" value="'+esc(scaleParsed.imp)+'" placeholder="1/8&quot;"><span style="font-family:var(--font-mono);color:var(--cm-text-subtle);font-size:0.8rem;white-space:nowrap;">= 1\'-0"</span></div>'+
   '</div></div>';
-  html+='<div><label>Model material</label><select id="'+idp+'mat-'+bid+'">'+MODEL_MATERIALS.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div>';
-  html+='<div><label>Base material</label><select id="'+idp+'base-'+bid+'">'+BASE_MATERIALS.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('')+'</select></div>';
+  html+='<div><label>Model material</label><select id="'+idp+'mat-'+bid+'">'+MODEL_MATERIALS.map(function(m){return '<option value="'+esc(m)+'"'+(seed&&seed.material===m?' selected':'')+'>'+esc(m)+'</option>';}).join('')+'</select></div>';
+  html+='<div><label>Base material</label><select id="'+idp+'base-'+bid+'">'+BASE_MATERIALS.map(function(m){return '<option value="'+esc(m)+'"'+(seed&&seed.base===m?' selected':'')+'>'+esc(m)+'</option>';}).join('')+'</select></div>';
   html+='<div class="full"><label>Model dimensions</label><div style="display:grid;grid-template-columns:40px 1fr 1fr 1fr;gap:0.5rem;align-items:center;">'+
     '<span></span><span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--cm-text-subtle);text-align:center;">Length</span><span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--cm-text-subtle);text-align:center;">Width</span><span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--cm-text-subtle);text-align:center;">Height</span>'+
-    '<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">mm</span><input id="'+idp+'l-mm-'+bid+'" type="number" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'l\',\'mm\')"><input id="'+idp+'w-mm-'+bid+'" type="number" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'w\',\'mm\')"><input id="'+idp+'h-mm-'+bid+'" type="number" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'h\',\'mm\')">'+
-    '<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">in</span><input id="'+idp+'l-in-'+bid+'" type="number" step="0.1" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'l\',\'in\')"><input id="'+idp+'w-in-'+bid+'" type="number" step="0.1" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'w\',\'in\')"><input id="'+idp+'h-in-'+bid+'" type="number" step="0.1" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'h\',\'in\')">'+
+    '<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">mm</span><input id="'+idp+'l-mm-'+bid+'" type="number" value="'+(seedDims&&seedDims.l!=null?esc(seedDims.l):'')+'" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'l\',\'mm\')"><input id="'+idp+'w-mm-'+bid+'" type="number" value="'+(seedDims&&seedDims.w!=null?esc(seedDims.w):'')+'" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'w\',\'mm\')"><input id="'+idp+'h-mm-'+bid+'" type="number" value="'+(seedDims&&seedDims.h!=null?esc(seedDims.h):'')+'" placeholder="mm" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'h\',\'mm\')">'+
+    '<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">in</span><input id="'+idp+'l-in-'+bid+'" type="number" step="0.1" value="'+(seedDims&&seedDims.l!=null?(+(seedDims.l/25.4).toFixed(1)):'')+'" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'l\',\'in\')"><input id="'+idp+'w-in-'+bid+'" type="number" step="0.1" value="'+(seedDims&&seedDims.w!=null?(+(seedDims.w/25.4).toFixed(1)):'')+'" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'w\',\'in\')"><input id="'+idp+'h-in-'+bid+'" type="number" step="0.1" value="'+(seedDims&&seedDims.h!=null?(+(seedDims.h/25.4).toFixed(1)):'')+'" placeholder="in" oninput="SRC_syncDim(\''+prefix+'\',\''+bid+'\',\'h\',\'in\')">'+
   '</div></div>';
   // A vendor can attach more than one boundary file (e.g. a layout plus an
   // elevation) -- SRC_renderBoundaryFiles populates the list below into
@@ -9822,19 +9842,20 @@ function quoteFormFields(prefix,bid,b){
   // form's HTML lands in the DOM (see srcRestorePkgDims, which fires on
   // every render of a quote form, not just draft-restores) so an
   // already-added file list survives a background-poll re-render the same
-  // way in-progress typed field values do.
+  // way in-progress typed field values do. On a revise, that same pass
+  // also picks up whatever was seeded into SRC_PENDING_BFILES above.
   html+='<div class="full"><label>Model Boundary Image(s)</label>'+
     '<div id="'+idp+'bfiles-'+bid+'"></div>'+
     '<div class="reqfiles" onclick="document.getElementById(\''+idp+'bfile-'+bid+'\').click()">'+
       '<input id="'+idp+'bfile-'+bid+'" type="file" style="display:none;" onchange="SRC_boundaryFilePicked(\''+prefix+'\',\''+bid+'\',this)">'+
       '<span id="'+idp+'bfile-label-'+bid+'">'+bfileLabelText(prefix+'-'+bid)+'</span>'+
     '</div></div>';
-  html+='<div><label>Approx. package count</label><input id="'+idp+'pkgn-'+bid+'" type="number" min="1" placeholder="e.g. 2" oninput="SRC_renderPkgDims(\''+prefix+'\',\''+bid+'\')"></div>';
+  html+='<div><label>Approx. package count</label><input id="'+idp+'pkgn-'+bid+'" type="number" min="1" value="'+(seed&&seed.packages!=null?esc(seed.packages):'')+'" placeholder="e.g. 2" oninput="SRC_renderPkgDims(\''+prefix+'\',\''+bid+'\')"></div>';
   html+='<div class="full" id="'+idp+'pkgdims-'+bid+'"></div>';
   html+='<div class="full"><label>Special requirements included in this quote</label><div style="display:flex;flex-wrap:wrap;gap:0.5rem;">'+
-    SPECIAL_REQS.map(function(r){return '<label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.8rem;color:var(--cm-text-muted);border:1px solid var(--cm-border);border-radius:var(--r-pill);padding:0.35rem 0.7rem;cursor:pointer;"><input type="checkbox" class="'+idp+'extra-'+bid+'" value="'+esc(r)+'" style="accent-color:var(--cm-silver);">'+esc(r)+'</label>';}).join('')+
+    SPECIAL_REQS.map(function(r){return '<label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.8rem;color:var(--cm-text-muted);border:1px solid var(--cm-border);border-radius:var(--r-pill);padding:0.35rem 0.7rem;cursor:pointer;"><input type="checkbox" class="'+idp+'extra-'+bid+'" value="'+esc(r)+'"'+(seed&&seed.extras&&seed.extras.indexOf(r)!==-1?' checked':'')+' style="accent-color:var(--cm-silver);">'+esc(r)+'</label>';}).join('')+
   '</div></div>';
-  html+='<div class="full"><label>Notes to Carve</label><textarea id="'+idp+'n-'+bid+'" rows="2" placeholder="Capabilities, materials…"></textarea></div>';
+  html+='<div class="full"><label>Notes to Carve</label><textarea id="'+idp+'n-'+bid+'" rows="2" placeholder="Capabilities, materials…">'+(seed&&seed.note?esc(seed.note):'')+'</textarea></div>';
   return html;
 }
 function collectQuoteFormData(prefix,bid,b){
@@ -10063,6 +10084,17 @@ window.SRC_renderPkgDims=function(prefix,bid){
     var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
     var base=(b.clientQuote)||winningQuote(b)||{};
     seedList=base.packageDimsList&&base.packageDimsList.length?base.packageDimsList:(base.packageDims?[base.packageDims]:[]);
+  }else if(prefix==='src'||prefix==='varnew'){
+    // Revise flow: seed the package-dimension rows from whatever was
+    // discarded by SRC_unquote/SRC_reviseVariation (see quoteFormFields'
+    // own seed handling, which reads the same quoteRevisionSeed/
+    // variationRevisionSeed field to seed every other field on this same
+    // form). prevRows (above) still wins on every subsequent call -- once
+    // the vendor's own rows exist in the DOM, this seed is never consulted
+    // again, exactly like the 'cq'/'psPackageSize' cases below.
+    var bSeed=SDB.briefs.filter(function(x){return x.id===bid;})[0];
+    var revSeed=bSeed&&(prefix==='src'?bSeed.quoteRevisionSeed:bSeed.variationRevisionSeed);
+    if(revSeed)seedList=revSeed.packageDimsList&&revSeed.packageDimsList.length?revSeed.packageDimsList:(revSeed.packageDims?[revSeed.packageDims]:[]);
   }else if(prefix==='psPackageSize'){
     // Project information's Package size field -- same widget, seeded from
     // whatever projectSpecValue(b,'packageSize') would currently be
@@ -11359,6 +11391,7 @@ window.SRC_addVariation=function(bid){
   if(!b.variations[OUR_SHOP])b.variations[OUR_SHOP]=[];
   b.variations[OUR_SHOP].push(data);
   logHistory(b,OUR_SHOP,data,'Submitted variation');
+  delete b.variationRevisionSeed;
   delete SRC_PENDING_BFILES['varnew-'+bid];
   delete SRC_OPEN_VARIATION[bid];
   saveSRC({changedBriefIds:[b.id]});SRC_render();
@@ -11367,6 +11400,11 @@ window.SRC_reviseVariation=function(bid,idx){
   var b=SDB.briefs.filter(function(x){return x.id===bid;})[0];
   if(b.variations&&b.variations[OUR_SHOP]&&b.variations[OUR_SHOP][idx]){
     logHistory(b,OUR_SHOP,b.variations[OUR_SHOP][idx],'Revised variation (previous version)');
+    // Stash the full discarded variation so the reopened blank form
+    // (quoteFormFields, prefix 'varnew') can prefill every field from it
+    // instead of making the vendor retype everything -- see quoteFormFields'
+    // seed handling and SRC_addVariation's cleanup of this field on resubmit.
+    b.variationRevisionSeed=b.variations[OUR_SHOP][idx];
     b.variations[OUR_SHOP].splice(idx,1);
   }
   SRC_OPEN_VARIATION[bid]=true;
@@ -11384,6 +11422,7 @@ window.SRC_quote=function(id){
   data.quotedAt=new Date().toISOString().slice(0,10);
   b.quotes[OUR_SHOP]=data;
   logHistory(b,OUR_SHOP,data,'Submitted');
+  delete b.quoteRevisionSeed;
   delete SRC_PENDING_BFILES['src-'+id];
   // changedBriefIds tells the server this save is intentionally updating this
   // exact brief, so it can never be overwritten by some OTHER save elsewhere
@@ -11392,7 +11431,7 @@ window.SRC_quote=function(id){
   // the project going back to "awaiting quote" after a vendor submitted one.
   saveSRC({changedBriefIds:[b.id]});SRC_render();
 };
-window.SRC_unquote=function(id){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];if(b.quotes[OUR_SHOP])logHistory(b,OUR_SHOP,b.quotes[OUR_SHOP],'Revised (previous version)');delete b.quotes[OUR_SHOP];delete b.lastCommentAt;saveSRC({changedBriefIds:[b.id]});SRC_render();};
+window.SRC_unquote=function(id){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];if(b.quotes[OUR_SHOP]){logHistory(b,OUR_SHOP,b.quotes[OUR_SHOP],'Revised (previous version)');b.quoteRevisionSeed=b.quotes[OUR_SHOP];}delete b.quotes[OUR_SHOP];delete b.lastCommentAt;saveSRC({changedBriefIds:[b.id]});SRC_render();};
 window.SRC_assign=function(id,tech){var b=SDB.briefs.filter(function(x){return x.id===id;})[0];b.assignedTech=(b.assignedTech===tech?null:tech);saveSRC({changedBriefIds:[b.id]});SRC_render();};
 window.SRC_proceedToFactory=function(id){
   var b=SDB.briefs.filter(function(x){return x.id===id;})[0];
