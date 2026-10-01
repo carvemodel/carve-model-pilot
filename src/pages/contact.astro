@@ -181,6 +181,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <label><input type="radio" name="type" value="Not Sure Yet" onchange="onTypeChange()"><span class="dot"></span><span>Not Sure Yet</span></label>
           </div>
         </div>
+        <div class="field"><label for="projname">Project / building name <span class="optional">(required)</span></label>
+          <input id="projname" name="projname" type="text" placeholder="e.g. Aria Tower" oninput="updateProjTitle();syncNextEnabled()" required>
+          <div class="hint">The name of the building, development, or piece — used to label your project everywhere.</div>
+          <div class="projtitle" id="projTitlePreview" hidden>
+            <span class="projtitle__k">Your project will be filed as</span>
+            <span class="projtitle__v" id="projTitleVal"></span>
+          </div>
+        </div>
+        <div class="field"><label for="quantity">Quantity <span class="optional">(optional)</span></label>
+          <input id="quantity" name="quantity" type="number" min="1" step="1" value="1">
+          <div class="hint">Defaults to 1. Need a model with different specs? Submit a separate inquiry.</div>
+        </div>
         <div class="field"><label for="description">Short project description <span class="optional">(optional)</span></label>
           <textarea id="description" name="description" oninput="syncNextEnabled()" placeholder="Briefly describe the project, what the model should communicate, and anything you already know about its size, scale or deadline. It is okay if these details are not finalized."></textarea>
         </div>
@@ -212,14 +224,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <legend class="wpanel__t">Optional project details</legend>
         <p class="hint" style="margin-top:-0.6rem;margin-bottom:1.2rem;">The following details help us prepare a more accurate preliminary estimate. Complete only what you already know.</p>
 
-        <div class="field"><label for="projname">Project / building name <span class="optional">(optional)</span></label>
-          <input id="projname" name="projname" type="text" placeholder="e.g. Aria Tower" oninput="updateProjTitle()">
-          <div class="hint">The name of the building, development, or piece — used to label your project everywhere.</div>
-          <div class="projtitle" id="projTitlePreview" hidden>
-            <span class="projtitle__k">Your project will be filed as</span>
-            <span class="projtitle__v" id="projTitleVal"></span>
-          </div>
-        </div>
         <div class="field"><label for="projloc">Project location <span class="optional">(optional)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA" oninput="updateProjTitle()"></div>
 
         <div class="field"><label>Desired scale or approximate model size <span class="optional">(optional)</span></label>
@@ -237,10 +241,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <input id="modelsize" name="modelsize" type="text" placeholder='e.g. 36" L × 24" W × 18" H  or  90 × 60 × 45 cm' style="margin-top:0.7rem;">
         </div>
 
-        <div class="field"><label for="quantity">Quantity <span class="optional">(optional)</span></label>
-          <input id="quantity" name="quantity" type="number" min="1" step="1" value="1">
-          <div class="hint">Defaults to 1. Need a model with different specs? Submit a separate inquiry.</div>
-        </div>
         <div class="field"><label for="use">Purpose of the model <span class="optional">(optional)</span></label>
           <select id="use" name="use">
             <option value="">Select one…</option>
@@ -334,6 +334,7 @@ function syncNextEnabled(){
   var nx=document.getElementById('wizNextBtn');
   if(wizStep===1){
     var ok=!!document.querySelector('input[name="type"]:checked')
+      &&!!(document.getElementById('projname').value||'').trim()
       &&!!(document.getElementById('name').value||'').trim()
       &&!!(document.getElementById('email').value||'').trim();
     nx.disabled=!ok;
@@ -342,6 +343,7 @@ function syncNextEnabled(){
 function validateStep(n){
   if(n===1){
     if(!document.querySelector('input[name="type"]:checked')){alert('Please select a model type or choose “Not Sure Yet.”');return false;}
+    if(!(document.getElementById('projname').value||'').trim()){alert('Please enter a project / building name to continue.');return false;}
     if(!(document.getElementById('name').value||'').trim()){alert('Please enter your full name to continue.');return false;}
     if(!(document.getElementById('email').value||'').trim()){alert('Please enter your email to continue.');return false;}
   }
