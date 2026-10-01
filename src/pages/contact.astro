@@ -100,7 +100,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 /* file dropzone */
 .drop{border:1.5px dashed var(--cm-border-strong);border-radius:var(--r-sm);padding:1.4rem;text-align:center;color:var(--cm-text-muted);font-size:0.88rem;transition:0.18s;cursor:pointer;}
 .drop:hover,.drop.over{border-color:var(--cm-silver);color:var(--cm-text);background:var(--cm-ink-850);}
-.drop strong{color:var(--cm-text);display:block;margin-bottom:0.3rem;font-weight:var(--w-semibold);}
+.drop strong{color:var(--cm-text-strong);display:block;margin-bottom:0.3rem;font-weight:var(--w-semibold);}
 .drop .sub{display:block;font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.02em;color:var(--cm-text-subtle);margin-top:0.5rem;}
 .filelist{list-style:none;padding:0;margin:0.8rem 0 0;display:flex;flex-direction:column;gap:0.5rem;}
 .filelist li{display:flex;align-items:center;gap:0.7rem;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.55rem 0.7rem;font-size:0.82rem;color:var(--cm-text);}
@@ -192,14 +192,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
         <div class="field"><label>Files or link <span class="optional">(optional)</span></label>
           <div class="hint" style="margin-bottom:0.8rem;">Helpful files include floor or site plans, elevations, roof or landscape plans, renderings, reference photos, and 3D models. Upload whatever you currently have—a complete drawing set is not required.</div>
-          <div class="hint" style="margin-bottom:0.6rem;"><strong style="color:var(--cm-text-strong);">Upload files directly</strong><br>CAD, PDF, Revit, Rhino, SketchUp or image files—maximum 25 MB per file.</div>
           <div class="drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
             <strong>Drop files here, or click to browse</strong>
+            <span class="sub">CAD, PDF, Revit, Rhino, SketchUp or image files—maximum 25 MB per file.</span>
           </div>
           <input id="fileInput" type="file" multiple hidden onchange="addFiles(this.files)">
           <ul class="filelist" id="fileList"></ul>
           <div class="orlink"><span>or share a link</span></div>
-          <div class="hint" style="margin-bottom:0.6rem;"><strong style="color:var(--cm-text-strong);">Larger files? Share a link instead</strong><br>Paste a Dropbox, Google Drive, OneDrive or WeTransfer link below. Please make sure we have permission to access it.</div>
           <ul class="filelist" id="linkList"></ul>
           <div style="display:flex;gap:0.5rem;">
             <input id="filelink" name="filelink" type="url" placeholder="Dropbox, Google Drive, WeTransfer, or OneDrive link" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addLink();}">
