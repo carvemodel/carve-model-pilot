@@ -184,9 +184,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div class="field"><label for="projname">Project / building name <span class="optional">(required)</span></label>
           <input id="projname" name="projname" type="text" placeholder="e.g. Aria Tower" oninput="syncNextEnabled()" required>
         </div>
-        <div class="field"><label for="quantity">Quantity <span class="optional">(optional)</span></label>
+        <div class="field"><label for="quantity">Quantity of same model <span class="optional">(optional)</span></label>
           <input id="quantity" name="quantity" type="number" min="1" step="1" value="1">
-          <div class="hint">Defaults to 1. Need a model with different specs? Submit a separate inquiry.</div>
+          <div class="hint">Need a model with different specs? Please mention in project description or in other comments field.</div>
         </div>
         <div class="field"><label for="description">Short project description <span class="optional">(optional)</span></label>
           <textarea id="description" name="description" oninput="syncNextEnabled()" placeholder="Briefly describe the project, what the model should communicate, and anything you already know about its size, scale or deadline. It is okay if these details are not finalized."></textarea>
