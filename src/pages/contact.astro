@@ -205,20 +205,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               <li>3D digital model</li>
             </ul>
           </div>
+          <div class="hint" style="margin-bottom:0.6rem;"><strong style="color:var(--cm-text-strong);">Upload files directly</strong><br>CAD, PDF, Revit, Rhino, SketchUp or image files—maximum 25 MB per file.</div>
           <div class="drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
             <strong>Drop files here, or click to browse</strong>
-            Attach what you have — it speeds up your quote
-            <span class="sub">CAD · PDF · Revit · Rhino · SketchUp · images · up to 25 MB each · larger files? use a link below</span>
           </div>
           <input id="fileInput" type="file" multiple hidden onchange="addFiles(this.files)">
           <ul class="filelist" id="fileList"></ul>
           <div class="orlink"><span>or share a link</span></div>
+          <div class="hint" style="margin-bottom:0.6rem;"><strong style="color:var(--cm-text-strong);">Larger files? Share a link instead</strong><br>Paste a Dropbox, Google Drive, OneDrive or WeTransfer link below. Please make sure we have permission to access it.</div>
           <ul class="filelist" id="linkList"></ul>
           <div style="display:flex;gap:0.5rem;">
             <input id="filelink" name="filelink" type="url" placeholder="Dropbox, Google Drive, WeTransfer, or OneDrive link" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addLink();}">
             <button type="button" class="btn btn--ghost btn--sm" onclick="addLink()">+ Add link</button>
           </div>
-          <div class="hint">Architectural files are often large — a shared cloud link is perfect. Share a secure file link with the appropriate access permissions. If your project requires restricted access or an NDA, let us know before providing confidential materials. Have more than one large file? Add a link for each, then click "+ Add link" (or just leave the last one in the box — it's included automatically).</div>
         </div>
       </fieldset>
 
@@ -357,7 +356,7 @@ function syncNextEnabled(){
 }
 function validateStep(n){
   if(n===1){
-    if(!document.querySelector('input[name="type"]:checked')){alert('Please choose a model type to continue.');return false;}
+    if(!document.querySelector('input[name="type"]:checked')){alert('Please select a model type or choose “Not Sure Yet.”');return false;}
     if(!(document.getElementById('description').value||'').trim()){alert('Please add a short project description to continue.');return false;}
     if(!(document.getElementById('name').value||'').trim()){alert('Please enter your full name to continue.');return false;}
     if(!(document.getElementById('email').value||'').trim()){alert('Please enter your email to continue.');return false;}
@@ -551,7 +550,8 @@ function submitQuote(e){
     if(!confirm('The phone number looks incomplete ('+phoneEl.value+'). Submit anyway?')){phoneEl.focus();return false;}
   }
   var typeEl=document.querySelector('input[name="type"]:checked');
-  var type=typeEl?typeEl.value:'Detailed Architectural Model — Building Alone';
+  if(!typeEl){alert('Please select a model type or choose “Not Sure Yet.”');document.getElementById('typeSeg').scrollIntoView({block:'center'});return false;}
+  var type=typeEl.value;
   var extras=[]; document.querySelectorAll('input[name="extras"]:checked').forEach(function(cb){extras.push(cb.value);});
   var projname=(document.getElementById('projname').value||'').trim()||'Untitled project';
   var projloc=(document.getElementById('projloc').value||'').trim();
