@@ -162,16 +162,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="wiz__head">
         <div class="wiz__steps" id="wizSteps">
           <div class="wstep on" data-step="1"><span class="wstep__n">1</span><span class="wstep__l">Project</span></div>
-          <div class="wstep" data-step="2"><span class="wstep__n">2</span><span class="wstep__l">Size</span></div>
-          <div class="wstep" data-step="3"><span class="wstep__n">3</span><span class="wstep__l">Files</span></div>
-          <div class="wstep" data-step="4"><span class="wstep__n">4</span><span class="wstep__l">You</span></div>
+          <div class="wstep" data-step="2"><span class="wstep__n">2</span><span class="wstep__l">Optional details</span></div>
         </div>
-        <div class="wiz__bar"><i id="wizBar" style="width:25%"></i></div>
+        <div class="wiz__bar"><i id="wizBar" style="width:50%"></i></div>
       </div>
 
       <!-- STEP 1 — Project -->
       <fieldset class="wpanel on" data-panel="1">
-        <legend class="wpanel__t">What are you building?</legend>
+        <legend class="wpanel__t">Tell us about your project</legend>
         <div class="field"><label>Model type</label>
           <div class="seg" id="typeSeg">
             <label><input type="radio" name="type" value="Architectural or Real Estate Model" onchange="onTypeChange()"><span class="dot"></span><span>Architectural or Real Estate Model</span></label>
@@ -183,114 +181,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <label><input type="radio" name="type" value="Not Sure Yet" onchange="onTypeChange()"><span class="dot"></span><span>Not Sure Yet</span></label>
           </div>
         </div>
-        <div class="field"><label for="projname">Project / building name</label>
-          <input id="projname" name="projname" type="text" placeholder="e.g. Aria Tower" oninput="updateProjTitle()" required>
-          <div class="hint">The name of the building, development, or piece — used to label your project everywhere.</div>
-          <div class="projtitle" id="projTitlePreview" hidden>
-            <span class="projtitle__k">Your project will be filed as</span>
-            <span class="projtitle__v" id="projTitleVal"></span>
-          </div>
+        <div class="field"><label for="description">Short project description</label>
+          <textarea id="description" name="description" required oninput="syncNextEnabled()" placeholder="Briefly describe the project, what the model should communicate, and anything you already know about its size, scale or deadline. It is okay if these details are not finalized."></textarea>
         </div>
         <div class="row2">
-          <div class="field"><label for="projloc">Project location <span class="optional">(optional)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA" oninput="updateProjTitle()"></div>
-          <div class="field"><label for="projcountry">Project country <span class="optional">(optional)</span></label><input id="projcountry" name="projcountry" type="text" placeholder="e.g. United States"></div>
+          <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" placeholder="Jane Doe" required oninput="syncNextEnabled()"></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" placeholder="jane@firm.com" required oninput="syncNextEnabled()"></div>
         </div>
-        <div class="field"><label for="quantity">Number of exact models</label>
-          <input id="quantity" name="quantity" type="number" min="1" step="1" value="1" required>
-          <div class="hint">Defaults to 1. Need a model with different specs? Submit a separate inquiry.</div>
-        </div>
-        <div class="field"><label for="use">What does the model need to support?</label>
-          <select id="use" name="use" required onchange="syncNextEnabled()">
-            <option value="">Select one…</option>
-            <option>Government Review / Planning Approval</option><option>Investor / board meeting</option>
-            <option>Sales gallery / marketing</option><option>Internal design review</option>
-            <option>Film / production</option><option>Exhibition / public display</option><option>Gift / Award</option><option>Trade show / conference</option><option>Other</option>
-          </select>
-        </div>
-      </fieldset>
+        <div class="field"><label for="company">Company <span class="optional">(optional)</span></label><input id="company" name="company" type="text" placeholder="Firm / studio"></div>
 
-      <!-- STEP 2 — Size -->
-      <fieldset class="wpanel" data-panel="2" hidden>
-        <legend class="wpanel__t">How big should it be?</legend>
-        <div class="field"><label>Scale <span class="optional">(required — or provide model size below)</span></label>
-          <div class="row2">
-            <div style="display:flex;align-items:baseline;gap:0.4rem;">
-              <span style="font-family:var(--font-sans);color:var(--cm-text-subtle);font-size:0.95rem;line-height:1;">1 :</span>
-              <input id="scaleIntl" type="number" placeholder="e.g. 100" style="flex:1;">
-            </div>
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-              <select id="scaleImp"></select>
-              <span style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-subtle);white-space:nowrap;">= 1'-0"</span>
-            </div>
-          </div>
-          <div class="hint">Enter either the scale or the desired model size below — one of the two is required.</div>
-        </div>
-        <div class="field"><label for="modelsize">Or, desired model size <span class="optional">(if no scale)</span></label>
-          <input id="modelsize" name="modelsize" type="text" placeholder='e.g. 36" L × 24" W × 18" H  or  90 × 60 × 45 cm'>
-          <div class="hint">Tell us how big you want the finished model and we'll work out the scale that fits.</div>
-        </div>
-        <div class="field"><label for="material">Preferred material / finish <span class="optional">(optional)</span></label>
-          <select id="material" name="material">
-            <option value="">Not specified</option>
-            <option>Full Color ABS / Realistic Visualization</option>
-            <option>Monochromatic ABS / Massing</option>
-            <option>Clear Acrylic</option>
-            <option>ABS with Wood Veneer</option>
-            <option>Hardwood</option>
-            <option>Foam</option>
-            <option>Wrought Iron</option>
-          </select>
-          <div class="hint">A starting point for your quote — we'll confirm what best fits your budget and use case.</div>
-        </div>
-        <div class="field"><label>Special requirements <span class="optional">(select any that apply)</span></label>
-          <div class="checks">
-            <label><input type="checkbox" name="extras" value="Surrounding Landscape / Site Context" id="landscapeChk" onchange="onTypeChange()"><span class="ck"></span><span>Surrounding Landscape / Site Context</span></label>
-            <label><input type="checkbox" name="extras" value="No Base" id="noBaseChk"><span class="ck"></span><span>No Base <span class="optional">(models include a base by default)</span></span></label>
-            <label><input type="checkbox" name="extras" value="Engraved Base"><span class="ck"></span><span>Engraved Base</span></label>
-            <label><input type="checkbox" name="extras" value="Interior Lighting"><span class="ck"></span><span>Interior Lighting</span></label>
-            <label><input type="checkbox" name="extras" value="External Lighting"><span class="ck"></span><span>External Lighting</span></label>
-            <label><input type="checkbox" name="extras" value="Split into Sections (transport / access)"><span class="ck"></span><span>Split into Sections (transport / access)</span></label>
-            <label><input type="checkbox" name="extras" value="Display Stand / Plinth"><span class="ck"></span><span>Display Stand / Plinth</span></label>
-            <label data-tip="For repeated air travel only, carry-on or checked-in — models ship via crate by default."><input type="checkbox" name="extras" value="Customized Protective Travel Case"><span class="ck"></span><span>Customized Protective Travel Case</span></label>
-            <label><input type="checkbox" name="extras" value="Furniture / Equipment"><span class="ck"></span><span>Furniture / Equipment</span></label>
-            <label><input type="checkbox" name="extras" value="Interior Finishes"><span class="ck"></span><span>Interior Finishes</span></label>
-            <label><input type="checkbox" name="extras" value="Removable Roof / Levels"><span class="ck"></span><span>Removable Roof / Levels</span></label>
-          </div>
-        </div>
-      </fieldset>
-
-      <!-- STEP 3 — Files & scope -->
-      <fieldset class="wpanel" data-panel="3" hidden>
-        <legend class="wpanel__t">Share your drawings</legend>
-        <!-- Conditional: scope boundary (context / masterplan only) -->
-        <div class="scope" id="scopeBlock" hidden>
-          <div class="scope__head"><h4>Mark your scope boundary</h4><span class="tagm">Required for this model type</span></div>
-          <p class="hint">This model type includes surrounding context — upload a site plan or aerial, then click to outline the area that should be included in the model. This is only needed for masterplan models and models with the surrounding landscape option selected.</p>
-          <div class="scope__upload">
-            <div class="drop" id="planDrop" onclick="document.getElementById('planInput').click()">
-              <strong>Upload a site plan or aerial</strong>
-              Drag an image here, or click to browse
-              <span class="sub">PNG / JPG / PDF page · a screenshot is fine</span>
-            </div>
-            <input id="planInput" type="file" accept="image/*" hidden onchange="loadPlan(this.files)">
-          </div>
-          <div class="scope__stage" id="planStage">
-            <canvas id="planCanvas"></canvas>
-          </div>
-          <div class="scope__tools" id="planTools" style="display:none;">
-            <button type="button" class="btn btn--ghost btn--sm" onclick="undoPoint()">Undo point</button>
-            <button type="button" class="btn btn--ghost btn--sm" onclick="clearScope()">Clear</button>
-            <div style="display:flex;align-items:center;gap:0.4rem;">
-              <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">Boundary color</span>
-              <button type="button" id="scopeColorRed" onclick="setScopeColor('#E5484D')" style="width:22px;height:22px;border-radius:50%;background:#E5484D;border:2px solid #fff;cursor:pointer;padding:0;" aria-label="Red"></button>
-              <button type="button" id="scopeColorWhite" onclick="setScopeColor('#ffffff')" style="width:22px;height:22px;border-radius:50%;background:#ffffff;border:2px solid transparent;cursor:pointer;padding:0;" aria-label="White"></button>
-            </div>
-            <button type="button" class="btn btn--ghost btn--sm" onclick="changePlan()">Replace image</button>
-            <span class="scope__count" id="ptCount">0 points</span>
-          </div>
-        </div>
-
-        <div class="field"><label>Files <span class="optional">(drawings, renderings, 3D)</span></label>
+        <div class="field"><label>Files <span class="optional">(optional — drawings, renderings, 3D, or a link)</span></label>
           <div class="needlist">
             <span class="needlist__h">Drawings that help us quote:</span>
             <ul>
@@ -322,22 +222,116 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
       </fieldset>
 
-      <!-- STEP 4 — You -->
-      <fieldset class="wpanel" data-panel="4" hidden>
-        <legend class="wpanel__t">Where do we send your quote?</legend>
+      <!-- STEP 2 — Optional details -->
+      <fieldset class="wpanel" data-panel="2" hidden>
+        <legend class="wpanel__t">Optional details</legend>
+        <p class="hint" style="margin-top:-0.6rem;margin-bottom:1.2rem;">None of this is required — add what you already know and skip the rest.</p>
+
+        <div class="field"><label for="projname">Project / building name <span class="optional">(optional)</span></label>
+          <input id="projname" name="projname" type="text" placeholder="e.g. Aria Tower" oninput="updateProjTitle()">
+          <div class="hint">The name of the building, development, or piece — used to label your project everywhere.</div>
+          <div class="projtitle" id="projTitlePreview" hidden>
+            <span class="projtitle__k">Your project will be filed as</span>
+            <span class="projtitle__v" id="projTitleVal"></span>
+          </div>
+        </div>
         <div class="row2">
-          <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" placeholder="Jane Doe" required></div>
+          <div class="field"><label for="projloc">Project location <span class="optional">(optional)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA" oninput="updateProjTitle()"></div>
+          <div class="field"><label for="projcountry">Project country <span class="optional">(optional)</span></label><input id="projcountry" name="projcountry" type="text" placeholder="e.g. United States"></div>
+        </div>
+        <div class="field"><label for="quantity">Number of exact models <span class="optional">(optional)</span></label>
+          <input id="quantity" name="quantity" type="number" min="1" step="1" value="1">
+          <div class="hint">Defaults to 1. Need a model with different specs? Submit a separate inquiry.</div>
+        </div>
+        <div class="field"><label for="use">What does the model need to support? <span class="optional">(optional)</span></label>
+          <select id="use" name="use">
+            <option value="">Select one…</option>
+            <option>Government Review / Planning Approval</option><option>Investor / board meeting</option>
+            <option>Sales gallery / marketing</option><option>Internal design review</option>
+            <option>Film / production</option><option>Exhibition / public display</option><option>Gift / Award</option><option>Trade show / conference</option><option>Other</option>
+          </select>
+        </div>
+
+        <div class="field"><label>Scale <span class="optional">(optional — or provide model size below)</span></label>
+          <div class="row2">
+            <div style="display:flex;align-items:baseline;gap:0.4rem;">
+              <span style="font-family:var(--font-sans);color:var(--cm-text-subtle);font-size:0.95rem;line-height:1;">1 :</span>
+              <input id="scaleIntl" type="number" placeholder="e.g. 100" style="flex:1;">
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <select id="scaleImp"></select>
+              <span style="font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-subtle);white-space:nowrap;">= 1'-0"</span>
+            </div>
+          </div>
+          <div class="hint">Enter either the scale or the desired model size below.</div>
+        </div>
+        <div class="field"><label for="modelsize">Or, desired model size <span class="optional">(optional)</span></label>
+          <input id="modelsize" name="modelsize" type="text" placeholder='e.g. 36" L × 24" W × 18" H  or  90 × 60 × 45 cm'>
+          <div class="hint">Tell us how big you want the finished model and we'll work out the scale that fits.</div>
+        </div>
+        <div class="field"><label for="material">Preferred material / finish <span class="optional">(optional)</span></label>
+          <select id="material" name="material">
+            <option value="">Not specified</option>
+            <option>Full Color ABS / Realistic Visualization</option>
+            <option>Monochromatic ABS / Massing</option>
+            <option>Clear Acrylic</option>
+            <option>ABS with Wood Veneer</option>
+            <option>Hardwood</option>
+            <option>Foam</option>
+            <option>Wrought Iron</option>
+          </select>
+          <div class="hint">A starting point for your quote — we'll confirm what best fits your budget and use case.</div>
+        </div>
+        <div class="field"><label>Special requirements <span class="optional">(select any that apply)</span></label>
+          <div class="checks">
+            <label><input type="checkbox" name="extras" value="Surrounding Landscape / Site Context" id="landscapeChk" onchange="onTypeChange()"><span class="ck"></span><span>Surrounding Landscape / Site Context</span></label>
+            <label><input type="checkbox" name="extras" value="No Base" id="noBaseChk"><span class="ck"></span><span>No Base <span class="optional">(models include a base by default)</span></span></label>
+            <label><input type="checkbox" name="extras" value="Engraved Base"><span class="ck"></span><span>Engraved Base</span></label>
+            <label><input type="checkbox" name="extras" value="Interior Lighting"><span class="ck"></span><span>Interior Lighting</span></label>
+            <label><input type="checkbox" name="extras" value="External Lighting"><span class="ck"></span><span>External Lighting</span></label>
+            <label><input type="checkbox" name="extras" value="Split into Sections (transport / access)"><span class="ck"></span><span>Split into Sections (transport / access)</span></label>
+            <label><input type="checkbox" name="extras" value="Display Stand / Plinth"><span class="ck"></span><span>Display Stand / Plinth</span></label>
+            <label data-tip="For repeated air travel only, carry-on or checked-in — models ship via crate by default."><input type="checkbox" name="extras" value="Customized Protective Travel Case"><span class="ck"></span><span>Customized Protective Travel Case</span></label>
+            <label><input type="checkbox" name="extras" value="Furniture / Equipment"><span class="ck"></span><span>Furniture / Equipment</span></label>
+            <label><input type="checkbox" name="extras" value="Interior Finishes"><span class="ck"></span><span>Interior Finishes</span></label>
+            <label><input type="checkbox" name="extras" value="Removable Roof / Levels"><span class="ck"></span><span>Removable Roof / Levels</span></label>
+          </div>
+        </div>
+
+        <!-- Conditional: scope boundary (context / masterplan only) -->
+        <div class="scope" id="scopeBlock" hidden>
+          <div class="scope__head"><h4>Mark your scope boundary</h4><span class="tagm">Helpful for this model type</span></div>
+          <p class="hint">This model type includes surrounding context — upload a site plan or aerial, then click to outline the area that should be included in the model. Optional, but it helps us scope accurately.</p>
+          <div class="scope__upload">
+            <div class="drop" id="planDrop" onclick="document.getElementById('planInput').click()">
+              <strong>Upload a site plan or aerial</strong>
+              Drag an image here, or click to browse
+              <span class="sub">PNG / JPG / PDF page · a screenshot is fine</span>
+            </div>
+            <input id="planInput" type="file" accept="image/*" hidden onchange="loadPlan(this.files)">
+          </div>
+          <div class="scope__stage" id="planStage">
+            <canvas id="planCanvas"></canvas>
+          </div>
+          <div class="scope__tools" id="planTools" style="display:none;">
+            <button type="button" class="btn btn--ghost btn--sm" onclick="undoPoint()">Undo point</button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="clearScope()">Clear</button>
+            <div style="display:flex;align-items:center;gap:0.4rem;">
+              <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--cm-text-subtle);">Boundary color</span>
+              <button type="button" id="scopeColorRed" onclick="setScopeColor('#E5484D')" style="width:22px;height:22px;border-radius:50%;background:#E5484D;border:2px solid #fff;cursor:pointer;padding:0;" aria-label="Red"></button>
+              <button type="button" id="scopeColorWhite" onclick="setScopeColor('#ffffff')" style="width:22px;height:22px;border-radius:50%;background:#ffffff;border:2px solid transparent;cursor:pointer;padding:0;" aria-label="White"></button>
+            </div>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="changePlan()">Replace image</button>
+            <span class="scope__count" id="ptCount">0 points</span>
+          </div>
+        </div>
+
+        <div class="row2">
           <div class="field"><label for="title">Title / position <span class="optional">(optional)</span></label><input id="title" name="title" type="text" placeholder="e.g. Director of Development"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label for="company">Company <span class="optional">(optional)</span></label><input id="company" name="company" type="text" placeholder="Firm / studio"></div>
-          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" placeholder="jane@firm.com" required></div>
-        </div>
-        <div class="row2">
           <div class="field"><label for="phone">Phone <span class="optional">(optional)</span></label><input id="phone" name="phone" type="tel" placeholder="(555) 000-0000" oninput="formatPhoneInput(this)"><div class="hint" id="phoneHint" style="display:none;color:#e0a860;">That doesn't look like a complete phone number — double check it, or leave it blank.</div></div>
         </div>
         <div class="row2">
-          <div class="field"><label for="deliveryloc">Delivery location</label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX" required></div>
+          <div class="field"><label for="deliveryloc">Delivery location <span class="optional">(optional)</span></label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX"></div>
           <div class="field"><label for="deliverycountry">Delivery country <span class="optional">(optional)</span></label><input id="deliverycountry" name="deliverycountry" type="text" placeholder="e.g. United States"></div>
         </div>
         <div class="field"><label for="deadline">Deadline / event date <span class="optional">(optional)</span></label><input id="deadline" name="deadline" type="text" placeholder="e.g. 09/15/2026 (MM/DD/YYYY)" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
@@ -345,9 +339,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </fieldset>
 
       <!-- Nav -->
+
       <div class="wiz__nav">
         <button type="button" class="btn btn--ghost" id="wizBack" onclick="wizPrev()" style="visibility:hidden;">← Back</button>
-        <button type="button" class="btn btn--primary" id="wizNextBtn" onclick="wizNext()">Continue →</button>
+        <button type="button" class="btn btn--primary" id="wizNextBtn" onclick="wizNext()">Continue with optional details →</button>
         <button type="submit" class="btn btn--primary" id="wizSubmit" style="display:none;">Send project details →</button>
       </div>
       <p class="form-note">By submitting, you agree to be contacted about your project. Your information is used only to review, coordinate, and deliver your project. No account is required. See our <a href="/privacy-policy">Privacy Policy</a>.</p>
@@ -370,7 +365,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </script>
 <script is:inline>
 /* ---- Wizard navigation ---- */
-var wizStep=1, wizMax=4;
+var wizStep=1, wizMax=2;
 function showStep(n){
   wizStep=n;
   document.querySelectorAll('.wpanel').forEach(function(p){p.hidden=(+p.dataset.panel!==n);});
@@ -389,25 +384,19 @@ function showStep(n){
 function syncNextEnabled(){
   var nx=document.getElementById('wizNextBtn');
   if(wizStep===1){
-    var ok=!!document.querySelector('input[name="type"]:checked')&&!!(document.getElementById('use').value||'').trim()&&!!(document.getElementById('quantity').value||'').trim();
+    var ok=!!document.querySelector('input[name="type"]:checked')
+      &&!!(document.getElementById('description').value||'').trim()
+      &&!!(document.getElementById('name').value||'').trim()
+      &&!!(document.getElementById('email').value||'').trim();
     nx.disabled=!ok;
   } else { nx.disabled=false; }
 }
 function validateStep(n){
   if(n===1){
     if(!document.querySelector('input[name="type"]:checked')){alert('Please choose a model type to continue.');return false;}
-    if(!(document.getElementById('projname').value||'').trim()){alert('Please enter a project / building name to continue.');return false;}
-    if(!(document.getElementById('quantity').value||'').trim()){alert('Please enter the number of exact models to continue.');return false;}
-    if(!(document.getElementById('use').value||'').trim()){alert('Please tell us what the model needs to support to continue.');return false;}
-  }
-  if(n===2){
-    var hasScale=!!(document.getElementById('scaleIntl').value||'').trim()||document.getElementById('scaleImp').selectedIndex>0;
-    var hasSize=!!(document.getElementById('modelsize').value||'').trim();
-    if(!hasScale&&!hasSize){alert('Please provide either a scale or a desired model size to continue.');return false;}
-  }
-  if(n===3){
-    var needsScope=!document.getElementById('scopeBlock').hidden;
-    if(needsScope&&!planImg){alert('This model type includes surrounding context — please upload a site plan or aerial and mark your scope boundary before continuing.');return false;}
+    if(!(document.getElementById('description').value||'').trim()){alert('Please add a short project description to continue.');return false;}
+    if(!(document.getElementById('name').value||'').trim()){alert('Please enter your full name to continue.');return false;}
+    if(!(document.getElementById('email').value||'').trim()){alert('Please enter your email to continue.');return false;}
   }
   return true;
 }
@@ -607,9 +596,9 @@ function submitQuote(e){
   var company=(document.getElementById('company').value||'').trim();
   var phone=(document.getElementById('phone').value||'').trim();
   var deliveryloc=(document.getElementById('deliveryloc').value||'').trim();
-  if(!deliveryloc){alert('Please add a delivery location so we know where the model is headed.');document.getElementById('deliveryloc').focus();return false;}
   var deliverycountry=(document.getElementById('deliverycountry').value||'').trim();
   var deadline=(document.getElementById('deadline').value||'').trim();
+  var description=(document.getElementById('description').value||'').trim();
   var message=(document.getElementById('message').value||'').trim();
   var scaleIntlVal=(document.getElementById('scaleIntl').value||'').trim();
   var scaleImpSel=document.getElementById('scaleImp');
@@ -673,7 +662,7 @@ function submitQuote(e){
       deliveryTo:(deliveryloc||projloc||'Not specified')+(deliverycountry?(', '+deliverycountry):(!deliveryloc&&projcountry?(', '+projcountry):'')),
       extras:extras,
       preferredMaterial:preferredMaterial,
-      notes:message||'(no additional notes)',
+      notes:(description||'(no additional notes)')+(message?('\n\n'+message):''),
       files:uploadedFiles,
       filelink:filelinks.length?filelinks:null,
       boundaryMap:boundaryMap,
