@@ -170,7 +170,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <!-- STEP 1 — Project -->
       <fieldset class="wpanel on" data-panel="1">
         <legend class="wpanel__t">Tell us about your project</legend>
-        <div class="field"><label>Model type</label>
+        <div class="field"><label>Model type <span class="optional">(required)</span></label>
           <div class="seg" id="typeSeg">
             <label><input type="radio" name="type" value="Architectural or Real Estate Model" onchange="onTypeChange()"><span class="dot"></span><span>Architectural or Real Estate Model</span></label>
             <label><input type="radio" name="type" value="Masterplan, Site or Topographic Model" onchange="onTypeChange()"><span class="dot"></span><span>Masterplan, Site or Topographic Model</span></label>
@@ -181,12 +181,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <label><input type="radio" name="type" value="Not Sure Yet" onchange="onTypeChange()"><span class="dot"></span><span>Not Sure Yet</span></label>
           </div>
         </div>
-        <div class="field"><label for="description">Short project description</label>
-          <textarea id="description" name="description" required oninput="syncNextEnabled()" placeholder="Briefly describe the project, what the model should communicate, and anything you already know about its size, scale or deadline. It is okay if these details are not finalized."></textarea>
+        <div class="field"><label for="description">Short project description <span class="optional">(optional)</span></label>
+          <textarea id="description" name="description" oninput="syncNextEnabled()" placeholder="Briefly describe the project, what the model should communicate, and anything you already know about its size, scale or deadline. It is okay if these details are not finalized."></textarea>
         </div>
         <div class="row2">
-          <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" placeholder="Jane Doe" required oninput="syncNextEnabled()"></div>
-          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" placeholder="jane@firm.com" required oninput="syncNextEnabled()"></div>
+          <div class="field"><label for="name">Full name <span class="optional">(required)</span></label><input id="name" name="name" type="text" placeholder="Jane Doe" required oninput="syncNextEnabled()"></div>
+          <div class="field"><label for="email">Email <span class="optional">(required)</span></label><input id="email" name="email" type="email" placeholder="jane@firm.com" required oninput="syncNextEnabled()"></div>
         </div>
         <div class="field"><label for="company">Company <span class="optional">(optional)</span></label><input id="company" name="company" type="text" placeholder="Firm / studio"></div>
 
@@ -348,7 +348,6 @@ function syncNextEnabled(){
   var nx=document.getElementById('wizNextBtn');
   if(wizStep===1){
     var ok=!!document.querySelector('input[name="type"]:checked')
-      &&!!(document.getElementById('description').value||'').trim()
       &&!!(document.getElementById('name').value||'').trim()
       &&!!(document.getElementById('email').value||'').trim();
     nx.disabled=!ok;
@@ -357,7 +356,6 @@ function syncNextEnabled(){
 function validateStep(n){
   if(n===1){
     if(!document.querySelector('input[name="type"]:checked')){alert('Please select a model type or choose “Not Sure Yet.”');return false;}
-    if(!(document.getElementById('description').value||'').trim()){alert('Please add a short project description to continue.');return false;}
     if(!(document.getElementById('name').value||'').trim()){alert('Please enter your full name to continue.');return false;}
     if(!(document.getElementById('email').value||'').trim()){alert('Please enter your email to continue.');return false;}
   }
