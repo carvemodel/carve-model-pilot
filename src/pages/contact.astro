@@ -190,21 +190,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
         <div class="field"><label for="company">Company <span class="optional">(optional)</span></label><input id="company" name="company" type="text" placeholder="Firm / studio"></div>
 
-        <div class="field"><label>Files <span class="optional">(optional — drawings, renderings, 3D, or a link)</span></label>
-          <div class="needlist">
-            <span class="needlist__h">Drawings that help us quote:</span>
-            <ul>
-              <li>Layout / floor plan</li>
-              <li>Site plan</li>
-              <li>Elevations</li>
-              <li>Roof plan</li>
-              <li>Landscape plan</li>
-              <li>Interior plan</li>
-              <li>Renderings</li>
-              <li>Reference photos</li>
-              <li>3D digital model</li>
-            </ul>
-          </div>
+        <div class="field"><label>Files or link <span class="optional">(optional)</span></label>
+          <div class="hint" style="margin-bottom:0.8rem;">Helpful files include floor or site plans, elevations, roof or landscape plans, renderings, reference photos, and 3D models. Upload whatever you currently have—a complete drawing set is not required.</div>
           <div class="hint" style="margin-bottom:0.6rem;"><strong style="color:var(--cm-text-strong);">Upload files directly</strong><br>CAD, PDF, Revit, Rhino, SketchUp or image files—maximum 25 MB per file.</div>
           <div class="drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
             <strong>Drop files here, or click to browse</strong>
