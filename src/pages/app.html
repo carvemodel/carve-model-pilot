@@ -9112,7 +9112,35 @@ window.OUR_SHOP=OUR_SHOP; // mirrored -- renderVendorProjects() (an earlier <scr
 window.SRC_setShop=function(id){OUR_SHOP=id||'';window.OUR_SHOP=OUR_SHOP;};
 var ME_TECH='sam';                    // Production Technician identity
 window.ME_TECH=ME_TECH; // mirrored for the same reason as window.OUR_SHOP above -- never reassigned, so a one-time mirror is enough
-var RMB_PER_USD=7.2;                  // demo FX rate — vendor quotes are now entered and calculated in USD; RMB is kept only as an informational reference (see usdToRmb/SRC_syncCostRmb)
+var RMB_PER_USD=7.2;                  // fallback FX rate, used until/unless the live rate below loads — vendor quotes are entered and calculated in USD; RMB is kept only as an informational reference (see usdToRmb/SRC_syncCostRmb)
+(function loadLiveFxRate(){
+  // Keeps the USD->RMB reference display current without touching any of
+  // the many usdToRmb()/rmbToUsd() call sites -- they just read whatever
+  // RMB_PER_USD currently holds. A same-origin-safe, no-API-key FX source
+  // (api.frankfurter.dev, backed by the ECB) is used; any failure silently
+  // keeps the 7.2 fallback above. Cached in localStorage for 4 hours so
+  // most page loads apply an accurate rate immediately, before the network
+  // fetch would otherwise resolve.
+  var CACHE_KEY='cm_fx_usd_cny';
+  var CACHE_MS=4*60*60*1000;
+  try{
+    var cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+    if(cached&&typeof cached.rate==='number'&&cached.rate>0&&(Date.now()-cached.at)<CACHE_MS){
+      RMB_PER_USD=cached.rate;
+      return; // fresh enough -- skip the network round trip this load
+    }
+  }catch(e){}
+  fetch('https://api.frankfurter.dev/v1/latest?base=USD&symbols=CNY').then(function(r){
+    if(!r.ok)throw new Error('FX rate request failed: '+r.status);
+    return r.json();
+  }).then(function(data){
+    var rate=data&&data.rates&&data.rates.CNY;
+    if(typeof rate==='number'&&rate>0){
+      RMB_PER_USD=rate;
+      try{localStorage.setItem(CACHE_KEY,JSON.stringify({rate:rate,at:Date.now()}));}catch(e){}
+    }
+  }).catch(function(e){console.error('Live USD->CNY rate fetch failed, staying on fallback 7.2:',e);});
+})();
 var SRC_PENDING_BFILES={};            // holds an ARRAY of boundary-file metadata picked but not yet submitted (a vendor can attach more than one -- e.g. a layout plus an elevation), keyed by "<prefix>-<briefId>"
 var SRC_BFILE_UPLOADING={};           // true while a boundary file's upload is still in flight, same keys as above
 var SRC_OPEN_VARIATION={};            // briefId -> true while a shop's "add variation" form is open
