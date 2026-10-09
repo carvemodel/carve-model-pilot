@@ -26,7 +26,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .page-hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
 .hero__spec{position:absolute;right:-12px;bottom:24px;z-index:4;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);padding:0.9rem 1.1rem;box-shadow:var(--shadow-lg);}
 .hero__spec .tick{display:block;}
-.hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.1rem;letter-spacing:-0.01em;}
+.hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.15rem;letter-spacing:-0.01em;}
 .hero__cta{display:flex;gap:0.9rem;flex-wrap:nowrap;margin-top:1.8rem;}
 @media(max-width:560px){.hero__cta{flex-wrap:wrap;}}
 .hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
@@ -34,11 +34,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .step{display:grid;grid-template-columns:clamp(4.5rem,10vw,7rem) 1fr;gap:clamp(1.5rem,4vw,3.5rem);padding-block:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
 .step__n{font-family:var(--font-display);font-weight:var(--w-black);font-size:clamp(2.5rem,6vw,5rem);line-height:0.9;color:var(--cm-ink-600);letter-spacing:-0.03em;}
 .step__n .of{display:block;font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);letter-spacing:0.1em;margin-top:0.6rem;font-weight:var(--w-regular);}
-.step h2{font-size:clamp(1.5rem,2.6vw,2.2rem);letter-spacing:-0.02em;}
+.step h2{font-size:clamp(1.6rem,2.8vw,2.4rem);letter-spacing:-0.02em;}
 .step p{margin-top:1rem;color:var(--cm-gray-300);max-width:62ch;}
 .step p+p{margin-top:0.8rem;}
 .step ul{list-style:none;padding:0;margin:1.4rem 0 0;display:grid;gap:0.7rem;}
-.step ul li{display:flex;gap:0.7rem;align-items:flex-start;font-size:0.95rem;color:var(--cm-text-muted);}
+.step ul li{display:flex;gap:0.7rem;align-items:flex-start;font-size:1rem;color:var(--cm-text-muted);}
 .step ul li svg{flex:none;margin-top:4px;color:var(--cm-silver);}
 .formats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--cm-line-faint);border:1px solid var(--cm-line-faint);margin-top:2.5rem;}
 .fmt{position:relative;background:var(--cm-ink-900);padding:1.4rem 1rem;text-align:center;font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-gray-300);letter-spacing:0.03em;transition:background var(--dur-3),color var(--dur-3);}
@@ -50,20 +50,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 @media(max-width:480px){.formats{grid-template-columns:1fr;}}
 .ocp-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,4vw,4rem);align-items:center;margin-top:1.5rem;}
 @media(max-width:900px){.ocp-grid{grid-template-columns:1fr;}}
-.mock{width:100%;background:var(--cm-ink-850);border:1px solid var(--cm-border-strong);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-lg);font-size:0.78rem;}
+.mock{width:100%;background:var(--cm-ink-850);border:1px solid var(--cm-border-strong);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-lg);font-size:0.8rem;}
 .mock__bar{display:flex;align-items:center;gap:0.5rem;padding:0.7rem 0.9rem;border-bottom:1px solid var(--cm-border);background:var(--cm-ink-800);}
 .mock__bar i{width:9px;height:9px;border-radius:50%;background:var(--cm-ink-500);display:block;}
-.mock__bar span{margin-left:auto;font-family:var(--font-mono);font-size:0.66rem;color:var(--cm-text-subtle);}
+.mock__bar span{margin-left:auto;font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);}
 .mock__body{padding:1rem;display:grid;grid-template-columns:0.8fr 1.2fr;gap:0.8rem;}
 .mock__side{display:flex;flex-direction:column;gap:0.5rem;}
-.mock__row{display:flex;align-items:center;gap:0.55rem;padding:0.5rem 0.6rem;border-radius:var(--r-sm);color:var(--cm-gray-300);font-size:0.74rem;}
+.mock__row{display:flex;align-items:center;gap:0.55rem;padding:0.5rem 0.6rem;border-radius:var(--r-sm);color:var(--cm-gray-300);font-size:0.8rem;}
 .mock__row.active{background:var(--cm-surface-2);color:var(--cm-text-strong);}
 .mock__row b{width:6px;height:6px;border-radius:50%;background:var(--cm-silver);display:block;}
 .mock__main{display:flex;flex-direction:column;gap:0.6rem;}
 .mock__card{background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.75rem;}
 .mock__progress{height:5px;background:var(--cm-ink-600);border-radius:99px;margin-top:0.5rem;overflow:hidden;}
 .mock__progress i{display:block;height:100%;background:var(--cm-silver);}
-.mock__k{font-family:var(--font-mono);font-size:0.64rem;color:var(--cm-text-subtle);text-transform:uppercase;letter-spacing:0.06em;}
+.mock__k{font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);text-transform:uppercase;letter-spacing:0.06em;}
 .mock__v{color:var(--cm-text-strong);font-weight:var(--w-semibold);margin-top:2px;}
 </style>
 </Fragment>
@@ -222,7 +222,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             </div>
             <div class="mock__card" style="display:flex;gap:0.6rem;align-items:center;">
               <div style="width:26px;height:26px;border-radius:50%;background:var(--cm-surface-2);flex:none;"></div>
-              <div><div class="mock__v" style="font-size:0.72rem;">Studio · Maya</div><span class="mock__k">QC photos uploaded →</span></div>
+              <div><div class="mock__v" style="font-size:0.7rem;">Studio · Maya</div><span class="mock__k">QC photos uploaded →</span></div>
             </div>
           </div>
         </div>

@@ -16,7 +16,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"FAQPage","@id":"https://www.physical-model.com/scale-model-services/film#faq","mainEntity":[{"@type":"Question","name":"What information do you need to evaluate a film or commercial miniature?","acceptedAnswer":{"@type":"Answer","text":"Please provide the available concept art, storyboards, drawings, 3D files, reference images, intended camera views, approximate miniature dimensions or scale, production schedule, and delivery location. It is also helpful to identify whether the miniature will be used for planning, presentation, on-camera filming, practical effects, or a combination of purposes."}},{"@type":"Question","name":"Can a miniature be designed around specific camera angles or production requirements?","acceptedAnswer":{"@type":"Answer","text":"Yes. The miniature can be developed around the intended framing, viewing distance, lens requirements, access points, lighting, removable sections, and areas visible to the camera. Defining the intended shots early helps concentrate detail and fabrication effort where it will have the greatest production value."}},{"@type":"Question","name":"How do you balance appearance, weight, access, and durability?","acceptedAnswer":{"@type":"Answer","text":"Materials, internal structure, surface finishes, connections, and removable components are selected according to how the miniature will be transported, handled, illuminated, accessed, and filmed. A presentation miniature may prioritize finish quality, while an on-set miniature may require additional reinforcement, modular construction, or replaceable components."}},{"@type":"Question","name":"Can you accommodate confidential or deadline-sensitive productions?","acceptedAnswer":{"@type":"Answer","text":"Yes. NDA, restricted-access, and project-specific information-handling requirements can be established before confidential files are shared. For deadline-sensitive work, we review the scope, approval process, fabrication requirements, and delivery plan before confirming whether the requested schedule is achievable."}}]}`} />
 <style>
 .breadcrumb{padding-top:1.6rem;}
-.breadcrumb a{font-family:var(--font-mono);font-size:0.78rem;letter-spacing:0.04em;color:var(--cm-text-subtle);transition:color var(--dur-2);}
+.breadcrumb a{font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.04em;color:var(--cm-text-subtle);transition:color var(--dur-2);}
 .breadcrumb a:hover{color:var(--cm-text-strong);}
 .page-hero{padding-top:1.6rem;padding-bottom:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
 .page-hero h1{margin-top:1.4rem;}
@@ -31,7 +31,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .page-hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
 .hero__spec{position:absolute;right:-12px;bottom:24px;z-index:4;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);padding:0.9rem 1.1rem;box-shadow:var(--shadow-lg);}
 .hero__spec .tick{display:block;}
-.hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.1rem;letter-spacing:-0.01em;}
+.hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.15rem;letter-spacing:-0.01em;}
 .hero__cta{display:flex;gap:0.9rem;flex-wrap:nowrap;margin-top:1.8rem;}
 @media(max-width:560px){.hero__cta{flex-wrap:wrap;}}
 .hero__cta .btn--primary,.hero__cta .btn--ghost{background:transparent;color:var(--cm-text-strong);border:1px solid var(--cm-border-strong);}
@@ -39,24 +39,24 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .svc-all-btn{background:transparent;color:var(--cm-text-strong);}
 .svc-all-btn:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .svc-section{padding-block:clamp(3rem,5vw,5rem);border-bottom:1px solid var(--cm-line-faint);}
-.svc-section h2{font-size:clamp(1.6rem,2.8vw,2.3rem);letter-spacing:-0.02em;margin-top:1rem;}
+.svc-section h2{font-size:clamp(1.6rem,2.8vw,2.4rem);letter-spacing:-0.02em;margin-top:1rem;}
 .svc-section .lead-p{margin-top:1.2rem;max-width:68ch;}
 .svc-checklist{list-style:none;padding:0;margin:1.8rem 0 0;display:grid;gap:0.75rem;max-width:68ch;}
-.svc-checklist li{display:flex;gap:0.7rem;align-items:flex-start;font-size:0.98rem;color:var(--cm-text-muted);}
+.svc-checklist li{display:flex;gap:0.7rem;align-items:flex-start;font-size:1rem;color:var(--cm-text-muted);}
 .svc-checklist li svg{flex:none;margin-top:4px;color:var(--cm-silver);}
 .svc-types{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.6rem,3vw,2.6rem);margin-top:2rem;}
 .svc-type{padding-top:0;border-top:0;}
 .svc-type__media{margin-bottom:0.9rem;}
 .svc-type__media image-slot{width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);}
-.svc-type h3{font-size:1.1rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
-.svc-type p{margin-top:0.5rem;color:var(--cm-text-muted);font-size:0.92rem;max-width:none;}
+.svc-type h3{font-size:1.15rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
+.svc-type p{margin-top:0.5rem;color:var(--cm-text-muted);font-size:0.9rem;max-width:none;}
 @media(max-width:900px){.svc-types{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:560px){.svc-types{grid-template-columns:1fr;}}
 .svc-steps{display:grid;gap:0;margin-top:2rem;max-width:68ch;}
 .svc-step{display:grid;grid-template-columns:2.4rem 1fr;gap:1rem;padding-block:1rem;border-bottom:1px solid var(--cm-line-faint);}
 .svc-step:last-child{border-bottom:0;}
-.svc-step__n{font-family:var(--font-mono);font-size:0.85rem;color:var(--cm-text-subtle);padding-top:0.15rem;}
-.svc-step p{color:var(--cm-text-muted);font-size:0.95rem;}
+.svc-step__n{font-family:var(--font-mono);font-size:0.9rem;color:var(--cm-text-subtle);padding-top:0.15rem;}
+.svc-step p{color:var(--cm-text-muted);font-size:1rem;}
 .svc-note{margin-top:1.4rem;color:var(--cm-text-muted);max-width:68ch;}
 .formats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--cm-line-faint);border:1px solid var(--cm-line-faint);margin-top:1.8rem;}
 .fmt{position:relative;background:var(--cm-ink-900);padding:1.4rem 1rem;text-align:center;font-family:var(--font-mono);font-size:0.8rem;color:var(--cm-gray-300);letter-spacing:0.03em;transition:background var(--dur-3),color var(--dur-3);}
@@ -70,7 +70,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .svc-faq{max-width:68ch;}
 .svc-faq .faq-list{border-top:1px solid var(--cm-line-faint);margin-top:1.8rem;}
 .svc-faq .faq-item{border-bottom:1px solid var(--cm-line-faint);}
-.svc-faq .faq-item summary{list-style:none;cursor:pointer;padding:1.3rem 0;display:flex;justify-content:space-between;gap:2rem;align-items:center;font-family:var(--font-display);font-weight:var(--w-semibold);font-size:1.05rem;color:var(--cm-text-strong);}
+.svc-faq .faq-item summary{list-style:none;cursor:pointer;padding:1.3rem 0;display:flex;justify-content:space-between;gap:2rem;align-items:center;font-family:var(--font-display);font-weight:var(--w-semibold);font-size:1rem;color:var(--cm-text-strong);}
 .svc-faq .faq-item summary::-webkit-details-marker{display:none;}
 .svc-faq .faq-item .pm{position:relative;width:16px;height:16px;flex:none;}
 .svc-faq .faq-item .pm::before,.svc-faq .faq-item .pm::after{content:"";position:absolute;background:var(--cm-silver);transition:transform var(--dur-3);}
