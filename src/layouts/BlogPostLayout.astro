@@ -166,7 +166,7 @@ const {
     {!hideFooterCta && (
       <div class="article-foot">
         <div class="callout" style="border-left-color:var(--cm-silver);">
-          <strong>{footerHeading}</strong> {footerText}
+          <strong>{footerHeading}</strong>{' '}{footerText}
           <div style="margin-top:1.1rem;display:flex;gap:0.8rem;flex-wrap:wrap;">{footerButtons.map((b, i) => <a class={`btn ${i === 0 ? 'btn--primary' : 'btn--ghost'}`} href={b.href}>{b.label}</a>)}</div>
         </div>
       </div>
