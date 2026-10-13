@@ -19,6 +19,7 @@ interface Props {
   leadExtraHtml?: string; // optional HTML version of leadExtra, e.g. with inline links
   coverId: string;
   coverImage?: string; // optional real image src to replace the placeholder cover
+  coverAlt?: string; // optional alt text for a real cover image (defaults to the heading)
   coverCaption?: string; // optional caption overlay shown on a real cover image
   coverAspectRatio?: string; // optional override for the cover box's aspect-ratio, e.g. "4/3" — the box defaults to 16/8, which was sized for the original wide (16:9-ish) hero-photo.png; a squarer real photo forced into that box gets heavily cropped top/bottom, so pass the photo's own ratio here to avoid that
   coverMockup?: boolean; // optional: show the Studio Portal browser-window UI mockup (from the process page) instead of a photo/placeholder
@@ -30,7 +31,7 @@ interface Props {
   robotsNoIndex?: boolean; // optional: exclude internal or temporary posts from search indexing
 }
 const {
-  title, description, slug, metaLabel, publishDate, publishDateISO, lastReviewedDate, lastReviewedDateISO, readTime, heading, headingHtml, lead, leadHtml, leadExtra, leadExtraHtml, coverId, coverImage, coverCaption, coverAspectRatio, coverMockup, hideCover, hideFooterCta, robotsNoIndex = false,
+  title, description, slug, metaLabel, publishDate, publishDateISO, lastReviewedDate, lastReviewedDateISO, readTime, heading, headingHtml, lead, leadHtml, leadExtra, leadExtraHtml, coverId, coverImage, coverAlt, coverCaption, coverAspectRatio, coverMockup, hideCover, hideFooterCta, robotsNoIndex = false,
   footerHeading = 'Planning an architectural model?',
   footerText = "Send us the approximate project dimensions, intended use, available files, and preferred display size. Even if the design is still developing, we can recommend an appropriate starting scale, scope, and level of detail.",
   footerButtons = [{ label: 'Get a Preliminary Estimate →', href: '/contact' }],
@@ -151,7 +152,7 @@ const {
         </div>
       </div>
     </div>
-  ) : coverImage ? <><span class="corner tl"></span><span class="corner br"></span><img src={coverImage} alt={heading} style={coverAspectRatio ? `aspect-ratio:${coverAspectRatio};` : undefined} width="1200" height="600" decoding="async" />{coverCaption && <span class="slot-label">{coverCaption}</span>}</> : <image-slot id={coverId} placeholder="Drop article image"></image-slot>}</div>}
+  ) : coverImage ? <><span class="corner tl"></span><span class="corner br"></span><img src={coverImage} alt={coverAlt ?? heading} style={coverAspectRatio ? `aspect-ratio:${coverAspectRatio};` : undefined} width="1200" height="600" decoding="async" />{coverCaption && <span class="slot-label">{coverCaption}</span>}</> : <image-slot id={coverId} placeholder="Drop article image"></image-slot>}</div>}
 </div></section>
 <section class="section" style={`padding-top:${hideCover ? 'clamp(1rem,1.6vw,1.4rem)' : 'clamp(2.5rem,4vw,3.5rem)'};`}><div class="container narrow">
   <div class="prose">
