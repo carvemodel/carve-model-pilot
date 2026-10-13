@@ -171,8 +171,8 @@ if (process.env.REDIS_URL) {
 .hero__spec strong{font-family:var(--font-display);font-weight:var(--w-bold);color:var(--cm-text-strong);font-size:1.15rem;letter-spacing:-0.01em;}
 .hero__meta{position:relative;z-index:1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:1.5rem 2rem;margin-top:clamp(1.5rem,2.5vw,2.5rem);padding-top:1.5rem;border-top:1px solid var(--cm-line-faint);}
 .hero__meta .stat__num{font-size:clamp(1.9rem,2.9vw,2.6rem);}
-@media(max-width:1180px){.hero__meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));}}
-@media(max-width:600px){.hero__meta{grid-template-columns:1fr;}}
+@media(max-width:1180px){.hero__meta{justify-content:center;text-align:center;}.hero__meta>div{flex:0 0 calc((100% - 4rem)/3);}}
+@media(max-width:600px){.hero__meta{justify-content:flex-start;text-align:left;}.hero__meta>div{flex-basis:100%;}}
 @media(max-width:900px){.hero__inner{grid-template-columns:1fr;}.hero__visual{order:-1;max-width:440px;}}
 #services{padding-top:clamp(0.75rem,0.25rem + 2vw,2.25rem);}
 .svc-all-btn{background:transparent;color:var(--cm-text-strong);}
