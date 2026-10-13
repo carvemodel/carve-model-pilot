@@ -20,8 +20,6 @@ export default defineConfig({
         !page.endsWith('/rss.xml') &&
         !page.includes('/login') &&
         !page.includes('/blog/carve-studio-portal-partner-testing') &&
-        // Draft case study: excluded until its body content lands.
-        !page.includes('/blog/laboratory-rd-campus-architectural-model') &&
         !page.includes('/app') &&
         !page.includes('/quotation') &&
         !page.includes('/factory-sourcing') &&
