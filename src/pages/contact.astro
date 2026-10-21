@@ -75,7 +75,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
 .seg label{display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.85rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);cursor:pointer;font-size:0.9rem;color:var(--cm-text-muted);transition:border-color var(--dur-2),color var(--dur-2),background var(--dur-2);margin:0;text-transform:none;letter-spacing:0;font-family:var(--font-sans);}
 .seg label:hover{border-color:var(--cm-text-subtle);color:var(--cm-text);}
-.seg input{position:absolute;opacity:0;pointer-events:none;}
+.seg input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;}
 .seg label .dot{width:14px;height:14px;border:1px solid var(--cm-border-strong);border-radius:50%;flex:none;position:relative;transition:0.18s;}
 .seg input:checked + .dot{border-color:var(--cm-silver);background:radial-gradient(circle,var(--cm-silver) 0 38%,transparent 42%);}
 .seg input:checked ~ span{color:var(--cm-text-strong);}
@@ -88,7 +88,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .checks{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
 .checks label{display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.85rem;border:1px solid var(--cm-border);border-radius:var(--r-sm);cursor:pointer;font-size:0.9rem;color:var(--cm-text-muted);transition:border-color var(--dur-2),color var(--dur-2),background var(--dur-2);margin:0;text-transform:none;letter-spacing:0;font-family:var(--font-sans);}
 .checks label:hover{border-color:var(--cm-text-subtle);color:var(--cm-text);}
-.checks input{position:absolute;opacity:0;pointer-events:none;}
+.checks input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;}
 .checks .ck{width:15px;height:15px;border:1px solid var(--cm-border-strong);border-radius:2px;flex:none;position:relative;transition:0.18s;}
 .checks input:checked + .ck{background:var(--cm-silver);border-color:var(--cm-silver);}
 .checks input:checked + .ck::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--cm-ink-900);border-width:0 2px 2px 0;transform:rotate(45deg);}
@@ -124,7 +124,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .scope__count{font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);margin-left:auto;}
 .scope__upload{margin-top:0.9rem;}
 
-@media(max-width:820px){.contact-wrap{grid-template-columns:1fr;}.row2{grid-template-columns:1fr;}.seg{grid-template-columns:1fr;}}
+@media(max-width:820px){.contact-wrap{grid-template-columns:minmax(0,1fr);}.row2{grid-template-columns:1fr;}.seg{grid-template-columns:1fr;}}
 </style>
 </Fragment>
 
