@@ -54,7 +54,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
    couple of px taller than text inputs once focused, so pin both heights */
 .row2--end{align-items:end;}
 .row2--end input{height:3.125rem;}
-@media(min-width:821px){.row2--end label{min-height:2.9em;display:flex;align-items:flex-end;flex-wrap:wrap;column-gap:0.35em;}}
+/* label text on line one, "(optional)" on line two */
+.label--stack .optional{display:block;margin-top:0.15rem;}
 .form-actions{margin-top:1.6rem;}
 .form-actions .btn[disabled]{opacity:0.6;cursor:progress;}
 @media(max-width:560px){.form-actions .btn{width:100%;}}
@@ -216,7 +217,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <details class="more" id="moreDetails">
         <summary><span>Add details for a more accurate estimate <span class="optional">(optional)</span></span></summary>
         <div class="more__body">
-          <div class="field"><label for="projloc">Project location <span class="optional">(optional)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA"></div>
+          <div class="field"><label class="label--stack" for="projloc">Project location <span class="optional">(optional)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA"></div>
           <div class="field"><label>Preferred scale or dimensions <span class="optional">(optional)</span></label>
             <div class="row2">
               <div style="display:flex;align-items:baseline;gap:0.4rem;">
@@ -263,14 +264,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             </div>
           </div>
           <div class="row2 row2--end">
-            <div class="field"><label for="deadline">Required delivery date <span class="optional">(optional)</span></label><input id="deadline" name="deadline" type="text" placeholder="e.g. 09/15/2026 (MM/DD/YYYY)" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
-            <div class="field"><label for="deliveryloc">Delivery location <span class="optional">(optional)</span></label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX"></div>
+            <div class="field"><label class="label--stack" for="deadline">Required delivery date <span class="optional">(optional)</span></label><input id="deadline" name="deadline" type="text" placeholder="e.g. 09/15/2026 (MM/DD/YYYY)" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
+            <div class="field"><label class="label--stack" for="deliveryloc">Delivery location <span class="optional">(optional)</span></label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX"></div>
           </div>
         </div>
       </details>
 
       <div class="form-actions">
-        <button type="submit" class="btn btn--primary" id="quoteSubmit">Request a Preliminary Estimate</button>
+        <button type="submit" class="btn btn--primary" id="quoteSubmit">Request a Preliminary Estimate <span class="arrow">→</span></button>
       </div>
       <p class="form-note">By submitting, you agree to be contacted about your project. Your information is used only to review, coordinate, and deliver your project. No account is required. See our <a href="/privacy-policy">Privacy Policy</a>.</p>
     </form>
@@ -578,7 +579,7 @@ function submitQuote(e){
   }).catch(function(err){
     console.error('Submission failed:',err);
     alert('Something went wrong sending your project — please try again or email support@physical-model.com directly.');
-    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Request a Preliminary Estimate';}
+    if(submitBtn){submitBtn.disabled=false;submitBtn.innerHTML='Request a Preliminary Estimate <span class="arrow">→</span>';}
   });
   return false;
 }
