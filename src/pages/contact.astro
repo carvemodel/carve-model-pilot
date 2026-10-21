@@ -54,6 +54,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
    couple of px taller than text inputs once focused, so pin both heights */
 .row2--end{align-items:end;}
 .row2--end input{height:3.125rem;}
+@media(min-width:821px){.row2--end label{min-height:2.9em;display:flex;align-items:flex-end;flex-wrap:wrap;column-gap:0.35em;}}
 .form-actions{margin-top:1.6rem;}
 .form-actions .btn[disabled]{opacity:0.6;cursor:progress;}
 @media(max-width:560px){.form-actions .btn{width:100%;}}
