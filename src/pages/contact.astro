@@ -39,25 +39,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .optional{text-transform:none;letter-spacing:0;color:var(--cm-text-subtle);font-weight:var(--w-regular);}
 .mono-eg{font-family:var(--font-mono);font-size:0.9em;color:var(--cm-silver);}
 
-/* wizard */
-.wiz__head{margin-bottom:1.8rem;}
-.wiz__steps{display:flex;justify-content:space-between;gap:0.4rem;margin-bottom:0.9rem;}
-.wstep{display:flex;align-items:center;gap:0.5rem;flex:none;opacity:0.45;transition:opacity var(--dur-2);}
-.wstep.on,.wstep.done{opacity:1;}
-.wstep__n{width:24px;height:24px;border-radius:50%;border:1px solid var(--cm-border-strong);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-muted);flex:none;transition:0.18s;}
-.wstep.on .wstep__n{background:var(--cm-white);color:var(--cm-ink-900);border-color:var(--cm-white);}
-.wstep.done .wstep__n{background:var(--cm-silver);color:var(--cm-ink-900);border-color:var(--cm-silver);}
-.wstep__l{font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--cm-text-muted);}
-.wstep.on .wstep__l{color:var(--cm-text-strong);}
-.wiz__bar{height:2px;background:var(--cm-ink-700);border-radius:99px;overflow:hidden;}
-.wiz__bar i{display:block;height:100%;background:var(--cm-silver);transition:width var(--dur-3) var(--ease-out);}
-.wpanel{border:0;padding:0;margin:0;min-inline-size:0;}
-.wpanel[hidden]{display:none;}
-.wpanel__t{font-family:var(--font-display);font-size:1.15rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;padding:0;margin-bottom:1.3rem;}
-.wiz__nav{display:flex;justify-content:space-between;gap:1rem;margin-top:1.6rem;}
-.wiz__nav .btn{min-width:128px;}
-.wiz__nav .btn[disabled]{opacity:0.4;cursor:not-allowed;pointer-events:none;}
-@media(max-width:560px){.wstep__l{display:none;}.wstep{flex:1;justify-content:center;}}
+/* collapsed optional details */
+.hint__lead{color:var(--cm-text);font-weight:var(--w-semibold);}
+.more{border:1px solid var(--cm-border);border-radius:var(--r-sm);background:var(--cm-ink-850);margin-top:0.4rem;}
+.more summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:0.7rem;padding:1rem 1.1rem;font-family:var(--font-display);font-size:1rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
+.more summary::-webkit-details-marker{display:none;}
+.more summary::before{content:"+";flex:none;width:22px;height:22px;border:1px solid var(--cm-border-strong);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.9rem;line-height:1;color:var(--cm-text-muted);}
+.more[open] summary::before{content:"\2212";}
+.more summary:hover::before{border-color:var(--cm-silver);color:var(--cm-text-strong);}
+.more summary .optional{font-family:var(--font-sans);font-size:0.85rem;}
+.more summary:focus-visible{outline:2px solid var(--cm-silver);outline-offset:2px;border-radius:var(--r-sm);}
+.more__body{padding:0.2rem 1.1rem 0.4rem;border-top:1px solid var(--cm-line-faint);padding-top:1.2rem;}
+.form-actions{margin-top:1.6rem;}
+.form-actions .btn[disabled]{opacity:0.6;cursor:progress;}
+@media(max-width:560px){.form-actions .btn{width:100%;}}
 .needlist{border:1px solid var(--cm-border);border-radius:var(--r-sm);background:var(--cm-ink-850);padding:0.95rem 1.1rem;margin-bottom:0.8rem;}
 .needlist__h{font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cm-text-subtle);}
 .needlist ul{list-style:none;padding:0;margin:0.7rem 0 0;display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 1rem;}
@@ -162,136 +157,111 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <label for="hp-website">Leave this field blank</label>
         <input id="hp-website" name="website" type="text" tabindex="-1" autocomplete="off">
       </div>
-      <!-- Progress -->
-      <div class="wiz__head">
-        <div class="wiz__steps" id="wizSteps">
-          <div class="wstep on" data-step="1"><span class="wstep__n">1</span><span class="wstep__l">Project</span></div>
-          <div class="wstep" data-step="2"><span class="wstep__n">2</span><span class="wstep__l">Optional details</span></div>
+      <div class="row2">
+        <div class="field"><label for="name">Name <span class="optional">(required)</span></label><input id="name" name="name" type="text" placeholder="Jane Doe" autocomplete="name" required></div>
+        <div class="field"><label for="email">Email <span class="optional">(required)</span></label><input id="email" name="email" type="email" placeholder="jane@firm.com" autocomplete="email" required></div>
+      </div>
+      <div class="field"><label id="typeLabel">Model type <span class="optional">(required)</span></label>
+        <div class="seg" id="typeSeg" role="radiogroup" aria-labelledby="typeLabel">
+          <label><input type="radio" name="type" value="Architectural or Real Estate Model" required><span class="dot"></span><span>Architectural or Real Estate Model</span></label>
+          <label><input type="radio" name="type" value="Masterplan, Site or Topographic Model"><span class="dot"></span><span>Masterplan, Site or Topographic Model</span></label>
+          <label><input type="radio" name="type" value="Interior or Section Model"><span class="dot"></span><span>Interior or Section Model</span></label>
+          <label><input type="radio" name="type" value="Product Prototype or Mockup"><span class="dot"></span><span>Product Prototype or Mockup</span></label>
+          <label><input type="radio" name="type" value="Film or Commercial Miniature"><span class="dot"></span><span>Film or Commercial Miniature</span></label>
+          <label><input type="radio" name="type" value="Art Maquette or Prototype"><span class="dot"></span><span>Art Maquette or Prototype</span></label>
+          <label><input type="radio" name="type" value="Not Sure Yet"><span class="dot"></span><span>Not Sure Yet</span></label>
         </div>
-        <div class="wiz__bar"><i id="wizBar" style="width:50%"></i></div>
+      </div>
+      <div class="field"><label for="use">Primary use <span class="optional">(required)</span></label>
+        <select id="use" name="use" required>
+          <option value="">Select one…</option>
+          <option>Government Review / Planning Approval</option><option>Investor / board meeting</option>
+          <option>Sales gallery / marketing</option><option>Internal design review</option>
+          <option>Film / production</option><option>Exhibition / public display</option><option>Gift / Award</option><option>Trade show / conference</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label for="description">Project description <span class="optional">(required)</span></label>
+        <textarea id="description" name="description" rows="6" required placeholder="Briefly describe the project, what the model should communicate, and who it's for. It is okay if details are not finalized; we'll help fill in the gaps."></textarea>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="company">Company <span class="optional">(optional)</span></label><input id="company" name="company" type="text" placeholder="Firm / studio" autocomplete="organization"></div>
+        <div class="field"><label for="phone">Phone <span class="optional">(optional)</span></label><input id="phone" name="phone" type="tel" placeholder="(555) 000-0000" autocomplete="tel" oninput="formatPhoneInput(this)"><div class="hint" id="phoneHint" style="display:none;color:#e0a860;">That doesn't look like a complete phone number — double check it, or leave it blank.</div></div>
       </div>
 
-      <!-- STEP 1 — Project -->
-      <fieldset class="wpanel on" data-panel="1">
-        <legend class="wpanel__t">Tell us about your project</legend>
-        <div class="field"><label>Model type <span class="optional">(required)</span></label>
-          <div class="seg" id="typeSeg">
-            <label><input type="radio" name="type" value="Architectural or Real Estate Model" onchange="onTypeChange()"><span class="dot"></span><span>Architectural or Real Estate Model</span></label>
-            <label><input type="radio" name="type" value="Masterplan, Site or Topographic Model" onchange="onTypeChange()"><span class="dot"></span><span>Masterplan, Site or Topographic Model</span></label>
-            <label><input type="radio" name="type" value="Interior or Section Model" onchange="onTypeChange()"><span class="dot"></span><span>Interior or Section Model</span></label>
-            <label><input type="radio" name="type" value="Product Prototype or Mockup" onchange="onTypeChange()"><span class="dot"></span><span>Product Prototype or Mockup</span></label>
-            <label><input type="radio" name="type" value="Film or Commercial Miniature" onchange="onTypeChange()"><span class="dot"></span><span>Film or Commercial Miniature</span></label>
-            <label><input type="radio" name="type" value="Art Maquette or Prototype" onchange="onTypeChange()"><span class="dot"></span><span>Art Maquette or Prototype</span></label>
-            <label><input type="radio" name="type" value="Not Sure Yet" onchange="onTypeChange()"><span class="dot"></span><span>Not Sure Yet</span></label>
+      <div class="field"><label>File upload <span class="optional">(optional)</span></label>
+        <div class="hint" style="margin-bottom:0.8rem;"><strong class="hint__lead">Complete drawings are not required to start.</strong> Share whatever you have: plans, elevations, renderings, reference photos, or 3D models.</div>
+        <div class="drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+          <strong>Drop files here, or click to browse</strong>
+          <span class="sub">CAD, PDF, Revit, Rhino, SketchUp or image files—maximum 25 MB per file.</span>
+        </div>
+        <input id="fileInput" type="file" multiple hidden onchange="addFiles(this.files)">
+        <ul class="filelist" id="fileList"></ul>
+        <div class="orlink"><span>or share a link</span></div>
+        <ul class="filelist" id="linkList"></ul>
+        <div style="display:flex;gap:0.5rem;">
+          <input id="filelink" name="filelink" type="url" placeholder="Dropbox, Google Drive, WeTransfer, or OneDrive link" style="flex:1;min-width:0;" onkeydown="if(event.key==='Enter'){event.preventDefault();addLink();}">
+          <button type="button" class="btn btn--ghost btn--sm" onclick="addLink()">+ Add link</button>
+        </div>
+      </div>
+
+      <!-- Optional details: collapsed by default and never required to submit -->
+      <details class="more" id="moreDetails">
+        <summary><span>Add details for a more accurate estimate <span class="optional">(optional)</span></span></summary>
+        <div class="more__body">
+          <div class="field"><label>Preferred scale or dimensions <span class="optional">(optional)</span></label>
+            <div class="row2">
+              <div style="display:flex;align-items:baseline;gap:0.4rem;">
+                <span style="font-family:var(--font-sans);color:var(--cm-text-subtle);font-size:1rem;line-height:1;">1 :</span>
+                <input id="scaleIntl" type="number" placeholder="e.g. 100" style="flex:1;" aria-label="Scale ratio">
+              </div>
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <select id="scaleImp" aria-label="Imperial scale"></select>
+                <span style="font-family:var(--font-mono);font-size:0.9rem;color:var(--cm-text-subtle);white-space:nowrap;">= 1'-0"</span>
+              </div>
+            </div>
+            <div class="hint">Enter a scale (e.g. 1:100), or describe the size you have in mind below.</div>
+            <input id="modelsize" name="modelsize" type="text" placeholder='e.g. 36" L × 24" W × 18" H  or  90 × 60 × 45 cm' style="margin-top:0.7rem;" aria-label="Approximate model dimensions">
           </div>
-        </div>
-        <div class="field"><label for="projname">Project / building name <span class="optional">(required)</span></label>
-          <input id="projname" name="projname" type="text" placeholder="e.g. Aria Tower" oninput="syncNextEnabled()" required>
-        </div>
-        <div class="field"><label for="quantity">Quantity of same model <span class="optional">(optional)</span></label>
-          <input id="quantity" name="quantity" type="number" min="1" step="1" value="1">
-          <div class="hint">Need a model with different specs? Please mention in project description or in other comments field.</div>
-        </div>
-        <div class="field"><label for="description">Short project description <span class="optional">(optional)</span></label>
-          <textarea id="description" name="description" rows="6" oninput="syncNextEnabled()" placeholder="Briefly describe the project, what the model should communicate, and who it's for — a client presentation, a planning submission, an exhibition, etc. Include anything you already know about its size, scale, materials or deadline. It is okay if these details are not finalized; we'll help fill in the gaps."></textarea>
-        </div>
-        <div class="row2">
-          <div class="field"><label for="name">Full name <span class="optional">(required)</span></label><input id="name" name="name" type="text" placeholder="Jane Doe" required oninput="syncNextEnabled()"></div>
-          <div class="field"><label for="email">Email <span class="optional">(required)</span></label><input id="email" name="email" type="email" placeholder="jane@firm.com" required oninput="syncNextEnabled()"></div>
-        </div>
-        <div class="field"><label for="company">Company <span class="optional">(optional)</span></label><input id="company" name="company" type="text" placeholder="Firm / studio"></div>
-
-        <div class="field"><label>Files or link <span class="optional">(optional)</span></label>
-          <div class="hint" style="margin-bottom:0.8rem;">Helpful files include floor or site plans, elevations, roof or landscape plans, renderings, reference photos, and 3D models. Upload whatever you currently have—a complete drawing set is not required.</div>
-          <div class="drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
-            <strong>Drop files here, or click to browse</strong>
-            <span class="sub">CAD, PDF, Revit, Rhino, SketchUp or image files—maximum 25 MB per file.</span>
+          <div class="field"><label for="scope">Model boundary / scope <span class="optional">(optional)</span></label>
+            <textarea id="scope" name="scope" rows="3" placeholder="What the model should include, e.g. the building only, the building plus surrounding streets, or the full site boundary."></textarea>
           </div>
-          <input id="fileInput" type="file" multiple hidden onchange="addFiles(this.files)">
-          <ul class="filelist" id="fileList"></ul>
-          <div class="orlink"><span>or share a link</span></div>
-          <ul class="filelist" id="linkList"></ul>
-          <div style="display:flex;gap:0.5rem;">
-            <input id="filelink" name="filelink" type="url" placeholder="Dropbox, Google Drive, WeTransfer, or OneDrive link" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addLink();}">
-            <button type="button" class="btn btn--ghost btn--sm" onclick="addLink()">+ Add link</button>
+          <div class="field"><label for="material">Material or finish <span class="optional">(optional)</span></label>
+            <select id="material" name="material">
+              <option value="">Not specified</option>
+              <option>Full Color ABS / Realistic Visualization</option>
+              <option>Monochromatic ABS / Massing</option>
+              <option>Clear Acrylic</option>
+              <option>ABS with Wood Veneer</option>
+              <option>Hardwood</option>
+              <option>Foam</option>
+              <option>Wrought Iron</option>
+            </select>
+            <div class="hint">A starting point for your estimate — we'll confirm what best fits your budget and use case.</div>
           </div>
-        </div>
-      </fieldset>
-
-      <!-- STEP 2 — Optional details -->
-      <fieldset class="wpanel" data-panel="2" hidden>
-        <legend class="wpanel__t">Optional project details</legend>
-        <p class="hint" style="margin-top:-0.6rem;margin-bottom:1.2rem;">The following details help us prepare a more accurate preliminary estimate. Complete only what you already know.</p>
-
-        <div class="field"><label for="projloc">Project location <span class="optional">(optional)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA"></div>
-
-        <div class="field"><label>Desired scale or approximate model size <span class="optional">(optional)</span></label>
+          <div class="field"><label>Lighting or special features <span class="optional">(select any that apply)</span></label>
+            <div class="checks">
+              <label><input type="checkbox" name="extras" value="Interior Lighting"><span class="ck"></span><span>Interior Lighting</span></label>
+              <label><input type="checkbox" name="extras" value="External Lighting"><span class="ck"></span><span>External Lighting</span></label>
+              <label><input type="checkbox" name="extras" value="Surrounding Landscape / Site Context"><span class="ck"></span><span>Surrounding Landscape / Site Context</span></label>
+              <label><input type="checkbox" name="extras" value="Removable Roof / Levels"><span class="ck"></span><span>Removable Roof / Levels</span></label>
+              <label><input type="checkbox" name="extras" value="Interior Finishes"><span class="ck"></span><span>Interior Finishes</span></label>
+              <label><input type="checkbox" name="extras" value="Furniture / Equipment"><span class="ck"></span><span>Furniture / Equipment</span></label>
+              <label><input type="checkbox" name="extras" value="Engraved Base"><span class="ck"></span><span>Engraved Base</span></label>
+              <label><input type="checkbox" name="extras" value="No Base"><span class="ck"></span><span>No Base <span class="optional">(models include a base by default)</span></span></label>
+              <label><input type="checkbox" name="extras" value="Display Stand / Plinth"><span class="ck"></span><span>Display Stand / Plinth</span></label>
+              <label><input type="checkbox" name="extras" value="Split into Sections (transport / access)"><span class="ck"></span><span>Split into Sections (transport / access)</span></label>
+              <label data-tip="For repeated air travel only, carry-on or checked-in — models ship via crate by default."><input type="checkbox" name="extras" value="Customized Protective Travel Case"><span class="ck"></span><span>Customized Protective Travel Case</span></label>
+            </div>
+          </div>
           <div class="row2">
-            <div style="display:flex;align-items:baseline;gap:0.4rem;">
-              <span style="font-family:var(--font-sans);color:var(--cm-text-subtle);font-size:1rem;line-height:1;">1 :</span>
-              <input id="scaleIntl" type="number" placeholder="e.g. 100" style="flex:1;">
-            </div>
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-              <select id="scaleImp"></select>
-              <span style="font-family:var(--font-mono);font-size:0.9rem;color:var(--cm-text-subtle);white-space:nowrap;">= 1'-0"</span>
-            </div>
-          </div>
-          <div class="hint">Enter a scale (e.g. 1:100), or just describe the size you have in mind below.</div>
-          <input id="modelsize" name="modelsize" type="text" placeholder='e.g. 36" L × 24" W × 18" H  or  90 × 60 × 45 cm' style="margin-top:0.7rem;">
-        </div>
-
-        <div class="field"><label for="use">Purpose of the model <span class="optional">(optional)</span></label>
-          <select id="use" name="use">
-            <option value="">Select one…</option>
-            <option>Government Review / Planning Approval</option><option>Investor / board meeting</option>
-            <option>Sales gallery / marketing</option><option>Internal design review</option>
-            <option>Film / production</option><option>Exhibition / public display</option><option>Gift / Award</option><option>Trade show / conference</option><option>Other</option>
-          </select>
-        </div>
-        <div class="field"><label for="material">Preferred material or finish <span class="optional">(optional)</span></label>
-          <select id="material" name="material">
-            <option value="">Not specified</option>
-            <option>Full Color ABS / Realistic Visualization</option>
-            <option>Monochromatic ABS / Massing</option>
-            <option>Clear Acrylic</option>
-            <option>ABS with Wood Veneer</option>
-            <option>Hardwood</option>
-            <option>Foam</option>
-            <option>Wrought Iron</option>
-          </select>
-          <div class="hint">A starting point for your quote — we'll confirm what best fits your budget and use case.</div>
-        </div>
-        <div class="field"><label>Special requirements <span class="optional">(select any that apply)</span></label>
-          <div class="checks">
-            <label><input type="checkbox" name="extras" value="Surrounding Landscape / Site Context" id="landscapeChk" onchange="onTypeChange()"><span class="ck"></span><span>Surrounding Landscape / Site Context</span></label>
-            <label><input type="checkbox" name="extras" value="No Base" id="noBaseChk"><span class="ck"></span><span>No Base <span class="optional">(models include a base by default)</span></span></label>
-            <label><input type="checkbox" name="extras" value="Engraved Base"><span class="ck"></span><span>Engraved Base</span></label>
-            <label><input type="checkbox" name="extras" value="Interior Lighting"><span class="ck"></span><span>Interior Lighting</span></label>
-            <label><input type="checkbox" name="extras" value="External Lighting"><span class="ck"></span><span>External Lighting</span></label>
-            <label><input type="checkbox" name="extras" value="Split into Sections (transport / access)"><span class="ck"></span><span>Split into Sections (transport / access)</span></label>
-            <label><input type="checkbox" name="extras" value="Display Stand / Plinth"><span class="ck"></span><span>Display Stand / Plinth</span></label>
-            <label data-tip="For repeated air travel only, carry-on or checked-in — models ship via crate by default."><input type="checkbox" name="extras" value="Customized Protective Travel Case"><span class="ck"></span><span>Customized Protective Travel Case</span></label>
-            <label><input type="checkbox" name="extras" value="Furniture / Equipment"><span class="ck"></span><span>Furniture / Equipment</span></label>
-            <label><input type="checkbox" name="extras" value="Interior Finishes"><span class="ck"></span><span>Interior Finishes</span></label>
-            <label><input type="checkbox" name="extras" value="Removable Roof / Levels"><span class="ck"></span><span>Removable Roof / Levels</span></label>
+            <div class="field"><label for="deadline">Required delivery date <span class="optional">(optional)</span></label><input id="deadline" name="deadline" type="text" placeholder="e.g. 09/15/2026 (MM/DD/YYYY)" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
+            <div class="field"><label for="deliveryloc">Delivery location <span class="optional">(optional)</span></label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX"></div>
           </div>
         </div>
+      </details>
 
-        <div class="row2">
-          <div class="field"><label for="deliveryloc">Delivery location <span class="optional">(optional)</span></label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX"></div>
-          <div class="field"><label for="deadline">Deadline / event date <span class="optional">(optional)</span></label><input id="deadline" name="deadline" type="text" placeholder="e.g. 09/15/2026 (MM/DD/YYYY)" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
-        </div>
-        <div class="field"><label for="phone">Phone <span class="optional">(optional)</span></label><input id="phone" name="phone" type="tel" placeholder="(555) 000-0000" oninput="formatPhoneInput(this)"><div class="hint" id="phoneHint" style="display:none;color:#e0a860;">That doesn't look like a complete phone number — double check it, or leave it blank.</div></div>
-        <div class="field"><label for="message">Additional comments <span class="optional">(optional)</span></label><textarea id="message" name="message" placeholder="Any requirement not listed above, plus notes on detail, finishes, lighting, or your deadline."></textarea></div>
-      </fieldset>
-
-      <!-- Nav -->
-
-
-      <div class="wiz__nav">
-        <button type="button" class="btn btn--ghost" id="wizBack" onclick="wizPrev()" style="visibility:hidden;">← Back</button>
-        <button type="button" class="btn btn--primary" id="wizNextBtn" onclick="wizNext()">Continue with optional details →</button>
-        <button type="submit" class="btn btn--primary" id="wizSubmit" style="display:none;">Send project for review</button>
+      <div class="form-actions">
+        <button type="submit" class="btn btn--primary" id="quoteSubmit">Request a Preliminary Estimate</button>
       </div>
       <p class="form-note">By submitting, you agree to be contacted about your project. Your information is used only to review, coordinate, and deliver your project. No account is required. See our <a href="/privacy-policy">Privacy Policy</a>.</p>
     </form>
@@ -312,55 +282,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   window.__blobUpload = upload;
 </script>
 <script is:inline>
-/* ---- Wizard navigation ---- */
-var wizStep=1, wizMax=2;
-function showStep(n){
-  wizStep=n;
-  document.querySelectorAll('.wpanel').forEach(function(p){p.hidden=(+p.dataset.panel!==n);});
-  document.querySelectorAll('.wstep').forEach(function(s){
-    var i=+s.dataset.step;
-    s.classList.toggle('on',i===n);
-    s.classList.toggle('done',i<n);
-  });
-  document.getElementById('wizBar').style.width=(n/wizMax*100)+'%';
-  document.getElementById('wizBack').style.visibility=(n>1)?'visible':'hidden';
-  document.getElementById('wizNextBtn').style.display=(n<wizMax)?'':'none';
-  document.getElementById('wizSubmit').style.display=(n===wizMax)?'':'none';
-  syncNextEnabled();
-  document.querySelector('.form-card').scrollIntoView({block:'nearest'});
-}
-function syncNextEnabled(){
-  var nx=document.getElementById('wizNextBtn');
-  if(wizStep===1){
-    var ok=!!document.querySelector('input[name="type"]:checked')
-      &&!!(document.getElementById('projname').value||'').trim()
-      &&!!(document.getElementById('name').value||'').trim()
-      &&!!(document.getElementById('email').value||'').trim();
-    nx.disabled=!ok;
-  } else { nx.disabled=false; }
-}
-function validateStep(n){
-  if(n===1){
-    if(!document.querySelector('input[name="type"]:checked')){alert('Please select a model type or choose “Not Sure Yet.”');return false;}
-    if(!(document.getElementById('projname').value||'').trim()){alert('Please enter a project / building name to continue.');return false;}
-    if(!(document.getElementById('name').value||'').trim()){alert('Please enter your full name to continue.');return false;}
-    if(!(document.getElementById('email').value||'').trim()){alert('Please enter your email to continue.');return false;}
-  }
-  return true;
-}
-function wizNext(){ if(!validateStep(wizStep))return; if(wizStep<wizMax)showStep(wizStep+1); }
-function wizPrev(){ if(wizStep>1)showStep(wizStep-1); }
-
-/* ---- Model type / landscape option → show scope boundary for context or masterplan ---- */
-function onTypeChange(){
-  var v=(document.querySelector('input[name="type"]:checked')||{}).value||'';
-  var landscapeChk=document.getElementById('landscapeChk');
-  var needsScope=(v==='Masterplan, Site or Topographic Model')||(landscapeChk&&landscapeChk.checked);
-  var scopeBlockEl=document.getElementById('scopeBlock');
-  if(scopeBlockEl)scopeBlockEl.hidden=!needsScope;
-  syncNextEnabled();
-}
-
 /* ---- Standardized project title (recognizable to client + management) ---- */
 var TYPE_LABEL={
   'Architectural or Real Estate Model':'Architectural Model',
@@ -528,27 +449,30 @@ function submitQuote(e){
   var typeEl=document.querySelector('input[name="type"]:checked');
   if(!typeEl){alert('Please select a model type or choose “Not Sure Yet.”');document.getElementById('typeSeg').scrollIntoView({block:'center'});return false;}
   var type=typeEl.value;
+  var useEl=document.getElementById('use');
+  var useVal=(useEl.value||'').trim();
+  if(!useVal){alert('Please select the primary use of the model.');useEl.focus();return false;}
+  var descEl=document.getElementById('description');
+  var description=(descEl.value||'').trim();
+  if(!description){alert('Please add a short project description.');descEl.focus();return false;}
   var extras=[]; document.querySelectorAll('input[name="extras"]:checked').forEach(function(cb){extras.push(cb.value);});
-  var projname=(document.getElementById('projname').value||'').trim()||'Untitled project';
-  var projloc=(document.getElementById('projloc').value||'').trim();
-  var title=projloc?(projname+' — '+projloc):projname;
-  var name=(document.getElementById('name').value||'').trim()||'(name not given)';
+  var name=(nameEl.value||'').trim();
   var company=(document.getElementById('company').value||'').trim();
+  // No project-name field any more, so build a recognizable title from the
+  // standardized type label plus the company (or contact name).
+  var title=(TYPE_LABEL[type]||'Model')+' — '+(company||name);
   var phone=(document.getElementById('phone').value||'').trim();
   var deliveryloc=(document.getElementById('deliveryloc').value||'').trim();
   var deadline=(document.getElementById('deadline').value||'').trim();
-  var description=(document.getElementById('description').value||'').trim();
-  var message=(document.getElementById('message').value||'').trim();
+  var scopeNotes=(document.getElementById('scope').value||'').trim();
   var scaleIntlVal=(document.getElementById('scaleIntl').value||'').trim();
   var scaleImpSel=document.getElementById('scaleImp');
   var scaleImpLabel=scaleImpSel.selectedIndex>0?scaleImpSel.options[scaleImpSel.selectedIndex].text:'';
   var scale=scaleIntlVal?('1:'+scaleIntlVal+(scaleImpLabel?(' ('+scaleImpLabel+' = 1\'-0")'):'')):(scaleImpLabel?(scaleImpLabel+' = 1\'-0"'):'');
   var modelsize=(document.getElementById('modelsize').value||'').trim();
-  var quantity=(document.getElementById('quantity').value||'').trim();
   var pendingLink=(document.getElementById('filelink').value||'').trim();
   if(pendingLink)addLink(); // capture anything still sitting in the box, not yet added
   var filelinks=pickedLinks.slice();
-  var useVal=(document.getElementById('use').value||'').trim();
   var preferredMaterial=(document.getElementById('material').value||'').trim()||null;
   var boundaryMap=null;
   if(typeof canvas!=='undefined'&&canvas&&planImg){
@@ -556,7 +480,7 @@ function submitQuote(e){
   }
   var today=new Date().toISOString().slice(0,10);
   var leadId='L'+Date.now();
-  var submitBtn=document.getElementById('wizSubmit');
+  var submitBtn=document.getElementById('quoteSubmit');
   if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Uploading files…';}
 
   // Same upload path the Studio Portal uses for every other file in the
@@ -596,12 +520,15 @@ function submitQuote(e){
       client:{Name:name,Title:null,Company:company||'—',Email:email.value.trim(),Phone:phone||''},
       scale:scale||'Not specified',
       modelsize:modelsize||'Not specified',
-      quantity:quantity||'1',
+      quantity:'1',
       timeline:deadline||'Not specified',
-      deliveryTo:deliveryloc||projloc||'Not specified',
+      deliveryTo:deliveryloc||'Not specified',
       extras:extras,
       preferredMaterial:preferredMaterial,
-      notes:(description||'(no additional notes)')+(message?('\n\n'+message):''),
+      scopeNotes:scopeNotes||null,
+      // Boundary/scope is folded into notes too, so it shows in the Studio
+      // Portal lead card and the new-lead email without changes there.
+      notes:description+(scopeNotes?('\n\nModel boundary / scope: '+scopeNotes):''),
       files:uploadedFiles,
       filelink:filelinks.length?filelinks:null,
       boundaryMap:boundaryMap,
@@ -639,7 +566,7 @@ function submitQuote(e){
   }).catch(function(err){
     console.error('Submission failed:',err);
     alert('Something went wrong sending your project — please try again or email support@physical-model.com directly.');
-    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Send project for review';}
+    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Request a Preliminary Estimate';}
   });
   return false;
 }
