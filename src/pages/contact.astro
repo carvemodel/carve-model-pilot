@@ -172,6 +172,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <label><input type="radio" name="type" value="Not Sure Yet"><span class="dot"></span><span>Not Sure Yet</span></label>
         </div>
       </div>
+      <div class="field"><label for="projname">Project / building name <span class="optional">(optional)</span></label>
+        <input id="projname" name="projname" type="text" placeholder="e.g. Aria Tower">
+      </div>
       <div class="field"><label for="use">Primary use <span class="optional">(required)</span></label>
         <select id="use" name="use" required>
           <option value="">Select one…</option>
@@ -180,7 +183,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <option>Film / production</option><option>Exhibition / public display</option><option>Gift / Award</option><option>Trade show / conference</option><option>Other</option>
         </select>
       </div>
-      <div class="field"><label for="description">Project description <span class="optional">(required)</span></label>
+      <div class="field"><label for="description">Project description / comments <span class="optional">(required)</span></label>
         <textarea id="description" name="description" rows="6" required placeholder="Briefly describe the project, what the model should communicate, and who it's for. It is okay if details are not finalized; we'll help fill in the gaps."></textarea>
       </div>
       <div class="row2">
@@ -208,6 +211,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <details class="more" id="moreDetails">
         <summary><span>Add details for a more accurate estimate <span class="optional">(optional)</span></span></summary>
         <div class="more__body">
+          <div class="field"><label for="projloc">Project location <span class="optional">(optional)</span></label><input id="projloc" name="projloc" type="text" placeholder="e.g. Los Angeles, CA"></div>
           <div class="field"><label>Preferred scale or dimensions <span class="optional">(optional)</span></label>
             <div class="row2">
               <div style="display:flex;align-items:baseline;gap:0.4rem;">
@@ -454,13 +458,16 @@ function submitQuote(e){
   if(!useVal){alert('Please select the primary use of the model.');useEl.focus();return false;}
   var descEl=document.getElementById('description');
   var description=(descEl.value||'').trim();
-  if(!description){alert('Please add a short project description.');descEl.focus();return false;}
+  if(!description){alert('Please add a short project description or comments.');descEl.focus();return false;}
   var extras=[]; document.querySelectorAll('input[name="extras"]:checked').forEach(function(cb){extras.push(cb.value);});
   var name=(nameEl.value||'').trim();
   var company=(document.getElementById('company').value||'').trim();
-  // No project-name field any more, so build a recognizable title from the
-  // standardized type label plus the company (or contact name).
-  var title=(TYPE_LABEL[type]||'Model')+' — '+(company||name);
+  var projname=(document.getElementById('projname').value||'').trim();
+  var projloc=(document.getElementById('projloc').value||'').trim();
+  // Project name is optional, so fall back to the standardized type label
+  // plus the company (or contact name) for a recognizable title.
+  var baseTitle=projname||((TYPE_LABEL[type]||'Model')+' — '+(company||name));
+  var title=projloc?(baseTitle+' — '+projloc):baseTitle;
   var phone=(document.getElementById('phone').value||'').trim();
   var deliveryloc=(document.getElementById('deliveryloc').value||'').trim();
   var deadline=(document.getElementById('deadline').value||'').trim();
@@ -522,7 +529,7 @@ function submitQuote(e){
       modelsize:modelsize||'Not specified',
       quantity:'1',
       timeline:deadline||'Not specified',
-      deliveryTo:deliveryloc||'Not specified',
+      deliveryTo:deliveryloc||projloc||'Not specified',
       extras:extras,
       preferredMaterial:preferredMaterial,
       scopeNotes:scopeNotes||null,
