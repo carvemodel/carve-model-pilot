@@ -50,6 +50,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .more summary .optional{font-family:var(--font-sans);font-size:0.85rem;}
 .more summary:focus-visible{outline:2px solid var(--cm-silver);outline-offset:2px;border-radius:var(--r-sm);}
 .more__body{padding:0.2rem 1.1rem 0.4rem;border-top:1px solid var(--cm-line-faint);padding-top:1.2rem;}
+/* bottom-align paired inputs when one label wraps; date inputs render a
+   couple of px taller than text inputs once focused, so pin both heights */
+.row2--end{align-items:end;}
+.row2--end input{height:3.125rem;}
 .form-actions{margin-top:1.6rem;}
 .form-actions .btn[disabled]{opacity:0.6;cursor:progress;}
 @media(max-width:560px){.form-actions .btn{width:100%;}}
@@ -257,7 +261,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               <label data-tip="For repeated air travel only, carry-on or checked-in — models ship via crate by default."><input type="checkbox" name="extras" value="Customized Protective Travel Case"><span class="ck"></span><span>Customized Protective Travel Case</span></label>
             </div>
           </div>
-          <div class="row2">
+          <div class="row2 row2--end">
             <div class="field"><label for="deadline">Required delivery date <span class="optional">(optional)</span></label><input id="deadline" name="deadline" type="text" placeholder="e.g. 09/15/2026 (MM/DD/YYYY)" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
             <div class="field"><label for="deliveryloc">Delivery location <span class="optional">(optional)</span></label><input id="deliveryloc" name="deliveryloc" type="text" placeholder="e.g. sales gallery, Austin, TX"></div>
           </div>
