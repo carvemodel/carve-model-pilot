@@ -94,6 +94,7 @@ p{margin:0;text-wrap:pretty;}
   white-space:nowrap;line-height:1;
 }
 .btn:active{transform:translateY(1px);}
+@media(max-width:560px){.btn{white-space:normal;text-align:center;line-height:1.25;max-width:100%;}}
 .btn--primary{background:var(--cm-accent);color:var(--cm-accent-contrast);}
 .btn--primary:hover{background:var(--cm-accent-hover);}
 .btn--ghost{background:transparent;color:var(--cm-text-strong);border-color:var(--cm-border-strong);}
@@ -152,7 +153,7 @@ p{margin:0;text-wrap:pretty;}
 .nav__toggle span::before{position:absolute;top:-6px;}
 .nav__toggle span::after{position:absolute;top:6px;}
 
-.mobile-menu{display:none;flex-direction:column;gap:0.25rem;padding:1rem var(--gutter) 1.5rem;border-bottom:1px solid var(--cm-line-faint);background:var(--cm-ink-900);}
+.mobile-menu{display:none;flex-direction:column;gap:0.25rem;padding:1rem var(--gutter) 1.5rem;max-height:calc(100vh - 75px);max-height:calc(100dvh - 75px);overflow-y:auto;overscroll-behavior:contain;border-bottom:1px solid var(--cm-line-faint);background:var(--cm-ink-900);}
 .mobile-menu a{padding:0.75rem 0;font-size:1.15rem;font-weight:var(--w-medium);border-bottom:1px solid var(--cm-line-faint);color:var(--cm-gray-200);}
 .mobile-menu a.mobile-menu__sub{padding-left:1rem;font-size:1rem;font-weight:var(--w-regular);color:var(--cm-gray-400);}
 .mobile-menu .mobile-menu__row{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;border-bottom:1px solid var(--cm-line-faint);}
@@ -164,7 +165,7 @@ p{margin:0;text-wrap:pretty;}
 .mobile-menu__subgroup[hidden]{display:none;}
 .mobile-menu.open{display:flex;}
 
-@media(max-width:880px){
+@media(max-width:1100px){
   .nav__links,.nav__actions .btn,.nav__login{display:none;}
   .nav__toggle{display:flex;}
 }
@@ -189,7 +190,7 @@ p{margin:0;text-wrap:pretty;}
 .nav__social a{display:flex;align-items:center;justify-content:center;width:34px;height:34px;color:var(--cm-gray-300);transition:color var(--dur-2);}
 .nav__social a:hover{color:var(--cm-text-strong);}
 .nav__social svg{width:18px;height:18px;}
-@media(max-width:880px){.nav__social{display:none;}}
+@media(max-width:1100px){.nav__social{display:none;}}
 @media(max-width:760px){.footer__top{grid-template-columns:1fr 1fr;gap:2rem;}.footer__brand{grid-column:1/-1;}}
 
 /* ---- Cards / surfaces ---- */
