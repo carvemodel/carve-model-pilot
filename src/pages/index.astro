@@ -528,7 +528,7 @@ if (process.env.REDIS_URL) {
         return (
           <figure class="work reveal" data-delay={i === 0 ? undefined : i * 40} style="margin:0;">
             {w.imageUrl
-              ? <a href="/works" aria-label={`View ${w.name} on the works page`}><img src={w.imageUrl} alt={w.name} style={ratioStyle} width={w.imageWidth || undefined} height={w.imageHeight || undefined} loading="lazy" decoding="async" /></a>
+              ? <a href="/works" aria-label={`View ${w.name} on the works page`}><img src={w.cardImageUrl || w.imageUrl} alt={w.name} style={ratioStyle} width={w.cardImageWidth || w.imageWidth || undefined} height={w.cardImageHeight || w.imageHeight || undefined} loading="lazy" decoding="async" /></a>
               : <image-slot id={w.id} placeholder="Drop project photo" style={ratioStyle}></image-slot>}
             <figcaption class="work__cap"><h3>{w.name}</h3><span class="tick">{tick}</span></figcaption>
           </figure>
