@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { createClient } from 'redis';
+import { cardImage, workAlt } from '../utils/workImage.js';
 
 const CATEGORY_LABEL = {
   architecture: 'Architecture & Real Estate',
@@ -165,7 +166,8 @@ if (process.env.REDIS_URL) {
   </div>
   <div class="gallery" id="gallery">
     {projects.map((p) => {
-      const ratio = p.imageWidth && p.imageHeight ? `${p.imageWidth}/${p.imageHeight}` : '4/3';
+      const card = cardImage(p);
+      const ratio = card.width && card.height ? `${card.width}/${card.height}` : '4/3';
       const label = [p.name, p.scale, p.material].filter(Boolean).join(' · ');
       const tags = (p.tag || '').split(',').map((t) => t.trim()).filter(Boolean);
       const tagsAttr = tags.map((t) => t.toLowerCase()).join(',');
@@ -178,7 +180,7 @@ if (process.env.REDIS_URL) {
             ))}
           </div>
           {p.imageUrl
-            ? <img src={p.imageUrl} alt={p.name} style={`aspect-ratio:${ratio};object-fit:cover;`} width={p.imageWidth || undefined} height={p.imageHeight || undefined} loading="lazy" decoding="async" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} data-case-study-url={p.caseStudyUrl || ''} onclick="openLightbox(this)" />
+            ? <img src={card.src} alt={workAlt(p, CATEGORY_LABEL[p.category])} style={`aspect-ratio:${ratio};object-fit:cover;`} width={card.width} height={card.height} loading="lazy" decoding="async" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} data-case-study-url={p.caseStudyUrl || ''} onclick="openLightbox(this)" />
             : <image-slot id={p.id} placeholder="Drop project photo" style={`aspect-ratio:${ratio};`}></image-slot>}
           <span class="corner tl"></span><span class="corner br"></span>
           <span class="slot-label">{label}</span>

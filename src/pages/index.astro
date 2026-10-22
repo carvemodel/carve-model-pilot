@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { createClient } from 'redis';
+import { cardImage, workAlt } from '../utils/workImage.js';
 
 // Shown on the homepage's "Selected work" tiles until real projects exist —
 // same data shape as works.astro (id, name, scale, material, imageUrl,
@@ -17,6 +18,13 @@ const FALLBACK_HOME_WORKS = [
 // Shows the 5 most recently added projects (admin-works.html appends new
 // entries to the end of the array), newest first. Falls back to sample
 // tiles if REDIS_URL is missing or the fetch fails, so the build never breaks.
+const CATEGORY_LABEL_HOME = {
+  architecture: 'Architectural',
+  product: 'Product',
+  film: 'Film and commercial',
+  art: 'Art',
+};
+
 let latestWorks = FALLBACK_HOME_WORKS;
 if (process.env.REDIS_URL) {
   try {
@@ -522,13 +530,14 @@ if (process.env.REDIS_URL) {
         // The first tile spans 2 grid rows (CSS nth-child(1) rule) and fills
         // that taller cell via aspect-ratio:auto;height:100% — skip the
         // inline aspect-ratio there so it doesn't override that CSS.
-        const ratio = w.imageWidth && w.imageHeight ? `${w.imageWidth}/${w.imageHeight}` : '1/1';
+        const card = cardImage(w);
+        const ratio = card.width && card.height ? `${card.width}/${card.height}` : '1/1';
         const ratioStyle = i === 0 ? '' : `aspect-ratio:${ratio};`;
         const tick = [w.scale, w.material].filter(Boolean).join(' · ');
         return (
           <figure class="work reveal" data-delay={i === 0 ? undefined : i * 40} style="margin:0;">
             {w.imageUrl
-              ? <a href="/works" aria-label={`View ${w.name} on the works page`}><img src={w.imageUrl} alt={w.name} style={ratioStyle} width={w.imageWidth || undefined} height={w.imageHeight || undefined} loading="lazy" decoding="async" /></a>
+              ? <a href="/works" aria-label={`View ${w.name} on the works page`}><img src={card.src} alt={workAlt(w, w.category && CATEGORY_LABEL_HOME[w.category])} style={ratioStyle} width={card.width} height={card.height} loading="lazy" decoding="async" /></a>
               : <image-slot id={w.id} placeholder="Drop project photo" style={ratioStyle}></image-slot>}
             <figcaption class="work__cap"><h3>{w.name}</h3><span class="tick">{tick}</span></figcaption>
           </figure>

@@ -80,6 +80,12 @@ body{background:var(--cm-ink-950);}
     <p style="color:var(--cm-text-subtle);font-size:0.78rem;margin-top:0.35rem;">From Vercel → Project Settings → Git → Deploy Hooks. If set, saving here also triggers a rebuild so /works updates automatically within a minute or two.</p>
   </div>
 
+  <div class="f" style="max-width:520px;margin-bottom:2rem;">
+    <label>Image optimization</label>
+    <button type="button" class="btn btn--ghost" id="migrateBtn" onclick="migrateCards()" disabled>Generate optimized card images</button>
+    <p style="color:var(--cm-text-subtle);font-size:0.78rem;margin-top:0.35rem;">New cover uploads create a ~1200px WebP card version automatically. This button does the same for existing projects. Originals are kept untouched and still used in the lightbox. Click Save changes afterwards.</p>
+  </div>
+
   <div id="list"></div>
   <div class="empty" id="emptyMsg" hidden>No projects yet. Click "Add project" to create one.</div>
 
@@ -118,7 +124,7 @@ function uid(){ return 'p' + Date.now().toString(36) + Math.random().toString(36
 // instead means the curated last-5 always stays put until someone
 // explicitly moves something in or out with the Up/Down buttons.
 function addProject(){
-  projects.unshift({ id: uid(), name: '', category: 'architecture', tag: '', scale: '', material: '', imageUrl: '', imageWidth: 0, imageHeight: 0, images: [], caseStudyUrl: '' });
+  projects.unshift({ id: uid(), name: '', category: 'architecture', tag: '', scale: '', material: '', imageUrl: '', imageWidth: 0, imageHeight: 0, cardImageUrl: '', cardImageWidth: 0, cardImageHeight: 0, alt: '', images: [], caseStudyUrl: '' });
   render();
 }
 
@@ -172,7 +178,7 @@ function render(){
   empty.hidden = projects.length > 0;
   list.innerHTML = projects.map(function(p, i){
     var thumb = p.imageUrl
-      ? '<img src="' + p.imageUrl + '" alt="">' + (p.imageWidth ? '<span class="dims">' + p.imageWidth + '×' + p.imageHeight + '</span>' : '')
+      ? '<img src="' + (p.cardImageUrl || p.imageUrl) + '" alt="">' + (p.imageWidth ? '<span class="dims">' + p.imageWidth + '×' + p.imageHeight + (p.cardImageUrl ? ' · card ✓' : ' · no card') + '</span>' : '')
       : 'Drop / click<br>to upload';
     var extraThumbs = (p.images || []).map(function(url, j){
       return '<div class="extra-thumb"><img src="' + url + '" alt="">' +
@@ -188,6 +194,7 @@ function render(){
           '<div class="f"><label>Scale</label><input value="' + escAttr(p.scale) + '" placeholder="e.g. 1:500 or Film-grade" oninput="updateField(' + i + ',\'scale\',this.value)"></div>' +
           '<div class="f" style="grid-column:1/-1"><label>Material</label><input value="' + escAttr(p.material) + '" placeholder="e.g. ABS" oninput="updateField(' + i + ',\'material\',this.value)"></div>' +
           '<div class="f" style="grid-column:1/-1"><label>Case study link (optional)</label><input value="' + escAttr(p.caseStudyUrl) + '" placeholder="e.g. /blog/atlanta-mixed-use-architectural-model-installation" oninput="updateField(' + i + ',\'caseStudyUrl\',this.value)"></div>' +
+          '<div class="f" style="grid-column:1/-1"><label>Cover photo alt text (optional — describes the photo for screen readers and search; leave blank to auto-generate from name, scale and material)</label><input value="' + escAttr(p.alt) + '" placeholder="e.g. 1:200 ABS massing model of a mixed-use tower on a city block" oninput="updateField(' + i + ',\'alt\',this.value)"></div>' +
           '<div class="f" style="grid-column:1/-1">' +
             '<label>Additional photos (visitors scroll through these plus the cover photo when they open this project)</label>' +
             '<div class="extra-row">' +
@@ -204,6 +211,7 @@ function render(){
       '</div>'
     );
   }).join('');
+  updateMigrateBtn();
 }
 
 function escAttr(s){
@@ -219,27 +227,151 @@ function readImageDims(url){
   });
 }
 
+var CARD_MAX = 1200;      // longest side of the optimized card image, in px
+var CARD_QUALITY = 0.82;  // WebP quality (0-1)
+
+// Uploads a File/Blob to Blob storage under works/ and resolves with its public URL.
+function uploadToBlob(name, file){
+  return window.__blobUpload
+    ? window.__blobUpload('works/' + uid() + '-' + name, file, { access: 'public', handleUploadUrl: '/api/upload', multipart: true }).then(function(blob){ return blob.url; })
+    : fetch('/api/upload?path=works', { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(name) }, body: file }).then(function(r){ return r.json(); }).then(function(d){ return d.url; });
+}
+
+// Decodes an image Blob honoring EXIF orientation where the browser supports it.
+function decodeImage(blob){
+  if(window.createImageBitmap){
+    return createImageBitmap(blob).catch(function(){ return decodeViaImgTag(blob); });
+  }
+  return decodeViaImgTag(blob);
+}
+function decodeViaImgTag(blob){
+  return new Promise(function(resolve, reject){
+    var u = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function(){ URL.revokeObjectURL(u); resolve(img); };
+    img.onerror = function(){ URL.revokeObjectURL(u); reject(new Error('Could not decode image')); };
+    img.src = u;
+  });
+}
+
+// Resizes (never enlarges) to at most CARD_MAX px on the longest side and
+// encodes as WebP. Resolves with { blob, width, height }.
+function makeCardBlob(sourceBlob){
+  return decodeImage(sourceBlob).then(function(img){
+    var sw = img.width || img.naturalWidth, sh = img.height || img.naturalHeight;
+    if(!sw || !sh) throw new Error('Image has no dimensions');
+    var scale = Math.min(1, CARD_MAX / Math.max(sw, sh));
+    var w = Math.max(1, Math.round(sw * scale)), h = Math.max(1, Math.round(sh * scale));
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, w, h);
+    if(img.close) img.close();
+    return new Promise(function(resolve, reject){
+      canvas.toBlob(function(b){
+        if(!b) return reject(new Error('Could not encode WebP'));
+        // Browsers that cannot encode WebP silently return PNG — refuse that
+        // rather than uploading a huge "card" image.
+        if(b.type !== 'image/webp') return reject(new Error('This browser cannot create WebP files. Use Chrome, Edge or Firefox.'));
+        resolve({ blob: b, width: w, height: h });
+      }, 'image/webp', CARD_QUALITY);
+    });
+  });
+}
+
+function baseName(name){ return String(name || 'image').replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 60) || 'image'; }
+
+// Creates + uploads the card version for a source Blob. The original is never touched.
+function buildAndUploadCard(sourceBlob, name){
+  return makeCardBlob(sourceBlob).then(function(card){
+    var file = new File([card.blob], 'card-' + baseName(name) + '.webp', { type: 'image/webp' });
+    return uploadToBlob(file.name, file).then(function(url){
+      return { url: url, width: card.width, height: card.height };
+    });
+  });
+}
+
 function handleUpload(i, input){
   var f = input.files && input.files[0];
   if(!f) return;
   var card = input.closest('.card');
   var thumb = card.querySelector('.thumb');
-  thumb.innerHTML = 'Uploading…';
-  var uploadPromise = window.__blobUpload
-    ? window.__blobUpload('works/' + uid() + '-' + f.name, f, { access: 'public', handleUploadUrl: '/api/upload', multipart: true }).then(function(blob){ return blob.url; })
-    : fetch('/api/upload?path=works', { method: 'POST', headers: { 'Content-Type': f.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(f.name) }, body: f }).then(function(r){ return r.json(); }).then(function(d){ return d.url; });
-
-  uploadPromise.then(function(url){
-    return readImageDims(url).then(function(dims){
-      projects[i].imageUrl = url;
-      projects[i].imageWidth = dims.w;
-      projects[i].imageHeight = dims.h;
-      render();
+  thumb.innerHTML = 'Uploading original…';
+  var original = {};
+  uploadToBlob(f.name, f).then(function(url){
+    original.url = url;
+    return readImageDims(url);
+  }).then(function(dims){
+    original.dims = dims;
+    // Save the original right away so a card failure never loses the upload.
+    projects[i].imageUrl = original.url;
+    projects[i].imageWidth = dims.w;
+    projects[i].imageHeight = dims.h;
+    projects[i].cardImageUrl = '';
+    projects[i].cardImageWidth = 0;
+    projects[i].cardImageHeight = 0;
+    thumb.innerHTML = 'Creating optimized card…';
+    return buildAndUploadCard(f, f.name).then(function(c){
+      projects[i].cardImageUrl = c.url;
+      projects[i].cardImageWidth = c.width;
+      projects[i].cardImageHeight = c.height;
+    }).catch(function(err){
+      console.error('Card image failed', err);
+      alert('The original uploaded, but the optimized card image could not be created (' + (err.message || err) + '). The site will use the original until you run "Generate optimized card images".');
     });
+  }).then(function(){
+    render();
   }).catch(function(err){
     console.error('Upload failed', err);
     thumb.innerHTML = 'Upload failed — try again';
   });
+}
+
+// Migration: generate card images for existing projects that only have an original.
+// Reads each original (read-only), uploads a NEW WebP, and records it separately.
+// Originals are never deleted or overwritten.
+var migrating = false;
+function projectsNeedingCards(){
+  return projects.map(function(p, i){ return { p: p, i: i }; }).filter(function(x){ return x.p.imageUrl && !x.p.cardImageUrl; });
+}
+function updateMigrateBtn(){
+  var btn = document.getElementById('migrateBtn');
+  if(!btn) return;
+  var n = projectsNeedingCards().length;
+  btn.textContent = n ? 'Generate optimized card images (' + n + ' needed)' : 'All cover images optimized ✓';
+  btn.disabled = migrating || !n;
+}
+function migrateCards(){
+  var todo = projectsNeedingCards();
+  if(!todo.length || migrating) return;
+  migrating = true; updateMigrateBtn();
+  var done = 0, failed = 0;
+  function next(){
+    if(!todo.length){
+      migrating = false;
+      render();
+      setStatus('Optimized ' + done + ' image' + (done === 1 ? '' : 's') + (failed ? ', ' + failed + ' failed (see console)' : '') + '. Click Save changes to publish.', failed ? 'err' : 'ok');
+      return;
+    }
+    var x = todo.shift();
+    setStatus('Optimizing ' + (done + failed + 1) + ' of ' + (done + failed + todo.length + 1) + ': ' + (x.p.name || 'Untitled') + '…');
+    fetch(x.p.imageUrl, { mode: 'cors' }).then(function(r){
+      if(!r.ok) throw new Error('Could not read original (' + r.status + ')');
+      return r.blob();
+    }).then(function(blob){
+      return buildAndUploadCard(blob, x.p.name || 'project');
+    }).then(function(c){
+      x.p.cardImageUrl = c.url;
+      x.p.cardImageWidth = c.width;
+      x.p.cardImageHeight = c.height;
+      done++;
+    }).catch(function(err){
+      console.error('Card migration failed for', x.p.name, err);
+      failed++;
+    }).then(next);
+  }
+  next();
 }
 
 function setStatus(msg, cls){
