@@ -11,6 +11,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   imageSlot={true}
 >
 <Fragment slot="head">
+<script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"CollectionPage","@id":"https://www.physical-model.com/blog#webpage","url":"https://www.physical-model.com/blog","name":"Journal — Insights on Architectural Model Making","description":"Practical guidance on physical models, project planning, materials, fabrication, and digital-to-physical production—along with news, events, and observations from Carve Model.","isPartOf":{"@id":"https://www.physical-model.com/#website"},"about":{"@id":"https://www.physical-model.com/#organization"},"breadcrumb":{"@id":"https://www.physical-model.com/blog#breadcrumb"}}`} />
+<script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"BreadcrumbList","@id":"https://www.physical-model.com/blog#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.physical-model.com/"},{"@type":"ListItem","position":2,"name":"Journal","item":"https://www.physical-model.com/blog"}]}`} />
 <link rel="alternate" type="application/rss+xml" title="Carve Model Blog" href="/rss.xml">
 <style>
 .page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,3rem);border-bottom:1px solid var(--cm-line-faint);}
@@ -190,7 +192,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <span class="eyebrow">Studio Update</span>
   <div class="posts">
     <article class="post"><span class="meta">Studio Update · Website · August 21, 2026</span><h3>The New Carve Model Website Is Live</h3><p>Carve Model launched its new website with clearer service information, project guidance, and updates on the Carve Studio Portal.</p><a class="read" href="/blog/new-carve-model-website-launch">Read the Update →</a></article>
-    <article class="post"><span class="meta">Studio Update · AIA26 · June 16, 2026</span><h3>Carve Model at the 2026 AIA Conference in San Diego</h3><p>Carve Model attended AIA26 in San Diego. Here is what the conference reinforced about digital design, shared understanding, and the continuing role of physical models in architectural decision-making.</p><a class="read" href="/blog/carve-model-aia26-conference">Read the Update →</a></article>
+    <article class="post"><span class="meta">Studio Update · AIA26 · June 16, 2026</span><h3>Carve Model at the 2026 AIA Conference in San Diego</h3><p>Carve Model exhibited at Booth 1655 at AIA26 in San Diego. Here is what the conference reinforced about digital design, shared understanding, and the continuing role of physical models in architectural decision-making.</p><a class="read" href="/blog/carve-model-aia26-conference">Read the Update →</a></article>
   </div>
 </div></section>
 
