@@ -71,7 +71,10 @@ body{background:var(--cm-ink-950);}
       <h1>Works admin</h1>
       <p>Add, edit, reorder, or remove projects shown on /works. This is a static site, so saving here updates the data — the live page updates on the next deploy (automatically, if a deploy hook is set below).</p>
     </div>
-    <button class="btn btn--ghost" onclick="addProject()">+ Add project</button>
+    <div style="display:flex;gap:.7rem;flex-wrap:wrap;">
+      <button class="btn btn--ghost" onclick="optimizeExistingCovers()">Optimize existing covers</button>
+      <button class="btn btn--ghost" onclick="addProject()">+ Add project</button>
+    </div>
   </div>
 
   <div class="f" style="max-width:520px;margin-bottom:2rem;">
@@ -118,7 +121,7 @@ function uid(){ return 'p' + Date.now().toString(36) + Math.random().toString(36
 // instead means the curated last-5 always stays put until someone
 // explicitly moves something in or out with the Up/Down buttons.
 function addProject(){
-  projects.unshift({ id: uid(), name: '', category: 'architecture', tag: '', scale: '', material: '', imageUrl: '', imageWidth: 0, imageHeight: 0, images: [], caseStudyUrl: '' });
+  projects.unshift({ id: uid(), name: '', category: 'architecture', tag: '', scale: '', material: '', imageUrl: '', imageWidth: 0, imageHeight: 0, cardImageUrl: '', cardImageWidth: 0, cardImageHeight: 0, images: [], caseStudyUrl: '' });
   render();
 }
 
@@ -172,7 +175,7 @@ function render(){
   empty.hidden = projects.length > 0;
   list.innerHTML = projects.map(function(p, i){
     var thumb = p.imageUrl
-      ? '<img src="' + p.imageUrl + '" alt="">' + (p.imageWidth ? '<span class="dims">' + p.imageWidth + '×' + p.imageHeight + '</span>' : '')
+      ? '<img src="' + (p.cardImageUrl || p.imageUrl) + '" alt="">' + (p.imageWidth ? '<span class="dims">' + p.imageWidth + '×' + p.imageHeight + (p.cardImageUrl ? ' · WebP card' : '') + '</span>' : '')
       : 'Drop / click<br>to upload';
     var extraThumbs = (p.images || []).map(function(url, j){
       return '<div class="extra-thumb"><img src="' + url + '" alt="">' +
@@ -219,6 +222,70 @@ function readImageDims(url){
   });
 }
 
+var CARD_MAX_DIM = 1200;
+var CARD_WEBP_QUALITY = 0.82;
+
+function makeCardWebp(source){
+  return new Promise(function(resolve, reject){
+    var objectUrl = typeof source === 'string' ? source : URL.createObjectURL(source);
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function(){
+      var scale = Math.min(1, CARD_MAX_DIM / Math.max(img.naturalWidth, img.naturalHeight));
+      var w = Math.max(1, Math.round(img.naturalWidth * scale));
+      var h = Math.max(1, Math.round(img.naturalHeight * scale));
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(function(blob){
+        if(typeof source !== 'string') URL.revokeObjectURL(objectUrl);
+        if(!blob) return reject(new Error('This browser could not create a WebP image.'));
+        resolve({ blob: blob, w: w, h: h });
+      }, 'image/webp', CARD_WEBP_QUALITY);
+    };
+    img.onerror = function(){
+      if(typeof source !== 'string') URL.revokeObjectURL(objectUrl);
+      reject(new Error('Could not decode the source image.'));
+    };
+    img.src = objectUrl;
+  });
+}
+
+function uploadCardWebp(projectId, card){
+  var name = 'works/cards/' + (projectId || uid()) + '-card.webp';
+  if(window.__blobUpload){
+    return window.__blobUpload(name, card.blob, { access: 'public', handleUploadUrl: '/api/upload', multipart: true }).then(function(blob){ return blob.url; });
+  }
+  return fetch('/api/upload?path=works/cards', { method: 'POST', headers: { 'Content-Type': 'image/webp', 'X-File-Name': encodeURIComponent((projectId || uid()) + '-card.webp') }, body: card.blob }).then(function(r){
+    if(!r.ok) throw new Error('Card upload failed (' + r.status + ')');
+    return r.json();
+  }).then(function(d){ return d.url; });
+}
+
+function createAndStoreCard(i, source){
+  return makeCardWebp(source).then(function(card){
+    return uploadCardWebp(projects[i].id, card).then(function(url){
+      projects[i].cardImageUrl = url;
+      projects[i].cardImageWidth = card.w;
+      projects[i].cardImageHeight = card.h;
+    });
+  });
+}
+
+async function optimizeExistingCovers(){
+  var pending = projects.map(function(p, i){ return { p: p, i: i }; }).filter(function(x){ return x.p.imageUrl && !x.p.cardImageUrl; });
+  if(!pending.length){ setStatus('All cover images already have optimized WebP cards.', 'ok'); return; }
+  setStatus('Optimizing 0 of ' + pending.length + ' covers…');
+  var failed = 0;
+  for(var n = 0; n < pending.length; n++){
+    try { await createAndStoreCard(pending[n].i, pending[n].p.imageUrl); }
+    catch(err){ failed++; console.error('Card optimization failed', pending[n].p.imageUrl, err); }
+    setStatus('Optimizing ' + (n + 1) + ' of ' + pending.length + ' covers…');
+  }
+  render();
+  setStatus('Created ' + (pending.length - failed) + ' optimized WebP card' + (pending.length - failed === 1 ? '' : 's') + (failed ? '; ' + failed + ' failed.' : '. Save changes to publish them.'), failed ? 'err' : 'ok');
+}
+
 function handleUpload(i, input){
   var f = input.files && input.files[0];
   if(!f) return;
@@ -234,7 +301,7 @@ function handleUpload(i, input){
       projects[i].imageUrl = url;
       projects[i].imageWidth = dims.w;
       projects[i].imageHeight = dims.h;
-      render();
+      return createAndStoreCard(i, f).then(render);
     });
   }).catch(function(err){
     console.error('Upload failed', err);
