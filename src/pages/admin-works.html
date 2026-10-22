@@ -82,8 +82,8 @@ body{background:var(--cm-ink-950);}
 
   <div class="f" style="max-width:520px;margin-bottom:2rem;">
     <label>Image optimization</label>
-    <button type="button" class="btn btn--ghost" id="migrateBtn" onclick="migrateCards()" disabled>Generate optimized card images</button>
-    <p style="color:var(--cm-text-subtle);font-size:0.78rem;margin-top:0.35rem;">New cover uploads create a ~1200px WebP card version automatically. This button does the same for existing projects. Originals are kept untouched and still used in the lightbox. Click Save changes afterwards.</p>
+    <button type="button" class="btn btn--ghost" id="migrateBtn" onclick="migrateCards()" disabled>Retry optimizing existing photos</button>
+    <p style="color:var(--cm-text-subtle);font-size:0.78rem;margin-top:0.35rem;">Cover photos are optimized automatically: new uploads create a ~1200px WebP card version, and existing projects are optimized and saved when you open this page. Originals are never changed and are still used in the lightbox. This button is only a retry if something failed.</p>
   </div>
 
   <div id="list"></div>
@@ -339,10 +339,10 @@ function updateMigrateBtn(){
   var btn = document.getElementById('migrateBtn');
   if(!btn) return;
   var n = projectsNeedingCards().length;
-  btn.textContent = n ? 'Generate optimized card images (' + n + ' needed)' : 'All cover images optimized ✓';
+  btn.textContent = n ? 'Retry optimizing existing photos (' + n + ' left)' : 'All cover images optimized ✓';
   btn.disabled = migrating || !n;
 }
-function migrateCards(){
+function migrateCards(auto){
   var todo = projectsNeedingCards();
   if(!todo.length || migrating) return;
   migrating = true; updateMigrateBtn();
@@ -351,6 +351,12 @@ function migrateCards(){
     if(!todo.length){
       migrating = false;
       render();
+      if(auto === true && done){
+        // Automatic run: save right away so the card images go live without any extra click.
+        setStatus('Optimized ' + done + ' image' + (done === 1 ? '' : 's') + (failed ? ' (' + failed + ' failed — see console)' : '') + '. Saving…', failed ? 'err' : 'ok');
+        saveAll();
+        return;
+      }
       setStatus('Optimized ' + done + ' image' + (done === 1 ? '' : 's') + (failed ? ', ' + failed + ' failed (see console)' : '') + '. Click Save changes to publish.', failed ? 'err' : 'ok');
       return;
     }
@@ -442,6 +448,9 @@ function boot(){
     projects.forEach(function(p){ if(!Array.isArray(p.images)) p.images = []; });
     render();
     setStatus('');
+    // Existing projects uploaded before card images existed are optimized and
+    // saved automatically, once per page load.
+    if(projectsNeedingCards().length) migrateCards(true);
   }).catch(function(){
     setStatus('Could not load existing projects — starting empty.', 'err');
     render();
