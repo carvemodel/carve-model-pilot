@@ -80,12 +80,6 @@ body{background:var(--cm-ink-950);}
     <p style="color:var(--cm-text-subtle);font-size:0.78rem;margin-top:0.35rem;">From Vercel → Project Settings → Git → Deploy Hooks. If set, saving here also triggers a rebuild so /works updates automatically within a minute or two.</p>
   </div>
 
-  <div class="f" style="max-width:520px;margin-bottom:2rem;">
-    <label>Image optimization</label>
-    <button type="button" class="btn btn--ghost" id="migrateBtn" onclick="migrateCards()" disabled>Retry optimizing existing photos</button>
-    <p style="color:var(--cm-text-subtle);font-size:0.78rem;margin-top:0.35rem;">Cover photos are optimized automatically: new uploads create a ~1200px WebP card version, and existing projects are optimized and saved when you open this page. Originals are never changed and are still used in the lightbox. This button is only a retry if something failed.</p>
-  </div>
-
   <div id="list"></div>
   <div class="empty" id="emptyMsg" hidden>No projects yet. Click "Add project" to create one.</div>
 
@@ -335,13 +329,7 @@ var migrating = false;
 function projectsNeedingCards(){
   return projects.map(function(p, i){ return { p: p, i: i }; }).filter(function(x){ return x.p.imageUrl && !x.p.cardImageUrl; });
 }
-function updateMigrateBtn(){
-  var btn = document.getElementById('migrateBtn');
-  if(!btn) return;
-  var n = projectsNeedingCards().length;
-  btn.textContent = n ? 'Retry optimizing existing photos (' + n + ' left)' : 'All cover images optimized ✓';
-  btn.disabled = migrating || !n;
-}
+function updateMigrateBtn(){ /* no button any more — optimization runs automatically on load */ }
 function migrateCards(auto){
   var todo = projectsNeedingCards();
   if(!todo.length || migrating) return;
