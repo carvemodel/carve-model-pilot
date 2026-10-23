@@ -78,6 +78,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .svc-faq{max-width:68ch;}
 .svc-faq .faq-list{border-top:1px solid var(--cm-line-faint);margin-top:1.8rem;}
 .svc-faq .faq-item{border-bottom:1px solid var(--cm-line-faint);}
+.svc-faq .faq-item p a{color:var(--cm-text-strong);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--cm-border-strong);transition:text-decoration-color var(--dur-2);}
+.svc-faq .faq-item p a:hover{text-decoration-color:currentColor;}
 .svc-faq .faq-item summary{list-style:none;cursor:pointer;padding:1.3rem 0;display:flex;justify-content:space-between;gap:2rem;align-items:center;font-family:var(--font-display);font-weight:var(--w-semibold);font-size:1rem;color:var(--cm-text-strong);}
 .svc-faq .faq-item summary::-webkit-details-marker{display:none;}
 .svc-faq .faq-item .pm{position:relative;width:16px;height:16px;flex:none;}
