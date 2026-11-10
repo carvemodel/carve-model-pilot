@@ -12250,7 +12250,12 @@ pullSourcing().then(function(){
 }).catch(function(e){console.error('Sourcing API init failed \u2014 staying local-only:',e);apiReady=true;})
   .then(function(){
     if(pollTimer)clearInterval(pollTimer);
-    pollTimer=setInterval(pullSourcing,POLL_MS);
+    // Each poll downloads the whole shared store from Redis, and portal tabs
+    // are often left open in the background all day -- that alone pushed the
+    // Redis plan past its monthly network-traffic limit. Only poll while the
+    // tab is visible, and catch up immediately when it becomes visible again.
+    pollTimer=setInterval(function(){ if(!document.hidden)pullSourcing(); },POLL_MS);
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden)pullSourcing(); });
   });
 })();
 </script>
