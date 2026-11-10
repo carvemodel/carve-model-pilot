@@ -9,6 +9,11 @@
 // visitors can't rewrite the portfolio: set WORKS_ADMIN_TOKEN in the
 // project's Environment Variables (Vercel dashboard → Settings →
 // Environment Variables) and enter that same value in admin-works.html.
+//
+// /works is a static page that reads this data at BUILD time, so a save only
+// shows up on the live site after a rebuild. Set WORKS_DEPLOY_HOOK_URL to a
+// Vercel Deploy Hook (Settings → Git → Deploy Hooks, branch "main") and every
+// successful save triggers that rebuild automatically.
 
 const { createClient } = require('redis');
 
@@ -63,7 +68,20 @@ module.exports = async (req, res) => {
 
       const projects = Array.isArray(body.projects) ? body.projects : [];
       await redis.set(KEY, JSON.stringify({ projects }));
-      res.status(200).json({ ok: true, count: projects.length });
+
+      let deployTriggered = false;
+      const hook = process.env.WORKS_DEPLOY_HOOK_URL;
+      if (hook) {
+        try {
+          const r = await fetch(hook, { method: 'POST' });
+          deployTriggered = r.ok;
+          if (!r.ok) console.error('Works deploy hook returned', r.status);
+        } catch (err) {
+          console.error('Works deploy hook failed:', err);
+        }
+      }
+
+      res.status(200).json({ ok: true, count: projects.length, deployHookConfigured: !!hook, deployTriggered });
       return;
     }
 
