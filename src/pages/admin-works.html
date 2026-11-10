@@ -69,7 +69,7 @@ body{background:var(--cm-ink-950);}
   <div class="admin__head">
     <div>
       <h1>Works admin</h1>
-      <p>Add, edit, reorder, or remove projects shown on /works. This is a static site, so saving here updates the data — the live page updates on the next deploy (automatically, if a deploy hook is set below).</p>
+      <p>Add, edit, reorder, or remove projects shown on /works. Saving stores the data, then the site rebuilds so the live page updates (automatic when the WORKS_DEPLOY_HOOK_URL environment variable is set in Vercel).</p>
     </div>
     <button class="btn btn--ghost" onclick="addProject()">+ Add project</button>
   </div>
@@ -412,15 +412,20 @@ function saveAll(){
     }
     if(!r.ok) throw new Error('Save failed (' + r.status + ')');
     return r.json();
-  }).then(function(){
+  }).then(function(res){
     var base = 'Saved ' + projects.length + ' project' + (projects.length === 1 ? '' : 's') + '.';
+    if(res && res.deployTriggered){
+      setStatus(base + ' Rebuilding the site — /works updates in about two minutes.', 'ok');
+      return;
+    }
     if(getHookUrl()){
       setStatus(base + ' Triggering deploy…', 'ok');
       return triggerDeploy().then(function(ok){
         setStatus(base + (ok ? ' Deploy triggered — live in a minute or two.' : ' Deploy hook failed to trigger — redeploy manually in Vercel.'), ok ? 'ok' : 'err');
       });
     }
-    setStatus(base + ' Redeploy the site (or set a deploy hook above) to publish it.', 'ok');
+    var why = (res && res.deployHookConfigured) ? ' The automatic rebuild failed to start.' : ' Not live yet.';
+    setStatus(base + why + ' Redeploy the site in Vercel to publish it to /works.', 'err');
   }).catch(function(err){
     setStatus(err.message || 'Save failed.', 'err');
   });
