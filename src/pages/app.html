@@ -6865,7 +6865,16 @@ function downloadLeadFile(name,type){
   setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
 }
 var leadSeq=2059;
+// Set while the Add Lead modal is editing an existing lead (see
+// openEditLead); createLead() then updates that lead in place instead of
+// adding a new one. openAddLead() clears it, so every other entry point
+// (Add lead, Create variation, Add lead for a contact) still creates new.
+var alEditingId=null;
 function openAddLead(){
+  alEditingId=null;
+  var alSubmit=document.querySelector('#addLeadModal button[type="submit"]');
+  if(alSubmit)alSubmit.textContent='Add to inbox';
+  var alSrcSel=document.getElementById('al-source');if(alSrcSel)alSrcSel.selectedIndex=0;
   ['al-contact','al-title','al-company','al-email','al-phone','al-project','al-location','al-country','al-delivery-location','al-delivery-country','al-notes','al-dropbox','al-size','al-quantity','al-scale-intl-new','al-scale-imp-new','al-timeline'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
   document.getElementById('al-quantity').value='1';
   document.getElementById('al-type-select').value='';
@@ -6898,8 +6907,11 @@ function alSplitLoc(str){
   var m=str.split(' — ');
   var first=m[0]||'', rest=m.slice(1).join(' — ');
   if(!rest)return {a:first,b:'',c:''};
-  var parts=rest.split(', ');
-  return {a:first,b:parts[0]||'',c:parts.slice(1).join(', ')};
+  // Split at the LAST comma: a location like "Denver, CO" has its own
+  // comma, so "Denver, CO, United States" -> "Denver, CO" + "United States".
+  var cut=rest.lastIndexOf(', ');
+  if(cut<0)return {a:first,b:rest,c:''};
+  return {a:first,b:rest.slice(0,cut),c:rest.slice(cut+2)};
 }
 /* Open the Add Lead modal pre-filled from an existing lead — client and
    project details carry over as-is; the admin then adjusts whatever
@@ -6911,8 +6923,44 @@ window.openLeadVariation=function(id){
   openAddLead();
   document.getElementById('addLeadTitle').textContent='Create a variation';
   document.getElementById('addLeadIntro').textContent='Client and project details are copied from the original enquiry — adjust whatever requirements should differ (scale, size, extras, etc.), then save. The original lead is left untouched.';
+  var unmatched=alPrefillFromLead(src);
+  document.getElementById('al-notes').value='Variation of the original enquiry (received '+(src.receivedAt||'')+').'+(unmatched.length?('\n\nAdditional requirements: '+unmatched.join(', ')+'.'):'')+((src.notes&&src.notes!=='(no additional notes)')?('\n\n'+src.notes):'');
+  document.getElementById('al-contact').focus();
+};
+/* Open the Add Lead modal on an existing lead so it can be corrected.
+   Saving (createLead) updates that same lead in place: its id, received
+   date, source, uploaded files and scope boundary are kept, and any new
+   files / a newly drawn boundary are added on top. */
+window.openEditLead=function(id){
+  var src=(SDB.leads||[]).filter(function(x){return x.id===id;})[0];
+  if(!src){alert('Could not find that lead.');return;}
+  openAddLead();
+  alEditingId=id;
+  document.getElementById('addLeadTitle').textContent='Edit lead';
+  var keptFiles=(src.files||[]).length;
+  document.getElementById('addLeadIntro').textContent='Update this enquiry\'s details, then save. '+(keptFiles?('Its '+keptFiles+' uploaded file'+(keptFiles>1?'s are':' is')+' kept; anything you upload below is added. '):'')+(src.boundaryMap?'The marked scope boundary is kept unless you draw a new one.':'');
+  var unmatched=alPrefillFromLead(src);
+  var notes=(src.notes&&src.notes!=='(no additional notes)')?src.notes:'';
+  // Extras that aren't one of the checkboxes (e.g. free text from an older
+  // form) have nowhere else to live in this form -- keep them in the notes
+  // so saving doesn't silently drop them.
+  if(unmatched.length)notes+=(notes?'\n\n':'')+'Additional requirements: '+unmatched.join(', ')+'.';
+  document.getElementById('al-notes').value=notes;
+  var srcSel=document.getElementById('al-source');
+  if(srcSel&&src.source){
+    if(!Array.from(srcSel.options).some(function(o){return o.value===src.source;})){
+      var o=document.createElement('option');o.value=src.source;o.textContent=src.source;o.setAttribute('data-al-added','1');srcSel.appendChild(o);
+    }
+    srcSel.value=src.source;
+  }
+  var alSubmit=document.querySelector('#addLeadModal button[type="submit"]');
+  if(alSubmit)alSubmit.textContent='Save changes';
+  document.getElementById('al-contact').focus();
+};
+/* Fill the Add Lead form from an existing lead (shared by Create variation
+   and Edit lead). Returns any extras that didn't match a checkbox. */
+function alPrefillFromLead(src){
   var proj=alSplitLoc(src.title||'');
-  var deliv=alSplitLoc(src.deliveryTo||'');
   document.getElementById('al-contact').value=(src.client&&src.client.Name&&src.client.Name!=='(name not given)')?src.client.Name:'';
   document.getElementById('al-title').value=(src.client&&src.client.Title)||'';
   document.getElementById('al-company').value=(src.client&&src.client.Company&&src.client.Company!=='—')?src.client.Company:'';
@@ -6921,8 +6969,13 @@ window.openLeadVariation=function(id){
   document.getElementById('al-project').value=proj.a;
   document.getElementById('al-location').value=proj.b;
   document.getElementById('al-country').value=proj.c;
-  document.getElementById('al-delivery-location').value=deliv.b?deliv.a:'';
-  document.getElementById('al-delivery-country').value=deliv.b?deliv.c:deliv.b;
+  // deliveryTo is saved as "Delivery location[, Delivery country]" with no
+  // " — " separator, so alSplitLoc() can't split it (that used to leave the
+  // required Delivery location box empty). Put the whole string back into
+  // Delivery location; with country left blank, saving rebuilds the same text.
+  var delivTo=(src.deliveryTo&&src.deliveryTo!=='Not specified')?src.deliveryTo:'';
+  document.getElementById('al-delivery-location').value=delivTo;
+  document.getElementById('al-delivery-country').value='';
   document.getElementById('al-type-select').value=src.type||'';
   onALTypeChange();
   document.getElementById('al-use').value=src.intendedUse||'';
@@ -6935,13 +6988,14 @@ window.openLeadVariation=function(id){
   var srcExtras=src.extras||[];
   document.querySelectorAll('input[name="al-extras"]').forEach(function(cb){cb.checked=srcExtras.indexOf(cb.value)!==-1;});
   var unmatched=srcExtras.filter(function(x){return !Array.from(document.querySelectorAll('input[name="al-extras"]')).some(function(cb){return cb.value===x;});});
-  document.getElementById('al-notes').value='Variation of the original enquiry (received '+(src.receivedAt||'')+').'+(unmatched.length?('\n\nAdditional requirements: '+unmatched.join(', ')+'.'):'')+((src.notes&&src.notes!=='(no additional notes)')?('\n\n'+src.notes):'');
+  var matSel=document.getElementById('al-material');
+  if(matSel)matSel.value=src.preferredMaterial||'';
   onALTypeChange(); // re-check scope visibility now that extras (incl. the landscape checkbox) are set
   var srcLinks=Array.isArray(src.filelink)?src.filelink:(src.filelink?[src.filelink]:[]);
   alPickedLinks=srcLinks.slice();
   alRenderLinks();
-  document.getElementById('al-contact').focus();
-};
+  return unmatched;
+}
 /* Open the Add Lead modal pre-filled from an existing Clients-tab contact --
    same idea as openLeadVariation() above, but sourced from a client record
    instead of a past lead. Used by the "+ Add lead" button on each contact
@@ -7537,10 +7591,12 @@ function createLead(e){
   }
   var pickedFiles=alPickedFiles.slice();
   var title=project+(location?' — '+location+(country?', '+country:''):'');
-  var id='L'+Date.now();
+  var editing=alEditingId?(window.SDB.leads||[]).filter(function(x){return x.id===alEditingId;})[0]:null;
+  if(alEditingId&&!editing){alert('This lead no longer exists — it may have been deleted in another tab.');return false;}
+  var id=editing?editing.id:('L'+Date.now());
   var today=new Date().toISOString().slice(0,10);
   var submitBtn=e.target.querySelector('button[type="submit"]');
-  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Adding\u2026';}
+  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent=editing?'Saving\u2026':'Adding\u2026';}
 
   var uploadTasks=pickedFiles.map(function(f){
     if(!window.__blobUpload){
@@ -7589,10 +7645,24 @@ function createLead(e){
       source:source||'Manual entry'
     };
     window.SDB.leads=window.SDB.leads||[];
-    window.SDB.leads.unshift(lead);
-    ensureClientContact(lead);
+    if(editing){
+      // Update in place so the lead keeps its id (the server merges leads by
+      // id, so this is a plain update -- no new-lead email) and anything not
+      // on this form (archived, pendingInfo, ...) survives untouched.
+      lead.files=(editing.files||[]).concat(uploadedFiles);
+      lead.boundaryMap=boundaryMap||editing.boundaryMap||null;
+      lead.receivedAt=editing.receivedAt;
+      lead.receivedAtISO=editing.receivedAtISO;
+      Object.keys(lead).forEach(function(k){editing[k]=lead[k];});
+      editing.editedAt=new Date().toISOString();
+    }else{
+      window.SDB.leads.unshift(lead);
+      ensureClientContact(lead);
+    }
+    alEditingId=null;
     window.saveSRC();
     window.SRC_renderLeads();
+    window.SRC_renderArchivedLeads&&window.SRC_renderArchivedLeads();
     if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Add to inbox';}
     closeAddLead();
   });
@@ -11637,6 +11707,7 @@ window.SRC_renderLeads=function(){
       '</div><div class="leadcard__act"><span class="mock__k">Received '+esc(l.receivedAt)+' \u00b7 '+esc((!l.source||l.source==='Website form')?'Inquiry form':('Email \u00b7 '+l.source))+'</span>'+
       '<button class="btn btn--primary btn--sm" onclick="convertLead(\''+esc(l.id)+'\')">Obtain Quotation \u2192</button>'+
       '<button class="btn btn--ghost btn--sm" onclick="replyLead(\''+esc(l.client.Email)+'\',\''+esc(l.title)+'\',\''+esc(l.id)+'\')">Reply by email</button>'+
+      '<button class="btn btn--ghost btn--sm studio-only" onclick="openEditLead(\''+esc(l.id)+'\')">Edit</button>'+
       '<button class="btn btn--ghost btn--sm studio-only" onclick="openLeadVariation(\''+esc(l.id)+'\')">+ Create variation</button>'+
       '<button class="btn btn--ghost btn--sm studio-only" onclick="archiveLead(\''+esc(l.id)+'\')">Archive</button>'+
       '<button class="btn btn--ghost btn--sm btn--danger studio-only" onclick="deleteLead(\''+esc(l.id)+'\')">Delete</button></div></article>';
