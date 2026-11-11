@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { createClient } from 'redis';
-import { cardImage, workAlt } from '../utils/workImage.js';
+import { cardImage, workAlt, withCover } from '../utils/workImage.js';
 
 const CATEGORY_LABEL = {
   architecture: 'Architecture & Real Estate',
@@ -44,7 +44,7 @@ if (process.env.REDIS_URL) {
     if (raw) {
       const data = JSON.parse(raw);
       if (Array.isArray(data.projects) && data.projects.length) {
-        projects = data.projects;
+        projects = data.projects.map(withCover);
       }
     }
   } catch (err) {
