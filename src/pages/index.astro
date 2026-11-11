@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { createClient } from 'redis';
-import { cardImage, workAlt } from '../utils/workImage.js';
+import { cardImage, workAlt, withCover } from '../utils/workImage.js';
 
 // Shown on the homepage's "Selected work" tiles until real projects exist —
 // same data shape as works.astro (id, name, scale, material, imageUrl,
@@ -35,7 +35,7 @@ if (process.env.REDIS_URL) {
     if (raw) {
       const data = JSON.parse(raw);
       if (Array.isArray(data.projects) && data.projects.length) {
-        latestWorks = data.projects.slice(-5).reverse();
+        latestWorks = data.projects.slice(-5).reverse().map(withCover);
       }
     }
   } catch (err) {
