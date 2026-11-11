@@ -387,7 +387,7 @@ function triggerDeploy(){
   // Deploy hooks are plain POST endpoints Vercel exposes per-project — no
   // auth token needed beyond the URL itself, which is why it's optional and
   // only ever stored locally in this browser, never sent to /api/works.
-  return fetch(hook, { method: 'POST' }).then(function(){ return true; }).catch(function(){ return false; });
+  return fetch(hook, { method: 'POST' }).then(function(r){ if(!r.ok) console.error('Deploy hook returned', r.status); return r.ok; }).catch(function(){ return false; });
 }
 
 function resetGate(msg){
