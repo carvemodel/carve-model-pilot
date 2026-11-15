@@ -113,33 +113,45 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </div></section>
 
 <section class="svc-section"><div class="container">
+  <span class="eyebrow">What the model shows</span>
   <h2>Show buyers how the development comes together</h2>
-  <p class="lead-p muted">A physical model gives sales teams a shared reference for explaining the project. Visitors can walk around it, examine the buildings and understand their relationship to outdoor spaces, amenities and the surrounding site.</p>
-  <p class="muted" style="margin-top:1rem;">Depending on your development, the model can show:</p>
-  <ul class="svc-checklist">
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Building forms, façades and architectural finishes.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Streets, entrances, circulation and site access.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Landscaping, courtyards and shared outdoor spaces.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Amenities and their locations within the development.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Relationships between buildings and surrounding context.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Development phases, with the presentation approach defined during project review.</li>
-  </ul>
-  <p class="svc-note">We recommend the scale and level of detail according to what your sales team needs to communicate and the space available for display.</p>
+  <div class="svc-split" style="margin-top:1.2rem;">
+    <div>
+      <p class="lead-p muted" style="margin-top:0;">A physical model gives sales teams a shared reference for explaining the project. Visitors can walk around it, examine the buildings and understand their relationship to outdoor spaces, amenities and the surrounding site.</p>
+      <p class="muted" style="margin-top:1rem;">Depending on your development, the model can show:</p>
+      <ul class="svc-checklist">
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Building forms, façades and architectural finishes.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Streets, entrances, circulation and site access.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Landscaping, courtyards and shared outdoor spaces.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Amenities and their locations within the development.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Relationships between buildings and surrounding context.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Development phases, with the presentation approach defined during project review.</li>
+      </ul>
+      <p class="svc-note">We recommend the scale and level of detail according to what your sales team needs to communicate and the space available for display.</p>
+    </div>
+    <div class="svc-split__media"><image-slot id="re-shows" placeholder="Drop a project photo" src="/assets/type-presentation.webp"></image-slot></div>
+  </div>
 </div></section>
 
 <section class="svc-section"><div class="container">
+  <span class="eyebrow">Detail and features</span>
   <h2>Detail and features tailored to your presentation</h2>
-  <p class="lead-p muted">A sales-gallery model should make the project easy to understand while presenting its architecture with a refined finish.</p>
-  <p class="muted" style="margin-top:1rem;max-width:68ch;">We combine fabrication methods such as 3D printing, laser cutting and hand assembly, followed by surface finishing and painting. Materials and methods are selected to suit the model’s geometry, scale and required detail.</p>
-  <p class="muted" style="margin-top:1rem;">Available features can include:</p>
-  <ul class="svc-checklist">
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Interior and exterior lighting.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Detailed façades, glazing and landscaping.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Removable buildings, floors or sections.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Custom display bases, stands and protective covers.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Sectional construction for delivery and installation.</li>
-  </ul>
-  <p class="svc-note">Each quotation specifies the features and finishes included in your model.</p>
+  <div class="svc-split" style="margin-top:1.2rem;">
+    <div>
+      <p class="lead-p muted" style="margin-top:0;">A sales-gallery model should make the project easy to understand while presenting its architecture with a refined finish.</p>
+      <p class="muted" style="margin-top:1rem;">We combine fabrication methods such as 3D printing, laser cutting and hand assembly, followed by surface finishing and painting. Materials and methods are selected to suit the model’s geometry, scale and required detail.</p>
+      <p class="muted" style="margin-top:1rem;">Available features can include:</p>
+      <ul class="svc-checklist">
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Interior and exterior lighting.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Detailed façades, glazing and landscaping.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Removable buildings, floors or sections.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Custom display bases, stands and protective covers.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Sectional construction for delivery and installation.</li>
+      </ul>
+      <p class="svc-note">Each quotation specifies the features and finishes included in your model.</p>
+    </div>
+    <div class="svc-split__media"><image-slot id="re-features" placeholder="Drop a project photo" src="/assets/svc-arch-features.webp"></image-slot></div>
+  </div>
 </div></section>
 
 <section class="svc-section"><div class="container">
@@ -150,13 +162,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p class="lead-p muted" style="margin-top:0;">Created to support property sales, this illuminated architectural model presents a mixed-use development in the client’s real estate office in Atlanta.</p>
       <p class="muted" style="margin-top:1rem;">Project details</p>
       <ul class="svc-checklist">
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Scale: 1:96.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Dimensions: approximately 8 feet wide × 8 feet deep × 6 feet tall.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Primary material: ABS.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Architecture: two towers, a shared podium and ribbon-like architectural features.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Lighting: integrated interior and exterior illumination.</li>
-  </ul>
-      <p class="muted" style="margin-top:1.4rem;">Restricted elevator access meant the model could not arrive as one assembled piece. Carve planned sectional fabrication and transportation before production, then completed on-site assembly and lighting tests with two technicians over two days.</p>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Scale: 1:96.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Dimensions: approximately 8 feet wide × 8 feet deep × 6 feet tall.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Primary material: ABS.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Architecture: two towers, a shared podium and ribbon-like architectural features.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Lighting: integrated interior and exterior illumination.</li>
+      </ul>
+      <p class="svc-note">Restricted elevator access meant the model could not arrive as one assembled piece. Carve planned sectional fabrication and transportation before production, then completed on-site assembly and lighting tests with two technicians over two days.</p>
       <div style="margin-top:1.6rem;">
         <a class="btn btn--ghost svc-all-btn" href="/blog/atlanta-mixed-use-architectural-model-installation">Explore the Atlanta project <span class="arrow">→</span></a>
       </div>
@@ -166,43 +178,55 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </div></section>
 
 <section class="svc-section"><div class="container">
+  <span class="eyebrow">Display and delivery</span>
   <h2>Plan the model around your sales-gallery space</h2>
-  <p class="lead-p muted">Display conditions influence the model’s dimensions, viewing height, lighting and construction.</p>
-  <p class="muted" style="margin-top:1rem;">Before fabrication, we review:</p>
-  <ul class="svc-checklist">
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Available floor space and viewing distances.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Stand, base and protective-cover requirements.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Electrical access for illuminated features.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Doorways, elevators and the delivery route.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Packaging, handling and on-site assembly needs.</li>
-  </ul>
-  <p class="svc-note">Carve coordinates packaging and delivery across the United States and Canada. On-site installation is available when required and included in the agreed scope.</p>
+  <div class="svc-split" style="margin-top:1.2rem;">
+    <div>
+      <p class="lead-p muted" style="margin-top:0;">Display conditions influence the model’s dimensions, viewing height, lighting and construction.</p>
+      <p class="muted" style="margin-top:1rem;">Before fabrication, we review:</p>
+      <ul class="svc-checklist">
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Available floor space and viewing distances.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Stand, base and protective-cover requirements.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Electrical access for illuminated features.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Doorways, elevators and the delivery route.</li>
+        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Packaging, handling and on-site assembly needs.</li>
+      </ul>
+      <p class="svc-note">Carve coordinates packaging and delivery across the United States and Canada. On-site installation is available when required and included in the agreed scope.</p>
+    </div>
+    <div class="svc-split__media"><image-slot id="re-display" placeholder="Drop a project photo" src="/assets/casestudy-atlanta3-1200.webp"></image-slot></div>
+  </div>
 </div></section>
 
 <section class="svc-section"><div class="container">
-  <h2>What determines the budget and schedule?</h2>
-  <p class="lead-p muted">Pricing depends on the model’s dimensions, scale, architectural detail, landscaping, lighting, source files and display requirements. Packaging, shipping and installation also affect the total project scope.</p>
-  <p class="muted" style="margin-top:1rem;max-width:68ch;">We provide a project-specific estimate and schedule after reviewing your information. Let us know the date of your sales-gallery opening or presentation so production, approvals and delivery can be planned around it.</p>
-  <div style="margin-top:1.6rem;">
+  <div class="flex justify-between items-center wrap gap">
+    <div>
+      <span class="eyebrow">Budget and schedule</span>
+      <h2>What determines the budget and schedule?</h2>
+    </div>
     <a class="btn btn--ghost svc-all-btn" href="/blog/architectural-scale-model-cost-us">Read the architectural-model cost guide <span class="arrow">→</span></a>
   </div>
+  <p class="lead-p muted">Pricing depends on the model’s dimensions, scale, architectural detail, landscaping, lighting, source files and display requirements. Packaging, shipping and installation also affect the total project scope.</p>
+  <p class="muted" style="margin-top:1rem;max-width:68ch;">We provide a project-specific estimate and schedule after reviewing your information. Let us know the date of your sales-gallery opening or presentation so production, approvals and delivery can be planned around it.</p>
 </div></section>
 
 <section class="svc-section" style="border-bottom:0;"><div class="container">
-  <h2>Start your sales-gallery model</h2>
-  <p class="lead-p muted">Send us the information you have:</p>
-  <ul class="svc-checklist">
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Project drawings, renderings or 3D files.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> What your sales team needs the model to communicate.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Preferred scale or approximate display dimensions.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Required lighting, detail and other features.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Target completion date.</li>
-    <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Delivery location and known access restrictions.</li>
-  </ul>
-  <p class="svc-note">Complete production-ready files are not required for an initial review. We will identify what is needed and recommend an appropriate scope.</p>
-  <div style="margin-top:1.8rem;">
-    <a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
+  <div class="flex justify-between items-center wrap gap">
+    <div>
+      <span class="eyebrow">Start with what you have</span>
+      <h2>Start your sales-gallery model</h2>
+    </div>
+    <a class="btn btn--ghost svc-all-btn" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
   </div>
+  <p class="muted" style="margin-top:1rem;">Send us the information you have:</p>
+  <div class="formats">
+    <div class="fmt">Project drawings, renderings or 3D files</div>
+    <div class="fmt">What your sales team needs the model to communicate</div>
+    <div class="fmt">Preferred scale or approximate display dimensions</div>
+    <div class="fmt">Required lighting, detail and other features</div>
+    <div class="fmt">Target completion date</div>
+    <div class="fmt">Delivery location and known access restrictions</div>
+  </div>
+  <p class="svc-note" style="max-width:none;">Complete production-ready files are not required for an initial review. We will identify what is needed and recommend an appropriate scope.</p>
 </div></section>
 </main>
 </BaseLayout>
