@@ -58,9 +58,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .svc-type__media{margin-bottom:0.9rem;}
 .svc-type__media image-slot{width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);}
 .svc-type h3{font-size:1.15rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
-.svc-types--3{grid-template-columns:repeat(3,1fr);}
-@media(max-width:1000px){.svc-types--3{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:760px){.svc-types--3{grid-template-columns:1fr;}}
 .svc-type__link{display:block;color:inherit;}
 .svc-type__cta{display:inline-flex;align-items:center;gap:0.5rem;margin-top:1rem;font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.03em;color:var(--cm-text-strong);border-bottom:1px solid var(--cm-border-strong);padding-bottom:2px;transition:border-color var(--dur-2);}
 .svc-type__cta:hover{border-color:var(--cm-text-strong);}
@@ -149,10 +146,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <section class="svc-section"><div class="container">
   <span class="eyebrow">Model purposes</span>
   <h2>Architectural models for sales, exhibitions and events.</h2>
-  <div class="svc-types svc-types--3">
+  <div class="svc-types">
     <div class="svc-type"><a class="svc-type__link" href="/real-estate-sales-gallery-models" aria-label="Real Estate Sales Gallery &amp; Exhibition Models"><div class="svc-type__media"><image-slot id="svc-purpose-sales-gallery" placeholder="Drop sales gallery model photo" src="/assets/type-presentation.webp"></image-slot></div></a><h3>Real Estate Sales Gallery &amp; Exhibition Models</h3><p>Detailed architectural models for property sales and dedicated exhibition spaces. Present buildings, landscaping and amenities with refined finishes, lighting and optional digital experiences.</p><a class="svc-type__cta" href="/real-estate-sales-gallery-models">Explore <span class="arrow">→</span></a></div>
     <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-purpose-trade-show" placeholder="Drop trade show model photo" src="/assets/svc-arch-features.webp"></image-slot></div><h3>Trade Show &amp; Convention Models</h3><p>Portable architectural models for presentations across multiple venues. Size, weight, protective packaging and setup requirements are planned around booth space, transportation and repeated use.</p></div>
     <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-purpose-stakeholder" placeholder="Drop stakeholder/investor model photo" src="/assets/type-masterplan.webp"></image-slot></div><h3>Stakeholder, Investor &amp; Fundraising Models</h3><p>Architectural models that communicate the project vision to stakeholders, investors and potential donors. Clearly present development phases, highlight key features and explain how buildings, amenities and surrounding spaces come together. Scale and detail are selected to support project discussions, investment presentations and fundraising campaigns.</p></div>
+    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-purpose-competition" placeholder="Drop design competition model photo" src="/assets/type-concept.webp"></image-slot></div><h3>Design Competition Models</h3><p>Architectural models developed collaboratively with designers for time-sensitive competition submissions. We help translate preliminary concepts into information sufficient for fabrication, explore materials and finishes, and prioritize the details that communicate the design intent within the available schedule.</p></div>
   </div>
 </div></section>
 
