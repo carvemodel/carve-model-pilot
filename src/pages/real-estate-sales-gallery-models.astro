@@ -74,6 +74,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .svc-split .svc-checklist,.svc-split .lead-p{max-width:none;}
 .svc-split__media image-slot{width:100%;height:auto;aspect-ratio:4/5;border-radius:var(--r-sm);}
 @media(max-width:900px){.svc-split{grid-template-columns:1fr;}.svc-split__media{order:-1;max-width:440px;}}
+.svc-split--rev{grid-template-columns:0.9fr 1.1fr;}
+.svc-split--rev .svc-split__media{order:-1;}
+@media(max-width:900px){.svc-split--rev{grid-template-columns:1fr;}}
 .svc-faq{max-width:68ch;}
 .svc-faq .faq-list{border-top:1px solid var(--cm-line-faint);margin-top:1.8rem;}
 .svc-faq .faq-item{border-bottom:1px solid var(--cm-line-faint);}
@@ -115,7 +118,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <section class="svc-section"><div class="container">
   <span class="eyebrow">What the model shows</span>
   <h2>Show buyers how the development comes together</h2>
-  <div class="svc-split" style="margin-top:1.2rem;">
+  <div class="svc-split svc-split--rev" style="margin-top:1.2rem;">
     <div>
       <p class="lead-p muted" style="margin-top:0;">A physical model gives sales teams a shared reference for explaining the project. Visitors can walk around it, examine the buildings and understand their relationship to outdoor spaces, amenities and the surrounding site.</p>
       <p class="muted" style="margin-top:1rem;">Depending on your development, the model can show:</p>
