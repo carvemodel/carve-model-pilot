@@ -210,14 +210,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </div></section>
 
 <section class="svc-section" style="border-bottom:0;"><div class="container">
-  <div class="flex justify-between items-center wrap gap">
-    <div>
-      <span class="eyebrow">Start with what you have</span>
-      <h2>Start your sales-gallery model</h2>
-    </div>
-    <a class="btn btn--ghost svc-all-btn" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
-  </div>
-  <p class="muted" style="margin-top:1rem;">Send us the information you have:</p>
+  <span class="eyebrow">Start with what you have</span>
+  <h2>Send us the information you have</h2>
   <div class="formats">
     <div class="fmt">Project drawings, renderings or 3D files</div>
     <div class="fmt">What your sales team needs the model to communicate</div>
@@ -226,7 +220,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="fmt">Target completion date</div>
     <div class="fmt">Delivery location and known access restrictions</div>
   </div>
-  <p class="svc-note" style="max-width:none;">Complete production-ready files are not required for an initial review. We will identify what is needed and recommend an appropriate scope.</p>
+</div></section>
+
+<section class="section"><div class="container">
+  <div class="cta reveal" style="position:relative;text-align:center;background:var(--cm-black);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:clamp(3rem,6vw,5rem) var(--gutter);">
+    <h2 class="display-md">Start your sales-gallery model.</h2>
+    <p class="muted mt-2" style="max-width:52ch;margin-inline:auto;">Complete production-ready files are not required for an initial review. We will identify what is needed and recommend an appropriate scope.</p>
+    <div class="hero__cta" style="justify-content:center;margin-top:2.4rem;">
+      <a class="btn btn--primary btn--lg" href="/contact">Get a Preliminary Estimate <span class="arrow">→</span></a>
+      <a class="btn btn--ghost btn--lg" href="/scale-model-services">All services <span class="arrow">→</span></a>
+    </div>
+  </div>
 </div></section>
 </main>
 </BaseLayout>
