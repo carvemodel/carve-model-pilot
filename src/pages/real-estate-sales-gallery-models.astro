@@ -160,8 +160,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </div></section>
 
 <section class="svc-section"><div class="container">
-  <span class="eyebrow">Featured project</span>
-  <h2>Atlanta mixed-use development</h2>
+  <div class="flex justify-between items-center wrap gap">
+    <div>
+      <span class="eyebrow">Featured project</span>
+      <h2>Atlanta mixed-use development</h2>
+    </div>
+    <a class="btn btn--ghost svc-all-btn" href="/blog/atlanta-mixed-use-architectural-model-installation">Explore the Atlanta project <span class="arrow">→</span></a>
+  </div>
   <div class="svc-split" style="margin-top:1.2rem;">
     <div>
       <p class="lead-p muted" style="margin-top:0;">Created to support property sales, this illuminated architectural model presents a mixed-use development in the client’s real estate office in Atlanta.</p>
@@ -174,9 +179,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Lighting: integrated interior and exterior illumination.</li>
       </ul>
       <p class="svc-note">Restricted elevator access meant the model could not arrive as one assembled piece. Carve planned sectional fabrication and transportation before production, then completed on-site assembly and lighting tests with two technicians over two days.</p>
-      <div style="margin-top:1.6rem;">
-        <a class="btn btn--ghost svc-all-btn" href="/blog/atlanta-mixed-use-architectural-model-installation">Explore the Atlanta project <span class="arrow">→</span></a>
-      </div>
     </div>
     <div class="svc-split__media"><image-slot id="re-atlanta" placeholder="Drop a project photo" src="/assets/casestudy-atlanta2-1200.webp"></image-slot></div>
   </div>
@@ -203,7 +205,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </div></section>
 
 <section class="svc-section"><div class="container">
-  <div class="flex justify-between items-center wrap gap" style="flex-direction:column;align-items:flex-start;">
+  <div class="flex justify-between items-center wrap gap">
     <div>
       <span class="eyebrow">Budget and schedule</span>
       <h2>What determines the budget and schedule?</h2>
