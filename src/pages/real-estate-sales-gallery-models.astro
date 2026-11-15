@@ -77,6 +77,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .svc-split--rev{grid-template-columns:0.9fr 1.1fr;}
 .svc-split--rev .svc-split__media{order:-1;}
 @media(max-width:900px){.svc-split--rev{grid-template-columns:1fr;}}
+.cs-nav{display:flex;gap:0.5rem;}
+.cs-nav__btn{width:44px;height:44px;border-radius:50%;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);color:var(--cm-text-strong);font-size:1.15rem;line-height:1;cursor:pointer;transition:background var(--dur-2),color var(--dur-2);}
+.cs-nav__btn:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
+.cs-scroll{display:flex;gap:clamp(1.2rem,2.5vw,2rem);overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;margin-top:1.8rem;padding-bottom:1rem;scrollbar-width:thin;}
+.cs-card{flex:0 0 min(92%,560px);scroll-snap-align:start;}
+.cs-card__media image-slot{width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);}
+.cs-card h3{margin-top:1.2rem;font-size:1.15rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
+.cs-card .svc-checklist{margin-top:0.8rem;}
 .svc-faq{max-width:68ch;}
 .svc-faq .faq-list{border-top:1px solid var(--cm-line-faint);margin-top:1.8rem;}
 .svc-faq .faq-item{border-bottom:1px solid var(--cm-line-faint);}
@@ -162,25 +170,30 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <section class="svc-section"><div class="container">
   <div class="flex justify-between items-center wrap gap">
     <div>
-      <span class="eyebrow">Featured project</span>
-      <h2>Atlanta mixed-use development</h2>
+      <span class="eyebrow">Featured projects</span>
+      <h2>Sales gallery case studies</h2>
     </div>
-    <a class="btn btn--ghost svc-all-btn" href="/blog/atlanta-mixed-use-architectural-model-installation">Explore the Atlanta project <span class="arrow">→</span></a>
+    <div class="cs-nav" aria-label="Scroll case studies">
+      <button type="button" class="cs-nav__btn" id="csPrev" aria-label="Previous case study">‹</button>
+      <button type="button" class="cs-nav__btn" id="csNext" aria-label="Next case study">›</button>
+    </div>
   </div>
-  <div class="svc-split" style="margin-top:1.2rem;">
-    <div>
-      <p class="lead-p muted" style="margin-top:0;">Created to support property sales, this illuminated architectural model presents a mixed-use development in the client’s real estate office in Atlanta.</p>
+  <div class="cs-scroll" id="csScroll" tabindex="0" aria-label="Featured sales gallery projects">
+    <article class="cs-card">
+      <div class="cs-card__media"><image-slot id="re-atlanta" placeholder="Drop a project photo" src="/assets/casestudy-atlanta2-1200.webp"></image-slot></div>
+      <h3>Atlanta mixed-use development</h3>
+      <p class="muted" style="margin-top:0.6rem;">Created to support property sales, this illuminated architectural model presents a mixed-use development in the client’s real estate office in Atlanta.</p>
       <p class="muted" style="margin-top:1rem;">Project details</p>
       <ul class="svc-checklist">
-        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Scale: 1:96.</li>
-        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Dimensions: approximately 8 feet wide × 8 feet deep × 6 feet tall.</li>
-        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Primary material: ABS.</li>
-        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Architecture: two towers, a shared podium and ribbon-like architectural features.</li>
-        <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Lighting: integrated interior and exterior illumination.</li>
+            <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Scale: 1:96.</li>
+            <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Dimensions: approximately 8 feet wide × 8 feet deep × 6 feet tall.</li>
+            <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Primary material: ABS.</li>
+            <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Architecture: two towers, a shared podium and ribbon-like architectural features.</li>
+            <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Lighting: integrated interior and exterior illumination.</li>
       </ul>
       <p class="svc-note">Restricted elevator access meant the model could not arrive as one assembled piece. Carve planned sectional fabrication and transportation before production, then completed on-site assembly and lighting tests with two technicians over two days.</p>
-    </div>
-    <div class="svc-split__media"><image-slot id="re-atlanta" placeholder="Drop a project photo" src="/assets/casestudy-atlanta2-1200.webp"></image-slot></div>
+      <a class="btn btn--ghost svc-all-btn" style="margin-top:1.4rem;" href="/blog/atlanta-mixed-use-architectural-model-installation">Explore the Atlanta project <span class="arrow">→</span></a>
+    </article>
   </div>
 </div></section>
 
@@ -239,5 +252,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
   </div>
 </div></section>
+<script is:inline>
+(function(){
+  var sc=document.getElementById('csScroll'),p=document.getElementById('csPrev'),n=document.getElementById('csNext');
+  if(!sc||!p||!n)return;
+  function step(d){var card=sc.querySelector('.cs-card');var w=card?card.getBoundingClientRect().width+24:400;sc.scrollBy({left:d*w,behavior:'smooth'});}
+  function upd(){var max=sc.scrollWidth-sc.clientWidth;var many=max>4;p.parentElement.style.display=many?'flex':'none';p.disabled=sc.scrollLeft<=2;n.disabled=sc.scrollLeft>=max-2;p.style.opacity=p.disabled?0.4:1;n.style.opacity=n.disabled?0.4:1;}
+  p.addEventListener('click',function(){step(-1);});n.addEventListener('click',function(){step(1);});
+  sc.addEventListener('scroll',upd,{passive:true});window.addEventListener('resize',upd);upd();
+})();
+</script>
 </main>
 </BaseLayout>
