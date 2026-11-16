@@ -8,7 +8,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   ogTitle="Real Estate Sales Gallery & Exhibition Models | Carve Model"
   ogDescription="Custom architectural models for real estate sales galleries and developer presentations. Explore lighting, detailing, delivery and installation with Carve Model."
   active="services"
-  imageSlot={true}
 >
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","@id":"https://www.physical-model.com/real-estate-sales-gallery-models#service","url":"https://www.physical-model.com/real-estate-sales-gallery-models","name":"Real Estate Sales Gallery & Exhibition Models","serviceType":"Architectural models for real estate sales galleries","description":"Custom architectural models for real estate sales galleries and developer presentations. Explore lighting, detailing, delivery and installation with Carve Model.","provider":{"@id":"https://www.physical-model.com/#organization"},"areaServed":[{"@type":"Country","name":"United States"},{"@type":"Country","name":"Canada"}],"isPartOf":{"@id":"https://www.physical-model.com/#website"},"breadcrumb":{"@id":"https://www.physical-model.com/real-estate-sales-gallery-models#breadcrumb"}}`} />
@@ -23,6 +22,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .page-hero p{margin-top:1.4rem;}
 .page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
 @media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
+.sg-photo{display:block;width:100%;aspect-ratio:var(--ar);background:var(--cm-ink-850);border:1px solid var(--cm-border);border-radius:var(--r-sm);overflow:hidden;}
+.sg-photo img{display:block;width:100%;height:100%;object-fit:cover;}
 .page-hero__visual{position:relative;}
 .page-hero__visual image-slot{width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);}
 .page-hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
@@ -89,7 +90,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .cs-specs dd{margin:0;text-align:right;color:var(--cm-text-strong);}
 .cs-card__meta{margin-top:0.35rem;font-size:0.82rem;letter-spacing:0.02em;color:var(--cm-text-muted,inherit);opacity:.75;}
 .cs-card .svc-all-btn{margin-top:1rem;}
-.cs-card__media image-slot{width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);}
 .cs-card h3{margin-top:1.2rem;font-size:1.15rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
 .cs-card .svc-checklist{margin-top:0.8rem;}
 .svc-faq{max-width:68ch;}
@@ -124,7 +124,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
     <div class="page-hero__visual reveal">
       <span class="corner tl"></span><span class="corner br"></span>
-      <image-slot id="re-hero" placeholder="Drop sales gallery model photo" src="/assets/type-presentation.webp"></image-slot>
+      <picture class="sg-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/sg-hero-480.avif 480w, /assets/sg-hero-800.avif 800w, /assets/sg-hero-1200.avif 1200w" sizes="(max-width:900px) min(100vw,440px), 650px"><source type="image/webp" srcset="/assets/sg-hero-480.webp 480w, /assets/sg-hero-800.webp 800w, /assets/sg-hero-1200.webp 1200w" sizes="(max-width:900px) min(100vw,440px), 650px"><img src="/assets/sg-hero-800.webp" width="1200" height="900" alt="Illuminated architectural model of two glass towers on a landscaped podium, displayed in a real estate sales lobby" loading="eager" fetchpriority="high" decoding="async"></picture>
       <span class="slot-label">Atlanta Mixed-Use Development · 1:96 · ABS</span>
     </div>
   </div>
@@ -147,7 +147,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </ul>
       <p class="svc-note">We recommend the scale and level of detail according to what your sales team needs to communicate and the space available for display.</p>
     </div>
-    <div class="svc-split__media"><image-slot id="re-shows" placeholder="Drop a project photo" src="/assets/show-buyer.webp"></image-slot></div>
+    <div class="svc-split__media"><picture class="sg-photo" style="--ar:4/5;"><source type="image/avif" srcset="/assets/sg-shows-480.avif 480w, /assets/sg-shows-800.avif 800w, /assets/sg-shows-1200.avif 1200w" sizes="(max-width:900px) min(100vw,440px), 510px"><source type="image/webp" srcset="/assets/sg-shows-480.webp 480w, /assets/sg-shows-800.webp 800w, /assets/sg-shows-1200.webp 1200w" sizes="(max-width:900px) min(100vw,440px), 510px"><img src="/assets/sg-shows-800.webp" width="1200" height="1500" alt="Close view of an illuminated residential development model showing stepped terraces, balconies and landscaping" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 
@@ -170,7 +170,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <h3 style="margin-top:1.8rem;font-size:1.15rem;">Combine the physical model with digital experiences</h3>
       <p class="muted" style="margin-top:0.6rem;">A sales-gallery model can be presented alongside touchscreen displays, architectural animation, augmented reality (AR) or virtual reality (VR). The physical model gives visitors a shared overview of the development, while digital experiences can explore interiors, viewpoints and design options in greater depth. Depending on the project, screen selections can also be coordinated with model lighting to highlight a building, floor or area. Carve can coordinate complementary digital deliverables, with content, hardware and integration requirements reviewed and quoted separately.</p>
     </div>
-    <div class="svc-split__media"><image-slot id="re-features" placeholder="Drop a project photo" src="/assets/svc-arch-features.webp"></image-slot></div>
+    <div class="svc-split__media"><picture class="sg-photo" style="--ar:4/5;"><source type="image/avif" srcset="/assets/sg-features-480.avif 480w, /assets/sg-features-800.avif 800w, /assets/sg-features-1200.avif 1200w" sizes="(max-width:900px) min(100vw,440px), 510px"><source type="image/webp" srcset="/assets/sg-features-480.webp 480w, /assets/sg-features-800.webp 800w, /assets/sg-features-1200.webp 1200w" sizes="(max-width:900px) min(100vw,440px), 510px"><img src="/assets/sg-features-800.webp" width="1200" height="1500" alt="Illuminated mixed-use development model with curved ribbon-like facades, a plaza and street-level detail" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 
@@ -187,7 +187,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </div>
   <div class="cs-scroll" id="csScroll" tabindex="0" aria-label="Featured sales gallery projects">
     <article class="cs-card">
-      <div class="cs-card__media"><image-slot id="re-atlanta" placeholder="Drop a project photo" src="/assets/casestudy-atlanta2-1200.webp"></image-slot></div>
+      <div class="cs-card__media"><picture class="sg-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/sg-atlanta-480.avif 480w, /assets/sg-atlanta-760.avif 760w" sizes="min(92vw,380px)"><source type="image/webp" srcset="/assets/sg-atlanta-480.webp 480w, /assets/sg-atlanta-760.webp 760w" sizes="min(92vw,380px)"><img src="/assets/sg-atlanta-760.webp" width="760" height="570" alt="Illuminated Atlanta mixed-use development model seen from above, showing ribbon-like architecture around a central courtyard" loading="lazy" decoding="async"></picture></div>
       <h3>Atlanta mixed-use development</h3>
       <p class="muted" style="margin-top:0.6rem;font-size:0.95rem;">An illuminated model presenting a mixed-use development in the client’s Atlanta real estate office, created to support property sales.</p>
       <dl class="cs-specs">
@@ -218,7 +218,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </ul>
       <p class="svc-note">Carve coordinates packaging and delivery across the United States and Canada. On-site installation is available when required and included in the agreed scope.</p>
     </div>
-    <div class="svc-split__media"><image-slot id="re-display" placeholder="Drop a project photo" src="/assets/sales-gallery.webp"></image-slot></div>
+    <div class="svc-split__media"><picture class="sg-photo" style="--ar:4/5;"><source type="image/avif" srcset="/assets/sg-display-480.avif 480w, /assets/sg-display-800.avif 800w, /assets/sg-display-1200.avif 1200w" sizes="(max-width:900px) min(100vw,440px), 510px"><source type="image/webp" srcset="/assets/sg-display-480.webp 480w, /assets/sg-display-800.webp 800w, /assets/sg-display-1200.webp 1200w" sizes="(max-width:900px) min(100vw,440px), 510px"><img src="/assets/sg-display-800.webp" width="1200" height="1500" alt="Illuminated waterfront development model on a white display base with integrated lighting, installed in a sales office" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 
