@@ -8,7 +8,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   ogTitle="Trade Show & Convention Models | Carve Model"
   ogDescription="Custom architectural models for trade shows and conventions, planned around portability, booth space, protective packaging and setup across multiple venues."
   active="services"
-  imageSlot={true}
 >
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","@id":"https://www.physical-model.com/trade-show-convention-models#service","url":"https://www.physical-model.com/trade-show-convention-models","name":"Trade Show & Convention Models","serviceType":"Architectural models for trade shows and conventions","description":"Custom architectural models for trade shows and conventions, planned around portability, booth space, protective packaging and setup across multiple venues.","provider":{"@id":"https://www.physical-model.com/#organization"},"areaServed":[{"@type":"Country","name":"United States"},{"@type":"Country","name":"Canada"}],"isPartOf":{"@id":"https://www.physical-model.com/#website"},"breadcrumb":{"@id":"https://www.physical-model.com/trade-show-convention-models#breadcrumb"}}`} />
@@ -23,6 +22,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .page-hero p{margin-top:1.4rem;}
 .page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
 @media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
+.tsc-photo{display:block;width:100%;aspect-ratio:var(--ar);background:var(--cm-ink-850);border:1px solid var(--cm-border);border-radius:var(--r-sm);overflow:hidden;}
+.tsc-photo img{display:block;width:100%;height:100%;object-fit:cover;}
 .page-hero__visual{position:relative;}
 .page-hero__visual image-slot{width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);}
 .page-hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
@@ -118,7 +119,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
     <div class="page-hero__visual reveal">
       <span class="corner tl"></span><span class="corner br"></span>
-      <image-slot id="tsc-hero" placeholder="Drop trade show model photo" src="/assets/trade-show-aviation-garage.webp"></image-slot>
+      <picture class="tsc-photo" style="--ar:1600/1200;"><img src="/assets/trade-show-aviation-garage-960.webp" srcset="/assets/trade-show-aviation-garage-640.webp 640w, /assets/trade-show-aviation-garage-960.webp 960w, /assets/trade-show-aviation-garage.webp 1600w" sizes="(max-width:900px) min(100vw,440px), 650px" width="1600" height="1200" alt="Architectural scale model of a multi-level mobility hub with rooftop aircraft landing pads and a street-level drop-off area" loading="eager" fetchpriority="high" decoding="async"></picture>
     </div>
   </div>
 </div></section>
@@ -139,7 +140,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Key buildings or areas through lighting.</li>
       </ul>
     </div>
-    <div class="svc-split__media"><image-slot id="tsc-clear" placeholder="Drop a project photo" src="/assets/easy-understand.webp" style="aspect-ratio:4/3;"></image-slot></div>
+    <div class="svc-split__media"><picture class="tsc-photo" style="--ar:1600/1200;"><img src="/assets/easy-understand-960.webp" srcset="/assets/easy-understand-640.webp 640w, /assets/easy-understand-960.webp 960w, /assets/easy-understand.webp 1600w" sizes="(max-width:900px) min(100vw,440px), 510px" width="1600" height="1200" alt="Architectural presentation model showing building façades, entrance and landscaped site" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 
@@ -159,7 +160,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </ul>
       <p class="svc-note">Materials, finishes and exposed details are selected with repeated handling in mind.</p>
     </div>
-    <div class="svc-split__media"><image-slot id="tsc-protect" placeholder="Drop a project photo" src="/assets/model-protect.webp" style="aspect-ratio:4/3;"></image-slot></div>
+    <div class="svc-split__media"><picture class="tsc-photo" style="--ar:1600/953;"><img src="/assets/model-protect-960.webp" srcset="/assets/model-protect-640.webp 640w, /assets/model-protect-960.webp 960w, /assets/model-protect.webp 1600w" sizes="(max-width:900px) min(100vw,440px), 510px" width="1600" height="953" alt="Architectural scale model secured inside a fitted reusable transport case" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 
@@ -172,7 +173,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p class="muted" style="margin-top:1rem;">Digital content can reveal interiors, explain project phases or demonstrate design options while the model provides the overall development context.</p>
       <p class="svc-note">Content, hardware and integration requirements are scoped separately.</p>
     </div>
-    <div class="svc-split__media"><image-slot id="tsc-digital" placeholder="Drop a project photo" src="/assets/digital.webp" style="aspect-ratio:4/3;"></image-slot></div>
+    <div class="svc-split__media"><picture class="tsc-photo" style="--ar:1600/1064;"><img src="/assets/digital-960.webp" srcset="/assets/digital-640.webp 640w, /assets/digital-960.webp 960w, /assets/digital.webp 1600w" sizes="(max-width:900px) min(100vw,440px), 510px" width="1600" height="1064" alt="Illuminated city scale model with highlighted towers and surrounding buildings" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 
