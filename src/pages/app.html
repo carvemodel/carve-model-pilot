@@ -2035,7 +2035,7 @@ body.pre-deposit[data-role="client"] .navbtn.projnav[data-view="milestones"]{dis
 <div class="modal-overlay" id="imgLightbox" hidden onclick="if(event.target===this)closeImageLightbox();" style="z-index:400;">
   <div style="position:relative;max-width:min(92vw,1100px);max-height:92vh;">
     <button type="button" onclick="closeImageLightbox()" aria-label="Close" style="position:absolute;top:-2.2rem;right:0;background:none;border:none;color:var(--cm-text);font-size:1.6rem;line-height:1;cursor:pointer;">×</button>
-    <img id="imgLightboxImg" src="" alt="" style="display:block;max-width:100%;max-height:92vh;border-radius:var(--r-sm);box-shadow:var(--shadow-float);">
+    <img id="imgLightboxImg" src="" alt="" style="display:block;max-width:100%;max-height:92vh;box-shadow:var(--shadow-float);">
     <div id="imgLightboxCaption" style="margin-top:0.6rem;text-align:center;color:var(--cm-text-subtle);font-size:0.8rem;"></div>
   </div>
 </div>
@@ -9876,7 +9876,7 @@ window.closeImageLightbox=closeImageLightbox;
 function boundaryFileOneLine(bf,label){
   var sizeStr=bf.size?(bf.size/1024/1024>=1?(bf.size/1024/1024).toFixed(1)+' MB':Math.round(bf.size/1024)+' KB'):'';
   var isImg=isImageBoundaryFile(bf)&&bf.url;
-  var thumb=isImg?('<img src="'+esc(bf.url)+'" alt="'+esc(label)+'" onclick="openImageLightbox(\''+esc(bf.url)+'\',\''+esc(label)+'\')" style="display:block;max-width:220px;max-height:160px;border-radius:var(--r-sm);border:1px solid var(--cm-border);cursor:zoom-in;margin-top:0.5rem;object-fit:cover;">'):'';
+  var thumb=isImg?('<img src="'+esc(bf.url)+'" alt="'+esc(label)+'" onclick="openImageLightbox(\''+esc(bf.url)+'\',\''+esc(label)+'\')" style="display:block;max-width:220px;max-height:160px;border:1px solid var(--cm-border);cursor:zoom-in;margin-top:0.5rem;object-fit:cover;">'):'';
   if(bf.url){
     return thumb+'<a class="filechip filechip--link" href="'+esc(bf.url)+'" target="_blank" rel="noopener" download="'+esc(bf.name)+'" style="margin-top:0.5rem;">📎 '+esc(label)+' <span class="filechip__sz">'+sizeStr+'</span> ↓</a>';
   }
@@ -11702,7 +11702,7 @@ window.SRC_renderLeads=function(){
       '</div>'+
       (l.extras&&l.extras.length?('<div class="leadcard__note"><span class="mock__k">Special requirements</span><p>'+esc(l.extras.join(' \u00b7 '))+'</p></div>'):'')+
       '<div class="leadcard__note"><span class="mock__k">Project details</span><p>'+esc(l.notes)+'</p></div>'+
-      (l.boundaryMap?('<div class="leadcard__note"><span class="mock__k">Scope boundary \u2014 marked by client</span><div style="margin-top:0.6rem;"><a href="'+l.boundaryMap+'" target="_blank" rel="noopener"><img src="'+l.boundaryMap+'" style="max-width:280px;border:1px solid var(--cm-border);border-radius:var(--r-sm);display:block;"></a></div></div>'):'')+
+      (l.boundaryMap?('<div class="leadcard__note"><span class="mock__k">Scope boundary \u2014 marked by client</span><div style="margin-top:0.6rem;"><a href="'+l.boundaryMap+'" target="_blank" rel="noopener"><img src="'+l.boundaryMap+'" style="max-width:280px;border:1px solid var(--cm-border);display:block;"></a></div></div>'):'')+
       filesHtml+
       '</div><div class="leadcard__act"><span class="mock__k">Received '+esc(l.receivedAt)+' \u00b7 '+esc((!l.source||l.source==='Website form')?'Inquiry form':('Email \u00b7 '+l.source))+'</span>'+
       '<button class="btn btn--primary btn--sm" onclick="convertLead(\''+esc(l.id)+'\')">Obtain Quotation \u2192</button>'+

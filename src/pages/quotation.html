@@ -3615,7 +3615,7 @@ window.SRC_renderLeads=function(){
       '</div>'+
       (l.extras&&l.extras.length?('<div class="leadcard__note"><span class="mock__k">Special requirements</span><p>'+esc(l.extras.join(' \u00b7 '))+'</p></div>'):'')+
       '<div class="leadcard__note"><span class="mock__k">Project details</span><p>'+esc(l.notes)+'</p></div>'+
-      (l.boundaryMap?('<div class="leadcard__note"><span class="mock__k">Scope boundary \u2014 marked by client</span><div style="margin-top:0.6rem;"><a href="'+l.boundaryMap+'" target="_blank" rel="noopener"><img src="'+l.boundaryMap+'" style="max-width:280px;border:1px solid var(--cm-border);border-radius:var(--r-sm);display:block;"></a></div></div>'):'')+
+      (l.boundaryMap?('<div class="leadcard__note"><span class="mock__k">Scope boundary \u2014 marked by client</span><div style="margin-top:0.6rem;"><a href="'+l.boundaryMap+'" target="_blank" rel="noopener"><img src="'+l.boundaryMap+'" style="max-width:280px;border:1px solid var(--cm-border);display:block;"></a></div></div>'):'')+
       filesHtml+
       '</div><div class="leadcard__act"><span class="mock__k">Received '+esc(l.receivedAt)+' \u00b7 '+esc(l.source||'Website form')+'</span>'+
       '<button class="btn btn--primary btn--sm" onclick="convertLead(\''+esc(l.id)+'\')">Submit a quote \u2192</button>'+
