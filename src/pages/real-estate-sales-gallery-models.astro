@@ -81,8 +81,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .cs-nav__btn{width:44px;height:44px;border-radius:50%;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);color:var(--cm-text-strong);font-size:1.15rem;line-height:1;cursor:pointer;transition:background var(--dur-2),color var(--dur-2);}
 .cs-nav__btn:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .cs-scroll{display:flex;gap:clamp(1.2rem,2.5vw,2rem);overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;margin-top:1.8rem;padding-bottom:1rem;scrollbar-width:thin;}
-.cs-card{flex:0 0 clamp(250px,30%,340px);scroll-snap-align:start;}
+.cs-card{flex:0 0 clamp(280px,32%,380px);scroll-snap-align:start;}
 .cs-card__media img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r-sm);}
+.cs-specs{margin:1rem 0 0;border-top:1px solid var(--cm-border);}
+.cs-specs div{display:flex;justify-content:space-between;gap:1rem;padding:0.5rem 0;border-bottom:1px solid var(--cm-border);font-size:0.9rem;}
+.cs-specs dt{color:var(--cm-text-muted,inherit);opacity:.75;}
+.cs-specs dd{margin:0;text-align:right;color:var(--cm-text-strong);}
 .cs-card__meta{margin-top:0.35rem;font-size:0.82rem;letter-spacing:0.02em;color:var(--cm-text-muted,inherit);opacity:.75;}
 .cs-card .svc-all-btn{margin-top:1rem;}
 .cs-card__media image-slot{width:100%;height:auto;aspect-ratio:4/3;border-radius:var(--r-sm);}
@@ -185,44 +189,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <article class="cs-card">
       <div class="cs-card__media"><image-slot id="re-atlanta" placeholder="Drop a project photo" src="/assets/casestudy-atlanta2-1200.webp"></image-slot></div>
       <h3>Atlanta mixed-use development</h3>
-      <p class="cs-card__meta">1:96 · ABS · approx. 8 × 8 × 6 ft · Illuminated</p>
-      <p class="muted" style="margin-top:0.6rem;font-size:0.95rem;">An illuminated model of two towers on a shared podium, built for the client’s Atlanta real estate office. Fabricated in sections for restricted elevator access, then assembled and lit on site.</p>
+      <p class="muted" style="margin-top:0.6rem;font-size:0.95rem;">An illuminated model presenting a mixed-use development in the client’s Atlanta real estate office, created to support property sales.</p>
+      <dl class="cs-specs">
+        <div><dt>Scale</dt><dd>1:96</dd></div>
+        <div><dt>Size</dt><dd>≈ 8 × 8 × 6 ft</dd></div>
+        <div><dt>Material</dt><dd>ABS</dd></div>
+        <div><dt>Lighting</dt><dd>Interior &amp; exterior</dd></div>
+        <div><dt>Delivery</dt><dd>Sectional, on-site assembly</dd></div>
+      </dl>
       <a class="btn btn--ghost svc-all-btn" href="/blog/atlanta-mixed-use-architectural-model-installation">Explore the Atlanta project <span class="arrow">→</span></a>
-    </article>
-    <article class="cs-card">
-      <a class="cs-card__media" href="/works" aria-label="Luxury Apartment — view our work"><img src="https://9jzgoseu9yi4w7nr.public.blob.vercel-storage.com/works/pmviuriszhvelv-card-Luxury-Apartment-hCM3A61DtZxqEoxbsK5TMR9QRF6VXk.webp" alt="Luxury Apartment — architectural scale model by Carve Model" width="1200" height="900" loading="lazy" decoding="async"></a>
-      <h3>Luxury Apartment</h3>
-      <p class="cs-card__meta">Sales gallery · ABS</p>
-    </article>
-    <article class="cs-card">
-      <a class="cs-card__media" href="/works" aria-label="Mixed Use Development — view our work"><img src="https://9jzgoseu9yi4w7nr.public.blob.vercel-storage.com/works/pmviusnxdmv8j1-card-Mixed-Use-Development-ZGbGvpzN4vTsTTLoPgQfOuOLlM5V7h.webp" alt="Mixed Use Development — architectural scale model by Carve Model" width="1200" height="900" loading="lazy" decoding="async"></a>
-      <h3>Mixed Use Development</h3>
-      <p class="cs-card__meta">1:96 · ABS</p>
-    </article>
-    <article class="cs-card">
-      <a class="cs-card__media" href="/works" aria-label="Residential Tower — view our work"><img src="https://9jzgoseu9yi4w7nr.public.blob.vercel-storage.com/works/pmviupt4jr7xvq-card-Residential-Tower-Xj8DhQEReG1tr4n3NW0tJUbi7q3Rjg.webp" alt="Residential Tower — architectural scale model by Carve Model" width="1200" height="900" loading="lazy" decoding="async"></a>
-      <h3>Residential Tower</h3>
-      <p class="cs-card__meta">1:200 · ABS</p>
-    </article>
-    <article class="cs-card">
-      <a class="cs-card__media" href="/works" aria-label="Waterfront Resort — view our work"><img src="https://9jzgoseu9yi4w7nr.public.blob.vercel-storage.com/works/pmviusevxydb8q-card-Waterfront-Resort-xJBLTXRoCi3XWg5WjRAYJm4pGSmbaa.webp" alt="Waterfront Resort — architectural scale model by Carve Model" width="1200" height="900" loading="lazy" decoding="async"></a>
-      <h3>Waterfront Resort</h3>
-      <p class="cs-card__meta">1:150 · ABS</p>
-    </article>
-    <article class="cs-card">
-      <a class="cs-card__media" href="/works" aria-label="Transit Oriented Development — view our work"><img src="https://9jzgoseu9yi4w7nr.public.blob.vercel-storage.com/works/pmviuq9cq2zvsb-card-Transit-Oriented-Development-XSp8sdnusXvsikoWihGoJiYPlB2u4g.webp" alt="Transit Oriented Development — architectural scale model by Carve Model" width="1200" height="900" loading="lazy" decoding="async"></a>
-      <h3>Transit Oriented Development</h3>
-      <p class="cs-card__meta">1:150 · ABS</p>
-    </article>
-    <article class="cs-card">
-      <a class="cs-card__media" href="/works" aria-label="Residential Complex — view our work"><img src="https://9jzgoseu9yi4w7nr.public.blob.vercel-storage.com/works/pmviusi7f5ysly-card-Residential-Complex-m2vhicRc1j5UU5Qu2dj1v56N4UEVPF.webp" alt="Residential Complex — architectural scale model by Carve Model" width="1200" height="900" loading="lazy" decoding="async"></a>
-      <h3>Residential Complex</h3>
-      <p class="cs-card__meta">1:96 · ABS</p>
-    </article>
-    <article class="cs-card">
-      <a class="cs-card__media" href="/works" aria-label="Resort Development — view our work"><img src="https://9jzgoseu9yi4w7nr.public.blob.vercel-storage.com/works/pmviutiv342w7c-card-Resort-Development-GRBfUfHUP6Qk50qZDLC5uhvDgUQt5D.webp" alt="Resort Development — architectural scale model by Carve Model" width="1200" height="900" loading="lazy" decoding="async"></a>
-      <h3>Resort Development</h3>
-      <p class="cs-card__meta">1:200 · ABS</p>
     </article>
   </div>
 </div></section>
