@@ -22,7 +22,7 @@
  *                'circle' applies 50% border-radius; on a non-square slot
  *                that's an ellipse — set equal width and height for a true
  *                circle.
- *   radius       Corner radius in px for 'rounded'.       (default 12)
+ *   radius       Corner radius in px for 'rounded'.       (default 0 — square)
  *   mask         Any CSS clip-path value. Overrides `shape` — use this for
  *                hexagons, blobs, arbitrary polygons.
  *   fit          object-fit: cover | contain | fill.       (default 'cover')
@@ -585,7 +585,7 @@
       else if (shape === 'pill') radius = '9999px';
       else if (shape === 'rounded') {
         const n = parseFloat(this.getAttribute('radius'));
-        radius = (Number.isFinite(n) ? n : 12) + 'px';
+        radius = (Number.isFinite(n) ? n : 0) + "px";
       }
       this._frame.style.borderRadius = mask ? '' : radius;
       this._frame.style.clipPath = mask || '';
