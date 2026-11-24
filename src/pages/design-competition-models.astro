@@ -81,10 +81,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .cs-nav__btn{width:44px;height:44px;border-radius:50%;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);color:var(--cm-text-strong);font-size:1.15rem;line-height:1;cursor:pointer;transition:background var(--dur-2),color var(--dur-2);}
 .cs-nav__btn:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .cs-scroll{display:flex;gap:clamp(1.2rem,2.5vw,2rem);overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;margin-top:1.8rem;padding-bottom:1rem;scrollbar-width:thin;}
-.cs-card{flex:0 0 min(92%,560px);scroll-snap-align:start;}
-.cs-card__media image-slot{width:100%;height:auto;aspect-ratio:4/3;}
+.cs-card{flex:0 0 clamp(280px,32%,380px);scroll-snap-align:start;}
+.cs-card__media img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;}
+.cs-specs{margin:1rem 0 0;border-top:1px solid var(--cm-border);}
+.cs-specs div{display:flex;justify-content:space-between;gap:1rem;padding:0.5rem 0;border-bottom:1px solid var(--cm-border);font-size:0.9rem;}
+.cs-specs dt{color:var(--cm-text-muted,inherit);opacity:.75;}
+.cs-specs dd{margin:0;text-align:right;color:var(--cm-text-strong);}
+.cs-card__meta{margin-top:0.35rem;font-size:0.82rem;letter-spacing:0.02em;color:var(--cm-text-muted,inherit);opacity:.75;}
+.cs-card .svc-all-btn{margin-top:1rem;}
 .cs-card h3{margin-top:1.2rem;font-size:1.15rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
 .cs-card .svc-checklist{margin-top:0.8rem;}
+.cs-card__media picture{display:block;width:100%;aspect-ratio:4/3;background:var(--cm-ink-850);border:1px solid var(--cm-border);overflow:hidden;}
+.cs-card__media picture img{display:block;width:100%;height:100%;object-fit:cover;}
 .svc-faq{max-width:68ch;}
 .svc-faq .faq-list{border-top:1px solid var(--cm-line-faint);margin-top:1.8rem;}
 .svc-faq .faq-item{border-bottom:1px solid var(--cm-line-faint);}
@@ -228,6 +236,33 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </div>
 </div></section>
 
+<section class="svc-section"><div class="container">
+  <div class="flex justify-between items-center wrap gap">
+    <div>
+      <span class="eyebrow">Featured projects</span>
+      <h2>Design competition case studies</h2>
+    </div>
+    <div class="cs-nav" aria-label="Scroll case studies">
+      <button type="button" class="cs-nav__btn" id="csPrev" aria-label="Previous case study">‹</button>
+      <button type="button" class="cs-nav__btn" id="csNext" aria-label="Next case study">›</button>
+    </div>
+  </div>
+  <div class="cs-scroll" id="csScroll" tabindex="0" aria-label="Featured design competition projects">
+    <article class="cs-card">
+      <div class="cs-card__media"><picture><source type="image/avif" srcset="/assets/sa-competition-480.avif 480w, /assets/sa-competition-800.avif 800w, /assets/sa-competition-1200.avif 1200w" sizes="min(92vw,380px)"><source type="image/webp" srcset="/assets/sa-competition-480.webp 480w, /assets/sa-competition-800.webp 800w, /assets/sa-competition-1200.webp 1200w" sizes="min(92vw,380px)"><img src="/assets/sa-competition-800.webp" srcset="/assets/sa-competition-480.webp 480w, /assets/sa-competition-800.webp 800w, /assets/sa-competition-1200.webp 1200w" sizes="min(92vw,380px)" width="1200" height="900" alt="Illuminated architectural model of a visitor center with glowing translucent mesh façades, a green roof and a landscaped entrance drive" loading="lazy" decoding="async"></picture></div>
+      <h3>Visitor Center design competition model</h3>
+      <p class="muted" style="margin-top:0.6rem;font-size:0.95rem;">A physical model for a visitor center competition proposal, with material testing for windows, glazing and mesh to explore how these elements read at model scale.</p>
+      <dl class="cs-specs">
+        <div><dt>Scale</dt><dd>1:96</dd></div>
+        <div><dt>Material</dt><dd>ABS</dd></div>
+        <div><dt>Scope</dt><dd>Glazing and mesh testing</dd></div>
+        <div><dt>Project type</dt><dd>Design competition</dd></div>
+      </dl>
+      <a class="btn btn--ghost svc-all-btn" href="/blog/visitor-center-design-competition-model">Read the case study <span class="arrow">→</span></a>
+    </article>
+  </div>
+</div></section>
+
 <section class="svc-section" style="border-bottom:0;"><div class="container">
   <span class="eyebrow">Send us</span>
   <h2>Start your competition model</h2>
@@ -251,5 +286,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
   </div>
 </div></section>
+<script is:inline>
+(function(){
+  var sc=document.getElementById('csScroll'),p=document.getElementById('csPrev'),n=document.getElementById('csNext');
+  if(!sc||!p||!n)return;
+  function step(d){var card=sc.querySelector('.cs-card');var w=card?card.getBoundingClientRect().width+24:400;sc.scrollBy({left:d*w,behavior:'smooth'});}
+  function upd(){var max=sc.scrollWidth-sc.clientWidth;var many=max>4;p.parentElement.style.display=many?'flex':'none';p.disabled=sc.scrollLeft<=2;n.disabled=sc.scrollLeft>=max-2;p.style.opacity=p.disabled?0.4:1;n.style.opacity=n.disabled?0.4:1;}
+  p.addEventListener('click',function(){step(-1);});n.addEventListener('click',function(){step(1);});
+  sc.addEventListener('scroll',upd,{passive:true});window.addEventListener('resize',upd);upd();
+})();
+</script>
 </main>
 </BaseLayout>
