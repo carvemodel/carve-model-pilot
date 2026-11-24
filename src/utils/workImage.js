@@ -21,11 +21,18 @@ export function cardImage(p) {
   };
 }
 
+// A bare number like "200" is shown as the ratio "1:200"; anything else
+// ("1:500", "1/16\" = 1'0\"", "Film-grade", "N/A") is shown as entered.
+export function formatScale(scale) {
+  const t = String(scale == null ? '' : scale).trim();
+  return /^\d+(\.\d+)?$/.test(t) ? `1:${t}` : t;
+}
+
 // Accurate, descriptive alt text. An explicit p.alt (editable in /admin-works)
 // always wins; otherwise build one from the project's own details.
 export function workAlt(p, categoryLabel) {
   if (p.alt && String(p.alt).trim()) return String(p.alt).trim();
   const kind = categoryLabel ? `${categoryLabel} physical model` : 'Physical model';
-  const details = [p.scale && `${p.scale} scale`, p.material].filter(Boolean).join(', ');
+  const details = [p.scale && `${formatScale(p.scale)} scale`, p.material].filter(Boolean).join(', ');
   return `${p.name} — ${kind} by Carve Model${details ? ` (${details})` : ''}`;
 }

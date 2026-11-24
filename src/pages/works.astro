@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { createClient } from 'redis';
-import { cardImage, workAlt } from '../utils/workImage.js';
+import { cardImage, workAlt, formatScale } from '../utils/workImage.js';
 
 const CATEGORY_LABEL = {
   architecture: 'Architecture & Real Estate',
@@ -168,7 +168,7 @@ if (process.env.REDIS_URL) {
     {projects.map((p) => {
       const card = cardImage(p);
       const ratio = card.width && card.height ? `${card.width}/${card.height}` : '4/3';
-      const label = [p.name, p.scale, p.material].filter(Boolean).join(' · ');
+      const label = [p.name, formatScale(p.scale), p.material].filter(Boolean).join(' · ');
       const tags = (p.tag || '').split(',').map((t) => t.trim()).filter(Boolean);
       const tagsAttr = tags.map((t) => t.toLowerCase()).join(',');
       return (

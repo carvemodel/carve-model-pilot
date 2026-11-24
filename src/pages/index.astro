@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { createClient } from 'redis';
-import { cardImage, workAlt } from '../utils/workImage.js';
+import { cardImage, workAlt, formatScale } from '../utils/workImage.js';
 
 // Shown on the homepage's "Selected work" tiles until real projects exist —
 // same data shape as works.astro (id, name, scale, material, imageUrl,
@@ -536,7 +536,7 @@ if (process.env.REDIS_URL) {
         const card = cardImage(w);
         const ratio = card.width && card.height ? `${card.width}/${card.height}` : '1/1';
         const ratioStyle = i === 0 ? '' : `aspect-ratio:${ratio};`;
-        const tick = [w.scale, w.material].filter(Boolean).join(' · ');
+        const tick = [formatScale(w.scale), w.material].filter(Boolean).join(' · ');
         return (
           <figure class="work reveal" data-delay={i === 0 ? undefined : i * 40} style="margin:0;">
             {w.imageUrl
