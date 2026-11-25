@@ -8,7 +8,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   ogTitle="Journal | Carve Model"
   ogDescription="Practical guidance on physical models, project planning, materials, fabrication, and digital-to-physical production."
   active="blog"
-  imageSlot={true}
 >
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"CollectionPage","@id":"https://www.physical-model.com/blog#webpage","url":"https://www.physical-model.com/blog","name":"Journal — Insights on Architectural Model Making","description":"Practical guidance on physical models, project planning, materials, fabrication, and digital-to-physical production—along with news, events, and observations from Carve Model.","isPartOf":{"@id":"https://www.physical-model.com/#website"},"about":{"@id":"https://www.physical-model.com/#organization"},"breadcrumb":{"@id":"https://www.physical-model.com/blog#breadcrumb"}}`} />
@@ -18,7 +17,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,3rem);border-bottom:1px solid var(--cm-line-faint);}
 .page-hero h1{margin-top:1.4rem;}.page-hero p{margin-top:1.4rem;}
 .feat{display:grid;grid-template-columns:1.1fr 0.9fr;gap:clamp(2rem,4vw,3.5rem);align-items:center;padding-top:1.6rem;padding-bottom:clamp(1.3rem,2vw,1.8rem);margin-top:1.6rem;}
-.feat image-slot{width:100%;aspect-ratio:16/10;}
 .feat-visual{position:relative;}
 .feat-visual .feat-photo{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:cover;object-position:50% center;}
 .feat-visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}

@@ -8,13 +8,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   ogTitle="Film & Commercial Miniatures | Carve Model"
   ogDescription="Miniature sets and physical models for film, commercial, and production teams — built for previsualization, camera planning, and on-location use."
   active="services"
-  imageSlot={true}
 >
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","@id":"https://www.physical-model.com/scale-model-services/film#service","url":"https://www.physical-model.com/scale-model-services/film","name":"Film & Commercial Miniatures","serviceType":"Film and commercial miniatures","provider":{"@id":"https://www.physical-model.com/#organization"},"areaServed":[{"@type":"Country","name":"United States"},{"@type":"Country","name":"Canada"}]}`} />
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"BreadcrumbList","@id":"https://www.physical-model.com/scale-model-services/film#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.physical-model.com/"},{"@type":"ListItem","position":2,"name":"Services","item":"https://www.physical-model.com/scale-model-services"},{"@type":"ListItem","position":3,"name":"Film & Commercial Miniatures","item":"https://www.physical-model.com/scale-model-services/film"}]}`} />
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"FAQPage","@id":"https://www.physical-model.com/scale-model-services/film#faq","mainEntity":[{"@type":"Question","name":"What information do you need to evaluate a film or commercial miniature?","acceptedAnswer":{"@type":"Answer","text":"Please provide the available concept art, storyboards, drawings, 3D files, reference images, intended camera views, approximate miniature dimensions or scale, production schedule, and delivery location. It is also helpful to identify whether the miniature will be used for planning, presentation, on-camera filming, practical effects, or a combination of purposes."}},{"@type":"Question","name":"Can a miniature be designed around specific camera angles or production requirements?","acceptedAnswer":{"@type":"Answer","text":"Yes. The miniature can be developed around the intended framing, viewing distance, lens requirements, access points, lighting, removable sections, and areas visible to the camera. Defining the intended shots early helps concentrate detail and fabrication effort where it will have the greatest production value."}},{"@type":"Question","name":"How do you balance appearance, weight, access, and durability?","acceptedAnswer":{"@type":"Answer","text":"Materials, internal structure, surface finishes, connections, and removable components are selected according to how the miniature will be transported, handled, illuminated, accessed, and filmed. A presentation miniature may prioritize finish quality, while an on-set miniature may require additional reinforcement, modular construction, or replaceable components."}},{"@type":"Question","name":"Can you accommodate confidential or deadline-sensitive productions?","acceptedAnswer":{"@type":"Answer","text":"Yes. NDA, restricted-access, and project-specific information-handling requirements can be established before confidential files are shared. For deadline-sensitive work, we review the scope, approval process, fabrication requirements, and delivery plan before confirming whether the requested schedule is achievable."}}]}`} />
 <style>
+.rs-photo{display:block;width:100%;aspect-ratio:var(--ar);background:var(--cm-ink-850);border:1px solid var(--cm-border);overflow:hidden;}.rs-photo img{display:block;width:100%;height:100%;object-fit:cover;}
 .breadcrumb{padding-top:1.6rem;}
 .breadcrumb a{font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.04em;color:var(--cm-text-subtle);transition:color var(--dur-2);}
 .breadcrumb a:hover{color:var(--cm-text-strong);}
@@ -25,7 +25,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
 @media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
 .page-hero__visual{position:relative;}
-.page-hero__visual image-slot{width:100%;height:auto;aspect-ratio:4/3;}
 .page-hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .page-hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .page-hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
@@ -47,7 +46,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .svc-types{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.6rem,3vw,2.6rem);margin-top:2rem;}
 .svc-type{padding-top:0;border-top:0;}
 .svc-type__media{margin-bottom:0.9rem;}
-.svc-type__media image-slot{width:100%;height:auto;aspect-ratio:4/3;}
 .svc-type h3{font-size:1.15rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
 .svc-type p{margin-top:0.5rem;color:var(--cm-text-muted);font-size:0.9rem;max-width:none;}
 @media(max-width:900px){.svc-types{grid-template-columns:repeat(2,1fr);}}
@@ -65,7 +63,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 @media(max-width:480px){.formats{grid-template-columns:1fr;}}
 .svc-split{display:grid;grid-template-columns:1.1fr 0.9fr;gap:clamp(2rem,4vw,4rem);align-items:start;}
 .svc-split .svc-checklist,.svc-split .lead-p{max-width:none;}
-.svc-split__media image-slot{width:100%;height:auto;aspect-ratio:4/5;}
 @media(max-width:900px){.svc-split{grid-template-columns:1fr;}.svc-split__media{order:-1;max-width:440px;}}
 .svc-faq{max-width:68ch;}
 .svc-faq .faq-list{border-top:1px solid var(--cm-line-faint);margin-top:1.8rem;}
@@ -98,7 +95,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </div>
     <div class="page-hero__visual reveal">
       <span class="corner tl"></span><span class="corner br"></span>
-      <image-slot id="svc-film-hero" placeholder="Drop film miniature photo" src="/assets/service-product-film-hero-v2.webp"></image-slot>
+      <picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-service-product-film-hero-v2-4x3-480.avif 480w, /assets/rs-service-product-film-hero-v2-4x3-800.avif 800w, /assets/rs-service-product-film-hero-v2-4x3-1080.avif 1080w" sizes="(max-width:900px) min(100vw,440px), 650px"><source type="image/webp" srcset="/assets/rs-service-product-film-hero-v2-4x3-480.webp 480w, /assets/rs-service-product-film-hero-v2-4x3-800.webp 800w, /assets/rs-service-product-film-hero-v2-4x3-1080.webp 1080w" sizes="(max-width:900px) min(100vw,440px), 650px"><img src="/assets/rs-service-product-film-hero-v2-4x3-1080.webp" srcset="/assets/rs-service-product-film-hero-v2-4x3-480.webp 480w, /assets/rs-service-product-film-hero-v2-4x3-800.webp 800w, /assets/rs-service-product-film-hero-v2-4x3-1080.webp 1080w" sizes="(max-width:900px) min(100vw,440px), 650px" width="1080" height="810" alt="Detailed film miniature set of a military base with hangars and vehicles on a blue-screen stage" loading="eager" fetchpriority="high" decoding="async"></picture>
       <div class="hero__spec">
         <span class="tick">PROJECTS DELIVERED</span>
         <strong>500+ models</strong>
@@ -125,7 +122,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Produce a durable display or campaign object</li>
       </ul>
     </div>
-    <div class="svc-split__media"><image-slot id="svc-film-why" placeholder="Drop a project photo" src="/assets/film-physical.webp"></image-slot></div>
+    <div class="svc-split__media"><picture class="rs-photo" style="--ar:4/5;"><source type="image/avif" srcset="/assets/rs-film-physical-4x5-480.avif 480w, /assets/rs-film-physical-4x5-800.avif 800w, /assets/rs-film-physical-4x5-1186.avif 1186w" sizes="(max-width:900px) min(100vw,440px), 510px"><source type="image/webp" srcset="/assets/rs-film-physical-4x5-480.webp 480w, /assets/rs-film-physical-4x5-800.webp 800w, /assets/rs-film-physical-4x5-1186.webp 1186w" sizes="(max-width:900px) min(100vw,440px), 510px"><img src="/assets/rs-film-physical-4x5-1186.webp" srcset="/assets/rs-film-physical-4x5-480.webp 480w, /assets/rs-film-physical-4x5-800.webp 800w, /assets/rs-film-physical-4x5-1186.webp 1186w" sizes="(max-width:900px) min(100vw,440px), 510px" width="1186" height="1482" alt="Film crew shooting scale warships on a model water tank in front of a green screen" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 
@@ -138,9 +135,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <a class="btn btn--ghost svc-all-btn" href="/works">View Our Work <span class="arrow">→</span></a>
   </div>
   <div class="svc-types">
-    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-ftype-previs" placeholder="Drop previsualization/camera-planning model photo" src="/assets/film-previs.webp"></image-slot></div><h3>Previs & Camera-Planning Models</h3><p>Physical planning models used to study composition, blocking, camera positions, framing, sightlines, movement, and set relationships before production.</p></div>
-    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-ftype-transport" placeholder="Drop practical filming miniature photo" src="/assets/film-practical.webp"></image-slot></div><h3>Practical Filming Miniatures</h3><p>Camera-ready miniature sets, environments, structures, or objects created to appear directly in photography or filmed footage.</p></div>
-    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-ftype-commercial" placeholder="Drop commercial product miniature/prop photo" src="/assets/film-mini.webp"></image-slot></div><h3>Commercial Product Miniatures & Props</h3><p>Reduced, enlarged, or specially fabricated products and objects created for advertising, close-up photography, branded content, demonstrations, campaign installations, or controlled visual effects.</p></div>
+    <div class="svc-type"><div class="svc-type__media"><picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-film-previs-4x3-480.avif 480w, /assets/rs-film-previs-4x3-800.avif 800w, /assets/rs-film-previs-4x3-1000.avif 1000w" sizes="(max-width:900px) 92vw, 380px"><source type="image/webp" srcset="/assets/rs-film-previs-4x3-480.webp 480w, /assets/rs-film-previs-4x3-800.webp 800w, /assets/rs-film-previs-4x3-1000.webp 1000w" sizes="(max-width:900px) 92vw, 380px"><img src="/assets/rs-film-previs-4x3-1000.webp" srcset="/assets/rs-film-previs-4x3-480.webp 480w, /assets/rs-film-previs-4x3-800.webp 800w, /assets/rs-film-previs-4x3-1000.webp 1000w" sizes="(max-width:900px) 92vw, 380px" width="1000" height="750" alt="Detailed miniature of an overgrown library interior with shelves and trees" loading="lazy" decoding="async"></picture></div><h3>Previs & Camera-Planning Models</h3><p>Physical planning models used to study composition, blocking, camera positions, framing, sightlines, movement, and set relationships before production.</p></div>
+    <div class="svc-type"><div class="svc-type__media"><picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-film-practical-4x3-480.avif 480w, /assets/rs-film-practical-4x3-800.avif 800w, /assets/rs-film-practical-4x3-1200.avif 1200w" sizes="(max-width:900px) 92vw, 380px"><source type="image/webp" srcset="/assets/rs-film-practical-4x3-480.webp 480w, /assets/rs-film-practical-4x3-800.webp 800w, /assets/rs-film-practical-4x3-1200.webp 1200w" sizes="(max-width:900px) 92vw, 380px"><img src="/assets/rs-film-practical-4x3-1200.webp" srcset="/assets/rs-film-practical-4x3-480.webp 480w, /assets/rs-film-practical-4x3-800.webp 800w, /assets/rs-film-practical-4x3-1200.webp 1200w" sizes="(max-width:900px) 92vw, 380px" width="1200" height="900" alt="Miniature city street with period buildings and vehicles photographed at close range" loading="lazy" decoding="async"></picture></div><h3>Practical Filming Miniatures</h3><p>Camera-ready miniature sets, environments, structures, or objects created to appear directly in photography or filmed footage.</p></div>
+    <div class="svc-type"><div class="svc-type__media"><picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-film-mini-4x3-480.avif 480w, /assets/rs-film-mini-4x3-800.avif 800w, /assets/rs-film-mini-4x3-1200.avif 1200w" sizes="(max-width:900px) 92vw, 380px"><source type="image/webp" srcset="/assets/rs-film-mini-4x3-480.webp 480w, /assets/rs-film-mini-4x3-800.webp 800w, /assets/rs-film-mini-4x3-1200.webp 1200w" sizes="(max-width:900px) 92vw, 380px"><img src="/assets/rs-film-mini-4x3-1200.webp" srcset="/assets/rs-film-mini-4x3-480.webp 480w, /assets/rs-film-mini-4x3-800.webp 800w, /assets/rs-film-mini-4x3-1200.webp 1200w" sizes="(max-width:900px) 92vw, 380px" width="1200" height="900" alt="Ornate metal lidded bowl with a lattice pattern on dark fabric, a commercial product miniature" loading="lazy" decoding="async"></picture></div><h3>Commercial Product Miniatures & Props</h3><p>Reduced, enlarged, or specially fabricated products and objects created for advertising, close-up photography, branded content, demonstrations, campaign installations, or controlled visual effects.</p></div>
   </div>
 </div></section>
 
@@ -166,7 +163,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </ul>
       <p class="svc-note">This helps concentrate effort where it will be visible and useful.</p>
     </div>
-    <div class="svc-split__media"><image-slot id="svc-film-design" placeholder="Drop a project photo" src="/assets/film-shot.webp"></image-slot></div>
+    <div class="svc-split__media"><picture class="rs-photo" style="--ar:4/5;"><source type="image/avif" srcset="/assets/rs-film-shot-4x5-387.avif 387w" sizes="(max-width:900px) min(100vw,440px), 510px"><source type="image/webp" srcset="/assets/rs-film-shot-4x5-387.webp 387w" sizes="(max-width:900px) min(100vw,440px), 510px"><img src="/assets/rs-film-shot-4x5-387.webp" srcset="/assets/rs-film-shot-4x5-387.webp 387w" sizes="(max-width:900px) min(100vw,440px), 510px" width="387" height="484" alt="Miniature hospital ward set with beds, tables and a window, photographed from above" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 

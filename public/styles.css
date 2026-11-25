@@ -202,7 +202,6 @@ p{margin:0;text-wrap:pretty;}
 .rule{height:1px;background:var(--cm-line-faint);border:0;margin:0;}
 
 /* ---- Image slot styling ---- */
-image-slot{display:block;background:var(--cm-ink-850);border:1px solid var(--cm-border);overflow:hidden;}
 .slot-label{position:absolute;left:0;bottom:0;z-index:2;font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.04em;color:var(--cm-gray-200);background:var(--cm-scrim-strong);padding:0.4rem 0.7rem;text-transform:uppercase;}
 
 /* ---- Reveal on scroll ---- */
@@ -235,7 +234,6 @@ image-slot{display:block;background:var(--cm-ink-850);border:1px solid var(--cm-
 .article h1{margin-top:1.1rem;}
 .article h1 em{font-style:normal;color:var(--cm-text-muted);}
 .article__lead{margin-top:1.5rem;}
-.article__cover image-slot{width:100%;aspect-ratio:16/8;}
 .prose{max-width:720px;}
 .prose h2{font-size:clamp(1.6rem,2.8vw,2.4rem);letter-spacing:-0.02em;margin-top:2.8rem;}
 .prose h3{font-family:var(--font-display);font-size:1.15rem;font-weight:var(--w-semibold);margin-top:1.8rem;color:var(--cm-text-strong);}

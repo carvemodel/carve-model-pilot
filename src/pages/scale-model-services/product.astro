@@ -8,13 +8,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   ogTitle="Product Prototypes & Mockups | Carve Model"
   ogDescription="Physical product prototypes and mockups — appearance models, form studies, functional prototypes, and investor demo pieces built from CAD, sketches, and reference images."
   active="services"
-  imageSlot={true}
 >
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","@id":"https://www.physical-model.com/scale-model-services/product#service","url":"https://www.physical-model.com/scale-model-services/product","name":"Product Prototypes & Mockups","serviceType":"Product prototypes and physical mockups","provider":{"@id":"https://www.physical-model.com/#organization"},"areaServed":[{"@type":"Country","name":"United States"},{"@type":"Country","name":"Canada"}]}`} />
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"BreadcrumbList","@id":"https://www.physical-model.com/scale-model-services/product#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.physical-model.com/"},{"@type":"ListItem","position":2,"name":"Services","item":"https://www.physical-model.com/scale-model-services"},{"@type":"ListItem","position":3,"name":"Product Prototypes & Mockups","item":"https://www.physical-model.com/scale-model-services/product"}]}`} />
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"FAQPage","@id":"https://www.physical-model.com/scale-model-services/product#faq","mainEntity":[{"@type":"Question","name":"Can you create a prototype if we do not have a finished 3D model?","acceptedAnswer":{"@type":"Answer","text":"Yes. We can begin with sketches, drawings, photographs, renderings, AI-generated images, reference products, or partially developed CAD files. If fabrication-ready geometry does not exist, we will identify the additional information and separately scoped digital model development required before physical production."}},{"@type":"Question","name":"What is the difference between an appearance prototype and a functional prototype?","acceptedAnswer":{"@type":"Answer","text":"An appearance prototype is primarily built to evaluate or present form, proportion, color, material, and finish. A functional prototype is developed to test specific physical requirements such as assembly, connections, movement, fit, access, or fabrication feasibility. A prototype may combine both purposes when clearly defined at the beginning of the project."}},{"@type":"Question","name":"What materials and fabrication methods can you use?","acceptedAnswer":{"@type":"Answer","text":"Materials and production methods are selected according to what the prototype must demonstrate. Depending on the project, we may use ABS, resin, acrylic, wood, metal, foam, printed components, custom finishes, CNC machining, laser cutting, 3D printing, painting, and hand assembly. Material recommendations are made after reviewing the intended use, appearance, handling, and performance requirements."}},{"@type":"Question","name":"How are product prototype pricing and schedules determined?","acceptedAnswer":{"@type":"Answer","text":"Pricing and lead time depend on the prototype's dimensions, geometry, function, materials, finish quality, number of components, source information, testing requirements, quantity, and deadline. After reviewing the available files and intended purpose, we provide a preliminary estimate and identify any design development required before fabrication."}}]}`} />
 <style>
+.rs-photo{display:block;width:100%;aspect-ratio:var(--ar);background:var(--cm-ink-850);border:1px solid var(--cm-border);overflow:hidden;}.rs-photo img{display:block;width:100%;height:100%;object-fit:cover;}
 .breadcrumb{padding-top:1.6rem;}
 .breadcrumb a{font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.04em;color:var(--cm-text-subtle);transition:color var(--dur-2);}
 .breadcrumb a:hover{color:var(--cm-text-strong);}
@@ -25,7 +25,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
 @media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
 .page-hero__visual{position:relative;}
-.page-hero__visual image-slot{width:100%;height:auto;aspect-ratio:4/3;}
 .page-hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .page-hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .page-hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
@@ -47,7 +46,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .svc-types{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.6rem,3vw,2.6rem);margin-top:2rem;}
 .svc-type{padding-top:0;border-top:0;}
 .svc-type__media{margin-bottom:0.9rem;}
-.svc-type__media image-slot{width:100%;height:auto;aspect-ratio:4/3;}
 .svc-type h3{font-size:1.15rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
 .svc-type p{margin-top:0.5rem;color:var(--cm-text-muted);font-size:0.9rem;max-width:none;}
 @media(max-width:900px){.svc-types{grid-template-columns:repeat(2,1fr);}}
@@ -65,7 +63,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 @media(max-width:480px){.formats{grid-template-columns:1fr;}}
 .svc-split{display:grid;grid-template-columns:1.1fr 0.9fr;gap:clamp(2rem,4vw,4rem);align-items:start;}
 .svc-split .svc-checklist,.svc-split .lead-p{max-width:none;}
-.svc-split__media image-slot{width:100%;height:auto;aspect-ratio:4/5;}
 @media(max-width:900px){.svc-split{grid-template-columns:1fr;}.svc-split__media{order:-1;max-width:440px;}}
 .svc-faq{max-width:68ch;}
 .svc-faq .faq-list{border-top:1px solid var(--cm-line-faint);margin-top:1.8rem;}
@@ -98,7 +95,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </div>
     <div class="page-hero__visual reveal">
       <span class="corner tl"></span><span class="corner br"></span>
-      <image-slot id="svc-product-hero" placeholder="Drop product prototype photo" src="/assets/service-product-prototype-hero-v3.webp"></image-slot>
+      <picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-service-product-prototype-hero-v3-4x3-480.avif 480w, /assets/rs-service-product-prototype-hero-v3-4x3-800.avif 800w, /assets/rs-service-product-prototype-hero-v3-4x3-1200.avif 1200w" sizes="(max-width:900px) min(100vw,440px), 650px"><source type="image/webp" srcset="/assets/rs-service-product-prototype-hero-v3-4x3-480.webp 480w, /assets/rs-service-product-prototype-hero-v3-4x3-800.webp 800w, /assets/rs-service-product-prototype-hero-v3-4x3-1200.webp 1200w" sizes="(max-width:900px) min(100vw,440px), 650px"><img src="/assets/rs-service-product-prototype-hero-v3-4x3-1200.webp" srcset="/assets/rs-service-product-prototype-hero-v3-4x3-480.webp 480w, /assets/rs-service-product-prototype-hero-v3-4x3-800.webp 800w, /assets/rs-service-product-prototype-hero-v3-4x3-1200.webp 1200w" sizes="(max-width:900px) min(100vw,440px), 650px" width="1200" height="900" alt="White and chrome product prototype of a motorcycle-style handlebar device on a white surface" loading="eager" fetchpriority="high" decoding="async"></picture>
       <div class="hero__spec">
         <span class="tick">PROJECTS DELIVERED</span>
         <strong>500+ models</strong>
@@ -125,7 +122,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Create a physical reference for further development</li>
       </ul>
     </div>
-    <div class="svc-split__media"><image-slot id="svc-product-why" placeholder="Drop a project photo" src="/assets/product-decision.jpg"></image-slot></div>
+    <div class="svc-split__media"><picture class="rs-photo" style="--ar:4/5;"><source type="image/avif" srcset="/assets/rs-product-decision-4x5-480.avif 480w, /assets/rs-product-decision-4x5-800.avif 800w, /assets/rs-product-decision-4x5-1200.avif 1200w" sizes="(max-width:900px) min(100vw,440px), 510px"><source type="image/webp" srcset="/assets/rs-product-decision-4x5-480.webp 480w, /assets/rs-product-decision-4x5-800.webp 800w, /assets/rs-product-decision-4x5-1200.webp 1200w" sizes="(max-width:900px) min(100vw,440px), 510px"><img src="/assets/rs-product-decision-4x5-1200.webp" srcset="/assets/rs-product-decision-4x5-480.webp 480w, /assets/rs-product-decision-4x5-800.webp 800w, /assets/rs-product-decision-4x5-1200.webp 1200w" sizes="(max-width:900px) min(100vw,440px), 510px" width="1200" height="1500" alt="Chrome and white rocket engine prototype on a display base" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 
@@ -138,9 +135,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <a class="btn btn--ghost svc-all-btn" href="/works">View Our Work <span class="arrow">→</span></a>
   </div>
   <div class="svc-types">
-    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-ptype-appearance" placeholder="Drop appearance/form prototype photo" src="/assets/product-appearance.jpg"></image-slot></div><h3>Appearance & Form Prototypes</h3><p>Models developed to evaluate a product’s form, proportion, color, materials, finishes, and overall visual character.</p></div>
-    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-ptype-form" placeholder="Drop ergonomic/interaction prototype photo" src="/assets/product-interactive.jpg"></image-slot></div><h3>Ergonomic & Interaction Prototypes</h3><p>Models used to evaluate physical size, handling, comfort, reach, control placement, and how the product interacts with its user.</p></div>
-    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-ptype-functional" placeholder="Drop functional/assembly prototype photo" src="/assets/product-function.jpg"></image-slot></div><h3>Functional & Assembly Prototypes</h3><p>Prototypes developed to evaluate selected movements, mechanisms, component fit, connections, removable parts, and assembly sequences.</p></div>
+    <div class="svc-type"><div class="svc-type__media"><picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-product-appearance-4x3-480.avif 480w, /assets/rs-product-appearance-4x3-800.avif 800w, /assets/rs-product-appearance-4x3-1043.avif 1043w" sizes="(max-width:900px) 92vw, 380px"><source type="image/webp" srcset="/assets/rs-product-appearance-4x3-480.webp 480w, /assets/rs-product-appearance-4x3-800.webp 800w, /assets/rs-product-appearance-4x3-1043.webp 1043w" sizes="(max-width:900px) 92vw, 380px"><img src="/assets/rs-product-appearance-4x3-1043.webp" srcset="/assets/rs-product-appearance-4x3-480.webp 480w, /assets/rs-product-appearance-4x3-800.webp 800w, /assets/rs-product-appearance-4x3-1043.webp 1043w" sizes="(max-width:900px) 92vw, 380px" width="1043" height="782" alt="Hexagonal white and blue equipment prototype with circular hatches and mounted components" loading="lazy" decoding="async"></picture></div><h3>Appearance & Form Prototypes</h3><p>Models developed to evaluate a product’s form, proportion, color, materials, finishes, and overall visual character.</p></div>
+    <div class="svc-type"><div class="svc-type__media"><picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-product-interactive-4x3-480.avif 480w, /assets/rs-product-interactive-4x3-800.avif 800w, /assets/rs-product-interactive-4x3-1123.avif 1123w" sizes="(max-width:900px) 92vw, 380px"><source type="image/webp" srcset="/assets/rs-product-interactive-4x3-480.webp 480w, /assets/rs-product-interactive-4x3-800.webp 800w, /assets/rs-product-interactive-4x3-1123.webp 1123w" sizes="(max-width:900px) 92vw, 380px"><img src="/assets/rs-product-interactive-4x3-1123.webp" srcset="/assets/rs-product-interactive-4x3-480.webp 480w, /assets/rs-product-interactive-4x3-800.webp 800w, /assets/rs-product-interactive-4x3-1123.webp 1123w" sizes="(max-width:900px) 92vw, 380px" width="1123" height="842" alt="Glass bowl prototype lit from below on a dark background with light trails" loading="lazy" decoding="async"></picture></div><h3>Ergonomic & Interaction Prototypes</h3><p>Models used to evaluate physical size, handling, comfort, reach, control placement, and how the product interacts with its user.</p></div>
+    <div class="svc-type"><div class="svc-type__media"><picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-product-function-4x3-480.avif 480w, /assets/rs-product-function-4x3-800.avif 800w, /assets/rs-product-function-4x3-1200.avif 1200w" sizes="(max-width:900px) 92vw, 380px"><source type="image/webp" srcset="/assets/rs-product-function-4x3-480.webp 480w, /assets/rs-product-function-4x3-800.webp 800w, /assets/rs-product-function-4x3-1200.webp 1200w" sizes="(max-width:900px) 92vw, 380px"><img src="/assets/rs-product-function-4x3-1200.webp" srcset="/assets/rs-product-function-4x3-480.webp 480w, /assets/rs-product-function-4x3-800.webp 800w, /assets/rs-product-function-4x3-1200.webp 1200w" sizes="(max-width:900px) 92vw, 380px" width="1200" height="900" alt="White functional assembly prototype with hinged panels on a table" loading="lazy" decoding="async"></picture></div><h3>Functional & Assembly Prototypes</h3><p>Prototypes developed to evaluate selected movements, mechanisms, component fit, connections, removable parts, and assembly sequences.</p></div>
   </div>
 </div></section>
 
@@ -163,7 +160,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </ul>
       <p class="svc-note">This prevents unnecessary complexity and focuses the scope on the decisions the prototype must support.</p>
     </div>
-    <div class="svc-split__media"><image-slot id="svc-product-define" placeholder="Drop a project photo" src="/assets/product-prove.jpg"></image-slot></div>
+    <div class="svc-split__media"><picture class="rs-photo" style="--ar:4/5;"><source type="image/avif" srcset="/assets/rs-product-prove-4x5-480.avif 480w, /assets/rs-product-prove-4x5-755.avif 755w" sizes="(max-width:900px) min(100vw,440px), 510px"><source type="image/webp" srcset="/assets/rs-product-prove-4x5-480.webp 480w, /assets/rs-product-prove-4x5-755.webp 755w" sizes="(max-width:900px) min(100vw,440px), 510px"><img src="/assets/rs-product-prove-4x5-755.webp" srcset="/assets/rs-product-prove-4x5-480.webp 480w, /assets/rs-product-prove-4x5-755.webp 755w" sizes="(max-width:900px) min(100vw,440px), 510px" width="755" height="944" alt="Red dragon and cloud sculpture on a square base against a black background" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 

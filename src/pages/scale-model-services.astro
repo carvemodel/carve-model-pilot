@@ -8,12 +8,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   ogTitle="Physical Model Making Services | Carve Model"
   ogDescription="Carve Model creates architectural models, product prototypes, film miniatures, and art maquettes for presentation, evaluation, testing, and physical verification."
   active="services"
-  imageSlot={true}
 >
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"BreadcrumbList","@id":"https://www.physical-model.com/scale-model-services#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.physical-model.com/"},{"@type":"ListItem","position":2,"name":"Services","item":"https://www.physical-model.com/scale-model-services"}]}`} />
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","@id":"https://www.physical-model.com/scale-model-services#service","url":"https://www.physical-model.com/scale-model-services","serviceType":"Physical model making","provider":{"@id":"https://www.physical-model.com/#organization"},"areaServed":[{"@type":"Country","name":"United States"},{"@type":"Country","name":"Canada"}],"hasOfferCatalog":{"@type":"OfferCatalog","name":"Model making services","itemListElement":[{"@type":"Offer","itemOffered":{"@type":"Service","name":"Architectural & Real Estate Models"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Product Prototypes & Mockups"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Film & Commercial Miniatures"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Art Maquettes & Prototypes"}}]}}`} />
 <style>
+.rs-photo{display:block;width:100%;aspect-ratio:var(--ar);background:var(--cm-ink-850);border:1px solid var(--cm-border);overflow:hidden;}.rs-photo img{display:block;width:100%;height:100%;object-fit:cover;}
 .page-hero{padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(2.5rem,4vw,4rem);border-bottom:1px solid var(--cm-line-faint);}
 .page-hero h1{margin-top:1.4rem;}
 .page-hero h1 em{font-style:normal;color:var(--cm-text-muted);}
@@ -35,7 +35,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .svc-block{display:grid;grid-template-columns:0.72fr 1.28fr;gap:clamp(2rem,4vw,4rem);align-items:center;padding-block:clamp(3rem,5vw,5rem);border-bottom:1px solid var(--cm-line-faint);}
 .svc-block:nth-child(even){grid-template-columns:1.28fr 0.72fr;}
 .svc-block:nth-child(even) .svc-block__media{order:-1;}
-.svc-block__media image-slot{width:100%;height:auto;aspect-ratio:16/9;}
 .svc-block h2{font-size:clamp(1.9rem,3.4vw,3rem);letter-spacing:-0.02em;margin-top:1.1rem;}
 .svc-block p{margin-top:1.1rem;color:var(--cm-gray-300);}
 .svc-explore{display:inline-flex;align-items:center;gap:0.5rem;margin-top:1.2rem;font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.03em;color:var(--cm-text-strong);border-bottom:1px solid var(--cm-border-strong);padding-bottom:2px;transition:border-color var(--dur-2),color var(--dur-2);}
@@ -202,7 +201,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Lighting, bases, display cases, delivery, and installation</li>
       </ul>
     </div>
-    <div class="svc-block__media"><image-slot id="svc-arch" placeholder="Drop architectural model photo" src="/assets/service-architecture-hero.webp"></image-slot></div>
+    <div class="svc-block__media"><picture class="rs-photo" style="--ar:16/9;"><source type="image/avif" srcset="/assets/rs-service-architecture-hero-16x9-480.avif 480w, /assets/rs-service-architecture-hero-16x9-800.avif 800w, /assets/rs-service-architecture-hero-16x9-1200.avif 1200w" sizes="(max-width:900px) 92vw, 560px"><source type="image/webp" srcset="/assets/rs-service-architecture-hero-16x9-480.webp 480w, /assets/rs-service-architecture-hero-16x9-800.webp 800w, /assets/rs-service-architecture-hero-16x9-1200.webp 1200w" sizes="(max-width:900px) 92vw, 560px"><img src="/assets/rs-service-architecture-hero-16x9-1200.webp" srcset="/assets/rs-service-architecture-hero-16x9-480.webp 480w, /assets/rs-service-architecture-hero-16x9-800.webp 800w, /assets/rs-service-architecture-hero-16x9-1200.webp 1200w" sizes="(max-width:900px) 92vw, 560px" width="1200" height="675" alt="Illuminated architectural model of a modern house with glowing interiors at night" loading="lazy" decoding="async"></picture></div>
   </article>
 
   <article class="svc-block" id="product">
@@ -221,7 +220,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Custom product-display models</li>
       </ul>
     </div>
-    <div class="svc-block__media"><image-slot id="svc-product" placeholder="Drop product prototype photo" src="/assets/service-product-prototype-hero-v3.webp"></image-slot></div>
+    <div class="svc-block__media"><picture class="rs-photo" style="--ar:16/9;"><source type="image/avif" srcset="/assets/rs-service-product-prototype-hero-v3-16x9-480.avif 480w, /assets/rs-service-product-prototype-hero-v3-16x9-800.avif 800w, /assets/rs-service-product-prototype-hero-v3-16x9-1200.avif 1200w" sizes="(max-width:900px) 92vw, 560px"><source type="image/webp" srcset="/assets/rs-service-product-prototype-hero-v3-16x9-480.webp 480w, /assets/rs-service-product-prototype-hero-v3-16x9-800.webp 800w, /assets/rs-service-product-prototype-hero-v3-16x9-1200.webp 1200w" sizes="(max-width:900px) 92vw, 560px"><img src="/assets/rs-service-product-prototype-hero-v3-16x9-1200.webp" srcset="/assets/rs-service-product-prototype-hero-v3-16x9-480.webp 480w, /assets/rs-service-product-prototype-hero-v3-16x9-800.webp 800w, /assets/rs-service-product-prototype-hero-v3-16x9-1200.webp 1200w" sizes="(max-width:900px) 92vw, 560px" width="1200" height="675" alt="White and chrome product prototype of a motorcycle-style handlebar device on a white surface" loading="lazy" decoding="async"></picture></div>
   </article>
 
   <article class="svc-block" id="film">
@@ -239,7 +238,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Models designed for filming and repeated handling</li>
       </ul>
     </div>
-    <div class="svc-block__media"><image-slot id="svc-film" placeholder="Drop film miniature photo" src="/assets/service-product-film-hero-v2.webp"></image-slot></div>
+    <div class="svc-block__media"><picture class="rs-photo" style="--ar:16/9;"><source type="image/avif" srcset="/assets/rs-service-product-film-hero-v2-16x9-480.avif 480w, /assets/rs-service-product-film-hero-v2-16x9-800.avif 800w, /assets/rs-service-product-film-hero-v2-16x9-1080.avif 1080w" sizes="(max-width:900px) 92vw, 560px"><source type="image/webp" srcset="/assets/rs-service-product-film-hero-v2-16x9-480.webp 480w, /assets/rs-service-product-film-hero-v2-16x9-800.webp 800w, /assets/rs-service-product-film-hero-v2-16x9-1080.webp 1080w" sizes="(max-width:900px) 92vw, 560px"><img src="/assets/rs-service-product-film-hero-v2-16x9-1080.webp" srcset="/assets/rs-service-product-film-hero-v2-16x9-480.webp 480w, /assets/rs-service-product-film-hero-v2-16x9-800.webp 800w, /assets/rs-service-product-film-hero-v2-16x9-1080.webp 1080w" sizes="(max-width:900px) 92vw, 560px" width="1080" height="608" alt="Detailed film miniature set of a military base with hangars and vehicles on a blue-screen stage" loading="lazy" decoding="async"></picture></div>
   </article>
 
   <article class="svc-block" id="art" style="border-bottom:0;">
@@ -257,7 +256,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Exhibition presentation models</li>
       </ul>
     </div>
-    <div class="svc-block__media"><image-slot id="svc-art" placeholder="Drop art installation / sculpture photo" src="/assets/service-art-maquette-hero-1600.webp"></image-slot></div>
+    <div class="svc-block__media"><picture class="rs-photo" style="--ar:16/9;"><source type="image/avif" srcset="/assets/rs-service-art-maquette-hero-1600-16x9-480.avif 480w, /assets/rs-service-art-maquette-hero-1600-16x9-800.avif 800w, /assets/rs-service-art-maquette-hero-1600-16x9-1200.avif 1200w" sizes="(max-width:900px) 92vw, 560px"><source type="image/webp" srcset="/assets/rs-service-art-maquette-hero-1600-16x9-480.webp 480w, /assets/rs-service-art-maquette-hero-1600-16x9-800.webp 800w, /assets/rs-service-art-maquette-hero-1600-16x9-1200.webp 1200w" sizes="(max-width:900px) 92vw, 560px"><img src="/assets/rs-service-art-maquette-hero-1600-16x9-1200.webp" srcset="/assets/rs-service-art-maquette-hero-1600-16x9-480.webp 480w, /assets/rs-service-art-maquette-hero-1600-16x9-800.webp 800w, /assets/rs-service-art-maquette-hero-1600-16x9-1200.webp 1200w" sizes="(max-width:900px) 92vw, 560px" width="1200" height="675" alt="Sculptural maquette of an organic form suspended by wires between two brown building walls" loading="lazy" decoding="async"></picture></div>
   </article>
 </div>
 

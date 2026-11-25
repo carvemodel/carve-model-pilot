@@ -8,13 +8,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   ogTitle="Art Maquettes & Prototypes | Carve Model"
   ogDescription="Art maquettes and prototypes for artists, designers, and cultural institutions — scale studies, placement models, and exhibition-ready pieces."
   active="services"
-  imageSlot={true}
 >
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"Service","@id":"https://www.physical-model.com/scale-model-services/art#service","url":"https://www.physical-model.com/scale-model-services/art","name":"Art Maquettes & Prototypes","serviceType":"Art maquettes and prototypes","provider":{"@id":"https://www.physical-model.com/#organization"},"areaServed":[{"@type":"Country","name":"United States"},{"@type":"Country","name":"Canada"}]}`} />
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"BreadcrumbList","@id":"https://www.physical-model.com/scale-model-services/art#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.physical-model.com/"},{"@type":"ListItem","position":2,"name":"Services","item":"https://www.physical-model.com/scale-model-services"},{"@type":"ListItem","position":3,"name":"Art Maquettes & Prototypes","item":"https://www.physical-model.com/scale-model-services/art"}]}`} />
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"FAQPage","@id":"https://www.physical-model.com/scale-model-services/art#faq","mainEntity":[{"@type":"Question","name":"What is the difference between an art maquette and the final artwork?","acceptedAnswer":{"@type":"Answer","text":"A maquette is a physical study used to evaluate an artistic concept before committing to the final work. It can help the artist, client, fabricator, institution, or approval body review scale, proportion, composition, placement, materials, and viewing relationships. Unless specifically included in the scope, the maquette should not be treated as the final full-scale artwork."}},{"@type":"Question","name":"Can you create a maquette from sketches, photographs, or digital references?","acceptedAnswer":{"@type":"Answer","text":"Yes. We can begin with sketches, photographs, renderings, digital models, AI-generated references, written dimensions, or an existing object. When the reference material does not fully define the geometry, we identify the interpretation and digital model development required before fabrication."}},{"@type":"Question","name":"What can an art maquette or prototype be used to evaluate?","acceptedAnswer":{"@type":"Answer","text":"A maquette can be used to study overall form, proportion, scale, color, surface treatment, structural relationships, site placement, lighting, viewing angles, and the relationship between an artwork and its surroundings. The scope is developed around the specific questions the physical study needs to answer."}},{"@type":"Question","name":"How does the artist review and approve the interpretation?","acceptedAnswer":{"@type":"Answer","text":"Key geometry, proportions, materials, colors, and finishes are documented for review before full fabrication proceeds. Depending on the project, approvals may include digital models, drawings, renderings, material samples, color samples, or progress photographs. Any design interpretation is identified for the artist's approval rather than treated as an assumed creative decision."}}]}`} />
 <style>
+.rs-photo{display:block;width:100%;aspect-ratio:var(--ar);background:var(--cm-ink-850);border:1px solid var(--cm-border);overflow:hidden;}.rs-photo img{display:block;width:100%;height:100%;object-fit:cover;}
 .breadcrumb{padding-top:1.6rem;}
 .breadcrumb a{font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.04em;color:var(--cm-text-subtle);transition:color var(--dur-2);}
 .breadcrumb a:hover{color:var(--cm-text-strong);}
@@ -25,7 +25,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
 @media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
 .page-hero__visual{position:relative;}
-.page-hero__visual image-slot{width:100%;height:auto;aspect-ratio:4/3;}
 .page-hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .page-hero__visual .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
 .page-hero__visual .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0;}
@@ -47,7 +46,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 .svc-types{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.6rem,3vw,2.6rem);margin-top:2rem;}
 .svc-type{padding-top:0;border-top:0;}
 .svc-type__media{margin-bottom:0.9rem;}
-.svc-type__media image-slot{width:100%;height:auto;aspect-ratio:4/3;}
 .svc-type h3{font-size:1.15rem;font-weight:var(--w-semibold);color:var(--cm-text-strong);letter-spacing:-0.01em;}
 .svc-type p{margin-top:0.5rem;color:var(--cm-text-muted);font-size:0.9rem;max-width:none;}
 @media(max-width:900px){.svc-types{grid-template-columns:repeat(2,1fr);}}
@@ -65,7 +63,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 @media(max-width:480px){.formats{grid-template-columns:1fr;}}
 .svc-split{display:grid;grid-template-columns:1.1fr 0.9fr;gap:clamp(2rem,4vw,4rem);align-items:start;}
 .svc-split .svc-checklist,.svc-split .lead-p{max-width:none;}
-.svc-split__media image-slot{width:100%;height:auto;aspect-ratio:4/5;}
 @media(max-width:900px){.svc-split{grid-template-columns:1fr;}.svc-split__media{order:-1;max-width:440px;}}
 .svc-faq{max-width:68ch;}
 .svc-faq .faq-list{border-top:1px solid var(--cm-line-faint);margin-top:1.8rem;}
@@ -98,7 +95,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </div>
     <div class="page-hero__visual reveal">
       <span class="corner tl"></span><span class="corner br"></span>
-      <image-slot id="svc-art-hero" placeholder="Drop art installation / sculpture photo" src="/assets/service-art-maquette-hero-1600.webp"></image-slot>
+      <picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-service-art-maquette-hero-1600-4x3-480.avif 480w, /assets/rs-service-art-maquette-hero-1600-4x3-800.avif 800w, /assets/rs-service-art-maquette-hero-1600-4x3-1200.avif 1200w" sizes="(max-width:900px) min(100vw,440px), 650px"><source type="image/webp" srcset="/assets/rs-service-art-maquette-hero-1600-4x3-480.webp 480w, /assets/rs-service-art-maquette-hero-1600-4x3-800.webp 800w, /assets/rs-service-art-maquette-hero-1600-4x3-1200.webp 1200w" sizes="(max-width:900px) min(100vw,440px), 650px"><img src="/assets/rs-service-art-maquette-hero-1600-4x3-1200.webp" srcset="/assets/rs-service-art-maquette-hero-1600-4x3-480.webp 480w, /assets/rs-service-art-maquette-hero-1600-4x3-800.webp 800w, /assets/rs-service-art-maquette-hero-1600-4x3-1200.webp 1200w" sizes="(max-width:900px) min(100vw,440px), 650px" width="1200" height="900" alt="Sculptural maquette of an organic form suspended by wires between two brown building walls" loading="eager" fetchpriority="high" decoding="async"></picture>
       <div class="hero__spec">
         <span class="tick">PROJECTS DELIVERED</span>
         <strong>500+ models</strong>
@@ -125,7 +122,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <li><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> Create a presentation or exhibition object</li>
       </ul>
     </div>
-    <div class="svc-split__media"><image-slot id="svc-art-why" placeholder="Drop a project photo" src="/assets/art-study.webp"></image-slot></div>
+    <div class="svc-split__media"><picture class="rs-photo" style="--ar:4/5;"><source type="image/avif" srcset="/assets/rs-art-study-4x5-480.avif 480w, /assets/rs-art-study-4x5-781.avif 781w" sizes="(max-width:900px) min(100vw,440px), 510px"><source type="image/webp" srcset="/assets/rs-art-study-4x5-480.webp 480w, /assets/rs-art-study-4x5-781.webp 781w" sizes="(max-width:900px) min(100vw,440px), 510px"><img src="/assets/rs-art-study-4x5-781.webp" srcset="/assets/rs-art-study-4x5-480.webp 480w, /assets/rs-art-study-4x5-781.webp 781w" sizes="(max-width:900px) min(100vw,440px), 510px" width="781" height="976" alt="Hand holding a small white sculptural maquette with leaf-like curved forms" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 
@@ -138,9 +135,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <a class="btn btn--ghost svc-all-btn" href="/works">View Our Work <span class="arrow">→</span></a>
   </div>
   <div class="svc-types">
-    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-atype-artist" placeholder="Drop artist/sculpture maquette photo" src="/assets/art-maquette-1200.webp"></image-slot></div><h3>Artist & Sculpture Maquettes</h3><p>Reduced-scale physical interpretations used to evaluate an artwork’s form, balance, proportion, composition, and visual intent.</p></div>
-    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-atype-material" placeholder="Drop material/fabrication prototype photo" src="/assets/art-material.jpg"></image-slot></div><h3>Material & Fabrication Prototypes</h3><p>Physical studies used to evaluate selected materials, finishes, components, joints, modules, connections, or assembly approaches before full-scale fabrication.</p></div>
-    <div class="svc-type"><div class="svc-type__media"><image-slot id="svc-atype-placement" placeholder="Drop site/placement study photo" src="/assets/art-site.jpg"></image-slot></div><h3>Site & Placement Studies</h3><p>Maquettes presented within architectural, landscape, gallery, or public-space context to evaluate scale, viewpoints, visibility, circulation, and the relationship between the artwork and its surroundings.</p></div>
+    <div class="svc-type"><div class="svc-type__media"><picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-art-maquette-1200-4x3-480.avif 480w, /assets/rs-art-maquette-1200-4x3-800.avif 800w, /assets/rs-art-maquette-1200-4x3-1200.avif 1200w" sizes="(max-width:900px) 92vw, 380px"><source type="image/webp" srcset="/assets/rs-art-maquette-1200-4x3-480.webp 480w, /assets/rs-art-maquette-1200-4x3-800.webp 800w, /assets/rs-art-maquette-1200-4x3-1200.webp 1200w" sizes="(max-width:900px) 92vw, 380px"><img src="/assets/rs-art-maquette-1200-4x3-1200.webp" srcset="/assets/rs-art-maquette-1200-4x3-480.webp 480w, /assets/rs-art-maquette-1200-4x3-800.webp 800w, /assets/rs-art-maquette-1200-4x3-1200.webp 1200w" sizes="(max-width:900px) 92vw, 380px" width="1200" height="900" alt="Wire sculpture maquette with intersecting curved lines forming a dome-like shape" loading="lazy" decoding="async"></picture></div><h3>Artist & Sculpture Maquettes</h3><p>Reduced-scale physical interpretations used to evaluate an artwork’s form, balance, proportion, composition, and visual intent.</p></div>
+    <div class="svc-type"><div class="svc-type__media"><picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-art-material-4x3-480.avif 480w, /assets/rs-art-material-4x3-800.avif 800w, /assets/rs-art-material-4x3-1200.avif 1200w" sizes="(max-width:900px) 92vw, 380px"><source type="image/webp" srcset="/assets/rs-art-material-4x3-480.webp 480w, /assets/rs-art-material-4x3-800.webp 800w, /assets/rs-art-material-4x3-1200.webp 1200w" sizes="(max-width:900px) 92vw, 380px"><img src="/assets/rs-art-material-4x3-1200.webp" srcset="/assets/rs-art-material-4x3-480.webp 480w, /assets/rs-art-material-4x3-800.webp 800w, /assets/rs-art-material-4x3-1200.webp 1200w" sizes="(max-width:900px) 92vw, 380px" width="1200" height="900" alt="Colorful material study objects, balloons and craft pieces arranged on a work table" loading="lazy" decoding="async"></picture></div><h3>Material & Fabrication Prototypes</h3><p>Physical studies used to evaluate selected materials, finishes, components, joints, modules, connections, or assembly approaches before full-scale fabrication.</p></div>
+    <div class="svc-type"><div class="svc-type__media"><picture class="rs-photo" style="--ar:4/3;"><source type="image/avif" srcset="/assets/rs-art-site-4x3-480.avif 480w, /assets/rs-art-site-4x3-800.avif 800w" sizes="(max-width:900px) 92vw, 380px"><source type="image/webp" srcset="/assets/rs-art-site-4x3-480.webp 480w, /assets/rs-art-site-4x3-800.webp 800w" sizes="(max-width:900px) 92vw, 380px"><img src="/assets/rs-art-site-4x3-800.webp" srcset="/assets/rs-art-site-4x3-480.webp 480w, /assets/rs-art-site-4x3-800.webp 800w" sizes="(max-width:900px) 92vw, 380px" width="800" height="600" alt="Gallery installation model showing a framed mirrored wall in an exhibition space" loading="lazy" decoding="async"></picture></div><h3>Site & Placement Studies</h3><p>Maquettes presented within architectural, landscape, gallery, or public-space context to evaluate scale, viewpoints, visibility, circulation, and the relationship between the artwork and its surroundings.</p></div>
   </div>
 </div></section>
 
@@ -186,7 +183,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </ul>
       <p class="svc-note">The physical study should focus on the aspects of the work that require examination or communication.</p>
     </div>
-    <div class="svc-split__media"><image-slot id="svc-art-define" placeholder="Drop a project photo" src="/assets/art-decision.jpg"></image-slot></div>
+    <div class="svc-split__media"><picture class="rs-photo" style="--ar:4/5;"><source type="image/avif" srcset="/assets/rs-art-decision-4x5-440.avif 440w" sizes="(max-width:900px) min(100vw,440px), 510px"><source type="image/webp" srcset="/assets/rs-art-decision-4x5-440.webp 440w" sizes="(max-width:900px) min(100vw,440px), 510px"><img src="/assets/rs-art-decision-4x5-440.webp" srcset="/assets/rs-art-decision-4x5-440.webp 440w" sizes="(max-width:900px) min(100vw,440px), 510px" width="440" height="550" alt="Tall stacked wooden sculpture installed in a bright gallery space" loading="lazy" decoding="async"></picture></div>
   </div>
 </div></section>
 

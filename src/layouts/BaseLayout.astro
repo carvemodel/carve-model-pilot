@@ -22,8 +22,6 @@ interface Props {
   robotsNoIndex?: boolean;
   /** Which primary-nav item is active, for aria-current="page" */
   active?: 'services' | 'process' | 'works' | 'about' | 'blog' | 'faq' | 'contact';
-  /** Whether this page loads image-slot.js (some source pages use <image-slot> without it — preserved as-is) */
-  imageSlot?: boolean;
 }
 
 const {
@@ -36,7 +34,6 @@ const {
   ogImage = 'https://www.physical-model.com/assets/og-home.jpg',
   robotsNoIndex = false,
   active,
-  imageSlot = false,
 } = Astro.props;
 
 const SITE = 'https://www.physical-model.com';
@@ -211,7 +208,6 @@ const canonical = SITE + (canonicalPath === '/' ? '/' : canonicalPath);
 <Header active={active} />
 <slot />
 <Footer />
-{imageSlot && <script src="/image-slot.js" is:inline></script>}
 <script src="/site.js" is:inline></script>
 <slot name="scripts" />
 </body>

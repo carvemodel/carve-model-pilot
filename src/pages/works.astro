@@ -59,7 +59,6 @@ if (process.env.REDIS_URL) {
   ogTitle="Our Work | Carve Model Portfolio"
   ogDescription="Models built for the decisions they support."
   active="works"
-  imageSlot={true}
 >
 <Fragment slot="head">
 <script type="application/ld+json" is:inline set:html={`{"@context":"https://schema.org","@type":"CollectionPage","@id":"https://www.physical-model.com/works#webpage","url":"https://www.physical-model.com/works","name":"Our Work — Physical Model Portfolio","description":"Architectural models, product prototypes, film and commercial miniatures, and art maquettes built by Carve Model.","isPartOf":{"@id":"https://www.physical-model.com/#website"},"about":{"@id":"https://www.physical-model.com/#organization"},"breadcrumb":{"@id":"https://www.physical-model.com/works#breadcrumb"}}`} />
@@ -83,7 +82,6 @@ if (process.env.REDIS_URL) {
 .filter.on,.filter:hover{color:var(--cm-ink-900);background:var(--cm-silver);border-color:transparent;}
 .gallery{columns:3 320px;column-gap:1.25rem;margin-top:3rem;}
 .proj{break-inside:avoid;margin:0 0 1.25rem;}
-.proj img,.proj image-slot{display:block;width:100%;height:auto;}
 .proj{position:relative;}
 .proj .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
 .proj .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0;}
@@ -181,7 +179,7 @@ if (process.env.REDIS_URL) {
           </div>
           {p.imageUrl
             ? <img src={card.src} alt={workAlt(p, CATEGORY_LABEL[p.category])} style={`aspect-ratio:${ratio};object-fit:cover;`} width={card.width} height={card.height} loading="lazy" decoding="async" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} data-case-study-url={p.caseStudyUrl || ''} onclick="openLightbox(this)" />
-            : <image-slot id={p.id} placeholder="Drop project photo" style={`aspect-ratio:${ratio};`}></image-slot>}
+            : <div class="proj__empty" role="presentation" style={`aspect-ratio:${ratio};`}></div>}
           <span class="corner tl"></span><span class="corner br"></span>
           <span class="slot-label">{label}</span>
         </figure>
