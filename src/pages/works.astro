@@ -101,6 +101,8 @@ if (process.env.REDIS_URL) {
 .tag-active strong{color:var(--cm-text-strong);text-transform:capitalize;}
 .tag-active button{background:none;border:1px solid var(--cm-border);border-radius:50%;width:22px;height:22px;color:var(--cm-gray-300);cursor:pointer;line-height:1;}
 .tag-active button:hover{color:var(--cm-text-strong);border-color:var(--cm-border-strong);}
+.proj__empty{background:var(--cm-ink-850);border:1px solid var(--cm-border);}
+.proj img,.proj .proj__empty{display:block;width:100%;height:auto;}
 .proj img[data-full]{cursor:pointer;}
 .lightbox{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:clamp(1.5rem,5vw,4rem);background:rgba(6,6,8,0.92);}
 .lightbox.open{display:flex;}
