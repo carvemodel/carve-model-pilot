@@ -1,5 +1,11 @@
 {
   "trailingSlash": false,
+  "images": {
+    "sizes": [480, 800, 1200],
+    "remotePatterns": [{ "protocol": "https", "hostname": "*.public.blob.vercel-storage.com" }],
+    "formats": ["image/avif", "image/webp"],
+    "minimumCacheTTL": 31536000
+  },
   "redirects": [
     { "source": "/home", "destination": "/", "statusCode": 301 },
     { "source": "/about", "destination": "/about-carve-model", "statusCode": 301 },

@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { createClient } from 'redis';
-import { cardImage, workAlt, formatScale } from '../utils/workImage.js';
+import { cardImage, workAlt, formatScale, cardSrcset, CARD_FALLBACK } from '../utils/workImage.js';
 
 const CATEGORY_LABEL = {
   architecture: 'Architecture & Real Estate',
@@ -180,7 +180,7 @@ if (process.env.REDIS_URL) {
             ))}
           </div>
           {p.imageUrl
-            ? <img src={card.src} alt={workAlt(p, CATEGORY_LABEL[p.category])} style={`aspect-ratio:${ratio};object-fit:cover;`} width={card.width} height={card.height} loading="lazy" decoding="async" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} data-case-study-url={p.caseStudyUrl || ''} onclick="openLightbox(this)" />
+            ? <img src={card.src} alt={workAlt(p, CATEGORY_LABEL[p.category])} srcset={cardSrcset(card.src, card.width)} sizes="(max-width:700px) 92vw, (max-width:1100px) 46vw, 455px" onerror={CARD_FALLBACK} style={`aspect-ratio:${ratio};object-fit:cover;`} width={card.width} height={card.height} loading="lazy" decoding="async" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} data-case-study-url={p.caseStudyUrl || ''} onclick="openLightbox(this)" />
             : <div class="proj__empty" role="presentation" style={`aspect-ratio:${ratio};`}></div>}
           <span class="corner tl"></span><span class="corner br"></span>
           <span class="slot-label">{label}</span>
