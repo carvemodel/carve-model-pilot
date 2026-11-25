@@ -5,8 +5,32 @@
     var t = e.target.closest('[data-menu-toggle]');
     if (t) {
       var m = document.getElementById('mobileMenu');
-      if (m) m.classList.toggle('open');
+      if (m) setMenu(t, m, !m.classList.contains('open'));
     }
+  });
+  function setMenu(btn, menu, open) {
+    menu.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+  // Escape closes the menu and returns focus to the button
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var m = document.getElementById('mobileMenu');
+    var btn = document.querySelector('[data-menu-toggle]');
+    if (m && btn && m.classList.contains('open')) { setMenu(btn, m, false); btn.focus(); }
+  });
+  // Close the menu when a link inside it is followed, or the viewport grows past the mobile layout
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('#mobileMenu a');
+    var btn = document.querySelector('[data-menu-toggle]');
+    var m = document.getElementById('mobileMenu');
+    if (a && btn && m) setMenu(btn, m, false);
+  });
+  window.addEventListener('resize', function () {
+    var m = document.getElementById('mobileMenu');
+    var btn = document.querySelector('[data-menu-toggle]');
+    if (m && btn && window.innerWidth > 900 && m.classList.contains('open')) setMenu(btn, m, false);
   });
 
   // Mobile "Services" submenu expand/collapse -- kept separate from the
@@ -28,10 +52,19 @@
   var io;
   function initReveal() {
     var els = document.querySelectorAll('.reveal');
-    if (!('IntersectionObserver' in window) || !els.length) {
+    if (!('IntersectionObserver' in window) || !els.length ||
+        (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
       els.forEach(function (el) { el.classList.add('in'); });
-      return;
+      return; // content stays visible: the hidden state is never switched on
     }
+    // Content is visible by default. Only now that JS is running do we enable the
+    // hidden "pre-reveal" state, and anything already on screen is revealed first.
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    els.forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.top < vh && r.bottom > 0) el.classList.add('in');
+    });
+    document.documentElement.classList.add('js-reveal');
     io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (en.isIntersecting) {

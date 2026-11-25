@@ -68,7 +68,7 @@ if (process.env.REDIS_URL) {
 .page-hero h1{margin-top:1.4rem;}.page-hero p{margin-top:1.4rem;}
 .page-hero h1 em{font-style:normal;color:var(--cm-text-muted);}
 .page-hero__inner{display:grid;grid-template-columns:0.85fr 1.15fr;gap:clamp(1.5rem,3vw,3rem);align-items:center;}
-@media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:-1;max-width:440px;}}
+@media(max-width:900px){.page-hero__inner{grid-template-columns:1fr;}.page-hero__visual{order:0;max-width:440px;margin-top:0.5rem;}}
 .page-hero__visual{position:relative;}
 .page-hero__visual .hero-photo{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;object-position:50% center;}
 .page-hero__visual .corner{position:absolute;width:14px;height:14px;border:1px solid var(--cm-silver);opacity:0.5;z-index:3;}
@@ -104,6 +104,9 @@ if (process.env.REDIS_URL) {
 .proj__empty{background:var(--cm-ink-850);border:1px solid var(--cm-border);}
 .proj img,.proj .proj__empty{display:block;width:100%;height:auto;}
 .proj img[data-full]{cursor:pointer;}
+.proj img[data-full]:focus-visible,.filter:focus-visible,.tag-pill:focus-visible,.lightbox button:focus-visible,.lightbox a:focus-visible{outline:2px solid var(--cm-silver);outline-offset:3px;}
+.filter,.tag-pill{touch-action:manipulation;}
+@media(pointer:coarse){.filter{min-height:44px;}.tag-pill{min-height:36px;}}
 .lightbox{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:clamp(1.5rem,5vw,4rem);background:rgba(6,6,8,0.92);}
 .lightbox.open{display:flex;}
 .lightbox__body{width:92vw;max-width:92vw;}
@@ -114,7 +117,7 @@ if (process.env.REDIS_URL) {
 .lightbox__case-study{color:var(--cm-silver);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--cm-border-strong);transition:color var(--dur-2),text-decoration-color var(--dur-2);}
 .lightbox__case-study:hover{color:var(--cm-text-strong);text-decoration-color:currentColor;}
 .lightbox__count{display:block;margin-top:0.3rem;font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-gray-500);text-align:center;}
-.lightbox__close{position:absolute;top:clamp(1rem,3vw,2rem);right:clamp(1rem,3vw,2rem);width:40px;height:40px;border-radius:50%;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);color:var(--cm-text-strong);font-size:1.15rem;line-height:1;cursor:pointer;z-index:5;}
+.lightbox__close{position:absolute;min-width:44px;min-height:44px;top:clamp(1rem,3vw,2rem);right:clamp(1rem,3vw,2rem);width:44px;height:44px;border-radius:50%;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);color:var(--cm-text-strong);font-size:1.15rem;line-height:1;cursor:pointer;z-index:5;}
 .lightbox__close:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
 .lightbox__nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:var(--cm-ink-800);border:1px solid var(--cm-border-strong);color:var(--cm-text-strong);font-size:clamp(1.15rem,1.6vw,1.5rem);line-height:1;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;}
 .lightbox__nav:hover{background:var(--cm-accent);color:var(--cm-accent-contrast);border-color:var(--cm-accent);}
@@ -154,14 +157,14 @@ if (process.env.REDIS_URL) {
 
 <section class="section" style="padding-top:clamp(2rem,4vw,3rem);"><div class="container">
   <p class="muted" style="max-width:none;">Explore architectural models, product prototypes, film and commercial miniatures, and art maquettes developed for design evaluation, approvals, presentations, testing, production, and documentation.</p>
-  <div class="filters">
-    <button class="filter on" data-f="all" onclick="filterWorks('all',this)">All</button>
-    <button class="filter" data-f="architecture" onclick="filterWorks('architecture',this)">Architecture &amp; Real Estate</button>
-    <button class="filter" data-f="product" onclick="filterWorks('product',this)">Product</button>
-    <button class="filter" data-f="film" onclick="filterWorks('film',this)">Film &amp; Commercial</button>
-    <button class="filter" data-f="art" onclick="filterWorks('art',this)">Art</button>
+  <div class="filters" role="group" aria-label="Filter projects by category">
+    <button type="button" class="filter on" aria-pressed="true" data-f="all" onclick="filterWorks('all',this)">All</button>
+    <button type="button" class="filter" aria-pressed="false" data-f="architecture" onclick="filterWorks('architecture',this)">Architecture &amp; Real Estate</button>
+    <button type="button" class="filter" aria-pressed="false" data-f="product" onclick="filterWorks('product',this)">Product</button>
+    <button type="button" class="filter" aria-pressed="false" data-f="film" onclick="filterWorks('film',this)">Film &amp; Commercial</button>
+    <button type="button" class="filter" aria-pressed="false" data-f="art" onclick="filterWorks('art',this)">Art</button>
   </div>
-  <div class="tag-active" id="tagActive" style="display:none;">
+  <div class="tag-active" id="tagActive" style="display:none;" role="status">
     Filtering by tag: <strong id="tagActiveLabel"></strong> <button type="button" onclick="clearTagFilter()" aria-label="Clear tag filter">✕</button>
   </div>
   <div class="gallery" id="gallery">
@@ -176,11 +179,11 @@ if (process.env.REDIS_URL) {
           <div class="proj__tag">
             <span class="proj__catlabel">{CATEGORY_LABEL[p.category] || p.category}</span>
             {tags.map((t) => (
-              <button type="button" class="tag-pill" data-cat={p.category} data-tag={t.toLowerCase()} onclick="filterByTag(this)">{t}</button>
+              <button type="button" class="tag-pill" aria-pressed="false" data-cat={p.category} data-tag={t.toLowerCase()} onclick="filterByTag(this)">{t}</button>
             ))}
           </div>
           {p.imageUrl
-            ? <img src={card.src} alt={workAlt(p, CATEGORY_LABEL[p.category])} srcset={cardSrcset(card.src, card.width)} sizes="(max-width:700px) 92vw, (max-width:1100px) 46vw, 455px" onerror={CARD_FALLBACK} style={`aspect-ratio:${ratio};object-fit:cover;`} width={card.width} height={card.height} loading="lazy" decoding="async" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} data-case-study-url={p.caseStudyUrl || ''} onclick="openLightbox(this)" />
+            ? <img src={card.src} alt={workAlt(p, CATEGORY_LABEL[p.category])} srcset={cardSrcset(card.src, card.width)} sizes="(max-width:700px) 92vw, (max-width:1100px) 46vw, 455px" onerror={CARD_FALLBACK} style={`aspect-ratio:${ratio};object-fit:cover;`} width={card.width} height={card.height} loading="lazy" decoding="async" data-full={p.imageUrl} data-images={JSON.stringify([p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean))} data-caption={label} data-case-study-url={p.caseStudyUrl || ''} onclick="openLightbox(this)" tabindex="0" role="button" aria-label={`View larger photos: ${p.name}`} />
             : <div class="proj__empty" role="presentation" style={`aspect-ratio:${ratio};`}></div>}
           <span class="corner tl"></span><span class="corner br"></span>
           <span class="slot-label">{label}</span>
@@ -198,13 +201,13 @@ if (process.env.REDIS_URL) {
   </div>
 </div></section>
 
-<div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
-  <button class="lightbox__close" onclick="closeLightbox()" aria-label="Close">✕</button>
-  <button class="lightbox__nav lightbox__nav--prev" id="lightboxPrev" onclick="lightboxStep(-1)" aria-label="Previous photo">‹</button>
-  <button class="lightbox__nav lightbox__nav--next" id="lightboxNext" onclick="lightboxStep(1)" aria-label="Next photo">›</button>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Project photos" onclick="if(event.target===this)closeLightbox()">
+  <button type="button" class="lightbox__close" onclick="closeLightbox()" aria-label="Close">✕</button>
+  <button type="button" class="lightbox__nav lightbox__nav--prev" id="lightboxPrev" onclick="lightboxStep(-1)" aria-label="Previous photo">‹</button>
+  <button type="button" class="lightbox__nav lightbox__nav--next" id="lightboxNext" onclick="lightboxStep(1)" aria-label="Next photo">›</button>
   <div class="lightbox__body">
     <div class="lightbox__track" id="lightboxTrack"></div>
-    <p class="lightbox__cap" id="lightboxCap"></p>
+    <p class="lightbox__cap" id="lightboxCap" aria-live="polite"></p>
     <span class="lightbox__count" id="lightboxCount"></span>
   </div>
 </div>
@@ -229,7 +232,9 @@ function applyFilter(){
     p.style.display = (catOk && tagOk) ? '' : 'none';
   });
   document.querySelectorAll('.tag-pill').forEach(function(btn){
-    btn.classList.toggle('on', !!currentTag && btn.dataset.tag === currentTag);
+    var on = !!currentTag && btn.dataset.tag === currentTag;
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', String(on));
   });
   var activeBox = document.getElementById('tagActive');
   if(currentTag){
@@ -241,8 +246,8 @@ function applyFilter(){
 }
 
 function filterWorks(cat, btn){
-  document.querySelectorAll('.filter').forEach(function(f){f.classList.remove('on');});
-  btn.classList.add('on');
+  document.querySelectorAll('.filter').forEach(function(f){f.classList.remove('on');f.setAttribute('aria-pressed','false');});
+  btn.classList.add('on');btn.setAttribute('aria-pressed','true');
   currentFilter = cat;
   currentTag = null;
   applyFilter();
@@ -253,6 +258,7 @@ function filterByTag(el){
   var tag = el.dataset.tag;
   document.querySelectorAll('.filter').forEach(function(f){
     f.classList.toggle('on', f.dataset.f === cat);
+    f.setAttribute('aria-pressed', String(f.dataset.f === cat));
   });
   currentFilter = cat;
   currentTag = tag;
@@ -309,7 +315,9 @@ function onLightboxScroll(){
   }, 80);
 }
 
+var lightboxOpener = null;
 function openLightbox(img){
+  lightboxOpener = img;
   var full = img.getAttribute('data-full');
   if(!full) return;
   var images = [];
@@ -336,6 +344,7 @@ function openLightbox(img){
   lightboxIndex = startIdx;
   requestAnimationFrame(function(){
     scrollToLightboxIndex(startIdx, false);
+    var c = document.querySelector('.lightbox__close'); if(c) c.focus();
   });
 }
 function closeLightbox(){
@@ -343,9 +352,29 @@ function closeLightbox(){
   document.getElementById('lightboxTrack').innerHTML = '';
   lightboxImages = [];
   document.body.style.overflow = '';
+  if(lightboxOpener && document.contains(lightboxOpener)) lightboxOpener.focus();
+  lightboxOpener = null;
 }
+// Keyboard: Enter / Space on a gallery photo opens the lightbox
 document.addEventListener('keydown', function(e){
-  if(!document.getElementById('lightbox').classList.contains('open')) return;
+  var t = e.target;
+  if((e.key === 'Enter' || e.key === ' ') && t && t.matches && t.matches('img[data-full]')){
+    e.preventDefault(); openLightbox(t);
+  }
+});
+document.addEventListener('keydown', function(e){
+  var lb = document.getElementById('lightbox');
+  if(!lb.classList.contains('open')) return;
+  if(e.key === 'Tab'){
+    // keep focus inside the dialog
+    var f = Array.prototype.filter.call(lb.querySelectorAll('button,a[href]'), function(el){ return !el.hidden && el.offsetParent !== null; });
+    if(!f.length) return;
+    var first = f[0], last = f[f.length-1];
+    if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    else if(!lb.contains(document.activeElement)){ e.preventDefault(); first.focus(); }
+    return;
+  }
   if(e.key === 'Escape') closeLightbox();
   if(e.key === 'ArrowRight') lightboxStep(1);
   if(e.key === 'ArrowLeft') lightboxStep(-1);

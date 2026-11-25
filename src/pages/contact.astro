@@ -107,7 +107,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .filelist{list-style:none;padding:0;margin:0.8rem 0 0;display:flex;flex-direction:column;gap:0.5rem;}
 .filelist li{display:flex;align-items:center;gap:0.7rem;background:var(--cm-ink-800);border:1px solid var(--cm-border);border-radius:var(--r-sm);padding:0.55rem 0.7rem;font-size:0.8rem;color:var(--cm-text);}
 .filelist .fz{margin-left:auto;font-family:var(--font-mono);font-size:0.7rem;color:var(--cm-text-subtle);}
-.filelist .rm{background:none;border:0;color:var(--cm-text-subtle);font-size:1rem;padding:0 0.2rem;line-height:1;}
+.filelist .rm{background:none;border:0;color:var(--cm-text-subtle);font-size:1.25rem;padding:0.5rem 0.75rem;min-width:44px;min-height:44px;line-height:1;touch-action:manipulation;}
+.filelist .rm:focus-visible,.drop:focus-visible{outline:2px solid var(--cm-silver);outline-offset:3px;}
 .filelist .rm:hover{color:var(--cm-text-strong);}
 
 /* conditional scope-boundary tool */
@@ -198,14 +199,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div class="field"><label for="phone">Phone <span class="optional">(optional)</span></label><input id="phone" name="phone" type="tel" placeholder="(555) 000-0000" autocomplete="tel" oninput="formatPhoneInput(this)"><div class="hint" id="phoneHint" style="display:none;color:#e0a860;">That doesn't look like a complete phone number — double check it, or leave it blank.</div></div>
       </div>
 
-      <div class="field"><label>File upload <span class="optional">(optional)</span></label>
+      <div class="field" role="group" aria-label="File upload (optional)"><label id="fileUploadLabel">File upload <span class="optional">(optional)</span></label>
         <div class="hint" style="margin-bottom:0.8rem;"><strong class="hint__lead">Complete drawings are not required to start.</strong> Share whatever you have: plans, elevations, renderings, reference photos, or 3D models.</div>
-        <div class="drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+        <div class="drop" id="fileDrop" role="button" tabindex="0" aria-label="Upload project files. Drop files here, or press Enter to browse" onclick="document.getElementById('fileInput').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('fileInput').click();}">
           <strong>Drop files here, or click to browse</strong>
           <span class="sub">CAD, PDF, Revit, Rhino, SketchUp or image files—maximum 25 MB per file.</span>
         </div>
-        <input id="fileInput" type="file" multiple hidden onchange="addFiles(this.files)">
-        <ul class="filelist" id="fileList"></ul>
+        <input id="fileInput" type="file" multiple hidden onchange="addFiles(this.files);this.value='';">
+        <ul class="filelist" id="fileList" aria-live="polite" aria-label="Selected files"></ul>
         <div class="orlink"><span>or share a link</span></div>
         <ul class="filelist" id="linkList"></ul>
         <div style="display:flex;gap:0.5rem;">
@@ -311,7 +312,7 @@ function renderFiles(){
   var ul=document.getElementById('fileList');ul.innerHTML='';
   pickedFiles.forEach(function(f,i){
     var li=document.createElement('li');
-    li.innerHTML='<span>'+f.name.replace(/[<>]/g,'')+'</span><span class="fz">'+fmtSize(f.size)+'</span><button type="button" class="rm" aria-label="Remove">×</button>';
+    li.innerHTML='<span>'+f.name.replace(/[<>]/g,'')+'</span><span class="fz">'+fmtSize(f.size)+'</span><button type="button" class="rm" aria-label="Remove file '+f.name.replace(/[<>"]/g,'')+'">×</button>';
     li.querySelector('.rm').onclick=function(){pickedFiles.splice(i,1);renderFiles();};
     ul.appendChild(li);
   });
